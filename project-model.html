@@ -17,7 +17,7 @@ the License.
 <!--
 Events based access to projects datastore.
 
-**All events must be cancelable.** When the event is cancelled by an instance
+Note: **All events must be cancelable.** When the event is cancelled by an instance
 of the element it won't be handled again by other instance that possibly exists
 in the DOM.
 
@@ -50,7 +50,7 @@ Reads a project object from the datastore.
 
 ##### Properties
 -   `id` (String, required) ID of the datastore entry
--   `rev` (String, optional) Specific revision to retreive from the datastore. Latest by default.
+-   `rev` (String, optional) Specific revision to retrieve from the datastore. Latest by default.
 
 ##### Example
 
@@ -121,7 +121,7 @@ custom event. Promise returns object's new `_rev` value.
 
 ##### Properties
 -   `id` (String, required) ID of the datastore entry
--   `rev` (String, optional) The _rev property of the PouchDB datastore object. If not set it will use latest revision.
+-   `rev` (String, optional) The `_rev` property of the PouchDB datastore object. If not set it will use latest revision.
 
 ##### Example
 
