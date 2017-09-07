@@ -1,3 +1,13 @@
+<a name="0.1.3"></a>
+## [0.1.3](https://github.com/advanced-rest-client/arc-models/compare/0.1.2...0.1.3) (2017-09-07)
+
+
+### Fix
+
+* Restoring tests ([8539317c962ac95dc559986105f5b7c25ec785df](https://github.com/advanced-rest-client/arc-models/commit/8539317c962ac95dc559986105f5b7c25ec785df))
+
+
+
 <a name="0.1.2"></a>
 ## [0.1.2](https://github.com/advanced-rest-client/arc-models/compare/0.1.1...0.1.2) (2017-09-07)
 
