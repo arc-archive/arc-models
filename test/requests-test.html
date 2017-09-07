@@ -1,0 +1,241 @@
+<!doctype html>
+<!--
+@license
+Copyright (c) 2015 The Polymer Project Authors. All rights reserved.
+This code may only be used under the BSD style license found at http://polymer.github.io/LICENSE.txt
+The complete set of authors may be found at http://polymer.github.io/AUTHORS.txt
+The complete set of contributors may be found at http://polymer.github.io/CONTRIBUTORS.txt
+Code distributed by Google as part of the polymer project is also
+subject to an additional IP rights grant found at http://polymer.github.io/PATENTS.txt
+-->
+<html>
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, minimum-scale=1.0, initial-scale=1.0, user-scalable=yes">
+
+    <script src="../../webcomponentsjs/webcomponents-lite.js"></script>
+    <script src="../../web-component-tester/browser.js"></script>
+    <script src="../../iron-test-helpers/test-helpers.js"></script>
+    <script src="database-helper.js"></script>
+    <link rel="import" href="../arc-models.html">
+  </head>
+  <body>
+
+    <test-fixture id="basic">
+      <template>
+        <request-model></request-model>
+      </template>
+    </test-fixture>
+
+    <script>
+    /* global DatabaseHelper, fixture, assert, sinon */
+    suite('Static methods', function() {
+      const databaseType = 'saved-requests';
+      suite('update()', function() {
+        teardown(function() {
+          return DatabaseHelper.clearRequests();
+        });
+
+        var element;
+        var dataObj;
+        setup(function() {
+          element = fixture('basic');
+          dataObj = {
+            name: 'test-1',
+            url: 'http://domain.com',
+            method: 'GET',
+            legacyProject: undefined
+          };
+        });
+
+        test('Creates a new object in the datastore', function() {
+          return element.update(databaseType, dataObj)
+          .then(result => {
+            assert.typeOf(result._rev, 'string', '_rev is set');
+            assert.typeOf(result._id, 'string', '_id is set');
+            assert.equal(result.url, dataObj.url, 'URL is set');
+            assert.equal(result.name, dataObj.name, 'name is set');
+            assert.equal(result.method, dataObj.method, 'method is set');
+          });
+        });
+
+        test('Updates created object (without ID change)', function() {
+          var originalRev;
+          var originalId;
+          return element.update(databaseType, dataObj)
+          .then(result => {
+            originalRev = result._rev;
+            originalId = result._id;
+            result.headers = 'x-test';
+            return element.update(databaseType, result);
+          })
+          .then(result => {
+            assert.notEqual(result._rev, originalRev, '_rev is regenerated');
+            assert.equal(result._id, originalId, '_id is the same');
+            assert.equal(result.headers, 'x-test', 'Change is recorded');
+          });
+        });
+
+        test('Updates created object (with ID change)', function() {
+          var originalRev;
+          var originalId;
+          return element.update(databaseType, dataObj)
+          .then(result => {
+            originalRev = result._rev;
+            originalId = result._id;
+            result.name = 'x-test';
+            return element.update(databaseType, result);
+          })
+          .then(result => {
+            assert.notEqual(result._rev, originalRev, '_rev is regenerated');
+            assert.notEqual(result._id, originalId, '_id is regenerated');
+            assert.equal(result.name, 'x-test', 'Change is recorded');
+          });
+        });
+
+        test('Fires request-object-changed custom event', function() {
+          var spy = sinon.spy();
+          element.addEventListener('request-object-changed', spy);
+          return element.update(databaseType, dataObj)
+          .then(() => {
+            assert.isTrue(spy.calledOnce);
+          });
+        });
+
+        test('The request-object-changed event has properties of newly created object', function() {
+          var eventData;
+          element.addEventListener('request-object-changed', function(e) {
+            eventData = e.detail;
+          });
+          return element.update(databaseType, dataObj)
+          .then(result => {
+            assert.isUndefined(eventData.oldRev);
+            assert.isUndefined(result.oldRev);
+            assert.typeOf(eventData.request, 'object');
+          });
+        });
+
+        test('The request-object-changed event has properties of updated object', function() {
+          var eventData;
+          var originalRev;
+          return element.update(databaseType, dataObj)
+          .then(result => {
+            element.addEventListener('request-object-changed', function(e) {
+              eventData = e.detail;
+            });
+            originalRev = result._rev;
+            result.name = 'test-2';
+            return element.update(databaseType, result);
+          })
+          .then(() => {
+            assert.equal(eventData.oldRev, originalRev);
+            assert.typeOf(eventData.request, 'object');
+            assert.notEqual(eventData.request._rev, originalRev);
+          });
+        });
+      });
+
+      suite('read()', function() {
+        teardown(function() {
+          return DatabaseHelper.clearRequests();
+        });
+
+        var element;
+        var dataObj;
+        setup(function() {
+          element = fixture('basic');
+          dataObj = {
+            name: 'test-1',
+            url: 'http://domain.com',
+            method: 'GET'
+          };
+          return element.update(databaseType, dataObj)
+          .then(result => dataObj = result);
+        });
+
+        test('Reads request object by id only', function() {
+          return element.read(databaseType, dataObj._id)
+          .then(result => {
+            assert.equal(result._id, dataObj._id);
+          });
+        });
+
+        test('Reads a revision', function() {
+          var originalRev;
+          var updatedRev;
+          return element.read(databaseType, dataObj._id)
+          .then(result => {
+            originalRev = result._rev;
+            result.name = 'test-2';
+            return element.update(databaseType, result);
+          })
+          .then(result => {
+            updatedRev = result._rev;
+            return element.read(databaseType, dataObj._id, originalRev);
+          })
+          .then(result => {
+            assert.equal(result.name, dataObj.name);
+            assert.notEqual(originalRev, updatedRev);
+          });
+        });
+      });
+
+      suite('remove()', function() {
+        teardown(function() {
+          return DatabaseHelper.clearRequests();
+        });
+
+        var element;
+        var dataObj;
+        setup(function() {
+          element = fixture('basic');
+          dataObj = {
+            name: 'test-1',
+            url: 'http://domain.com',
+            method: 'GET'
+          };
+          return element.update(databaseType, dataObj)
+          .then(result => dataObj = result);
+        });
+
+        test('Removes object from the datastore', function() {
+          return element.remove(databaseType, dataObj._id, dataObj._rev)
+          .then(() => {
+            return element.read(databaseType, dataObj._id);
+          })
+          .then(() => {
+            throw new Error('TEST');
+          })
+          .catch(cause => {
+            assert.equal(cause.status, 404);
+          });
+        });
+
+        test('Fires request-object-deleted custom event', function() {
+          var spy = sinon.spy();
+          element.addEventListener('request-object-deleted', spy);
+          return element.remove(databaseType, dataObj._id, dataObj._rev)
+          .then(() => {
+            assert.isTrue(spy.calledOnce);
+          });
+        });
+
+        test('request-object-deleted event contains request data', function() {
+          var eventData;
+          element.addEventListener('request-object-deleted', function(e) {
+            eventData = e.detail;
+          });
+          return element.remove(databaseType, dataObj._id, dataObj._rev)
+          .then(() => {
+            assert.equal(eventData.id, dataObj._id);
+            assert.equal(eventData.oldRev, dataObj._rev);
+            assert.typeOf(eventData.rev, 'string');
+            assert.notEqual(eventData.rev, dataObj._rev);
+          });
+        });
+      });
+    });
+    </script>
+
+  </body>
+</html>
