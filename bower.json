@@ -1,7 +1,7 @@
 {
   "name": "arc-models",
   "description": "Event based access to ARC datastores",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "license": "Apache-2.0 OR CC-BY-4.0",
   "authors": [
     "The Advanced REST client authors <arc@mulesoft.com>"
@@ -15,7 +15,8 @@
   "private": true,
   "main": [
     "project-model.html",
-    "request-model.html"
+    "request-model.html",
+    "websocket-url-history-model.html"
   ],
   "repository": {
     "type": "git",

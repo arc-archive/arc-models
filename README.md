@@ -4,7 +4,7 @@
 
 Events based access to projects datastore.
 
-*All events must be cancelable.** When the event is cancelled by an instance
+Note: **All events must be cancelable.** When the event is cancelled by an instance
 of the element it won't be handled again by other instance that possibly exists
 in the DOM.
 
@@ -37,7 +37,7 @@ Reads a project object from the datastore.
 
 ##### Properties
 -   `id` (String, required) ID of the datastore entry
--   `rev` (String, optional) Specific revision to retreive from the datastore. Latest by default.
+-   `rev` (String, optional) Specific revision to retrieve from the datastore. Latest by default.
 
 ##### Example
 
@@ -108,7 +108,7 @@ custom event. Promise returns object's new `_rev` value.
 
 ##### Properties
 -   `id` (String, required) ID of the datastore entry
--   `rev` (String, optional) The _rev property of the PouchDB datastore object. If not set it will use latest revision.
+-   `rev` (String, optional) The `_rev` property of the PouchDB datastore object. If not set it will use latest revision.
 
 ##### Example
 
@@ -159,7 +159,7 @@ oldRev **String** - Entity old `_rev` property (before delete). |
 
 Events based access to saved request datastore.
 
-*All events must be cancelable.** When the event is cancelled by an instance
+Note: **All events must be cancelable.** When the event is cancelled by an instance
 of the element it won't be handled again by other instance that possibly exists
 in the DOM.
 
@@ -198,7 +198,7 @@ Reads a request object from the datastore.
 
 ##### Properties
 -   `id` (String, required) ID of the datastore entry
--   `rev` (String, optional) Specific revision to retreive from the datastore. Latest by default.
+-   `rev` (String, optional) Specific revision to retrieve from the datastore. Latest by default.
 -   `type` {String, required} Request object type. Either `saved-requests` or `history-requests`
 
 ##### Example
@@ -225,7 +225,7 @@ that is used to build the datastore key.
 -   `id` (String, required if `project` is not set) ID of the datastore entry
 -   `request` (Object, required if `id` is not set) The database entity
 -   `name` (String, required) New name of the project. It doesn't matter if `project` property already has new name.
--   `type` {String, required} Request object type. Either `saved-requests` or `history-requests
+-   `type` {String, required} Request object type. Either `saved-requests` or `history-requests`
 
 ##### Example
 
@@ -248,7 +248,7 @@ Updates / saves new object in the datastore.
 ##### Properties
 
 -   `request` (Object, required) An object to store
--   `type` {String, required} Request object type. Either `saved-requests` or `history-requests
+-   `type` {String, required} Request object type. Either `saved-requests` or `history-requests`
 
 ##### Example
 
@@ -271,8 +271,8 @@ custom event. Promise returns object's new `_rev` value.
 
 ##### Properties
 -   `id` (String, required) ID of the datastore entry
--   `rev` (String, optional) The _rev property of the PouchDB datastore object. If not set it will use latest revision.
--   `type` {String, required} Request object type. Either `saved-requests` or `history-requests
+-   `rev` (String, optional) The `_rev` property of the PouchDB datastore object. If not set it will use latest revision.
+-   `type` {String, required} Request object type. Either `saved-requests` or `history-requests`
 
 ##### Example
 
@@ -296,7 +296,7 @@ are request ids and values are new revision hash.
 ##### Properties
 
 -   `items` (Array, required) List of IDs to delete
--   `type` {String, required} Request object type. Either `saved-requests` or `history-requests
+-   `type` {String, required} Request object type. Either `saved-requests` or `history-requests`
 
 ##### Example
 
@@ -326,3 +326,24 @@ oldId **String** - Entity old `_id` property. May be `undefined` when creating n
 | request-object-deleted |  | id **String** - Removed request ID |
 rev **String** - Updated `_rev` property of the object. |
 oldRev **String** - Entity old `_rev` property (before delete). |
+# websocket-url-history-model
+
+Events based access to websockets URL history datastore.
+
+Note: **All events must be cancelable.** When the event is cancelled by an instance
+of the element it won't be handled again by other instance that possibly exists
+in the DOM.
+
+Cancellable event is a request to models for change. Non-cancellable event
+is a notification for views to update their values.
+For example `request-object-changed` event notifies model to update object in
+the datastore if the event is cancelable and to update views if it's not
+cancellable.
+
+Each handled event contains the `result` property on the `detail` object. It
+contains a `Promise` object with a result of the operation. Also, for update / delete
+events the same non-cancelable event is fired.
+
+Events handled by this element are cancelled and propagation of the event is
+stopped.
+

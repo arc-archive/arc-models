@@ -11,3 +11,6 @@ DatabaseHelper.clearProjects = function() {
 DatabaseHelper.clearRequests = function() {
   return DatabaseHelper.clearDatabases('saved-requests'); //, 'history-requests'
 };
+DatabaseHelper.clearWebsocketUrlHostory = function() {
+  return DatabaseHelper.clearDatabases('websocket-url-history');
+};

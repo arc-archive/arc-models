@@ -1,6 +1,6 @@
 {
   "name": "arc-models",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "license": "Apache-2.0 OR CC-BY-4.0",
   "description": "Event based access to ARC datastores",
   "devDependencies": {
@@ -14,7 +14,7 @@
   "author": "The Advanced REST client authors <arc@mulesoft.com>",
   "scripts": {
     "serve": "node_modules/.bin/polymer serve",
-    "lint": "node_modules/.bin/polymer lint arc-models.html project-model.html request-model.html --rules polymer-1",
+    "lint": "node_modules/.bin/polymer lint arc-models.html project-model.html request-model.html websocket-url-history-model.html --rules polymer-1",
     "test-sauce": "node_modules/.bin/polymer test --plugin sauce --job-name \"arc-models:local-test\"",
     "test": "node_modules/.bin/polymer test --plugin local",
     "deps": "npm install --quiet && bower install --quiet",
