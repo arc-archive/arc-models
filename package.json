@@ -14,7 +14,7 @@
   "author": "The Advanced REST client authors <arc@mulesoft.com>",
   "scripts": {
     "serve": "node_modules/.bin/polymer serve",
-    "lint": "node_modules/.bin/polymer lint arc-models.html project-model.html request-model.html --rules polymer-1",
+    "lint": "node_modules/.bin/polymer lint arc-models.html project-model.html request-model.html websocket-url-history-model.html --rules polymer-1",
     "test-sauce": "node_modules/.bin/polymer test --plugin sauce --job-name \"arc-models:local-test\"",
     "test": "node_modules/.bin/polymer test --plugin local",
     "deps": "npm install --quiet && bower install --quiet",
