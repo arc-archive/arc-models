@@ -1,3 +1,13 @@
+<a name="0.1.6"></a>
+## [0.1.6](https://github.com/advanced-rest-client/arc-models/compare/0.1.5...0.1.6) (2017-09-10)
+
+
+### New
+
+* Added request object restoration after the delete ([1312c9c435de04345a8cd6d13a6fc2d437d1276c](https://github.com/advanced-rest-client/arc-models/commit/1312c9c435de04345a8cd6d13a6fc2d437d1276c))
+
+
+
 <a name="0.1.5"></a>
 ## [0.1.5](https://github.com/advanced-rest-client/arc-models/compare/0.1.4...0.1.5) (2017-09-07)
 

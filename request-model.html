@@ -173,6 +173,37 @@ if (event.defaultPrevented) {
 }
 ```
 
+#### `request-objects-undeleted` event
+
+Restores previously deleted requests from the history.
+It searches in the revision history of each object to find a revision before
+passed `_rev` and restores this object as a new one in the revision tree.
+
+This operation fires `request-object-deleted` custom event. Promise returns
+request objects with updated `_rev` value.
+
+##### Properties
+
+-   `items` (Array, required) List of requests to restore. It required `_id` and `_rev` properties to be set on each object. The `_rev` property must be a revision updated after the deletion of the object.
+-   `type` {String, required} Request object type. Either `saved-requests` or `history-requests`
+
+##### Example
+
+```javascript
+var event = new CustomEvent('request-objects-deleted', {
+  detail: {
+    items: [{_id: 'some-id', '_rev': '2-xyz'}],
+    type: 'saved-requests'
+  },
+  bubbles: true,
+  composed: true,
+  cancelable: true
+});
+if (event.defaultPrevented) {
+  event.detail.result.then(restored => console.log(restored));
+}
+```
+
 @group Logic Elements
 @element request-model
 -->
@@ -206,6 +237,7 @@ Polymer({
     this.listen(node, 'request-object-changed', '_handleObjectSave');
     this.listen(node, 'request-object-deleted', '_handleObjectDelete');
     this.listen(node, 'request-objects-deleted', '_handleObjectsDelete');
+    this.listen(node, 'request-objects-undeleted', '_handleObjectsUndelete');
   },
 
   _detachListeners: function(node) {
@@ -214,6 +246,7 @@ Polymer({
     this.unlisten(node, 'request-object-changed', '_handleObjectSave');
     this.unlisten(node, 'request-object-deleted', '_handleObjectDelete');
     this.unlisten(node, 'request-objects-deleted', '_handleObjectsDelete');
+    this.unlisten(node, 'request-objects-undeleted', '_handleObjectsUndelete');
   },
 
   get savedDb() {
@@ -357,6 +390,101 @@ Polymer({
       this._fireUpdated('request-object-deleted', detail);
       return response.rev;
     });
+  },
+  /**
+   * Reverts deleted items.
+   * This function fires `request-object-changed` event for each restored
+   * request.
+   *
+   * @param {String} type Request type: `saved-requests` or `history-requests`
+   * @param {Array} items List of request objects. Required properties are
+   * `_id` and `_rev`.
+   * @return {Promise} Resolved promise with restored objects. Objects have
+   * updated `_rev` property.
+   */
+  revertRemove: function(type, items) {
+    var db = this.getDatabase(type);
+    // first get information about previous revision (before delete)
+
+    return this._findNotDeleted(db, items)
+    .then(restored => {
+      restored = restored.map((doc, i) => {
+        doc._rev = items[i]._rev;
+        return doc;
+      });
+      return db.bulkDocs(restored);
+    })
+    .then(result => {
+      return db.allDocs({
+        keys: result.map(item => item.id),
+        // jscs:disable
+        include_docs: true
+        // jscs:enable
+      });
+    })
+    .then(result => {
+      result.rows.forEach((request, i) => {
+        let detail = {
+          request: request.doc,
+          oldRev: items[i]._rev,
+          oldId: request.id
+        };
+        this._fireUpdated('request-object-changed', detail);
+      });
+      return result.rows;
+    });
+  },
+
+  _findNotDeleted: function(db, items) {
+    var list = items.map(item => {
+      return {
+        id: item._id,
+        rev: item._rev
+      };
+    });
+    var options = {
+      docs: list,
+      revs: true
+    };
+    return db.bulkGet(options)
+    .then(result => {
+      return result.results.map((item, i) => {
+        let doc = item.docs[0].ok;
+        let revs = doc._revisions;
+        let undeletedRevision = this._findUndeletedRevision(revs, items[i]._rev);
+        if (!undeletedRevision) {
+          throw new Error('Previous version of the object not found');
+        }
+        return db.get(doc._id, {rev: undeletedRevision});
+      });
+    })
+    .then(promises => Promise.all(promises));
+  },
+  /**
+   * Finds a next revision after the `deletedRevision` in the revisions history
+   * which is the one that reverts any changes made after it.
+   *
+   * @param {Object} revs PouchDB revision history object
+   * @param {Object} deletedRevision Revision of deleted object (after delete).
+   * @return {String} Revision ID of the object before a change registered in
+   * `deletedRevision`
+   */
+  _findUndeletedRevision: function(revs, deletedRevision) {
+    // find a revision matching deleted item's updated rev
+    let index = revs.start;
+    let ids = revs.ids;
+    let found = false;
+    for (let i = 0, len = ids.length; i < len; i++) {
+      let revision = index + '-' + ids[i];
+      if (found) {
+        return revision;
+      }
+      if (revision === deletedRevision) {
+        // next revision is the one we are looking for.
+        found = true;
+      }
+      index--;
+    }
   },
 
   _generateId: function(request) {
@@ -533,6 +661,26 @@ Polymer({
       return data;
     });
   },
+  // handlers `request-objects-undeleted` event to restore deleted items
+  _handleObjectsUndelete: function(e, detail) {
+    if (!e.cancelable || e.target === this) {
+      return;
+    }
+    e.preventDefault();
+    e.stopPropagation();
+
+    if (!detail.type) {
+      e.detail.result = Promise.reject(new Error('Request "type" property is missing.'));
+      return;
+    }
+
+    if (!detail.items) {
+      e.detail.result = Promise.reject(new Error('The "items" property is missing.'));
+      return;
+    }
+    e.detail.result = this.revertRemove(detail.type, detail.items)
+    .catch((e) => this._handleException(e));
+  },
   /**
    * Filters query results to return only successfuly read data.
    * @param {Object} result PouchDB query result
@@ -559,7 +707,6 @@ Polymer({
       'message': ['Project model', e],
       'level': 'error'
     });
-    console.error('Project model', e);
     var message;
     if (e instanceof Error) {
       message = e.message;
@@ -571,6 +718,7 @@ Polymer({
       description: message,
       fatal: true
     });
+    console.error('Project model', e);
     throw e;
   }
 });

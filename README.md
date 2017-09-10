@@ -315,6 +315,37 @@ if (event.defaultPrevented) {
 }
 ```
 
+#### `request-objects-undeleted` event
+
+Restores previously deleted requests from the history.
+It searches in the revision history of each object to find a revision before
+passed `_rev` and restores this object as a new one in the revision tree.
+
+This operation fires `request-object-deleted` custom event. Promise returns
+request objects with updated `_rev` value.
+
+##### Properties
+
+-   `items` (Array, required) List of requests to restore. It required `_id` and `_rev` properties to be set on each object. The `_rev` property must be a revision updated after the deletion of the object.
+-   `type` {String, required} Request object type. Either `saved-requests` or `history-requests`
+
+##### Example
+
+```javascript
+var event = new CustomEvent('request-objects-deleted', {
+  detail: {
+    items: [{_id: 'some-id', '_rev': '2-xyz'}],
+    type: 'saved-requests'
+  },
+  bubbles: true,
+  composed: true,
+  cancelable: true
+});
+if (event.defaultPrevented) {
+  event.detail.result.then(restored => console.log(restored));
+}
+```
+
 
 
 ### Events
