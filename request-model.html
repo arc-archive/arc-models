@@ -222,6 +222,8 @@ Polymer({
    * creating new entity.
    * @param {String} oldId Entity old `_id` property. May be `undefined` when
    * creating new entity.
+   * @param {String} type Request object type. Can be either `saved-requests` or
+   * `history-requests`
    */
 
   /**
@@ -229,6 +231,8 @@ Polymer({
    * @param {String} id Removed request ID
    * @param {String} rev Updated `_rev` property of the object.
    * @param {String} oldRev Entity old `_rev` property (before delete).
+   * @param {String} type Request object type. Can be either `saved-requests` or
+   * `history-requests`
    */
 
   _attachListeners: function(node) {
@@ -354,7 +358,8 @@ Polymer({
       let detail = {
         request: request,
         oldRev: oldRev,
-        oldId: oldId
+        oldId: oldId,
+        type: type
       };
       this._fireUpdated('request-object-changed', detail);
       return request;
@@ -385,7 +390,8 @@ Polymer({
       let detail = {
         id: id,
         rev: response.rev,
-        oldRev: rev
+        oldRev: rev,
+        type: type
       };
       this._fireUpdated('request-object-deleted', detail);
       return response.rev;

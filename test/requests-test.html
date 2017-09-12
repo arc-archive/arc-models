@@ -131,6 +131,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
             assert.equal(eventData.oldRev, originalRev);
             assert.typeOf(eventData.request, 'object');
             assert.notEqual(eventData.request._rev, originalRev);
+            assert.equal(eventData.type, databaseType);
           });
         });
       });
@@ -231,6 +232,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
             assert.equal(eventData.oldRev, dataObj._rev);
             assert.typeOf(eventData.rev, 'string');
             assert.notEqual(eventData.rev, dataObj._rev);
+            assert.equal(eventData.type, databaseType);
           });
         });
       });
