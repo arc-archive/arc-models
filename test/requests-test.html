@@ -31,6 +31,48 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
     /* global DatabaseHelper, fixture, assert, sinon */
     suite('Static methods', function() {
       const databaseType = 'saved-requests';
+
+      suite('_generateId()', function() {
+        var element;
+        var dataObj;
+        setup(function() {
+          element = fixture('basic');
+          dataObj = {
+            url: 'http://domain.com',
+            method: 'GET'
+          };
+        });
+
+        test('Generates ID for saved-requests object', function() {
+          dataObj.name = 'test-name';
+          dataObj.legacyProject = 'test-project';
+          var result = element._generateId(dataObj);
+          var parts = result.split('/');
+          assert.equal(parts[0], 'test-name');
+          assert.equal(parts[1], 'http%3A%2F%2Fdomain.com');
+          assert.equal(parts[2], 'GET');
+          assert.equal(parts[3], 'test-project');
+        });
+
+        test('Generated ID encodes values', function() {
+          dataObj.name = 'test name';
+          dataObj.legacyProject = 'test project';
+          var result = element._generateId(dataObj);
+          var parts = result.split('/');
+          assert.equal(parts[0], 'test%20name');
+        });
+
+        test('Generates ID for history object object', function() {
+          dataObj.created = 1505258202427;
+          var result = element._generateId(dataObj, true);
+          var parts = result.split('/');
+          assert.equal(parts[0], '1505199600000');
+          assert.equal(parts[1], 'http%3A%2F%2Fdomain.com');
+          assert.equal(parts[2], 'GET');
+          assert.isUndefined(parts[3]);
+        });
+      });
+
       suite('update()', function() {
         teardown(function() {
           return DatabaseHelper.clearRequests();
