@@ -354,9 +354,11 @@ if (event.defaultPrevented) {
 | request-object-changed | Fired when the project entity has been saved / updated in the datastore. | request **Object** - Request object with new `_rev`. |
 oldRev **String** - Entity old `_rev` property. May be `undefined` when creating new entity. |
 oldId **String** - Entity old `_id` property. May be `undefined` when creating new entity. |
+type **String** - Request object type. Can be either `saved-requests` or `history-requests` |
 | request-object-deleted |  | id **String** - Removed request ID |
 rev **String** - Updated `_rev` property of the object. |
 oldRev **String** - Entity old `_rev` property (before delete). |
+type **String** - Request object type. Can be either `saved-requests` or `history-requests` |
 # websocket-url-history-model
 
 Events based access to websockets URL history datastore.
