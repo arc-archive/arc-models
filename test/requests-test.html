@@ -66,7 +66,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
           dataObj.created = 1505258202427;
           var result = element._generateId(dataObj, true);
           var parts = result.split('/');
-          assert.equal(parts[0], '1505199600000');
+          assert.isNotNaN(parts[0]);
           assert.equal(parts[1], 'http%3A%2F%2Fdomain.com');
           assert.equal(parts[2], 'GET');
           assert.isUndefined(parts[3]);
