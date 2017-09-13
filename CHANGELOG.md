@@ -1,3 +1,18 @@
+<a name="0.1.8"></a>
+## [0.1.8](https://github.com/advanced-rest-client/arc-models/compare/0.1.7...0.1.8) (2017-09-13)
+
+
+### Fix
+
+* Fixed test. ([062692fc95d2e64dc25b7c17915095cef4d44422](https://github.com/advanced-rest-client/arc-models/commit/062692fc95d2e64dc25b7c17915095cef4d44422))
+
+### New
+
+* Added `type` property to delete/update event for request model ([850e0cd49585fe70c7ffc5f2b52e3bbe555b706b](https://github.com/advanced-rest-client/arc-models/commit/850e0cd49585fe70c7ffc5f2b52e3bbe555b706b))
+* Added support for updating history objects ([35b83ab797d5b83ba2b912cc450f0c7a7d465cda](https://github.com/advanced-rest-client/arc-models/commit/35b83ab797d5b83ba2b912cc450f0c7a7d465cda))
+
+
+
 <a name="0.1.7"></a>
 ## [0.1.7](https://github.com/advanced-rest-client/arc-models/compare/0.1.6...0.1.7) (2017-09-10)
 
