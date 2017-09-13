@@ -222,6 +222,8 @@ Polymer({
    * creating new entity.
    * @param {String} oldId Entity old `_id` property. May be `undefined` when
    * creating new entity.
+   * @param {String} type Request object type. Can be either `saved-requests` or
+   * `history-requests`
    */
 
   /**
@@ -229,6 +231,8 @@ Polymer({
    * @param {String} id Removed request ID
    * @param {String} rev Updated `_rev` property of the object.
    * @param {String} oldRev Entity old `_rev` property (before delete).
+   * @param {String} type Request object type. Can be either `saved-requests` or
+   * `history-requests`
    */
 
   _attachListeners: function(node) {
@@ -310,16 +314,17 @@ Polymer({
     var oldRev = request._rev;
     var oldId = request._id;
     var regenerateId = false;
+    var isHistory = type === 'history-requests';
     if (request._id) {
       // Checks if the ID has to be regenerated if parts of the ID changes.
       promise = this.read(type, request._id, request._rev)
       .then(req => {
         oldId = req._id;
         oldRev = request._rev = req._rev;
-        if (request.name !== req.name) {
+        if (!isHistory && request.name !== req.name) {
           regenerateId = true;
         }
-        if (request.legacyProject !== req.legacyProject) {
+        if (!isHistory && request.legacyProject !== req.legacyProject) {
           regenerateId = true;
         }
         if (request.url !== req.url) {
@@ -338,11 +343,11 @@ Polymer({
       if (regenerateId) {
         let removeId = request._id;
         let removeRev = request._rev;
-        request._id = this._generateId(request);
+        request._id = this._generateId(request, isHistory);
         delete request._rev;
         return db.remove(removeId, removeRev);
       } else if (!request._id) {
-        request._id = this._generateId(request);
+        request._id = this._generateId(request, isHistory);
       }
     })
     .then(() => {
@@ -354,7 +359,8 @@ Polymer({
       let detail = {
         request: request,
         oldRev: oldRev,
-        oldId: oldId
+        oldId: oldId,
+        type: type
       };
       this._fireUpdated('request-object-changed', detail);
       return request;
@@ -385,7 +391,8 @@ Polymer({
       let detail = {
         id: id,
         rev: response.rev,
-        oldRev: rev
+        oldRev: rev,
+        type: type
       };
       this._fireUpdated('request-object-deleted', detail);
       return response.rev;
@@ -427,7 +434,8 @@ Polymer({
         let detail = {
           request: request.doc,
           oldRev: items[i]._rev,
-          oldId: request.id
+          oldId: request.id,
+          type: type
         };
         this._fireUpdated('request-object-changed', detail);
       });
@@ -486,15 +494,50 @@ Polymer({
       index--;
     }
   },
-
-  _generateId: function(request) {
-    var id = encodeURIComponent(request.name) + '/';
+  /**
+   * Generates the IS for the request depending on it's type and properties.
+   *
+   * @param {Object} request The request object to store.
+   * @param {Boolean} isHistory Is true then it generates an ID for a history
+   * item
+   * @return {String} A database ID
+   */
+  _generateId: function(request, isHistory) {
+    var id;
+    if (isHistory) {
+      let time = request.updated || request.created;
+      time = Number(time);
+      if (time !== time) {
+        time = request.updated = request.created = Date.now();
+      }
+      id = this._getDayToday(time);
+    } else {
+      id = encodeURIComponent(request.name);
+    }
+    id += '/';
     id += encodeURIComponent(request.url) + '/';
     id += request.method;
-    if (request.legacyProject) {
+    if (!isHistory && request.legacyProject) {
       id += '/' + request.legacyProject;
     }
     return id;
+  },
+  /**
+   * Setss hours, minutes, seconds and ms to 0 and returns timestamp.
+   *
+   * @return {Number} Timestamp to the day.
+   */
+  _getDayToday: function(timestamp) {
+    var d = new Date(timestamp);
+    var tCheck = d.getTime();
+    if (tCheck !== tCheck) {
+      throw new Error('Invalid timestamp: ' + timestamp);
+    }
+    d.setMilliseconds(0);
+    d.setSeconds(0);
+    d.setMinutes(0);
+    d.setHours(0);
+    return d.getTime();
   },
   /**
    * Handler for request read event request.
