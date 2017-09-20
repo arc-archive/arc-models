@@ -512,11 +512,15 @@ Polymer({
       }
       id = this._getDayToday(time);
     } else {
-      id = encodeURIComponent(request.name);
+      request.name = request.name || '';
+      let name = request.name.toLowerCase();
+      id = encodeURIComponent(name);
     }
     id += '/';
-    id += encodeURIComponent(request.url) + '/';
-    id += request.method;
+    var url = request.url || '';
+    url = url.toLowerCase();
+    id += encodeURIComponent(url) + '/';
+    id += (request.method || '').toLowerCase();
     if (!isHistory && request.legacyProject) {
       id += '/' + request.legacyProject;
     }

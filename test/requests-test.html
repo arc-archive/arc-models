@@ -50,7 +50,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
           var parts = result.split('/');
           assert.equal(parts[0], 'test-name');
           assert.equal(parts[1], 'http%3A%2F%2Fdomain.com');
-          assert.equal(parts[2], 'GET');
+          assert.equal(parts[2], 'get');
           assert.equal(parts[3], 'test-project');
         });
 
@@ -68,8 +68,21 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
           var parts = result.split('/');
           assert.isNotNaN(parts[0]);
           assert.equal(parts[1], 'http%3A%2F%2Fdomain.com');
-          assert.equal(parts[2], 'GET');
+          assert.equal(parts[2], 'get');
           assert.isUndefined(parts[3]);
+        });
+
+        test('Generated ID is lowercase', function() {
+          dataObj.name = 'TEST-NAME';
+          dataObj.legacyProject = 'TEST-project';
+          dataObj.url = 'HTTP://domain.com';
+
+          var result = element._generateId(dataObj);
+          var parts = result.split('/');
+          assert.equal(parts[0], 'test-name', 'Name is lowercase');
+          assert.equal(parts[1], 'http%3A%2F%2Fdomain.com', 'URL is lowercase');
+          assert.equal(parts[2], 'get', 'Method is lowercase');
+          assert.equal(parts[3], 'TEST-project', 'Project ID is not lowercased');
         });
       });
 
