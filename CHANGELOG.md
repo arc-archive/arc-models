@@ -1,3 +1,13 @@
+<a name="0.1.11"></a>
+## [0.1.11](https://github.com/advanced-rest-client/arc-models/compare/0.1.10...0.1.11) (2017-11-04)
+
+
+### New
+
+* Added bulk edit method ([dba4d46a14b899b236254559456395a3bd1f3e42](https://github.com/advanced-rest-client/arc-models/commit/dba4d46a14b899b236254559456395a3bd1f3e42))
+
+
+
 <a name="0.1.10"></a>
 ## [0.1.10](https://github.com/advanced-rest-client/arc-models/compare/0.1.8...0.1.10) (2017-09-20)
 

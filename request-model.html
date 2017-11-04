@@ -367,6 +367,98 @@ Polymer({
     });
   },
   /**
+   * Updates more than one request in a bulk.
+   * @param {String} type Request type: `saved-requests` or `history-requests`
+   * @param {Array} request List of requests to update.
+   * @return {Array} List of PouchDB responses to each insert
+   */
+  updateBulk: function(type, requests) {
+    var promises = requests.map(item => {
+      let options = {
+        oldRev: item._rev,
+        oldId: item._id,
+        regenerateId: false,
+        isHistory: type === 'history-requests',
+        request: item
+      };
+      if (item._id) {
+        return this.read(type, item._id, item._rev)
+        .then(req => {
+          options.oldId = req._id;
+          options.oldRev = options.request._rev = req._rev;
+          if (!options.isHistory && item.name !== req.name) {
+            options.regenerateId = true;
+          } else if (!options.isHistory && item.legacyProject !== req.legacyProject) {
+            options.regenerateId = true;
+          } else if (item.url !== req.url) {
+            options.regenerateId = true;
+          } else if (item.method !== req.method) {
+            options.regenerateId = true;
+          }
+          return options;
+        });
+      } else {
+        return Promise.resolve(options);
+      }
+    });
+    var db = this.getDatabase(type);
+    var toInsert = [];
+    return Promise.all(promises)
+    .then(list => {
+      let toRemove = [];
+      list.forEach(item => {
+        if (item.regenerateId) {
+          let clone = Object.assign({}, item.request);
+          clone._deleted = true;
+          toRemove.push(clone);
+          item.request._id = this._generateId(item.request, item.isHistory);
+          delete item.request._rev;
+        } else if (!item.request._id) {
+          item.request._id = this._generateId(item.request, item.isHistory);
+        }
+        item.request.updated = Date.now();
+        toInsert.push(item);
+      });
+      if (toRemove.length) {
+        return db.bulkDocs(toRemove)
+        .then(response => {
+          response.forEach((item, index) => {
+            let detail = {
+              id: item.id,
+              rev: item.rev,
+              oldRev: toRemove[index]._rev,
+              type: type
+            };
+            this._fireUpdated('request-object-deleted', detail);
+          });
+        });
+      }
+    })
+    .then(() => {
+      return db.bulkDocs(toInsert.map(item => item.request));
+    })
+    .then(response => {
+      response.forEach((item, index) => {
+        if (!item.ok) {
+          console.warn('Update error', item);
+          return;
+        }
+        let options = toInsert[index];
+        let request = options.request;
+        request._rev = item.rev;
+        let detail = {
+          request: request,
+          oldRev: options.oldRev,
+          oldId: options.oldId,
+          type: type
+        };
+        this._fireUpdated('request-object-changed', detail);
+      });
+      return response;
+    });
+  },
+
+  /**
    * Removed an object from the datastore.
    * This function fires `request-object-deleted` event.
    *

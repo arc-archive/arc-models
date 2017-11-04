@@ -191,6 +191,102 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
         });
       });
 
+      suite('updateBulk()', function() {
+        teardown(function() {
+          return DatabaseHelper.clearRequests();
+        });
+
+        var element;
+        var dataObj;
+        setup(function() {
+          element = fixture('basic');
+          dataObj = [{
+            name: 'test-1',
+            url: 'http://domain.com',
+            method: 'GET',
+            legacyProject: undefined
+          }, {
+            name: 'test-2',
+            url: 'http://domain.com',
+            method: 'POST',
+            legacyProject: 'abc'
+          }];
+        });
+
+        test('Creates objects in bulk', function() {
+          return element.updateBulk(databaseType, dataObj)
+          .then(result => {
+            assert.typeOf(result, 'array', 'Response is an array');
+            assert.isTrue(result[0].ok, 'Item #1 is inserted');
+            assert.isTrue(result[1].ok, 'Item #2 is inserted');
+            assert.typeOf(result[0].rev, 'string', '_rev is set');
+            assert.typeOf(result[0].id, 'string', '_id is set');
+          });
+        });
+
+        test('Updates created object (without ID change)', function() {
+          var originalRevs = [];
+          var originalIds = [];
+          return element.updateBulk(databaseType, dataObj)
+          .then(result => {
+            result.forEach(item => {
+              originalRevs.push(item.rev);
+              originalIds.push(item.id);
+            });
+            dataObj[0].headers = 'x-test';
+            return element.updateBulk(databaseType, dataObj);
+          })
+          .then(result => {
+            assert.notEqual(result[0].rev, originalRevs[0], '_rev is regenerated');
+            assert.equal(result[0].id, originalIds[0], '_id is the same');
+          });
+        });
+
+        test('Fires request-object-changed custom event', function() {
+          var spy = sinon.spy();
+          element.addEventListener('request-object-changed', spy);
+          return element.updateBulk(databaseType, dataObj)
+          .then(() => {
+            assert.equal(spy.callCount, 2);
+          });
+        });
+
+        test('The request-object-changed event has properties of newly created object', function() {
+          var eventData;
+          element.addEventListener('request-object-changed', function clb(e) {
+            element.removeEventListener('request-object-changed', clb);
+            eventData = e.detail;
+          });
+          return element.updateBulk(databaseType, dataObj)
+          .then(result => {
+            assert.isUndefined(eventData.oldRev);
+            assert.isUndefined(result.oldRev);
+            assert.typeOf(eventData.request, 'object');
+          });
+        });
+
+        test('The request-object-changed event has properties of updated object', function() {
+          var eventData;
+          var originalRev;
+          return element.updateBulk(databaseType, dataObj)
+          .then(result => {
+            element.addEventListener('request-object-changed', function clb(e) {
+              element.removeEventListener('request-object-changed', clb);
+              eventData = e.detail;
+            });
+            originalRev = result[0].rev;
+            dataObj[0].name = 'test-2';
+            return element.updateBulk(databaseType, dataObj);
+          })
+          .then(() => {
+            assert.equal(eventData.oldRev, originalRev);
+            assert.typeOf(eventData.request, 'object');
+            assert.notEqual(eventData.request._rev, originalRev);
+            assert.equal(eventData.type, databaseType);
+          });
+        });
+      });
+
       suite('read()', function() {
         teardown(function() {
           return DatabaseHelper.clearRequests();
