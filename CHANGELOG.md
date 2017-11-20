@@ -1,3 +1,13 @@
+<a name="0.1.13"></a>
+## [0.1.13](https://github.com/advanced-rest-client/arc-models/compare/0.1.12...0.1.13) (2017-11-20)
+
+
+### New
+
+* Added rest API model. ([b58850133f64d6f6e8d2e02c2abd4bfe4ba61199](https://github.com/advanced-rest-client/arc-models/commit/b58850133f64d6f6e8d2e02c2abd4bfe4ba61199))
+
+
+
 <a name="0.1.12"></a>
 ## [0.1.12](https://github.com/advanced-rest-client/arc-models/compare/0.1.11...0.1.12) (2017-11-04)
 

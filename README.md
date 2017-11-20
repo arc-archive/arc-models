@@ -380,3 +380,222 @@ events the same non-cancelable event is fired.
 Events handled by this element are cancelled and propagation of the event is
 stopped.
 
+# rest-api-model
+
+Events based access to REST APIs datastore.
+
+Note: **All events must be cancelable.** When the event is cancelled by an instance
+of the element it won't be handled again by other instance that possibly exists
+in the DOM.
+
+`rest-api-index-updated`, `rest-api-data-updated` and `rest-api-deleted` events
+are cancelable if a view requested to alter the data in the datastore. Only
+models should handle cancelable events. This element fires an event with the same
+type but non-cancelable when the operation has been commited to the datastore
+and view shouls handle non-cancelable event to update their state.
+
+## Index and data object
+
+RAML can be a large object therefore iterating over each record when listing
+or searching for APIs would not be efficient. This model creates separate object in
+different data stores to keep listing (index) data separately from RAML data.
+In most cases application should operate on index data. API data should be
+read directly using record's data store ID which is the same as index id.
+
+Index object contains following properties:
+
+- `_id` `{String}` - The same ID as API data record ID
+- `title` `{String}` - API title
+- `version` `{String}` - API version number / string
+- `baseUri` `{String}` - API base URI
+- `order` `{Number}` - Order on the list. By default it's `0`
+- `description` `{?String}` - API description. Can be undefined.
+
+## Events API
+
+### Create
+
+Creates bothe api data and api index objects.
+
+To create data fire cancelable `rest-api-create` with the raml data in detail object
+
+```javascript
+let event = new CustomEvent('rest-api-create', {
+  detail: {
+    raml: {...}
+  },
+  bubbles: true,
+  cancelable: true
+});
+document.body.dispatchEvent(event);
+console.log(event.defaultPrevented);
+// prints "true"
+
+event.detail.result(indexDoc => {
+  console.log(indexDoc);
+  // prints content of the index object
+});
+```
+
+### Read
+
+Reads API data object form the datastore.
+
+To access data fire cancelable `rest-api-read` with the ID in detail object
+
+```javascript
+let event = new CustomEvent('rest-api-read', {
+  detail: {
+    id: "api-datastore-id"
+  },
+  bubbles: true,
+  cancelable: true
+});
+document.body.dispatchEvent(event);
+console.log(event.defaultPrevented);
+// prints "true"
+
+event.detail.result(dataDoc => {
+  console.log(dataDoc.raml);
+  // prints API data
+});
+```
+
+### Update index
+
+Updates API index object in the datastore.
+
+To update index data fire cancelable `rest-api-index-updated` with the PouchDB document in `detail` object
+
+```javascript
+let event = new CustomEvent('rest-api-index-updated', {
+  detail: {
+    doc: {_id: ...}
+  },
+  bubbles: true,
+  cancelable: true
+});
+document.body.dispatchEvent(event);
+console.log(event.defaultPrevented);
+// prints "true"
+
+event.detail.result(doc => {
+  console.log(doc);
+  // prints upadated document
+});
+```
+
+### Update API data
+
+Updates API data object in the datastore.
+
+To update API data fire cancelable `rest-api-data-updated` with the PouchDB document in `detail` object
+
+```javascript
+let event = new CustomEvent('rest-api-data-updated', {
+  detail: {
+    doc: {_id: ...}
+  },
+  bubbles: true,
+  cancelable: true
+});
+document.body.dispatchEvent(event);
+console.log(event.defaultPrevented);
+// prints "true"
+
+event.detail.result(doc => {
+  console.log(doc);
+  // prints upadated document
+});
+```
+
+### Delete
+
+Deletes API index and API data object from the datastore.
+
+To remove API data fire cancelable `rest-api-deleted` with the id of the document in `detail` object
+
+```javascript
+let event = new CustomEvent('rest-api-deleted', {
+  detail: {
+    id: "datastore-id"
+  },
+  bubbles: true,
+  cancelable: true
+});
+document.body.dispatchEvent(event);
+console.log(event.defaultPrevented);
+// prints "true"
+
+event.detail.result(() => {
+  // Documents has been deleted
+});
+```
+
+Note, delete operation marks object as deleted. It doesn't actually remove the data
+from the datastore. If needed data can be restored as described in PouchDB
+documentation.
+
+### Update index data in batch
+
+The same as create event but allows to update many index objects in one request.
+This is faster than making series of individual requests.
+
+```javascript
+let event = new CustomEvent('rest-api-index-updated-batch', {
+  detail: {
+    docs: [{_id: ...}]
+  },
+  bubbles: true,
+  cancelable: true
+});
+document.body.dispatchEvent(event);
+console.log(event.defaultPrevented);
+// prints "true"
+
+event.detail.result(updated => {
+  console.log(updated);
+  // Array of updated documents
+});
+```
+
+### List index data
+
+List a page of index object. Each page contains a 100 of results.
+It supports pagination using `nextPageToken` property returned with each call to this API.
+
+Result object contains `nextPageToken` that should be used to pass to next
+request to receive next page of results. Index listing data are in `items` property.
+
+```javascript
+
+var nextPageToken;
+function queryPage() {
+  var detail = {};
+  if (nextPageToken) {
+    detail.nextPageToken = nextPageToken;
+  }
+  let event = new CustomEvent('rest-api-index-list', {
+    detail: detail,
+    bubbles: true,
+    cancelable: true
+  });
+  document.body.dispatchEvent(event);
+
+  return event.detail.result
+  .then(result => {
+    nextPageToken = result.nextPageToken;
+    return result.items;
+  });
+}
+```
+
+
+
+
+### Events
+| Name | Description | Params |
+| --- | --- | --- |
+| rest-api-data-updated | Fired when RAML (API) data has been updated. The event is non cancelable which means that the change is commited to the datastore.  It sets a `result` property on event `detail` object which contains a return value from calling `updateData()` function. | doc **Object** - PouchDB document representing API data. |
+| rest-api-deleted | Fired when data has been deleted. The event is non cancelable which means that the change is commited to the datastore.  It sets a `result` property on event `detail` object which contains a return value from calling `remove()` function. | id **String** - Datastore ID of deleted item. |
+| rest-api-index-updated | Fired when index data has been updated. The event is non cancelable which means that the change is commited to the datastore.  It sets a `result` property on event `detail` object which contains a return value from calling `updateIndex()` function. | doc **Object** - PouchDB document representing index data. |
