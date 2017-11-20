@@ -1,0 +1,754 @@
+<!--
+@license
+Copyright 2016 The Advanced REST client authors <arc@mulesoft.com>
+Licensed under the Apache License, Version 2.0 (the "License"); you may not
+use this file except in compliance with the License. You may obtain a copy of
+the License at
+http://www.apache.org/licenses/LICENSE-2.0
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+License for the specific language governing permissions and limitations under
+the License.
+-->
+<link rel="import" href="../polymer/polymer.html">
+<link rel="import" href="../app-pouchdb/pouchdb.html">
+<link rel="import" href="../events-target-behavior/events-target-behavior.html">
+<!--
+Events based access to REST APIs datastore.
+
+Note: **All events must be cancelable.** When the event is cancelled by an instance
+of the element it won't be handled again by other instance that possibly exists
+in the DOM.
+
+`rest-api-index-updated`, `rest-api-data-updated` and `rest-api-deleted` events
+are cancelable if a view requested to alter the data in the datastore. Only
+models should handle cancelable events. This element fires an event with the same
+type but non-cancelable when the operation has been commited to the datastore
+and view shouls handle non-cancelable event to update their state.
+
+## Index and data object
+
+RAML can be a large object therefore iterating over each record when listing
+or searching for APIs would not be efficient. This model creates separate object in
+different data stores to keep listing (index) data separately from RAML data.
+In most cases application should operate on index data. API data should be
+read directly using record's data store ID which is the same as index id.
+
+Index object contains following properties:
+
+- `_id` `{String}` - The same ID as API data record ID
+- `title` `{String}` - API title
+- `version` `{String}` - API version number / string
+- `baseUri` `{String}` - API base URI
+- `order` `{Number}` - Order on the list. By default it's `0`
+- `description` `{?String}` - API description. Can be undefined.
+
+## Events API
+
+### Create
+
+Creates bothe api data and api index objects.
+
+To create data fire cancelable `rest-api-create` with the raml data in detail object
+
+```javascript
+let event = new CustomEvent('rest-api-create', {
+  detail: {
+    raml: {...}
+  },
+  bubbles: true,
+  cancelable: true
+});
+document.body.dispatchEvent(event);
+console.log(event.defaultPrevented);
+// prints "true"
+
+event.detail.result(indexDoc => {
+  console.log(indexDoc);
+  // prints content of the index object
+});
+```
+
+### Read
+
+Reads API data object form the datastore.
+
+To access data fire cancelable `rest-api-read` with the ID in detail object
+
+```javascript
+let event = new CustomEvent('rest-api-read', {
+  detail: {
+    id: "api-datastore-id"
+  },
+  bubbles: true,
+  cancelable: true
+});
+document.body.dispatchEvent(event);
+console.log(event.defaultPrevented);
+// prints "true"
+
+event.detail.result(dataDoc => {
+  console.log(dataDoc.raml);
+  // prints API data
+});
+```
+
+### Update index
+
+Updates API index object in the datastore.
+
+To update index data fire cancelable `rest-api-index-updated` with the PouchDB document in `detail` object
+
+```javascript
+let event = new CustomEvent('rest-api-index-updated', {
+  detail: {
+    doc: {_id: ...}
+  },
+  bubbles: true,
+  cancelable: true
+});
+document.body.dispatchEvent(event);
+console.log(event.defaultPrevented);
+// prints "true"
+
+event.detail.result(doc => {
+  console.log(doc);
+  // prints upadated document
+});
+```
+
+### Update API data
+
+Updates API data object in the datastore.
+
+To update API data fire cancelable `rest-api-data-updated` with the PouchDB document in `detail` object
+
+```javascript
+let event = new CustomEvent('rest-api-data-updated', {
+  detail: {
+    doc: {_id: ...}
+  },
+  bubbles: true,
+  cancelable: true
+});
+document.body.dispatchEvent(event);
+console.log(event.defaultPrevented);
+// prints "true"
+
+event.detail.result(doc => {
+  console.log(doc);
+  // prints upadated document
+});
+```
+
+### Delete
+
+Deletes API index and API data object from the datastore.
+
+To remove API data fire cancelable `rest-api-deleted` with the id of the document in `detail` object
+
+```javascript
+let event = new CustomEvent('rest-api-deleted', {
+  detail: {
+    id: "datastore-id"
+  },
+  bubbles: true,
+  cancelable: true
+});
+document.body.dispatchEvent(event);
+console.log(event.defaultPrevented);
+// prints "true"
+
+event.detail.result(() => {
+  // Documents has been deleted
+});
+```
+
+Note, delete operation marks object as deleted. It doesn't actually remove the data
+from the datastore. If needed data can be restored as described in PouchDB
+documentation.
+
+### Update index data in batch
+
+The same as create event but allows to update many index objects in one request.
+This is faster than making series of individual requests.
+
+```javascript
+let event = new CustomEvent('rest-api-index-updated-batch', {
+  detail: {
+    docs: [{_id: ...}]
+  },
+  bubbles: true,
+  cancelable: true
+});
+document.body.dispatchEvent(event);
+console.log(event.defaultPrevented);
+// prints "true"
+
+event.detail.result(updated => {
+  console.log(updated);
+  // Array of updated documents
+});
+```
+
+### List index data
+
+List a page of index object. Each page contains a 100 of results.
+It supports pagination using `nextPageToken` property returned with each call to this API.
+
+Result object contains `nextPageToken` that should be used to pass to next
+request to receive next page of results. Index listing data are in `items` property.
+
+```javascript
+
+var nextPageToken;
+function queryPage() {
+  var detail = {};
+  if (nextPageToken) {
+    detail.nextPageToken = nextPageToken;
+  }
+  let event = new CustomEvent('rest-api-index-list', {
+    detail: detail,
+    bubbles: true,
+    cancelable: true
+  });
+  document.body.dispatchEvent(event);
+
+  return event.detail.result
+  .then(result => {
+    nextPageToken = result.nextPageToken;
+    return result.items;
+  });
+}
+```
+
+
+@group Logic Elements
+@element rest-api-model
+-->
+<script>
+Polymer({
+  is: 'rest-api-model',
+
+  behaviors: [ArcBehaviors.EventsTargetBehavior],
+
+  properties: {
+    /**
+     * Cached query options for index data listing.
+     * Keys is the nextPageToken returned with listing response. If the
+     * page token has been used with the query it will takes this data
+     * to return next page results.
+     */
+    _cachedQueryOptions: {
+      type: Object,
+      value: function() {
+        return {};
+      }
+    },
+    /**
+     * Database query options for pagination.
+     * Override this value to change the query options like limit of the results in one call.
+     *
+     * This is query options passed to the PouchDB `allDocs` function. Note that it will not
+     * set `include_docs` option. A conviniet shortcut is to set the the `includeDocs` property
+     * and the directive will be added automatically.
+     */
+    defaultQueryOptions: {
+      type: Object,
+      readOnly: true,
+      value: function() {
+        return {
+          limit: 100,
+          descending: true,
+          // jscs:disable
+          include_docs: true
+          // jscs:enable
+        };
+      }
+    }
+  },
+
+  _attachListeners: function(node) {
+    this.listen(node, 'rest-api-create', '_createHandler');
+    this.listen(node, 'rest-api-read', '_readHandler');
+    this.listen(node, 'rest-api-index-updated', '_indexUpdatedHandler');
+    this.listen(node, 'rest-api-data-updated', '_dataUpdatedHandler');
+    this.listen(node, 'rest-api-deleted', '_deletedHandler');
+    this.listen(node, 'rest-api-index-updated-batch', '_indexesUpdatedHandler');
+    this.listen(node, 'rest-api-index-list', '_indexListHandler');
+  },
+
+  _detachListeners: function(node) {
+    this.unlisten(node, 'rest-api-create', '_createHandler');
+    this.unlisten(node, 'rest-api-read', '_readHandler');
+    this.unlisten(node, 'rest-api-index-updated', '_indexUpdatedHandler');
+    this.unlisten(node, 'rest-api-data-updated', '_dataUpdatedHandler');
+    this.unlisten(node, 'rest-api-deleted', '_deletedHandler');
+    this.unlisten(node, 'rest-api-index-updated-batch', '_indexesUpdatedHandler');
+    this.unlisten(node, 'rest-api-index-list', '_indexListHandler');
+  },
+  /**
+   * A handler to the datastroe contains listing data
+   */
+  get indexDb() {
+    return new PouchDB('rest-api-index');
+  },
+  /**
+   * A handler to the datastore containing REST API data
+   * (raml definition).
+   */
+  get dataDb() {
+    return new PouchDB('rest-api-data');
+  },
+
+  _fireUpdated: function(type, detail) {
+    return this.fire(type, detail, {
+      cancelable: false,
+      composed: true
+    });
+  },
+  /**
+   * Reads an entry from the index datastore.
+   *
+   * @param {String} id The ID of the datastore entry.
+   * @param {?String} rev Specific revision to read. Defaults to latest revision.
+   * @return {Promise} Promise resolved to a project object.
+   */
+  readIndex: function(id, rev) {
+    var opts = {};
+    if (rev) {
+      opts.rev = rev;
+    }
+    return this.indexDb.get(id, opts);
+  },
+  /**
+   * Reads an entry from the raml data datastore.
+   *
+   * @param {String} id The ID of the datastore entry.
+   * @param {?String} rev Specific revision to read. Defaults to latest revision.
+   * @return {Promise} Promise resolved to a project object.
+   */
+  readData: function(id, rev) {
+    var opts = {};
+    if (rev) {
+      opts.rev = rev;
+    }
+    return this.dataDb.get(id, opts);
+  },
+  /**
+   * Creates / updates API data object.
+   * The `_id` property must be already set on the object.
+   *
+   * This function fires `rest-api-data-updated` custom event on success.
+   *
+   * @param {Object} doc PouchDB document.
+   * @return {Promise} Resolved promise to a document with updated `_rev`
+   */
+  updateData: function(doc) {
+    return this.dataDb.put(doc)
+      .then(result => {
+        if (!result.ok) {
+          throw result;
+        }
+        let detail = {
+          oldRev: doc._rev,
+          doc: doc
+        };
+        detail.doc._rev = result.rev;
+        this._fireUpdated('rest-api-data-updated', detail);
+        return detail.doc;
+      });
+  },
+  /**
+   * Creates / updates API index object.
+   * The `_id` property must be already set on the object.
+   *
+   * This function fires `rest-api-index-updated` custom event on success.
+   *
+   * @param {Object} doc PouchDB document.
+   * @return {Promise} Resolved promise to a document with updated `_rev`
+   */
+  updateIndex: function(doc) {
+    return this.indexDb.put(doc)
+      .then(result => {
+        if (!result.ok) {
+          throw result;
+        }
+        let detail = {
+          oldRev: doc._rev,
+          doc: doc
+        };
+        detail.doc._rev = result.rev;
+        this._fireUpdated('rest-api-index-updated', detail);
+        return detail.doc;
+      });
+  },
+  /**
+   * Updates many index objects in one request.
+   *
+   * @param {Array<Object>} docs List of PouchDB documents to update.
+   * @return {Promise} Resolved promise to a list of document with updated `_rev`
+   */
+  updateIndexBatch: function(docs) {
+    var copy = [];
+    docs.forEach(item => {
+      copy.push(Object.assign({}, item));
+    });
+    return this.indexDb.bulkDocs(copy)
+      .then(result => {
+        let toReturn = [];
+        result.forEach((res, i) => {
+          if (res.ok) {
+            let detail = {
+              oldRev: docs[i]._rev,
+              doc: docs[i]
+            };
+            detail.doc._rev = result[i].rev;
+            this._fireUpdated('rest-api-index-updated', detail);
+            toReturn.push(detail.doc);
+          } else {
+            console.warn('Update error', result[i]);
+            toReturn.push(docs[i]);
+          }
+        });
+        return toReturn;
+      });
+  },
+  /**
+   * Removes data from index and raml data datastores.
+   *
+   * @param {String} id Datastore entry ID to delete. Both data and index objects
+   * shares the same ID.
+   * @return {Promise} Promise resolved to a new `_rev` property of deleted object.
+   */
+  remove: function(id) {
+    return this.readIndex(id)
+      .then(doc => {
+        doc._deleted = true;
+        return this.indexDb.put(doc);
+      })
+      .then(result => {
+        if (!result.ok) {
+          throw result;
+        }
+        return this.readData(id);
+      })
+      .then(doc => {
+        doc._deleted = true;
+        return this.dataDb.put(doc);
+      })
+      .then(() => {
+        let detail = {
+          id: id
+        };
+        this._fireUpdated('rest-api-deleted', detail);
+      });
+  },
+  /**
+   * Creates datastores entries for REST API.
+   * It creates data object and index object used for listings.
+   *
+   * @param {Object} raml A RAML data to insert
+   * @return {Promise} A promise resolved when the datastore objects are created.
+   * Resolved promise contains index object.
+   */
+  create: function(raml) {
+    var doc = this._prepareStoreObject(raml);
+    var indexObj;
+    return this.updateData(doc)
+      .then(doc => {
+        indexObj = this._prepareIndexObject(doc);
+        return this.updateIndex(indexObj);
+      });
+  },
+  /**
+   * Lists index data.
+   *
+   * ### QueryResultObject
+   * - `data` {Array<Object>} List of PouchDB documents read from the datastore
+   * - `nextPageToken` {String} Pagination string to be used with next call
+   * to get resutls for a next page. The nextPageToken don't change over
+   * subsequent requests.
+   *
+   * @param {Object} opts Query options:
+   * - nextPageToken {String} Received from previous query page token.
+   * @return {Promise} A promise resolved to a query result object on success.
+   */
+  listIndex: function(opts) {
+    opts = opts || {};
+    var queryOptions;
+    if (opts.nextPageToken) {
+      queryOptions = this._cachedQueryOptions[opts.nextPageToken];
+    }
+    if (!queryOptions) {
+      queryOptions = Object.assign({}, this.defaultQueryOptions);
+    }
+    return this.indexDb.allDocs(queryOptions)
+      .then(response => {
+        let data = [];
+        if (response && response.rows.length > 0) {
+          queryOptions.startkey = response.rows[response.rows.length - 1].key;
+          queryOptions.skip = 1;
+          data = response.rows.map(item => item.doc);
+        }
+        opts.nextPageToken = opts.nextPageToken || this._makeNextPageToken();
+        this._cachedQueryOptions[opts.nextPageToken] = queryOptions;
+
+        return {
+          nextPageToken: opts.nextPageToken,
+          items: data
+        };
+      });
+  },
+  /**
+   * Generates `nextPageToken` as a random string.
+   *
+   * @return {String} Random 32 characters long string.
+   */
+  _makeNextPageToken: function() {
+    var text = '';
+    var possible = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+    for (var i = 0; i < 32; i++) {
+      text += possible.charAt(Math.floor(Math.random() * possible.length));
+    }
+    return text;
+  },
+  /**
+   * A handler for `rest-api-create` custom event.
+   * It only handles event's that hasn't been cancelled.
+   *
+   * It sets a `result` property on the event `detail` object that is a
+   * promise returned by `create()` function.
+   */
+  _createHandler: function(e) {
+    if (e.defaultPrevented) {
+      return;
+    }
+    e.preventDefault();
+    e.stopPropagation();
+    if (!e.detail || !e.detail.raml) {
+      e.detail.result = Promise.reject(new Error('The "raml" property is missing.'));
+      return;
+    }
+    e.detail.result = this.create(e.detail.raml)
+      .catch((e) => this._handleException(e));
+  },
+
+  /**
+   * Handler for the `rest-api-read` custom event.
+   * It only handles event's that hasn't been cancelled.
+   *
+   * Event `detail` object must contain the `id` property with datastore entry
+   * id and may contain a `rev` property to read a specific revision.
+   *
+   * It sets a `result` property on the event `detail` object that is a
+   * promise returned by `readData()` function.
+   */
+  _readHandler: function(e) {
+    if (e.defaultPrevented) {
+      return;
+    }
+    e.preventDefault();
+    e.stopPropagation();
+
+    if (!e.detail.id) {
+      e.detail.result = Promise.reject(new Error('The "id" property is missing.'));
+      return;
+    }
+    e.detail.result = this.readData(e.detail.id, e.detail.rev)
+      .catch((e) => this._handleException(e));
+  },
+  /**
+   * A handler for the `rest-api-index-updated` custom event.
+   * It is only handled if the event in cancelable and not cancelled.
+   *
+   * Updates index object in the datastore and sets `result` property on the
+   * event detail object with a result of calling `updateIndex()` function.
+   */
+  _indexUpdatedHandler: function(e) {
+    if (!e.cancelable || e.target === this || e.defaultPrevented) {
+      return;
+    }
+    e.preventDefault();
+    e.stopPropagation();
+    if (!e.detail.doc) {
+      e.detail.result = Promise.reject(new Error('The "doc" property is missing.'));
+      return;
+    }
+    e.detail.result = this.updateIndex(e.detail.doc)
+      .catch((e) => this._handleException(e));
+  },
+  /**
+   * A handler for the `rest-api-data-updated` custom event.
+   * It is only handled if the event in cancelable and not cancelled.
+   *
+   * Updates RAML data object in the datastore and sets `result` property on the
+   * event detail object with a result of calling `updateData()` function.
+   */
+  _dataUpdatedHandler: function(e) {
+    if (!e.cancelable || e.target === this || e.defaultPrevented) {
+      return;
+    }
+    e.preventDefault();
+    e.stopPropagation();
+    if (!e.detail.doc) {
+      e.detail.result = Promise.reject(new Error('The "doc" property is missing.'));
+      return;
+    }
+    e.detail.result = this.updateData(e.detail.doc)
+      .catch((e) => this._handleException(e));
+  },
+  /**
+   * Deletes the object from the datastores.
+   * It is only handled if the event in cancelable and not cancelled.
+   *
+   * Event has to have `id` property set on the detail object.
+   *
+   * It sets `result` property on the event detail object with a result of
+   * calling `remove()` function.
+   */
+  _deletedHandler: function(e) {
+    if (!e.cancelable || e.target === this || e.defaultPrevented) {
+      return;
+    }
+    e.preventDefault();
+    e.stopPropagation();
+    if (!e.detail.id) {
+      e.detail.result = Promise.reject(new Error('The "id" property is missing.'));
+      return;
+    }
+    e.detail.result = this.remove(e.detail.id)
+      .catch((e) => this._handleException(e));
+  },
+  /**
+   * Handler for the `rest-api-index-updated-batch` custom event.
+   * It requires to have `docs` property set to event detail as an array of
+   * PouchDB documents to update.
+   *
+   * It sets `result` property on the event detail object with a result of
+   * calling `updateIndexBatch()` function.
+   */
+  _indexesUpdatedHandler: function(e) {
+    if (!e.cancelable || e.target === this || e.defaultPrevented) {
+      return;
+    }
+    e.preventDefault();
+    e.stopPropagation();
+    if (!e.detail.docs) {
+      e.detail.result = Promise.reject(new Error('The "docs" property is missing.'));
+      return;
+    }
+    e.detail.result = this.updateIndexBatch(e.detail.docs)
+      .catch((e) => this._handleException(e));
+  },
+  /**
+   * Handler for the `rest-api-index-list` custom event.
+   *
+   * The `detail` object can contain `nextPageToken` property used for pagination.
+   *
+   * It sets `result` property on the event detail object with a result of
+   * calling `listIndex()` function.
+   */
+  _indexListHandler: function(e) {
+    if (!e.cancelable || e.target === this || e.defaultPrevented) {
+      return;
+    }
+    e.preventDefault();
+    e.stopPropagation();
+    e.detail.result = this.listIndex(e.detail)
+      .catch((e) => this._handleException(e));
+  },
+  /**
+   * Prepares PouchDB data object to store in the datastore.
+   *
+   * @return {Object} Datastore object
+   */
+  _prepareStoreObject: function(raml) {
+    var result = {
+      raml: raml,
+      created: Date.now()
+    };
+    var title = raml.title || 'Untitled';
+    var version = raml.version || '0';
+    var baseUri = raml.baseUri || '/';
+    var id = encodeURIComponent(title.toLowerCase());
+    id += '/' + encodeURIComponent(String(version).toLowerCase());
+    id += '/' + encodeURIComponent(baseUri.toLowerCase());
+    result._id = id;
+    return result;
+  },
+  /**
+   * Prepares index data store object for the REST API.
+   *
+   * @param {Object} storeObject A store object with RAML data
+   * @return {Object} Index store object.
+   */
+  _prepareIndexObject: function(storeObject) {
+    return {
+      _id: storeObject._id,
+      title: storeObject.raml.title || 'Untitled',
+      version: storeObject.raml.version || 'Unknown version',
+      baseUri: storeObject.raml.baseUri || '/',
+      order: 0,
+      description: storeObject.raml.description
+    };
+  },
+  // Handles any exception in the model.
+  _handleException: function(e) {
+    this.fire('app-log', {
+      'message': ['Project model', e],
+      'level': 'error'
+    });
+    var message;
+    if (e instanceof Error) {
+      message = e.message;
+    } else {
+      message = JSON.stringify(e);
+    }
+    this.fire('send-analytics', {
+      type: 'exception',
+      description: message,
+      fatal: true
+    });
+    console.error('REST API model', e);
+    throw e;
+  }
+
+  /**
+   * Fired when index data has been updated.
+   * The event is non cancelable which means that the change is commited to the
+   * datastore.
+   *
+   * It sets a `result` property on event `detail` object which contains a return
+   * value from calling `updateIndex()` function.
+   *
+   * @event rest-api-index-updated
+   * @param {Object} doc PouchDB document representing index data.
+   */
+
+  /**
+   * Fired when RAML (API) data has been updated.
+   * The event is non cancelable which means that the change is commited to the
+   * datastore.
+   *
+   * It sets a `result` property on event `detail` object which contains a return
+   * value from calling `updateData()` function.
+   *
+   * @event rest-api-data-updated
+   * @param {Object} doc PouchDB document representing API data.
+   */
+
+  /**
+   * Fired when data has been deleted.
+   * The event is non cancelable which means that the change is commited to the
+   * datastore.
+   *
+   * It sets a `result` property on event `detail` object which contains a return
+   * value from calling `remove()` function.
+   *
+   * @event rest-api-deleted
+   * @param {String} id Datastore ID of deleted item.
+   */
+});
+</script>

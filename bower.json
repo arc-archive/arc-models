@@ -16,7 +16,8 @@
   "main": [
     "project-model.html",
     "request-model.html",
-    "websocket-url-history-model.html"
+    "websocket-url-history-model.html",
+    "rest-api-model.html"
   ],
   "repository": {
     "type": "git",
