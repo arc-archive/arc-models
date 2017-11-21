@@ -437,6 +437,8 @@ event.detail.result(indexDoc => {
 });
 ```
 
+Optional property for create event is `order` which is used to order elements on the list.
+
 ### Read
 
 Reads API data object form the datastore.

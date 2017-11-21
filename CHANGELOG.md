@@ -1,3 +1,13 @@
+<a name="0.1.15"></a>
+## [0.1.15](https://github.com/advanced-rest-client/arc-models/compare/0.1.14...0.1.15) (2017-11-21)
+
+
+### Update
+
+* Added support for `order` when creating an object. ([5e385c17615bee0ed6841212a508c48a4d33c8eb](https://github.com/advanced-rest-client/arc-models/commit/5e385c17615bee0ed6841212a508c48a4d33c8eb))
+
+
+
 <a name="0.1.14"></a>
 ## [0.1.14](https://github.com/advanced-rest-client/arc-models/compare/0.1.13...0.1.14) (2017-11-20)
 
