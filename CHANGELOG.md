@@ -1,3 +1,9 @@
+<a name="0.1.16"></a>
+## [0.1.16](https://github.com/advanced-rest-client/arc-models/compare/0.1.15...0.1.16) (2017-11-21)
+
+
+
+
 <a name="0.1.15"></a>
 ## [0.1.15](https://github.com/advanced-rest-client/arc-models/compare/0.1.14...0.1.15) (2017-11-21)
 
