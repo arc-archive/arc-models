@@ -70,6 +70,8 @@ event.detail.result(indexDoc => {
 });
 ```
 
+Optional property for create event is `order` which is used to order elements on the list.
+
 ### Read
 
 Reads API data object form the datastore.
@@ -450,15 +452,16 @@ Polymer({
    * It creates data object and index object used for listings.
    *
    * @param {Object} raml A RAML data to insert
+   * @param {Number} order Optional, creates a datastore entry with given order.
    * @return {Promise} A promise resolved when the datastore objects are created.
    * Resolved promise contains index object.
    */
-  create: function(raml) {
+  create: function(raml, order) {
     var doc = this._prepareStoreObject(raml);
     var indexObj;
     return this.updateData(doc)
       .then(doc => {
-        indexObj = this._prepareIndexObject(doc);
+        indexObj = this._prepareIndexObject(doc, order);
         return this.updateIndex(indexObj);
       });
   },
@@ -518,6 +521,9 @@ Polymer({
    * A handler for `rest-api-create` custom event.
    * It only handles event's that hasn't been cancelled.
    *
+   * Required detail property is `raml` with the RAML data to insert.
+   * Optional property is `order` that describes order on the list.
+   *
    * It sets a `result` property on the event `detail` object that is a
    * promise returned by `create()` function.
    */
@@ -531,7 +537,7 @@ Polymer({
       e.detail.result = Promise.reject(new Error('The "raml" property is missing.'));
       return;
     }
-    e.detail.result = this.create(e.detail.raml)
+    e.detail.result = this.create(e.detail.raml, e.detail.order)
       .catch((e) => this._handleException(e));
   },
 
@@ -682,15 +688,22 @@ Polymer({
    * Prepares index data store object for the REST API.
    *
    * @param {Object} storeObject A store object with RAML data
+   * @param {?Number} order Optional, creates a datastore entry with given order.
    * @return {Object} Index store object.
    */
-  _prepareIndexObject: function(storeObject) {
+  _prepareIndexObject: function(storeObject, order) {
+    if (order) {
+      order = Number(order);
+      if (order !== order) {
+        order = undefined;
+      }
+    }
     return {
       _id: storeObject._id,
       title: storeObject.raml.title || 'Untitled',
       version: storeObject.raml.version || 'Unknown version',
       baseUri: storeObject.raml.baseUri || '/',
-      order: 0,
+      order: order || 0,
       description: storeObject.raml.description
     };
   },
