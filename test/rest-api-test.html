@@ -157,6 +157,16 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
             assert.lengthOf(result.rows, 1);
           });
         });
+
+        test('Creates new object with order property', function() {
+          var data = Object.assign({}, RAML);
+          data.title = 'test-2';
+          const order = 4;
+          return element.create(data, order)
+          .then(result => {
+            assert.strictEqual(result.order, order);
+          });
+        });
       });
 
       suite('read()', function() {
@@ -495,6 +505,25 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
         test('Data datastore contains one object', function() {
           return dataDb().allDocs().then(result => {
             assert.lengthOf(result.rows, 1);
+          });
+        });
+
+        test('Creates new object with order property', function() {
+          var data = Object.assign({}, RAML);
+          data.title = 'test-2';
+          const order = 4;
+          var event = new CustomEvent('rest-api-create', {
+            detail: {
+              raml: data,
+              order: order
+            },
+            bubbles: true,
+            cancelable: true
+          });
+          document.body.dispatchEvent(event);
+          return event.detail.result
+          .then(result => {
+            assert.strictEqual(result.order, order);
           });
         });
       });
