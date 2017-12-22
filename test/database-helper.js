@@ -38,3 +38,6 @@ DatabaseHelper.clearWebsocketUrlHostory = function() {
 DatabaseHelper.clearRestAPi = function() {
   return DatabaseHelper.clearDatabases('rest-api-index', 'rest-api-data');
 };
+DatabaseHelper.clearHostRules = function() {
+  return DatabaseHelper.clearDatabases('host-rules');
+};
