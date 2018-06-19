@@ -1,0 +1,72 @@
+<!--
+@license
+Copyright 2018 The Advanced REST client authors <arc@mulesoft.com>
+Licensed under the Apache License, Version 2.0 (the "License"); you may not
+use this file except in compliance with the License. You may obtain a copy of
+the License at
+http://www.apache.org/licenses/LICENSE-2.0
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+License for the specific language governing permissions and limitations under
+the License.
+-->
+<link rel="import" href="../polymer/polymer-element.html">
+<link rel="import" href="../app-pouchdb/pouchdb.html">
+<link rel="import" href="../events-target-behavior/events-target-behavior.html">
+<script>
+/**
+ * A base class for all models.
+ *
+ * @polymer
+ * @customElement
+ * @appliesMixin ArcBehaviors.EventsTargetBehavior
+ * @memberof LogicElements
+ */
+class ArcBaseModel extends ArcBehaviors.EventsTargetBehavior(Polymer.Element) {
+  static get is() { return 'arc-base-model'; };
+  /**
+   * Dispatches non-cancelable change event.
+   *
+   * @param {String} type Event type
+   * @param {Object} detail A detail object to dispatch.
+   * @return {CustomEvent} Created and dispatched event.
+   */
+  _fireUpdated(type, detail) {
+    const e = new CustomEvent(type, {
+      cancelable: false,
+      composed: true,
+      bubbles: true,
+      detail: detail
+    });
+    this.dispatchEvent(e);
+    return e;
+  }
+
+  /**
+   * Handles any exception in the model in a unified way.
+   * @param {[type]} e [description]
+   * @return {[type]} [description]
+   */
+  _handleException(e) {
+    let message;
+    if (e instanceof Error) {
+      message = e.message;
+    } else {
+      message = JSON.stringify(e);
+    }
+    this.dispatchEvent(new CustomEvent('send-analytics', {
+      bubbles: true,
+      composed: true,
+      detail: {
+        type: 'exception',
+        description: message,
+        fatal: true
+      }
+    }));
+    console.error(this.constructor.name, e);
+    throw e;
+  }
+}
+window.customElements.define(ArcBaseModel.is, ArcBaseModel);
+</script>

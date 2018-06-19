@@ -1,19 +1,9 @@
 <!doctype html>
-<!--
-@license
-Copyright (c) 2015 The Polymer Project Authors. All rights reserved.
-This code may only be used under the BSD style license found at http://polymer.github.io/LICENSE.txt
-The complete set of authors may be found at http://polymer.github.io/AUTHORS.txt
-The complete set of contributors may be found at http://polymer.github.io/CONTRIBUTORS.txt
-Code distributed by Google as part of the polymer project is also
-subject to an additional IP rights grant found at http://polymer.github.io/PATENTS.txt
--->
 <html>
   <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, minimum-scale=1.0, initial-scale=1.0, user-scalable=yes">
-
-    <script src="../../webcomponentsjs/webcomponents-lite.js"></script>
+    <script src="../../webcomponentsjs/webcomponents-loader.js"></script>
     <script src="../../web-component-tester/browser.js"></script>
     <script src="../../iron-test-helpers/test-helpers.js"></script>
     <script src="database-helper.js"></script>
@@ -43,8 +33,8 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
           return DatabaseHelper.clearHostRules();
         });
 
-        var element;
-        var dataObj;
+        let element;
+        let dataObj;
         setup(function() {
           element = fixture('basic');
           dataObj = {
@@ -57,7 +47,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
         });
 
         function fire(rule) {
-          var event = new CustomEvent('host-rules-changed', {
+          const event = new CustomEvent('host-rules-changed', {
             detail: {
               rule: rule
             },
@@ -70,19 +60,19 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
         }
 
         test('Event is canceled', function() {
-          var event = fire(dataObj);
+          const event = fire(dataObj);
           assert.isTrue(event.defaultPrevented);
         });
 
         test('Event detail contains "result" as promise', function() {
-          var event = fire(dataObj);
+          const event = fire(dataObj);
           assert.typeOf(event.detail.result, 'promise');
         });
 
         test('Creates a new object in the datastore', function() {
-          var event = fire(dataObj);
+          const event = fire(dataObj);
           return event.detail.result
-          .then(result => {
+          .then((result) => {
             assert.typeOf(result._rev, 'string', '_rev is set');
             assert.equal(result._id, 'test-id-1', '_id is set');
             assert.equal(result.from, dataObj.from, 'from is set');
@@ -93,16 +83,16 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
         });
 
         test('Updates created object', function() {
-          var originalRev;
-          var event = fire(dataObj);
+          let originalRev;
+          const event = fire(dataObj);
           return event.detail.result
-          .then(result => {
+          .then((result) => {
             originalRev = result._rev;
             result.comment = 'test-2';
-            var event = fire(result);
+            const event = fire(result);
             return event.detail.result;
           })
-          .then(result => {
+          .then((result) => {
             assert.notEqual(result._rev, originalRev, '_rev is regenerated');
             assert.equal(result._id, 'test-id-1', '_id is the same');
             assert.equal(result.comment, 'test-2', 'comment is set');
@@ -111,17 +101,17 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
         });
 
         test('Updates created object without "_rev" property', function() {
-          var originalRev;
-          var event = fire(dataObj);
+          let originalRev;
+          const event = fire(dataObj);
           return event.detail.result
-          .then(result => {
+          .then((result) => {
             originalRev = result._rev;
             result.comment = 'test-2';
             delete result._rev;
-            var event = fire(result);
+            const event = fire(result);
             return event.detail.result;
           })
-          .then(result => {
+          .then((result) => {
             assert.notEqual(result._rev, originalRev, '_rev is regenerated');
             assert.equal(result._id, 'test-id-1', '_id is the same');
             assert.equal(result.comment, 'test-2', 'comment is set');
@@ -129,7 +119,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
           });
         });
         test('Rejects promise when save object is not set', function() {
-          var event = fire();
+          const event = fire();
           return event.detail.result
           .then(() => {
             return Promise.reject('Expected method to reject.');
@@ -146,8 +136,8 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
           return DatabaseHelper.clearHostRules();
         });
 
-        var element;
-        var dataObj;
+        let element;
+        let dataObj;
         setup(function() {
           element = fixture('basic');
           dataObj = {
@@ -158,11 +148,11 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
             comment: 'test'
           };
           return element.update(dataObj)
-          .then(result => dataObj = result);
+          .then((result) => dataObj = result);
         });
 
         function fire(id, rev) {
-          var event = new CustomEvent('host-rules-deleted', {
+          const event = new CustomEvent('host-rules-deleted', {
             detail: {
               id: id,
               rev: rev
@@ -176,35 +166,31 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
         }
 
         test('Event is canceled', function() {
-          var event = fire(dataObj._id);
+          const event = fire(dataObj._id);
           assert.isTrue(event.defaultPrevented);
         });
 
         test('Event detail contains "result" as promise', function() {
-          var event = fire(dataObj._id);
+          const event = fire(dataObj._id);
           assert.typeOf(event.detail.result, 'promise');
         });
 
         test('Removes object from the datastore', function() {
-          var event = fire(dataObj._id, dataObj._rev);
+          const event = fire(dataObj._id, dataObj._rev);
           return event.detail.result
-          .then(() => {
-            return element.read(dataObj._id);
-          })
+          .then(() => element.read(dataObj._id))
           .then(() => {
             throw new Error('TEST');
           })
-          .catch(cause => {
+          .catch((cause) => {
             assert.equal(cause.status, 404);
           });
         });
 
         test('Rejects promise when no ID', function() {
-          var event = fire();
+          const event = fire();
           return event.detail.result
-          .then(() => {
-            return Promise.reject('Expected method to reject.');
-          })
+          .then(() => Promise.reject('Expected method to reject.'))
           .catch(isError)
           .then((err) => {
             assert.isDefined(err);
@@ -217,8 +203,8 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
           return DatabaseHelper.clearHostRules();
         });
 
-        var element;
-        var dataObj;
+        let element;
+        let dataObj;
         setup(function() {
           element = fixture('basic');
           dataObj = {
@@ -229,11 +215,11 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
             comment: 'test'
           };
           return element.update(dataObj)
-          .then(result => dataObj = result);
+          .then((result) => dataObj = result);
         });
 
         function fire() {
-          var event = new CustomEvent('host-rules-list', {
+          const event = new CustomEvent('host-rules-list', {
             detail: {},
             bubbles: true,
             composed: true,
@@ -244,19 +230,19 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
         }
 
         test('Event is canceled', function() {
-          var event = fire();
+          const event = fire();
           assert.isTrue(event.defaultPrevented);
         });
 
         test('Event detail contains "result" as promise', function() {
-          var event = fire();
+          const event = fire();
           assert.typeOf(event.detail.result, 'promise');
         });
 
         test('Lists saved projects', function() {
-          var event = fire();
+          const event = fire();
           return event.detail.result
-          .then(result => {
+          .then((result) => {
             assert.typeOf(result, 'array');
             assert.lengthOf(result, 1);
           });

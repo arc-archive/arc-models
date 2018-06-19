@@ -1,0 +1,2482 @@
+{
+  "schema_version": "1.0.0",
+  "elements": [
+    {
+      "description": "A base class for all models.",
+      "summary": "",
+      "path": "base-model.html",
+      "properties": [
+        {
+          "name": "eventsTarget",
+          "type": "Object | null | undefined",
+          "description": "Events handlers target. By default the element listens on\n`window` object. If set, all events listeners will be attached to this\nobject instead of `window`.",
+          "privacy": "public",
+          "sourceRange": {
+            "file": "../events-target-behavior/events-target-behavior.html",
+            "start": {
+              "line": 73,
+              "column": 8
+            },
+            "end": {
+              "line": 76,
+              "column": 9
+            }
+          },
+          "metadata": {
+            "polymer": {
+              "observer": "\"_eventsTargetChanged\"",
+              "attributeType": "Object"
+            }
+          },
+          "inheritedFrom": "ArcBehaviors.EventsTargetBehavior"
+        },
+        {
+          "name": "_oldEventsTarget",
+          "type": "Object | null | undefined",
+          "description": "An event target used to attach listeners.",
+          "privacy": "protected",
+          "sourceRange": {
+            "file": "../events-target-behavior/events-target-behavior.html",
+            "start": {
+              "line": 78,
+              "column": 8
+            },
+            "end": {
+              "line": 78,
+              "column": 32
+            }
+          },
+          "metadata": {
+            "polymer": {
+              "attributeType": "Object"
+            }
+          },
+          "inheritedFrom": "ArcBehaviors.EventsTargetBehavior"
+        }
+      ],
+      "methods": [
+        {
+          "name": "connectedCallback",
+          "description": "",
+          "privacy": "public",
+          "sourceRange": {
+            "file": "../events-target-behavior/events-target-behavior.html",
+            "start": {
+              "line": 81,
+              "column": 4
+            },
+            "end": {
+              "line": 84,
+              "column": 6
+            }
+          },
+          "metadata": {},
+          "params": [],
+          "return": {
+            "type": "void"
+          },
+          "inheritedFrom": "ArcBehaviors.EventsTargetBehavior"
+        },
+        {
+          "name": "disconnectedCallback",
+          "description": "",
+          "privacy": "public",
+          "sourceRange": {
+            "file": "../events-target-behavior/events-target-behavior.html",
+            "start": {
+              "line": 86,
+              "column": 5
+            },
+            "end": {
+              "line": 91,
+              "column": 6
+            }
+          },
+          "metadata": {},
+          "params": [],
+          "return": {
+            "type": "void"
+          },
+          "inheritedFrom": "ArcBehaviors.EventsTargetBehavior"
+        },
+        {
+          "name": "_eventsTargetChanged",
+          "description": "Removes old handlers (if any) and attaches listeners on new event\nevent target.",
+          "privacy": "protected",
+          "sourceRange": {
+            "file": "../events-target-behavior/events-target-behavior.html",
+            "start": {
+              "line": 99,
+              "column": 4
+            },
+            "end": {
+              "line": 105,
+              "column": 5
+            }
+          },
+          "metadata": {},
+          "params": [
+            {
+              "name": "eventsTarget",
+              "type": "?Node",
+              "description": "Event target to set handlers on. If not set it\nwill set handlers on the `window` object."
+            }
+          ],
+          "return": {
+            "type": "void"
+          },
+          "inheritedFrom": "ArcBehaviors.EventsTargetBehavior"
+        },
+        {
+          "name": "_attachListeners",
+          "description": "To be implement by the element to set event listeners on the target",
+          "privacy": "protected",
+          "sourceRange": {
+            "file": "../events-target-behavior/events-target-behavior.html",
+            "start": {
+              "line": 107,
+              "column": 4
+            },
+            "end": {
+              "line": 109,
+              "column": 5
+            }
+          },
+          "metadata": {},
+          "params": [],
+          "return": {
+            "type": "void"
+          },
+          "inheritedFrom": "ArcBehaviors.EventsTargetBehavior"
+        },
+        {
+          "name": "_detachListeners",
+          "description": "To be implement by the element to remove event listeners from the target",
+          "privacy": "protected",
+          "sourceRange": {
+            "file": "../events-target-behavior/events-target-behavior.html",
+            "start": {
+              "line": 111,
+              "column": 4
+            },
+            "end": {
+              "line": 113,
+              "column": 5
+            }
+          },
+          "metadata": {},
+          "params": [],
+          "return": {
+            "type": "void"
+          },
+          "inheritedFrom": "ArcBehaviors.EventsTargetBehavior"
+        },
+        {
+          "name": "_fireUpdated",
+          "description": "Dispatches non-cancelable change event.",
+          "privacy": "protected",
+          "sourceRange": {
+            "start": {
+              "line": 34,
+              "column": 2
+            },
+            "end": {
+              "line": 43,
+              "column": 3
+            }
+          },
+          "metadata": {},
+          "params": [
+            {
+              "name": "type",
+              "type": "String",
+              "description": "Event type"
+            },
+            {
+              "name": "detail",
+              "type": "Object",
+              "description": "A detail object to dispatch."
+            }
+          ],
+          "return": {
+            "type": "CustomEvent",
+            "desc": "Created and dispatched event."
+          }
+        },
+        {
+          "name": "_handleException",
+          "description": "Handles any exception in the model in a unified way.",
+          "privacy": "protected",
+          "sourceRange": {
+            "start": {
+              "line": 50,
+              "column": 2
+            },
+            "end": {
+              "line": 68,
+              "column": 3
+            }
+          },
+          "metadata": {},
+          "params": [
+            {
+              "name": "e",
+              "type": "[type]",
+              "description": "[description]"
+            }
+          ],
+          "return": {
+            "type": "[type]",
+            "desc": "[description]"
+          }
+        }
+      ],
+      "staticMethods": [],
+      "demos": [],
+      "metadata": {},
+      "sourceRange": {
+        "start": {
+          "line": 25,
+          "column": 0
+        },
+        "end": {
+          "line": 69,
+          "column": 1
+        }
+      },
+      "privacy": "public",
+      "superclass": "HTMLElement",
+      "name": "LogicElements.ArcBaseModel",
+      "attributes": [
+        {
+          "name": "events-target",
+          "description": "Events handlers target. By default the element listens on\n`window` object. If set, all events listeners will be attached to this\nobject instead of `window`.",
+          "sourceRange": {
+            "file": "../events-target-behavior/events-target-behavior.html",
+            "start": {
+              "line": 73,
+              "column": 8
+            },
+            "end": {
+              "line": 76,
+              "column": 9
+            }
+          },
+          "metadata": {},
+          "type": "Object | null | undefined",
+          "inheritedFrom": "ArcBehaviors.EventsTargetBehavior"
+        }
+      ],
+      "events": [],
+      "styling": {
+        "cssVariables": [],
+        "selectors": []
+      },
+      "slots": [],
+      "tagname": "arc-base-model",
+      "mixins": [
+        "ArcBehaviors.EventsTargetBehavior"
+      ]
+    },
+    {
+      "description": "Events based access to projects datastore.\n\nNote: **All events must be cancelable.** When the event is cancelled by an\ninstance of the element it won't be handled again by other instance that\npossibly exists in the DOM.\n\nCancellable event is a request to models for change. Non-cancellable event\nis a notification for views to update their values.\nFor example `project-object-changed` event notifies model to update object in\nthe datastore if the event is cancelable and to update views if it's not\ncancellable.\n\nEach handled event contains the `result` property on the `detail` object. It\ncontains a `Promise` object with a result of the operation. Also, for update\n/ delete events the same non-cancelable event is fired.\n\nEvents handled by this element are cancelled and propagation of the event is\nstopped.\n\nSupported operations:\n\n-   Read project object (`project-read`)\n-   Update name only (`project-name-changed`)\n-   Update project object (`project-object-changed`)\n-   Delete object (`project-object-deleted`)\n-   Query for projects (`project-model-query`)\n\n### Events description\n\n#### `project-read` event\n\nReads a project object from the datastore.\n\n##### Properties\n-   `id` (String, required) ID of the datastore entry\n-   `rev` (String, optional) Specific revision to retrieve from the datastore.\nLatest by default.\n\n##### Example\n\n```javascript\nvar event = new CustomEvent('project-read', {\n   detail: { id: 'some-id' },\n   bubbles: true,\n   composed: true,\n   cancelable: true\n});\ndocument.body.dispatchEvent(event);\nif (event.defaultPrevented) {\n   event.detail.result.then(project => console.log(project));\n}\n```\n\n#### `project-name-changed` event\n\nChanges name of a project. Promise result has updated name and `_rev` properties.\n\n##### Properties\n-   `id` (String, required if `project` is not set) ID of the datastore entry\n-   `project` (Object, required if `id` is not set) The database entity\n-   `name` (String, required) New name of the project. It doesn't matter if\n`project` property already has new name.\n\n##### Example\n\n```javascript\nvar event = new CustomEvent('project-name-changed', {\n   detail: { id: 'some-id', name: 'new name' },\n   bubbles: true,\n   composed: true,\n   cancelable: true\n});\ndocument.body.dispatchEvent(event);\nif (event.defaultPrevented) {\n   event.detail.result.then(project => console.log(project));\n}\n```\n\n#### `project-object-changed` event\n\nUpdates / saves new object in the datastore.\n\n##### Properties\n\n-   `project` (Object, required) An object to store\n\n##### Example\n\n```javascript\nvar event = new CustomEvent('project-object-changed', {\n   detail: { project: {...} },\n   bubbles: true,\n   composed: true,\n   cancelable: true\n});\ndocument.body.dispatchEvent(event);\nif (event.defaultPrevented) {\n   event.detail.result.then(project => console.log(project));\n}\n```\n\n#### `project-object-deleted` event\n\nDeletes the object from the datastore. This operation fires\n`project-object-deleted` custom event. Promise returns object's\nnew `_rev` value.\n\n##### Properties\n-   `id` (String, required) ID of the datastore entry\n-   `rev` (String, optional) The `_rev` property of the PouchDB datastore\nobject. If not set it will use latest revision.\n\n##### Example\n\n```javascript\nvar event = new CustomEvent('project-object-deleted', {\n   detail: { id: 'some-id' },\n   bubbles: true,\n   composed: true,\n   cancelable: true\n});\ndocument.body.dispatchEvent(event);\nif (event.defaultPrevented) {\n   event.detail.result.then(newRev => console.log(newRev));\n}\n```\n\n#### `project-model-query` event\n\nReads the list of all projects. Promise resolves to the list of projects.\nThis event doesn't requeire any properties but **the `details` object must be set**.\n\n##### Example\n\n```javascript\nvar event = new CustomEvent('project-model-query', {\n   detail: {}, // THIS MUST BE SET\n   bubbles: true,\n   composed: true,\n   cancelable: true\n});\ndocument.body.dispatchEvent(event);\nif (event.defaultPrevented) {\n   event.detail.result.then(list => console.log(list));\n}\n```",
+      "summary": "",
+      "path": "project-model.html",
+      "properties": [
+        {
+          "name": "db",
+          "type": "?",
+          "description": "",
+          "privacy": "public",
+          "sourceRange": {
+            "start": {
+              "line": 195,
+              "column": 2
+            },
+            "end": {
+              "line": 197,
+              "column": 3
+            }
+          },
+          "metadata": {
+            "polymer": {
+              "readOnly": true
+            }
+          }
+        }
+      ],
+      "methods": [
+        {
+          "name": "_attachListeners",
+          "description": "",
+          "privacy": "protected",
+          "sourceRange": {
+            "start": {
+              "line": 179,
+              "column": 2
+            },
+            "end": {
+              "line": 185,
+              "column": 3
+            }
+          },
+          "metadata": {},
+          "params": [
+            {
+              "name": "node"
+            }
+          ],
+          "return": {
+            "type": "void"
+          }
+        },
+        {
+          "name": "_detachListeners",
+          "description": "",
+          "privacy": "protected",
+          "sourceRange": {
+            "start": {
+              "line": 187,
+              "column": 2
+            },
+            "end": {
+              "line": 193,
+              "column": 3
+            }
+          },
+          "metadata": {},
+          "params": [
+            {
+              "name": "node"
+            }
+          ],
+          "return": {
+            "type": "void"
+          }
+        },
+        {
+          "name": "_handleRead",
+          "description": "Handler for project read event request.",
+          "privacy": "protected",
+          "sourceRange": {
+            "start": {
+              "line": 201,
+              "column": 2
+            },
+            "end": {
+              "line": 214,
+              "column": 3
+            }
+          },
+          "metadata": {},
+          "params": [
+            {
+              "name": "e"
+            }
+          ],
+          "return": {
+            "type": "void"
+          }
+        },
+        {
+          "name": "read",
+          "description": "Reads an entry from the datastore.",
+          "privacy": "public",
+          "sourceRange": {
+            "start": {
+              "line": 222,
+              "column": 2
+            },
+            "end": {
+              "line": 229,
+              "column": 3
+            }
+          },
+          "metadata": {},
+          "params": [
+            {
+              "name": "id",
+              "type": "String",
+              "description": "The ID of the datastore entry."
+            },
+            {
+              "name": "rev",
+              "type": "?String",
+              "description": "Specific revision to read. Defaults to latest revision."
+            }
+          ],
+          "return": {
+            "type": "Promise",
+            "desc": "Promise resolved to a project object."
+          }
+        },
+        {
+          "name": "update",
+          "description": "Updates / saves the project object in the datastore.\nThis function fires `project-object-changed` event.",
+          "privacy": "public",
+          "sourceRange": {
+            "start": {
+              "line": 237,
+              "column": 2
+            },
+            "end": {
+              "line": 249,
+              "column": 3
+            }
+          },
+          "metadata": {},
+          "params": [
+            {
+              "name": "project",
+              "type": "Object",
+              "description": "A project to save / update"
+            }
+          ],
+          "return": {
+            "type": "Promise",
+            "desc": "Resolved promise to project object with updated `_rev`"
+          }
+        },
+        {
+          "name": "remove",
+          "description": "Removed an object from the datastore.\nThis function fires `project-object-deleted` event.",
+          "privacy": "public",
+          "sourceRange": {
+            "start": {
+              "line": 258,
+              "column": 2
+            },
+            "end": {
+              "line": 277,
+              "column": 3
+            }
+          },
+          "metadata": {},
+          "params": [
+            {
+              "name": "id",
+              "type": "String",
+              "description": "The ID of the datastore entry."
+            },
+            {
+              "name": "rev",
+              "type": "?String",
+              "description": "Specific revision to read. Defaults to latest revision."
+            }
+          ],
+          "return": {
+            "type": "Promise",
+            "desc": "Promise resolved to a new `_rev` property of deleted object."
+          }
+        },
+        {
+          "name": "list",
+          "description": "Lists all project objects.",
+          "privacy": "public",
+          "sourceRange": {
+            "start": {
+              "line": 282,
+              "column": 2
+            },
+            "end": {
+              "line": 289,
+              "column": 3
+            }
+          },
+          "metadata": {},
+          "params": [],
+          "return": {
+            "type": "Promise",
+            "desc": "A promise resolved to a list of projects."
+          }
+        },
+        {
+          "name": "_handleNameChange",
+          "description": "Updates name of a project.",
+          "privacy": "protected",
+          "sourceRange": {
+            "start": {
+              "line": 292,
+              "column": 2
+            },
+            "end": {
+              "line": 327,
+              "column": 3
+            }
+          },
+          "metadata": {},
+          "params": [
+            {
+              "name": "e"
+            }
+          ],
+          "return": {
+            "type": "void"
+          }
+        },
+        {
+          "name": "_handleObjectSave",
+          "description": "Handles onject save / update",
+          "privacy": "protected",
+          "sourceRange": {
+            "start": {
+              "line": 329,
+              "column": 2
+            },
+            "end": {
+              "line": 361,
+              "column": 3
+            }
+          },
+          "metadata": {},
+          "params": [
+            {
+              "name": "e"
+            }
+          ],
+          "return": {
+            "type": "void"
+          }
+        },
+        {
+          "name": "_handleObjectDelete",
+          "description": "Deletes the object from the datastore.",
+          "privacy": "protected",
+          "sourceRange": {
+            "start": {
+              "line": 363,
+              "column": 2
+            },
+            "end": {
+              "line": 377,
+              "column": 3
+            }
+          },
+          "metadata": {},
+          "params": [
+            {
+              "name": "e"
+            }
+          ],
+          "return": {
+            "type": "void"
+          }
+        },
+        {
+          "name": "_queryHandler",
+          "description": "Queries for a list of projects.",
+          "privacy": "protected",
+          "sourceRange": {
+            "start": {
+              "line": 379,
+              "column": 2
+            },
+            "end": {
+              "line": 389,
+              "column": 3
+            }
+          },
+          "metadata": {},
+          "params": [
+            {
+              "name": "e"
+            }
+          ],
+          "return": {
+            "type": "void"
+          }
+        }
+      ],
+      "staticMethods": [],
+      "demos": [],
+      "metadata": {},
+      "sourceRange": {
+        "start": {
+          "line": 167,
+          "column": 0
+        },
+        "end": {
+          "line": 405,
+          "column": 1
+        }
+      },
+      "privacy": "public",
+      "superclass": "ArcBaseModel",
+      "name": "LogicElements.ProjectModel",
+      "attributes": [],
+      "events": [
+        {
+          "type": "CustomEvent",
+          "name": "project-object-changed",
+          "description": "Fired when the project entity has been saved / updated in the datastore.",
+          "metadata": {}
+        },
+        {
+          "type": "CustomEvent",
+          "name": "project-object-deleted",
+          "description": "project-object-deleted",
+          "metadata": {}
+        }
+      ],
+      "styling": {
+        "cssVariables": [],
+        "selectors": []
+      },
+      "slots": [],
+      "tagname": "project-model"
+    },
+    {
+      "description": "Events based access to saved request datastore.\n\nNote: **All events must be cancelable.** When the event is cancelled by an instance\nof the element it won't be handled again by other instance that possibly exists\nin the DOM.\n\nCancellable event is a request to models for change. Non-cancellable event\nis a notification for views to update their values. For example\n`request-object-changed` event notifies model to update object in\nthe datastore if the event is cancelable and to update views if it's not\ncancellable.\n\nEach handled event contains the `result` property on the `detail` object. It\ncontains a `Promise` object with a result of the operation. Also, for update / delete\nevents the same non-cancelable event is fired.\n\nEvents handled by this element are cancelled and propagation of the event is\nstopped.\n\nSupported operations:\n\n-   Read request object (`request-object-read`)\n-   Update name only (`request-name-changed`)\n-   Update request object (`request-object-changed`)\n-   Delete object (`request-object-deleted`)\n-   Deletes list of request objects (`request-objects-deleted`)\n\n## Request object types\n\nThere are two request object types: `saved-requests` and `history-requests`.\nEach event must contain a `type` property to determine which database to query\nfor an object.\n\n### Events description\n\n#### `request-object-read` event\n\nReads a request object from the datastore.\n\n##### Properties\n\n-   `id` (String, required) ID of the datastore entry\n-   `rev` (String, optional) Specific revision to retrieve from the\ndatastore. Latest by default.\n-   `type` {String, required} Request object type. Either `saved-requests`\nor `history-requests`\n\n##### Example\n\n```javascript\nvar event = new CustomEvent('request-object-read', {\n   detail: { id: 'some-id', type: 'saved-requests' },\n   bubbles: true,\n   composed: true,\n   cancelable: true\n});\nif (event.defaultPrevented) {\n   event.detail.result.then(request => console.log(request));\n}\n```\n\n#### `request-name-changed` Event\n\nChanges name of a request. Promise result has updated `name` and `_rev` properties.\nThis operation deletes old object because it changes the `name` of the request\nthat is used to build the datastore key.\n\n##### Properties\n-   `id` (String, required if `project` is not set) ID of the datastore entry\n-   `request` (Object, required if `id` is not set) The database entity\n-   `name` (String, required) New name of the project. It doesn't matter\nif `project` property already has new name.\n-   `type` {String, required} Request object type. Either `saved-requests`\nor `history-requests`\n\n##### Example\n\n```javascript\nvar event = new CustomEvent('request-name-changed', {\n   detail: { id: 'some-id', name: 'new name', type: 'history-requests' },\n   bubbles: true,\n   composed: true,\n   cancelable: true\n});\nif (event.defaultPrevented) {\n   event.detail.result.then(request => console.log(request));\n}\n```\n\n#### `request-object-changed` event\n\nUpdates / saves new object in the datastore.\n\n##### Properties\n\n-   `request` (Object, required) An object to store\n-   `type` {String, required} Request object type. Either `saved-requests`\nor `history-requests`\n\n##### Example\n*\n```javascript\nvar event = new CustomEvent('request-object-changed', {\n   detail: { request: {...}, type: 'saved-requests' },\n   bubbles: true,\n   composed: true,\n   cancelable: true\n});\nif (event.defaultPrevented) {\n   event.detail.result.then(request => console.log(request));\n}\n```\n\n#### `request-object-deleted` event\n\nDeletes the object from the datastore. This operation fires `request-object-deleted`\ncustom event. Promise returns object's new `_rev` value.\n\n##### Properties\n-   `id` (String, required) ID of the datastore entry\n-   `rev` (String, optional) The `_rev` property of the PouchDB datastore\nobject. If not set it will use latest revision.\n-   `type` {String, required} Request object type. Either `saved-requests` or\n`history-requests`\n\n##### Example\n\n```javascript\nvar event = new CustomEvent('request-object-deleted', {\n   detail: { id: 'some-id', type: 'saved-requests' },\n   bubbles: true,\n   composed: true,\n   cancelable: true\n});\nif (event.defaultPrevented) {\n   event.detail.result.then(newRev => console.log(newRev));\n}\n```\n\n#### `request-objects-deleted` event\n\nRemoves list of requests in batch operation. Promise results to the map where keys\nare request ids and values are new revision hash.\n\n##### Properties\n\n-   `items` (Array, required) List of IDs to delete\n-   `type` {String, required} Request object type. Either `saved-requests` or `history-requests`\n\n##### Example\n\n```javascript\nvar event = new CustomEvent('request-objects-deleted', {\n   detail: {\n     items: ['some-id', 'other-id'],\n     type: 'saved-requests'\n   },\n   bubbles: true,\n   composed: true,\n   cancelable: true\n });\n if (event.defaultPrevented) {\n   event.detail.result.then(deleted => console.log(deleted));\n }\n ```<link rel=\"import\" href=\"../polymer/polymer.html\">\n <link rel=\"import\" href=\"../app-pouchdb/pouchdb.html\">\n <link rel=\"import\" href=\"../events-target-behavior/events-target-behavior.html\">\n\n#### `request-objects-undeleted` event\n\nRestores previously deleted requests from the history.\nIt searches in the revision history of each object to find a revision before\npassed `_rev` and restores this object as a new one in the revision tree.\n\nThis operation fires `request-object-deleted` custom event. Promise returns\nrequest objects with updated `_rev` value.\n\n##### Properties\n\n-   `items` (Array, required) List of requests to restore. It required `_id`\nand `_rev` properties to be set on each object. The `_rev` property must be\na revision updated after the deletion of the object.\n-   `type` {String, required} Request object type. Either `saved-requests`\nor `history-requests`\n\n##### Example\n\n```javascript\nvar event = new CustomEvent('request-objects-deleted', {\n   detail: {\n     items: [{_id: 'some-id', '_rev': '2-xyz']},\n     type: 'saved-requests'\n   },\n   bubbles: true,<link rel=\"import\" href=\"../polymer/polymer.html\">\n<link rel=\"import\" href=\"../app-pouchdb/pouchdb.html\">\n<link rel=\"import\" href=\"../events-target-behavior/events-target-behavior.html\">\n   composed: true,\n   cancelable: true\n});\nif (event.defaultPrevented) {\n   event.detail.result.then(restored => console.log(restored));\n}\n```",
+      "summary": "",
+      "path": "request-model.html",
+      "properties": [
+        {
+          "name": "savedDb",
+          "type": "?",
+          "description": "",
+          "privacy": "public",
+          "sourceRange": {
+            "start": {
+              "line": 255,
+              "column": 2
+            },
+            "end": {
+              "line": 257,
+              "column": 3
+            }
+          },
+          "metadata": {
+            "polymer": {
+              "readOnly": true
+            }
+          }
+        },
+        {
+          "name": "historyDb",
+          "type": "?",
+          "description": "",
+          "privacy": "public",
+          "sourceRange": {
+            "start": {
+              "line": 259,
+              "column": 2
+            },
+            "end": {
+              "line": 261,
+              "column": 3
+            }
+          },
+          "metadata": {
+            "polymer": {
+              "readOnly": true
+            }
+          }
+        }
+      ],
+      "methods": [
+        {
+          "name": "_attachListeners",
+          "description": "",
+          "privacy": "protected",
+          "sourceRange": {
+            "start": {
+              "line": 237,
+              "column": 2
+            },
+            "end": {
+              "line": 244,
+              "column": 3
+            }
+          },
+          "metadata": {},
+          "params": [
+            {
+              "name": "node"
+            }
+          ],
+          "return": {
+            "type": "void"
+          }
+        },
+        {
+          "name": "_detachListeners",
+          "description": "",
+          "privacy": "protected",
+          "sourceRange": {
+            "start": {
+              "line": 246,
+              "column": 2
+            },
+            "end": {
+              "line": 253,
+              "column": 3
+            }
+          },
+          "metadata": {},
+          "params": [
+            {
+              "name": "node"
+            }
+          ],
+          "return": {
+            "type": "void"
+          }
+        },
+        {
+          "name": "getDatabase",
+          "description": "Returns a reference to a PouchDB database instance for given type.",
+          "privacy": "public",
+          "sourceRange": {
+            "start": {
+              "line": 268,
+              "column": 2
+            },
+            "end": {
+              "line": 274,
+              "column": 3
+            }
+          },
+          "metadata": {},
+          "params": [
+            {
+              "name": "type",
+              "type": "String",
+              "description": "Either `saved-requests` or `history-requests`"
+            }
+          ],
+          "return": {
+            "type": "PouchDB",
+            "desc": "PouchDB instance for the datastore."
+          }
+        },
+        {
+          "name": "read",
+          "description": "Reads an entry from the datastore.",
+          "privacy": "public",
+          "sourceRange": {
+            "start": {
+              "line": 283,
+              "column": 2
+            },
+            "end": {
+              "line": 290,
+              "column": 3
+            }
+          },
+          "metadata": {},
+          "params": [
+            {
+              "name": "type",
+              "type": "String",
+              "description": "Request type: `saved-requests` or `history-requests`"
+            },
+            {
+              "name": "id",
+              "type": "String",
+              "description": "The ID of the datastore entry."
+            },
+            {
+              "name": "rev",
+              "type": "?String",
+              "description": "Specific revision to read. Defaults to latest revision."
+            }
+          ],
+          "return": {
+            "type": "Promise",
+            "desc": "Promise resolved to a project object."
+          }
+        },
+        {
+          "name": "update",
+          "description": "Updates / saves the request object in the datastore.\nThis function fires `request-object-changed` event.\n\nIf any of `name`, `method`, `url` or `legacyProject` properties change\nthen the old object is deleted and new is created with new ID.",
+          "privacy": "public",
+          "sourceRange": {
+            "start": {
+              "line": 302,
+              "column": 2
+            },
+            "end": {
+              "line": 359,
+              "column": 3
+            }
+          },
+          "metadata": {},
+          "params": [
+            {
+              "name": "type",
+              "type": "String",
+              "description": "Request type: `saved-requests` or `history-requests`"
+            },
+            {
+              "name": "request",
+              "type": "Object",
+              "description": "An object to save / update"
+            }
+          ],
+          "return": {
+            "type": "Promise",
+            "desc": "Resolved promise to request object with updated `_rev`"
+          }
+        },
+        {
+          "name": "updateBulk",
+          "description": "Updates more than one request in a bulk.",
+          "privacy": "public",
+          "sourceRange": {
+            "start": {
+              "line": 366,
+              "column": 2
+            },
+            "end": {
+              "line": 448,
+              "column": 3
+            }
+          },
+          "metadata": {},
+          "params": [
+            {
+              "name": "type",
+              "type": "String",
+              "description": "Request type: `saved-requests` or `history-requests`"
+            },
+            {
+              "name": "requests"
+            }
+          ],
+          "return": {
+            "type": "Array",
+            "desc": "List of PouchDB responses to each insert"
+          }
+        },
+        {
+          "name": "remove",
+          "description": "Removed an object from the datastore.\nThis function fires `request-object-deleted` event.",
+          "privacy": "public",
+          "sourceRange": {
+            "start": {
+              "line": 458,
+              "column": 2
+            },
+            "end": {
+              "line": 480,
+              "column": 3
+            }
+          },
+          "metadata": {},
+          "params": [
+            {
+              "name": "type",
+              "type": "String",
+              "description": "Request type: `saved-requests` or `history-requests`"
+            },
+            {
+              "name": "id",
+              "type": "String",
+              "description": "The ID of the datastore entry."
+            },
+            {
+              "name": "rev",
+              "type": "?String",
+              "description": "Specific revision to read. Defaults to latest revision."
+            }
+          ],
+          "return": {
+            "type": "Promise",
+            "desc": "Promise resolved to a new `_rev` property of deleted object."
+          }
+        },
+        {
+          "name": "revertRemove",
+          "description": "Reverts deleted items.\nThis function fires `request-object-changed` event for each restored\nrequest.",
+          "privacy": "public",
+          "sourceRange": {
+            "start": {
+              "line": 492,
+              "column": 2
+            },
+            "end": {
+              "line": 523,
+              "column": 3
+            }
+          },
+          "metadata": {},
+          "params": [
+            {
+              "name": "type",
+              "type": "String",
+              "description": "Request type: `saved-requests` or `history-requests`"
+            },
+            {
+              "name": "items",
+              "type": "Array",
+              "description": "List of request objects. Required properties are\n`_id` and `_rev`."
+            }
+          ],
+          "return": {
+            "type": "Promise",
+            "desc": "Resolved promise with restored objects. Objects have\nupdated `_rev` property."
+          }
+        },
+        {
+          "name": "_findNotDeleted",
+          "description": "",
+          "privacy": "protected",
+          "sourceRange": {
+            "start": {
+              "line": 525,
+              "column": 2
+            },
+            "end": {
+              "line": 549,
+              "column": 3
+            }
+          },
+          "metadata": {},
+          "params": [
+            {
+              "name": "db"
+            },
+            {
+              "name": "items"
+            }
+          ]
+        },
+        {
+          "name": "_findUndeletedRevision",
+          "description": "Finds a next revision after the `deletedRevision` in the revisions history\nwhich is the one that reverts any changes made after it.",
+          "privacy": "protected",
+          "sourceRange": {
+            "start": {
+              "line": 559,
+              "column": 2
+            },
+            "end": {
+              "line": 575,
+              "column": 3
+            }
+          },
+          "metadata": {},
+          "params": [
+            {
+              "name": "revs",
+              "type": "Object",
+              "description": "PouchDB revision history object"
+            },
+            {
+              "name": "deletedRevision",
+              "type": "Object",
+              "description": "Revision of deleted object (after delete)."
+            }
+          ],
+          "return": {
+            "type": "String",
+            "desc": "Revision ID of the object before a change registered in\n`deletedRevision`"
+          }
+        },
+        {
+          "name": "_generateId",
+          "description": "Generates the IS for the request depending on it's type and properties.",
+          "privacy": "protected",
+          "sourceRange": {
+            "start": {
+              "line": 584,
+              "column": 2
+            },
+            "end": {
+              "line": 607,
+              "column": 3
+            }
+          },
+          "metadata": {},
+          "params": [
+            {
+              "name": "request",
+              "type": "Object",
+              "description": "The request object to store."
+            },
+            {
+              "name": "isHistory",
+              "type": "Boolean",
+              "description": "Is true then it generates an ID for a history\nitem"
+            }
+          ],
+          "return": {
+            "type": "String",
+            "desc": "A database ID"
+          }
+        },
+        {
+          "name": "_getDayToday",
+          "description": "Setss hours, minutes, seconds and ms to 0 and returns timestamp.",
+          "privacy": "protected",
+          "sourceRange": {
+            "start": {
+              "line": 613,
+              "column": 2
+            },
+            "end": {
+              "line": 624,
+              "column": 3
+            }
+          },
+          "metadata": {},
+          "params": [
+            {
+              "name": "timestamp"
+            }
+          ],
+          "return": {
+            "type": "Number",
+            "desc": "Timestamp to the day."
+          }
+        },
+        {
+          "name": "_handleRead",
+          "description": "Handler for request read event request.",
+          "privacy": "protected",
+          "sourceRange": {
+            "start": {
+              "line": 628,
+              "column": 2
+            },
+            "end": {
+              "line": 645,
+              "column": 3
+            }
+          },
+          "metadata": {},
+          "params": [
+            {
+              "name": "e"
+            }
+          ],
+          "return": {
+            "type": "void"
+          }
+        },
+        {
+          "name": "_handleNameChange",
+          "description": "Updates name of a request.",
+          "privacy": "protected",
+          "sourceRange": {
+            "start": {
+              "line": 648,
+              "column": 2
+            },
+            "end": {
+              "line": 687,
+              "column": 3
+            }
+          },
+          "metadata": {},
+          "params": [
+            {
+              "name": "e"
+            }
+          ],
+          "return": {
+            "type": "void"
+          }
+        },
+        {
+          "name": "_handleObjectSave",
+          "description": "Handles onject save / update",
+          "privacy": "protected",
+          "sourceRange": {
+            "start": {
+              "line": 689,
+              "column": 2
+            },
+            "end": {
+              "line": 725,
+              "column": 3
+            }
+          },
+          "metadata": {},
+          "params": [
+            {
+              "name": "e"
+            }
+          ],
+          "return": {
+            "type": "void"
+          }
+        },
+        {
+          "name": "_handleObjectDelete",
+          "description": "Deletes the object from the datastore.",
+          "privacy": "protected",
+          "sourceRange": {
+            "start": {
+              "line": 727,
+              "column": 2
+            },
+            "end": {
+              "line": 746,
+              "column": 3
+            }
+          },
+          "metadata": {},
+          "params": [
+            {
+              "name": "e"
+            }
+          ],
+          "return": {
+            "type": "void"
+          }
+        },
+        {
+          "name": "_handleObjectsDelete",
+          "description": "Queries for a list of projects.",
+          "privacy": "protected",
+          "sourceRange": {
+            "start": {
+              "line": 748,
+              "column": 2
+            },
+            "end": {
+              "line": 789,
+              "column": 3
+            }
+          },
+          "metadata": {},
+          "params": [
+            {
+              "name": "e"
+            }
+          ],
+          "return": {
+            "type": "void"
+          }
+        },
+        {
+          "name": "_handleObjectsUndelete",
+          "description": "handlers `request-objects-undeleted` event to restore deleted items",
+          "privacy": "protected",
+          "sourceRange": {
+            "start": {
+              "line": 791,
+              "column": 2
+            },
+            "end": {
+              "line": 809,
+              "column": 3
+            }
+          },
+          "metadata": {},
+          "params": [
+            {
+              "name": "e"
+            }
+          ],
+          "return": {
+            "type": "void"
+          }
+        },
+        {
+          "name": "_filterExistingItems",
+          "description": "Filters query results to return only successfuly read data.",
+          "privacy": "protected",
+          "sourceRange": {
+            "start": {
+              "line": 815,
+              "column": 2
+            },
+            "end": {
+              "line": 824,
+              "column": 3
+            }
+          },
+          "metadata": {},
+          "params": [
+            {
+              "name": "result",
+              "type": "Object",
+              "description": "PouchDB query result"
+            }
+          ],
+          "return": {
+            "type": "Array",
+            "desc": "List of request that has been read."
+          }
+        },
+        {
+          "name": "_findOldRef",
+          "description": "",
+          "privacy": "protected",
+          "sourceRange": {
+            "start": {
+              "line": 826,
+              "column": 2
+            },
+            "end": {
+              "line": 829,
+              "column": 3
+            }
+          },
+          "metadata": {},
+          "params": [
+            {
+              "name": "docs"
+            },
+            {
+              "name": "id"
+            }
+          ]
+        }
+      ],
+      "staticMethods": [],
+      "demos": [],
+      "metadata": {},
+      "sourceRange": {
+        "start": {
+          "line": 224,
+          "column": 0
+        },
+        "end": {
+          "line": 852,
+          "column": 1
+        }
+      },
+      "privacy": "public",
+      "superclass": "ArcBaseModel",
+      "name": "LogicElements.RequestModel",
+      "attributes": [],
+      "events": [
+        {
+          "type": "CustomEvent",
+          "name": "request-object-changed",
+          "description": "Fired when the project entity has been saved / updated in the datastore.",
+          "metadata": {}
+        },
+        {
+          "type": "CustomEvent",
+          "name": "request-object-deleted",
+          "description": "request-object-deleted",
+          "metadata": {}
+        }
+      ],
+      "styling": {
+        "cssVariables": [],
+        "selectors": []
+      },
+      "slots": [],
+      "tagname": "request-model"
+    },
+    {
+      "description": "Events based access to websockets URL history datastore.\n\nNote: **All events must be cancelable.** When the event is cancelled by an instance\nof the element it won't be handled again by other instance that possibly exists\nin the DOM.\n\nCancellable event is a request to models for change. Non-cancellable event\nis a notification for views to update their values.\nFor example `request-object-changed` event notifies model to update object in\nthe datastore if the event is cancelable and to update views if it's not\ncancellable.\n\nEach handled event contains the `result` property on the `detail` object. It\ncontains a `Promise` object with a result of the operation. Also, for update / delete\nevents the same non-cancelable event is fired.\n\nEvents handled by this element are cancelled and propagation of the event is\nstopped.",
+      "summary": "",
+      "path": "websocket-url-history-model.html",
+      "properties": [
+        {
+          "name": "db",
+          "type": "?",
+          "description": "",
+          "privacy": "public",
+          "sourceRange": {
+            "start": {
+              "line": 66,
+              "column": 2
+            },
+            "end": {
+              "line": 73,
+              "column": 3
+            }
+          },
+          "metadata": {
+            "polymer": {
+              "readOnly": true
+            }
+          }
+        }
+      ],
+      "methods": [
+        {
+          "name": "_attachListeners",
+          "description": "",
+          "privacy": "protected",
+          "sourceRange": {
+            "start": {
+              "line": 52,
+              "column": 2
+            },
+            "end": {
+              "line": 57,
+              "column": 3
+            }
+          },
+          "metadata": {},
+          "params": [
+            {
+              "name": "node"
+            }
+          ],
+          "return": {
+            "type": "void"
+          }
+        },
+        {
+          "name": "_detachListeners",
+          "description": "",
+          "privacy": "protected",
+          "sourceRange": {
+            "start": {
+              "line": 59,
+              "column": 2
+            },
+            "end": {
+              "line": 64,
+              "column": 3
+            }
+          },
+          "metadata": {},
+          "params": [
+            {
+              "name": "node"
+            }
+          ],
+          "return": {
+            "type": "void"
+          }
+        },
+        {
+          "name": "_handleRead",
+          "description": "Handles the read object event",
+          "privacy": "protected",
+          "sourceRange": {
+            "start": {
+              "line": 75,
+              "column": 2
+            },
+            "end": {
+              "line": 94,
+              "column": 3
+            }
+          },
+          "metadata": {},
+          "params": [
+            {
+              "name": "e"
+            }
+          ],
+          "return": {
+            "type": "void"
+          }
+        },
+        {
+          "name": "_handleChange",
+          "description": "",
+          "privacy": "protected",
+          "sourceRange": {
+            "start": {
+              "line": 96,
+              "column": 2
+            },
+            "end": {
+              "line": 123,
+              "column": 3
+            }
+          },
+          "metadata": {},
+          "params": [
+            {
+              "name": "e"
+            }
+          ],
+          "return": {
+            "type": "void"
+          }
+        },
+        {
+          "name": "_handleQuery",
+          "description": "",
+          "privacy": "protected",
+          "sourceRange": {
+            "start": {
+              "line": 125,
+              "column": 2
+            },
+            "end": {
+              "line": 151,
+              "column": 3
+            }
+          },
+          "metadata": {},
+          "params": [
+            {
+              "name": "e"
+            }
+          ],
+          "return": {
+            "type": "void"
+          }
+        },
+        {
+          "name": "_sortFunction",
+          "description": "",
+          "privacy": "protected",
+          "sourceRange": {
+            "start": {
+              "line": 153,
+              "column": 2
+            },
+            "end": {
+              "line": 171,
+              "column": 3
+            }
+          },
+          "metadata": {},
+          "params": [
+            {
+              "name": "a"
+            },
+            {
+              "name": "b"
+            }
+          ]
+        },
+        {
+          "name": "_handleQueryHistory",
+          "description": "",
+          "privacy": "protected",
+          "sourceRange": {
+            "start": {
+              "line": 173,
+              "column": 2
+            },
+            "end": {
+              "line": 191,
+              "column": 3
+            }
+          },
+          "metadata": {},
+          "params": [
+            {
+              "name": "e"
+            }
+          ],
+          "return": {
+            "type": "void"
+          }
+        },
+        {
+          "name": "_computeTime",
+          "description": "Computes time for timestamp's day, month and year and time set to 0.",
+          "privacy": "protected",
+          "sourceRange": {
+            "start": {
+              "line": 197,
+              "column": 2
+            },
+            "end": {
+              "line": 205,
+              "column": 3
+            }
+          },
+          "metadata": {},
+          "params": [
+            {
+              "name": "item",
+              "type": "Object",
+              "description": "Database entry item."
+            }
+          ],
+          "return": {
+            "type": "Object",
+            "desc": "The same database item with `_time` property."
+          }
+        }
+      ],
+      "staticMethods": [],
+      "demos": [],
+      "metadata": {},
+      "sourceRange": {
+        "start": {
+          "line": 40,
+          "column": 0
+        },
+        "end": {
+          "line": 206,
+          "column": 1
+        }
+      },
+      "privacy": "public",
+      "superclass": "ArcBaseModel",
+      "name": "LogicElements.WebsocketUrlHistoryModel",
+      "attributes": [],
+      "events": [],
+      "styling": {
+        "cssVariables": [],
+        "selectors": []
+      },
+      "slots": [],
+      "tagname": "websocket-url-history-model"
+    },
+    {
+      "description": "Events based access to REST APIs datastore.\n\nNote: **All events must be cancelable.** When the event is cancelled by an instance\nof the element it won't be handled again by other instance that possibly exists\nin the DOM.\n\n`rest-api-index-updated`, `rest-api-data-updated` and `rest-api-deleted` events\nare cancelable if a view requested to alter the data in the datastore. Only\nmodels should handle cancelable events. This element fires an event with the same\ntype but non-cancelable when the operation has been commited to the datastore\nand view shouls handle non-cancelable event to update their state.\n\n## Index and data object\n\nRAML can be a large object therefore iterating over each record when listing\nor searching for APIs would not be efficient. This model creates separate object in\ndifferent data stores to keep listing (index) data separately from RAML data.\nIn most cases application should operate on index data. API data should be\nread directly using record's data store ID which is the same as index id.\n\nIndex object contains following properties:\n\n- `_id` `{String}` - The same ID as API data record ID\n- `title` `{String}` - API title\n- `version` `{String}` - API version number / string\n- `baseUri` `{String}` - API base URI\n- `order` `{Number}` - Order on the list. By default it's `0`\n- `description` `{?String}` - API description. Can be undefined.\n\n## Events API\n\n### Create\n\nCreates bothe api data and api index objects.\n\nTo create data fire cancelable `rest-api-create` with the raml data in\ndetail object\n\n```javascript\nlet event = new CustomEvent('rest-api-create', {\n   detail: {\n     raml: {...}\n   },\n   bubbles: true,\n   cancelable: true\n});\ndocument.body.dispatchEvent(event);\nconsole.log(event.defaultPrevented);\n// prints \"true\"\n\nevent.detail.result(indexDoc => {\n   console.log(indexDoc);\n   // prints content of the index object\n});\n```\n\nOptional property for create event is `order` which is used to order\nelements on the list.\n\n### Read\n\nReads API data object form the datastore.\n\nTo access data fire cancelable `rest-api-read` with the ID in detail object\n\n```javascript\nlet event = new CustomEvent('rest-api-read', {\n   detail: {\n     id: \"api-datastore-id\"\n   },\n   bubbles: true,\n   cancelable: true\n});\ndocument.body.dispatchEvent(event);\nconsole.log(event.defaultPrevented);\n// prints \"true\"\n\nevent.detail.result(dataDoc => {\n   console.log(dataDoc.raml);\n   // prints API data\n});\n```\n\n### Update index\n\nUpdates API index object in the datastore.\n\nTo update index data fire cancelable `rest-api-index-updated` with the\nPouchDB document in `detail` object\n\n```javascript\nlet event = new CustomEvent('rest-api-index-updated', {\n   detail: {\n     doc: {_id: ...}\n   },\n   bubbles: true,\n   cancelable: true\n});\ndocument.body.dispatchEvent(event);\nconsole.log(event.defaultPrevented);\n// prints \"true\"\n\nevent.detail.result(doc => {\n   console.log(doc);\n   // prints upadated document\n});\n```\n\n### Update API data\n\nUpdates API data object in the datastore.\n\nTo update API data fire cancelable `rest-api-data-updated` with the PouchDB\ndocument in `detail` object\n\n```javascript\nlet event = new CustomEvent('rest-api-data-updated', {\n   detail: {\n     doc: {_id: ...}\n   },\n   bubbles: true,\n   cancelable: true\n});\ndocument.body.dispatchEvent(event);\nconsole.log(event.defaultPrevented);\n// prints \"true\"\n\nevent.detail.result(doc => {\n   console.log(doc);\n   // prints upadated document\n});\n```\n\n### Delete\n\nDeletes API index and API data object from the datastore.\n\nTo remove API data fire cancelable `rest-api-deleted` with the id of the\ndocument in `detail` object\n\n```javascript\nlet event = new CustomEvent('rest-api-deleted', {\n   detail: {\n     id: \"datastore-id\"\n   },\n   bubbles: true,\n   cancelable: true\n});\ndocument.body.dispatchEvent(event);\nconsole.log(event.defaultPrevented);\n// prints \"true\"\n\nevent.detail.result(() => {\n    // Documents has been deleted\n});\n```\n\nNote, delete operation marks object as deleted. It doesn't actually remove\nthe data from the datastore. If needed data can be restored as described in\nPouchDB documentation.\n\n### Update index data in batch\n\nThe same as create event but allows to update many index objects in one request.\nThis is faster than making series of individual requests.\n\n```javascript\nlet event = new CustomEvent('rest-api-index-updated-batch', {\n   detail: {\n     docs: [{_id: ...]}\n   },\n   bubbles: true,\n   cancelable: true\n});\ndocument.body.dispatchEvent(event);\nconsole.log(event.defaultPrevented);\n// prints \"true\"\n\nevent.detail.result(updated => {\n   console.log(updated);\n   // Array of updated documents\n});\n```\n\n### List index data\n\nList a page of index object. Each page contains a 100 of results.\nIt supports pagination using `nextPageToken` property returned with each call to this API.\n\nResult object contains `nextPageToken` that should be used to pass to next\nrequest to receive next page of results. Index listing data are in `items` property.\n\n```javascript\n\nvar nextPageToken;\nfunction queryPage() {\n   var detail = {};\n   if (nextPageToken) {\n     detail.nextPageToken = nextPageToken;\n   }\n   let event = new CustomEvent('rest-api-index-list', {\n     detail: detail,\n     bubbles: true,\n     cancelable: true\n   });\n   document.body.dispatchEvent(event);\n\n   return event.detail.result\n   .then(result => {\n     nextPageToken = result.nextPageToken;\n     return result.items;\n   });\n}\n```",
+      "summary": "",
+      "path": "rest-api-model.html",
+      "properties": [
+        {
+          "name": "indexDb",
+          "type": "?",
+          "description": "A handler to the datastroe contains listing data\n   ",
+          "privacy": "public",
+          "sourceRange": {
+            "start": {
+              "line": 309,
+              "column": 2
+            },
+            "end": {
+              "line": 311,
+              "column": 3
+            }
+          },
+          "metadata": {
+            "polymer": {
+              "readOnly": true
+            }
+          }
+        },
+        {
+          "name": "dataDb",
+          "type": "?",
+          "description": "A handler to the datastore containing REST API data\n(raml definition).\n   ",
+          "privacy": "public",
+          "sourceRange": {
+            "start": {
+              "line": 316,
+              "column": 2
+            },
+            "end": {
+              "line": 318,
+              "column": 3
+            }
+          },
+          "metadata": {
+            "polymer": {
+              "readOnly": true
+            }
+          }
+        },
+        {
+          "name": "_cachedQueryOptions",
+          "type": "Object | null | undefined",
+          "description": "Cached query options for index data listing.\nKeys is the nextPageToken returned with listing response. If the\npage token has been used with the query it will takes this data\nto return next page results.",
+          "privacy": "protected",
+          "sourceRange": {
+            "start": {
+              "line": 246,
+              "column": 6
+            },
+            "end": {
+              "line": 251,
+              "column": 7
+            }
+          },
+          "metadata": {
+            "polymer": {
+              "attributeType": "Object"
+            }
+          }
+        },
+        {
+          "name": "defaultQueryOptions",
+          "type": "Object | null | undefined",
+          "description": "Database query options for pagination.\nOverride this value to change the query options like limit of the results in one call.\n\nThis is query options passed to the PouchDB `allDocs` function. Note that it will not\nset `include_docs` option. A conviniet shortcut is to set the the `includeDocs` property\nand the directive will be added automatically.",
+          "privacy": "public",
+          "sourceRange": {
+            "start": {
+              "line": 260,
+              "column": 6
+            },
+            "end": {
+              "line": 272,
+              "column": 7
+            }
+          },
+          "metadata": {
+            "polymer": {
+              "readOnly": true,
+              "attributeType": "Object"
+            }
+          }
+        }
+      ],
+      "methods": [
+        {
+          "name": "_attachListeners",
+          "description": "",
+          "privacy": "protected",
+          "sourceRange": {
+            "start": {
+              "line": 287,
+              "column": 2
+            },
+            "end": {
+              "line": 295,
+              "column": 3
+            }
+          },
+          "metadata": {},
+          "params": [
+            {
+              "name": "node"
+            }
+          ],
+          "return": {
+            "type": "void"
+          }
+        },
+        {
+          "name": "_detachListeners",
+          "description": "",
+          "privacy": "protected",
+          "sourceRange": {
+            "start": {
+              "line": 297,
+              "column": 2
+            },
+            "end": {
+              "line": 305,
+              "column": 3
+            }
+          },
+          "metadata": {},
+          "params": [
+            {
+              "name": "node"
+            }
+          ],
+          "return": {
+            "type": "void"
+          }
+        },
+        {
+          "name": "readIndex",
+          "description": "Reads an entry from the index datastore.",
+          "privacy": "public",
+          "sourceRange": {
+            "start": {
+              "line": 327,
+              "column": 2
+            },
+            "end": {
+              "line": 333,
+              "column": 3
+            }
+          },
+          "metadata": {},
+          "params": [
+            {
+              "name": "id",
+              "type": "String",
+              "description": "The ID of the datastore entry."
+            },
+            {
+              "name": "rev",
+              "type": "?String",
+              "description": "Specific revision to read. Defaults to latest revision."
+            }
+          ],
+          "return": {
+            "type": "Promise",
+            "desc": "Promise resolved to a project object."
+          }
+        },
+        {
+          "name": "readData",
+          "description": "Reads an entry from the raml data datastore.",
+          "privacy": "public",
+          "sourceRange": {
+            "start": {
+              "line": 341,
+              "column": 2
+            },
+            "end": {
+              "line": 347,
+              "column": 3
+            }
+          },
+          "metadata": {},
+          "params": [
+            {
+              "name": "id",
+              "type": "String",
+              "description": "The ID of the datastore entry."
+            },
+            {
+              "name": "rev",
+              "type": "?String",
+              "description": "Specific revision to read. Defaults to latest revision."
+            }
+          ],
+          "return": {
+            "type": "Promise",
+            "desc": "Promise resolved to a project object."
+          }
+        },
+        {
+          "name": "updateData",
+          "description": "Creates / updates API data object.\nThe `_id` property must be already set on the object.\n\nThis function fires `rest-api-data-updated` custom event on success.",
+          "privacy": "public",
+          "sourceRange": {
+            "start": {
+              "line": 357,
+              "column": 2
+            },
+            "end": {
+              "line": 371,
+              "column": 3
+            }
+          },
+          "metadata": {},
+          "params": [
+            {
+              "name": "doc",
+              "type": "Object",
+              "description": "PouchDB document."
+            }
+          ],
+          "return": {
+            "type": "Promise",
+            "desc": "Resolved promise to a document with updated `_rev`"
+          }
+        },
+        {
+          "name": "updateIndex",
+          "description": "Creates / updates API index object.\nThe `_id` property must be already set on the object.\n\nThis function fires `rest-api-index-updated` custom event on success.",
+          "privacy": "public",
+          "sourceRange": {
+            "start": {
+              "line": 381,
+              "column": 2
+            },
+            "end": {
+              "line": 395,
+              "column": 3
+            }
+          },
+          "metadata": {},
+          "params": [
+            {
+              "name": "doc",
+              "type": "Object",
+              "description": "PouchDB document."
+            }
+          ],
+          "return": {
+            "type": "Promise",
+            "desc": "Resolved promise to a document with updated `_rev`"
+          }
+        },
+        {
+          "name": "updateIndexBatch",
+          "description": "Updates many index objects in one request.",
+          "privacy": "public",
+          "sourceRange": {
+            "start": {
+              "line": 402,
+              "column": 2
+            },
+            "end": {
+              "line": 426,
+              "column": 3
+            }
+          },
+          "metadata": {},
+          "params": [
+            {
+              "name": "docs",
+              "type": "Array.<Object>",
+              "description": "List of PouchDB documents to update."
+            }
+          ],
+          "return": {
+            "type": "Promise",
+            "desc": "Resolved promise to a list of document with updated `_rev`"
+          }
+        },
+        {
+          "name": "remove",
+          "description": "Removes data from index and raml data datastores.",
+          "privacy": "public",
+          "sourceRange": {
+            "start": {
+              "line": 434,
+              "column": 2
+            },
+            "end": {
+              "line": 456,
+              "column": 3
+            }
+          },
+          "metadata": {},
+          "params": [
+            {
+              "name": "id",
+              "type": "String",
+              "description": "Datastore entry ID to delete. Both data and index objects\nshares the same ID."
+            }
+          ],
+          "return": {
+            "type": "Promise",
+            "desc": "Promise resolved to a new `_rev` property of deleted object."
+          }
+        },
+        {
+          "name": "create",
+          "description": "Creates datastores entries for REST API.\nIt creates data object and index object used for listings.",
+          "privacy": "public",
+          "sourceRange": {
+            "start": {
+              "line": 466,
+              "column": 2
+            },
+            "end": {
+              "line": 474,
+              "column": 3
+            }
+          },
+          "metadata": {},
+          "params": [
+            {
+              "name": "raml",
+              "type": "Object",
+              "description": "A RAML data to insert"
+            },
+            {
+              "name": "order",
+              "type": "Number",
+              "description": "Optional, creates a datastore entry with given order."
+            }
+          ],
+          "return": {
+            "type": "Promise",
+            "desc": "A promise resolved when the datastore objects are created.\nResolved promise contains index object."
+          }
+        },
+        {
+          "name": "listIndex",
+          "description": "Lists index data.\n\n### QueryResultObject\n- `data` {Array<Object>} List of PouchDB documents read from the datastore\n- `nextPageToken` {String} Pagination string to be used with next call\nto get resutls for a next page. The nextPageToken don't change over\nsubsequent requests.",
+          "privacy": "public",
+          "sourceRange": {
+            "start": {
+              "line": 488,
+              "column": 2
+            },
+            "end": {
+              "line": 512,
+              "column": 3
+            }
+          },
+          "metadata": {},
+          "params": [
+            {
+              "name": "opts",
+              "type": "Object",
+              "description": "Query options:\n- nextPageToken {String} Received from previous query page token."
+            }
+          ],
+          "return": {
+            "type": "Promise",
+            "desc": "A promise resolved to a query result object on success."
+          }
+        },
+        {
+          "name": "_makeNextPageToken",
+          "description": "Generates `nextPageToken` as a random string.",
+          "privacy": "protected",
+          "sourceRange": {
+            "start": {
+              "line": 518,
+              "column": 2
+            },
+            "end": {
+              "line": 525,
+              "column": 3
+            }
+          },
+          "metadata": {},
+          "params": [],
+          "return": {
+            "type": "String",
+            "desc": "Random 32 characters long string."
+          }
+        },
+        {
+          "name": "_createHandler",
+          "description": "A handler for `rest-api-create` custom event.\nIt only handles event's that hasn't been cancelled.\n\nRequired detail property is `raml` with the RAML data to insert.\nOptional property is `order` that describes order on the list.\n\nIt sets a `result` property on the event `detail` object that is a\npromise returned by `create()` function.",
+          "privacy": "protected",
+          "sourceRange": {
+            "start": {
+              "line": 536,
+              "column": 2
+            },
+            "end": {
+              "line": 548,
+              "column": 3
+            }
+          },
+          "metadata": {},
+          "params": [
+            {
+              "name": "e"
+            }
+          ],
+          "return": {
+            "type": "void"
+          }
+        },
+        {
+          "name": "_readHandler",
+          "description": "Handler for the `rest-api-read` custom event.\nIt only handles event's that hasn't been cancelled.\n\nEvent `detail` object must contain the `id` property with datastore entry\nid and may contain a `rev` property to read a specific revision.\n\nIt sets a `result` property on the event `detail` object that is a\npromise returned by `readData()` function.",
+          "privacy": "protected",
+          "sourceRange": {
+            "start": {
+              "line": 559,
+              "column": 2
+            },
+            "end": {
+              "line": 572,
+              "column": 3
+            }
+          },
+          "metadata": {},
+          "params": [
+            {
+              "name": "e"
+            }
+          ],
+          "return": {
+            "type": "void"
+          }
+        },
+        {
+          "name": "_indexUpdatedHandler",
+          "description": "A handler for the `rest-api-index-updated` custom event.\nIt is only handled if the event in cancelable and not cancelled.\n\nUpdates index object in the datastore and sets `result` property on the\nevent detail object with a result of calling `updateIndex()` function.",
+          "privacy": "protected",
+          "sourceRange": {
+            "start": {
+              "line": 580,
+              "column": 2
+            },
+            "end": {
+              "line": 592,
+              "column": 3
+            }
+          },
+          "metadata": {},
+          "params": [
+            {
+              "name": "e"
+            }
+          ],
+          "return": {
+            "type": "void"
+          }
+        },
+        {
+          "name": "_dataUpdatedHandler",
+          "description": "A handler for the `rest-api-data-updated` custom event.\nIt is only handled if the event in cancelable and not cancelled.\n\nUpdates RAML data object in the datastore and sets `result` property on the\nevent detail object with a result of calling `updateData()` function.",
+          "privacy": "protected",
+          "sourceRange": {
+            "start": {
+              "line": 600,
+              "column": 2
+            },
+            "end": {
+              "line": 612,
+              "column": 3
+            }
+          },
+          "metadata": {},
+          "params": [
+            {
+              "name": "e"
+            }
+          ],
+          "return": {
+            "type": "void"
+          }
+        },
+        {
+          "name": "_deletedHandler",
+          "description": "Deletes the object from the datastores.\nIt is only handled if the event in cancelable and not cancelled.\n\nEvent has to have `id` property set on the detail object.\n\nIt sets `result` property on the event detail object with a result of\ncalling `remove()` function.",
+          "privacy": "protected",
+          "sourceRange": {
+            "start": {
+              "line": 622,
+              "column": 2
+            },
+            "end": {
+              "line": 634,
+              "column": 3
+            }
+          },
+          "metadata": {},
+          "params": [
+            {
+              "name": "e"
+            }
+          ],
+          "return": {
+            "type": "void"
+          }
+        },
+        {
+          "name": "_indexesUpdatedHandler",
+          "description": "Handler for the `rest-api-index-updated-batch` custom event.\nIt requires to have `docs` property set to event detail as an array of\nPouchDB documents to update.\n\nIt sets `result` property on the event detail object with a result of\ncalling `updateIndexBatch()` function.",
+          "privacy": "protected",
+          "sourceRange": {
+            "start": {
+              "line": 643,
+              "column": 2
+            },
+            "end": {
+              "line": 655,
+              "column": 3
+            }
+          },
+          "metadata": {},
+          "params": [
+            {
+              "name": "e"
+            }
+          ],
+          "return": {
+            "type": "void"
+          }
+        },
+        {
+          "name": "_indexListHandler",
+          "description": "Handler for the `rest-api-index-list` custom event.\n\nThe `detail` object can contain `nextPageToken` property used for pagination.\n\nIt sets `result` property on the event detail object with a result of\ncalling `listIndex()` function.",
+          "privacy": "protected",
+          "sourceRange": {
+            "start": {
+              "line": 664,
+              "column": 2
+            },
+            "end": {
+              "line": 672,
+              "column": 3
+            }
+          },
+          "metadata": {},
+          "params": [
+            {
+              "name": "e"
+            }
+          ],
+          "return": {
+            "type": "void"
+          }
+        },
+        {
+          "name": "_prepareStoreObject",
+          "description": "Prepares PouchDB data object to store in the datastore.",
+          "privacy": "protected",
+          "sourceRange": {
+            "start": {
+              "line": 678,
+              "column": 2
+            },
+            "end": {
+              "line": 691,
+              "column": 3
+            }
+          },
+          "metadata": {},
+          "params": [
+            {
+              "name": "raml"
+            }
+          ],
+          "return": {
+            "type": "Object",
+            "desc": "Datastore object"
+          }
+        },
+        {
+          "name": "_prepareIndexObject",
+          "description": "Prepares index data store object for the REST API.",
+          "privacy": "protected",
+          "sourceRange": {
+            "start": {
+              "line": 699,
+              "column": 2
+            },
+            "end": {
+              "line": 714,
+              "column": 3
+            }
+          },
+          "metadata": {},
+          "params": [
+            {
+              "name": "storeObject",
+              "type": "Object",
+              "description": "A store object with RAML data"
+            },
+            {
+              "name": "order",
+              "type": "?Number",
+              "description": "Optional, creates a datastore entry with given order."
+            }
+          ],
+          "return": {
+            "type": "Object",
+            "desc": "Index store object."
+          }
+        }
+      ],
+      "staticMethods": [],
+      "demos": [],
+      "metadata": {},
+      "sourceRange": {
+        "start": {
+          "line": 235,
+          "column": 0
+        },
+        "end": {
+          "line": 750,
+          "column": 1
+        }
+      },
+      "privacy": "public",
+      "superclass": "ArcBaseModel",
+      "name": "LogicElements.RestApiModel",
+      "attributes": [
+        {
+          "name": "default-query-options",
+          "description": "Database query options for pagination.\nOverride this value to change the query options like limit of the results in one call.\n\nThis is query options passed to the PouchDB `allDocs` function. Note that it will not\nset `include_docs` option. A conviniet shortcut is to set the the `includeDocs` property\nand the directive will be added automatically.",
+          "sourceRange": {
+            "start": {
+              "line": 260,
+              "column": 6
+            },
+            "end": {
+              "line": 272,
+              "column": 7
+            }
+          },
+          "metadata": {},
+          "type": "Object | null | undefined"
+        }
+      ],
+      "events": [
+        {
+          "type": "CustomEvent",
+          "name": "rest-api-data-updated",
+          "description": "Fired when RAML (API) data has been updated.\nThe event is non cancelable which means that the change is commited to the\ndatastore.\n\nIt sets a `result` property on event `detail` object which contains a return\nvalue from calling `updateData()` function.",
+          "metadata": {}
+        },
+        {
+          "type": "CustomEvent",
+          "name": "rest-api-deleted",
+          "description": "Fired when data has been deleted.\nThe event is non cancelable which means that the change is commited to the\ndatastore.\n\nIt sets a `result` property on event `detail` object which contains a return\nvalue from calling `remove()` function.",
+          "metadata": {}
+        },
+        {
+          "type": "CustomEvent",
+          "name": "rest-api-index-updated",
+          "description": "Fired when index data has been updated.\nThe event is non cancelable which means that the change is commited to the\ndatastore.\n\nIt sets a `result` property on event `detail` object which contains a return\nvalue from calling `updateIndex()` function.",
+          "metadata": {}
+        }
+      ],
+      "styling": {
+        "cssVariables": [],
+        "selectors": []
+      },
+      "slots": [],
+      "tagname": "rest-api-model"
+    },
+    {
+      "description": "Model for host rules.",
+      "summary": "",
+      "path": "host-rules-model.html",
+      "properties": [
+        {
+          "name": "db",
+          "type": "?",
+          "description": " A handler to host rules database",
+          "privacy": "public",
+          "sourceRange": {
+            "start": {
+              "line": 44,
+              "column": 2
+            },
+            "end": {
+              "line": 46,
+              "column": 3
+            }
+          },
+          "metadata": {
+            "polymer": {
+              "readOnly": true
+            }
+          }
+        }
+      ],
+      "methods": [
+        {
+          "name": "_attachListeners",
+          "description": "",
+          "privacy": "protected",
+          "sourceRange": {
+            "start": {
+              "line": 32,
+              "column": 2
+            },
+            "end": {
+              "line": 36,
+              "column": 3
+            }
+          },
+          "metadata": {},
+          "params": [
+            {
+              "name": "node"
+            }
+          ],
+          "return": {
+            "type": "void"
+          }
+        },
+        {
+          "name": "_detachListeners",
+          "description": "",
+          "privacy": "protected",
+          "sourceRange": {
+            "start": {
+              "line": 38,
+              "column": 2
+            },
+            "end": {
+              "line": 42,
+              "column": 3
+            }
+          },
+          "metadata": {},
+          "params": [
+            {
+              "name": "node"
+            }
+          ],
+          "return": {
+            "type": "void"
+          }
+        },
+        {
+          "name": "read",
+          "description": "Reads an entry from the datastore.",
+          "privacy": "public",
+          "sourceRange": {
+            "start": {
+              "line": 55,
+              "column": 2
+            },
+            "end": {
+              "line": 61,
+              "column": 3
+            }
+          },
+          "metadata": {},
+          "params": [
+            {
+              "name": "id",
+              "type": "String",
+              "description": "The ID of the datastore entry."
+            },
+            {
+              "name": "rev",
+              "type": "?String",
+              "description": "Specific revision to read. Defaults to latest revision."
+            }
+          ],
+          "return": {
+            "type": "Promise",
+            "desc": "Promise resolved to a project object."
+          }
+        },
+        {
+          "name": "update",
+          "description": "Updates / saves the host rule object in the datastore.\nThis function fires `host-rules-changed` event.",
+          "privacy": "public",
+          "sourceRange": {
+            "start": {
+              "line": 70,
+              "column": 2
+            },
+            "end": {
+              "line": 82,
+              "column": 3
+            }
+          },
+          "metadata": {},
+          "params": [
+            {
+              "name": "rule",
+              "type": "Object",
+              "description": "A rule object to save / update"
+            }
+          ],
+          "return": {
+            "type": "Promise",
+            "desc": "Resolved promise to updated object with updated `_rev`"
+          }
+        },
+        {
+          "name": "remove",
+          "description": "Removed an object from the datastore.\nThis function fires `host-rules-deleted` event.",
+          "privacy": "public",
+          "sourceRange": {
+            "start": {
+              "line": 91,
+              "column": 2
+            },
+            "end": {
+              "line": 110,
+              "column": 3
+            }
+          },
+          "metadata": {},
+          "params": [
+            {
+              "name": "id",
+              "type": "String",
+              "description": "The ID of the datastore entry."
+            },
+            {
+              "name": "rev",
+              "type": "?String",
+              "description": "Specific revision to read. Defaults to latest revision."
+            }
+          ],
+          "return": {
+            "type": "Promise",
+            "desc": "Promise resolved to a new `_rev` property of deleted object."
+          }
+        },
+        {
+          "name": "list",
+          "description": "Lists all existing host rules",
+          "privacy": "public",
+          "sourceRange": {
+            "start": {
+              "line": 116,
+              "column": 2
+            },
+            "end": {
+              "line": 130,
+              "column": 3
+            }
+          },
+          "metadata": {},
+          "params": [],
+          "return": {
+            "type": "Promise",
+            "desc": "Promise resolved to list of the host rules"
+          }
+        },
+        {
+          "name": "_updatedHandler",
+          "description": "",
+          "privacy": "protected",
+          "sourceRange": {
+            "start": {
+              "line": 132,
+              "column": 2
+            },
+            "end": {
+              "line": 163,
+              "column": 3
+            }
+          },
+          "metadata": {},
+          "params": [
+            {
+              "name": "e"
+            }
+          ],
+          "return": {
+            "type": "void"
+          }
+        },
+        {
+          "name": "_deletedHandler",
+          "description": "",
+          "privacy": "protected",
+          "sourceRange": {
+            "start": {
+              "line": 165,
+              "column": 2
+            },
+            "end": {
+              "line": 180,
+              "column": 3
+            }
+          },
+          "metadata": {},
+          "params": [
+            {
+              "name": "e"
+            }
+          ],
+          "return": {
+            "type": "void"
+          }
+        },
+        {
+          "name": "_listHandler",
+          "description": "",
+          "privacy": "protected",
+          "sourceRange": {
+            "start": {
+              "line": 182,
+              "column": 2
+            },
+            "end": {
+              "line": 190,
+              "column": 3
+            }
+          },
+          "metadata": {},
+          "params": [
+            {
+              "name": "e"
+            }
+          ],
+          "return": {
+            "type": "void"
+          }
+        }
+      ],
+      "staticMethods": [],
+      "demos": [],
+      "metadata": {},
+      "sourceRange": {
+        "start": {
+          "line": 22,
+          "column": 0
+        },
+        "end": {
+          "line": 191,
+          "column": 1
+        }
+      },
+      "privacy": "public",
+      "superclass": "ArcBaseModel",
+      "name": "LogicElements.HostRulesModel",
+      "attributes": [],
+      "events": [],
+      "styling": {
+        "cssVariables": [],
+        "selectors": []
+      },
+      "slots": [],
+      "tagname": "host-rules-model"
+    }
+  ]
+}
