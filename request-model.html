@@ -11,275 +11,270 @@ WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
 License for the specific language governing permissions and limitations under
 the License.
 -->
-<link rel="import" href="../polymer/polymer.html">
-<link rel="import" href="../app-pouchdb/pouchdb.html">
-<link rel="import" href="../events-target-behavior/events-target-behavior.html">
-<!--
-Events based access to saved request datastore.
-
-Note: **All events must be cancelable.** When the event is cancelled by an instance
-of the element it won't be handled again by other instance that possibly exists
-in the DOM.
-
-Cancellable event is a request to models for change. Non-cancellable event
-is a notification for views to update their values.
-For example `request-object-changed` event notifies model to update object in
-the datastore if the event is cancelable and to update views if it's not
-cancellable.
-
-Each handled event contains the `result` property on the `detail` object. It
-contains a `Promise` object with a result of the operation. Also, for update / delete
-events the same non-cancelable event is fired.
-
-Events handled by this element are cancelled and propagation of the event is
-stopped.
-
-Supported operations:
-
--   Read request object (`request-object-read`)
--   Update name only (`request-name-changed`)
--   Update request object (`request-object-changed`)
--   Delete object (`request-object-deleted`)
--   Deletes list of request objects (`request-objects-deleted`)
-
-## Request object types
-
-There are two request object types: `saved-requests` and `history-requests`.
-Each event must contain a `type` property to determine which database to query
-for an object.
-
-### Events description
-
-#### `request-object-read` event
-
-Reads a request object from the datastore.
-
-##### Properties
--   `id` (String, required) ID of the datastore entry
--   `rev` (String, optional) Specific revision to retrieve from the datastore. Latest by default.
--   `type` {String, required} Request object type. Either `saved-requests` or `history-requests`
-
-##### Example
-
-```javascript
-var event = new CustomEvent('request-object-read', {
-  detail: { id: 'some-id', type: 'saved-requests' },
-  bubbles: true,
-  composed: true,
-  cancelable: true
-});
-if (event.defaultPrevented) {
-  event.detail.result.then(request => console.log(request));
-}
-```
-
-#### `request-name-changed` Event
-
-Changes name of a request. Promise result has updated `name` and `_rev` properties.
-This operation deletes old object because it changes the `name` of the request
-that is used to build the datastore key.
-
-##### Properties
--   `id` (String, required if `project` is not set) ID of the datastore entry
--   `request` (Object, required if `id` is not set) The database entity
--   `name` (String, required) New name of the project. It doesn't matter if `project` property already has new name.
--   `type` {String, required} Request object type. Either `saved-requests` or `history-requests`
-
-##### Example
-
-```javascript
-var event = new CustomEvent('request-name-changed', {
-  detail: { id: 'some-id', name: 'new name', type: 'history-requests' },
-  bubbles: true,
-  composed: true,
-  cancelable: true
-});
-if (event.defaultPrevented) {
-  event.detail.result.then(request => console.log(request));
-}
-```
-
-#### `request-object-changed` event
-
-Updates / saves new object in the datastore.
-
-##### Properties
-
--   `request` (Object, required) An object to store
--   `type` {String, required} Request object type. Either `saved-requests` or `history-requests`
-
-##### Example
-
-```javascript
-var event = new CustomEvent('request-object-changed', {
-  detail: { request: {...}, type: 'saved-requests' },
-  bubbles: true,
-  composed: true,
-  cancelable: true
-});
-if (event.defaultPrevented) {
-  event.detail.result.then(request => console.log(request));
-}
-```
-
-#### `request-object-deleted` event
-
-Deletes the object from the datastore. This operation fires `request-object-deleted`
-custom event. Promise returns object's new `_rev` value.
-
-##### Properties
--   `id` (String, required) ID of the datastore entry
--   `rev` (String, optional) The `_rev` property of the PouchDB datastore object. If not set it will use latest revision.
--   `type` {String, required} Request object type. Either `saved-requests` or `history-requests`
-
-##### Example
-
-```javascript
-var event = new CustomEvent('request-object-deleted', {
-  detail: { id: 'some-id', type: 'saved-requests' },
-  bubbles: true,
-  composed: true,
-  cancelable: true
-});
-if (event.defaultPrevented) {
-  event.detail.result.then(newRev => console.log(newRev));
-}
-```
-
-#### `request-objects-deleted` event
-
-Removes list of requests in batch operation. Promise results to the map where keys
-are request ids and values are new revision hash.
-
-##### Properties
-
--   `items` (Array, required) List of IDs to delete
--   `type` {String, required} Request object type. Either `saved-requests` or `history-requests`
-
-##### Example
-
-```javascript
-var event = new CustomEvent('request-objects-deleted', {
-  detail: {
-    items: ['some-id', 'other-id'],
-    type: 'saved-requests'
-  },
-  bubbles: true,
-  composed: true,
-  cancelable: true
-});
-if (event.defaultPrevented) {
-  event.detail.result.then(deleted => console.log(deleted));
-}
-```
-
-#### `request-objects-undeleted` event
-
-Restores previously deleted requests from the history.
-It searches in the revision history of each object to find a revision before
-passed `_rev` and restores this object as a new one in the revision tree.
-
-This operation fires `request-object-deleted` custom event. Promise returns
-request objects with updated `_rev` value.
-
-##### Properties
-
--   `items` (Array, required) List of requests to restore. It required `_id` and `_rev` properties to be set on each object. The `_rev` property must be a revision updated after the deletion of the object.
--   `type` {String, required} Request object type. Either `saved-requests` or `history-requests`
-
-##### Example
-
-```javascript
-var event = new CustomEvent('request-objects-deleted', {
-  detail: {
-    items: [{_id: 'some-id', '_rev': '2-xyz'}],
-    type: 'saved-requests'
-  },
-  bubbles: true,
-  composed: true,
-  cancelable: true
-});
-if (event.defaultPrevented) {
-  event.detail.result.then(restored => console.log(restored));
-}
-```
-
-@group Logic Elements
-@element request-model
--->
+<link rel="import" href="base-model.html">
 <script>
-Polymer({
-  is: 'request-model',
+/**
+ * Events based access to saved request datastore.
+ *
+ * Note: **All events must be cancelable.** When the event is cancelled by an instance
+ * of the element it won't be handled again by other instance that possibly exists
+ * in the DOM.
+ *
+ * Cancellable event is a request to models for change. Non-cancellable event
+ * is a notification for views to update their values. For example
+ * `request-object-changed` event notifies model to update object in
+ * the datastore if the event is cancelable and to update views if it's not
+ * cancellable.
+ *
+ * Each handled event contains the `result` property on the `detail` object. It
+ * contains a `Promise` object with a result of the operation. Also, for update / delete
+ * events the same non-cancelable event is fired.
+ *
+ * Events handled by this element are cancelled and propagation of the event is
+ * stopped.
+ *
+ * Supported operations:
+ *
+ * -   Read request object (`request-object-read`)
+ * -   Update name only (`request-name-changed`)
+ * -   Update request object (`request-object-changed`)
+ * -   Delete object (`request-object-deleted`)
+ * -   Deletes list of request objects (`request-objects-deleted`)
+ *
+ * ## Request object types
+ *
+ * There are two request object types: `saved-requests` and `history-requests`.
+ * Each event must contain a `type` property to determine which database to query
+ * for an object.
+ *
+ * ### Events description
+ *
+ * #### `request-object-read` event
+ *
+ * Reads a request object from the datastore.
+ *
+ * ##### Properties
+ *
+ * -   `id` (String, required) ID of the datastore entry
+ * -   `rev` (String, optional) Specific revision to retrieve from the
+ * datastore. Latest by default.
+ * -   `type` {String, required} Request object type. Either `saved-requests`
+ * or `history-requests`
+ *
+ * ##### Example
+ *
+ * ```javascript
+ * var event = new CustomEvent('request-object-read', {
+ *    detail: { id: 'some-id', type: 'saved-requests' },
+ *    bubbles: true,
+ *    composed: true,
+ *    cancelable: true
+ * });
+ * if (event.defaultPrevented) {
+ *    event.detail.result.then(request => console.log(request));
+ * }
+ * ```
+ *
+ * #### `request-name-changed` Event
+ *
+ * Changes name of a request. Promise result has updated `name` and `_rev` properties.
+ * This operation deletes old object because it changes the `name` of the request
+ * that is used to build the datastore key.
+ *
+ * ##### Properties
+ * -   `id` (String, required if `project` is not set) ID of the datastore entry
+ * -   `request` (Object, required if `id` is not set) The database entity
+ * -   `name` (String, required) New name of the project. It doesn't matter
+ * if `project` property already has new name.
+ * -   `type` {String, required} Request object type. Either `saved-requests`
+ * or `history-requests`
+ *
+ * ##### Example
+ *
+ * ```javascript
+ * var event = new CustomEvent('request-name-changed', {
+ *    detail: { id: 'some-id', name: 'new name', type: 'history-requests' },
+ *    bubbles: true,
+ *    composed: true,
+ *    cancelable: true
+ * });
+ * if (event.defaultPrevented) {
+ *    event.detail.result.then(request => console.log(request));
+ * }
+ * ```
+ *
+ * #### `request-object-changed` event
+ *
+ * Updates / saves new object in the datastore.
+ *
+ * ##### Properties
+ *
+ * -   `request` (Object, required) An object to store
+ * -   `type` {String, required} Request object type. Either `saved-requests`
+ * or `history-requests`
+ *
+ * ##### Example
+ **
+ * ```javascript
+ * var event = new CustomEvent('request-object-changed', {
+ *    detail: { request: {...}, type: 'saved-requests' },
+ *    bubbles: true,
+ *    composed: true,
+ *    cancelable: true
+ * });
+ * if (event.defaultPrevented) {
+ *    event.detail.result.then(request => console.log(request));
+ * }
+ * ```
+ *
+ * #### `request-object-deleted` event
+ *
+ * Deletes the object from the datastore. This operation fires `request-object-deleted`
+ * custom event. Promise returns object's new `_rev` value.
+ *
+ * ##### Properties
+ * -   `id` (String, required) ID of the datastore entry
+ * -   `rev` (String, optional) The `_rev` property of the PouchDB datastore
+ * object. If not set it will use latest revision.
+ * -   `type` {String, required} Request object type. Either `saved-requests` or
+ * `history-requests`
+ *
+ * ##### Example
+ *
+ * ```javascript
+ * var event = new CustomEvent('request-object-deleted', {
+ *    detail: { id: 'some-id', type: 'saved-requests' },
+ *    bubbles: true,
+ *    composed: true,
+ *    cancelable: true
+ * });
+ * if (event.defaultPrevented) {
+ *    event.detail.result.then(newRev => console.log(newRev));
+ * }
+ * ```
+ *
+ * #### `request-objects-deleted` event
+ *
+ * Removes list of requests in batch operation. Promise results to the map where keys
+ * are request ids and values are new revision hash.
+ *
+ * ##### Properties
+ *
+ * -   `items` (Array, required) List of IDs to delete
+ * -   `type` {String, required} Request object type. Either `saved-requests` or `history-requests`
+ *
+ * ##### Example
+ *
+ * ```javascript
+ * var event = new CustomEvent('request-objects-deleted', {
+ *    detail: {
+ *      items: ['some-id', 'other-id'],
+ *      type: 'saved-requests'
+ *    },
+ *    bubbles: true,
+ *    composed: true,
+ *    cancelable: true
+ *  });
+ *  if (event.defaultPrevented) {
+ *    event.detail.result.then(deleted => console.log(deleted));
+ *  }
+ *  ```<link rel="import" href="../polymer/polymer.html">
+ *  <link rel="import" href="../app-pouchdb/pouchdb.html">
+ *  <link rel="import" href="../events-target-behavior/events-target-behavior.html">
+ *
+ * #### `request-objects-undeleted` event
+ *
+ * Restores previously deleted requests from the history.
+ * It searches in the revision history of each object to find a revision before
+ * passed `_rev` and restores this object as a new one in the revision tree.
+ *
+ * This operation fires `request-object-deleted` custom event. Promise returns
+ * request objects with updated `_rev` value.
+ *
+ * ##### Properties
+ *
+ * -   `items` (Array, required) List of requests to restore. It required `_id`
+ * and `_rev` properties to be set on each object. The `_rev` property must be
+ * a revision updated after the deletion of the object.
+ * -   `type` {String, required} Request object type. Either `saved-requests`
+ * or `history-requests`
+ *
+ * ##### Example
+ *
+ * ```javascript
+ * var event = new CustomEvent('request-objects-deleted', {
+ *    detail: {
+ *      items: [{_id: 'some-id', '_rev': '2-xyz']},
+ *      type: 'saved-requests'
+ *    },
+ *    bubbles: true,<link rel="import" href="../polymer/polymer.html">
+ * <link rel="import" href="../app-pouchdb/pouchdb.html">
+ * <link rel="import" href="../events-target-behavior/events-target-behavior.html">
+ *    composed: true,
+ *    cancelable: true
+ * });
+ * if (event.defaultPrevented) {
+ *    event.detail.result.then(restored => console.log(restored));
+ * }
+ * ```
+ *
+ * @polymer
+ * @customElement
+ * @memberof LogicElements
+ */
+class RequestModel extends ArcBaseModel {
+  /* global ArcBaseModel */
+  static get is() { return 'request-model'; }
 
-  behaviors: [ArcBehaviors.EventsTargetBehavior],
+  constructor() {
+    super();
+    this._handleRead = this._handleRead.bind(this);
+    this._handleNameChange = this._handleNameChange.bind(this);
+    this._handleObjectSave = this._handleObjectSave.bind(this);
+    this._handleObjectDelete = this._handleObjectDelete.bind(this);
+    this._handleObjectsDelete = this._handleObjectsDelete.bind(this);
+    this._handleObjectsUndelete = this._handleObjectsUndelete.bind(this);
+  }
 
-  /**
-   * Fired when the project entity has been saved / updated in the datastore.
-   *
-   * @event request-object-changed
-   * @param {Object} request Request object with new `_rev`.
-   * @param {String} oldRev Entity old `_rev` property. May be `undefined` when
-   * creating new entity.
-   * @param {String} oldId Entity old `_id` property. May be `undefined` when
-   * creating new entity.
-   * @param {String} type Request object type. Can be either `saved-requests` or
-   * `history-requests`
-   */
+  _attachListeners(node) {
+    node.addEventListener('request-object-read', this._handleRead);
+    node.addEventListener('request-name-changed', this._handleNameChange);
+    node.addEventListener('request-object-changed', this._handleObjectSave);
+    node.addEventListener('request-object-deleted', this._handleObjectDelete);
+    node.addEventListener('request-objects-deleted', this._handleObjectsDelete);
+    node.addEventListener('request-objects-undeleted', this._handleObjectsUndelete);
+  }
 
-  /**
-   * @event request-object-deleted
-   * @param {String} id Removed request ID
-   * @param {String} rev Updated `_rev` property of the object.
-   * @param {String} oldRev Entity old `_rev` property (before delete).
-   * @param {String} type Request object type. Can be either `saved-requests` or
-   * `history-requests`
-   */
-
-  _attachListeners: function(node) {
-    this.listen(node, 'request-object-read', '_handleRead');
-    this.listen(node, 'request-name-changed', '_handleNameChange');
-    this.listen(node, 'request-object-changed', '_handleObjectSave');
-    this.listen(node, 'request-object-deleted', '_handleObjectDelete');
-    this.listen(node, 'request-objects-deleted', '_handleObjectsDelete');
-    this.listen(node, 'request-objects-undeleted', '_handleObjectsUndelete');
-  },
-
-  _detachListeners: function(node) {
-    this.unlisten(node, 'request-object-read', '_handleRead');
-    this.unlisten(node, 'request-name-changed', '_handleNameChange');
-    this.unlisten(node, 'request-object-changed', '_handleObjectSave');
-    this.unlisten(node, 'request-object-deleted', '_handleObjectDelete');
-    this.unlisten(node, 'request-objects-deleted', '_handleObjectsDelete');
-    this.unlisten(node, 'request-objects-undeleted', '_handleObjectsUndelete');
-  },
+  _detachListeners(node) {
+    node.removeEventListener('request-object-read', this._handleRead);
+    node.removeEventListener('request-name-changed', this._handleNameChange);
+    node.removeEventListener('request-object-changed', this._handleObjectSave);
+    node.removeEventListener('request-object-deleted', this._handleObjectDelete);
+    node.removeEventListener('request-objects-deleted', this._handleObjectsDelete);
+    node.removeEventListener('request-objects-undeleted', this._handleObjectsUndelete);
+  }
 
   get savedDb() {
+    /* global PouchDB */
     return new PouchDB('saved-requests');
-  },
+  }
 
   get historyDb() {
     return new PouchDB('history-requests');
-  },
+  }
   /**
    * Returns a reference to a PouchDB database instance for given type.
    *
    * @param {String} type Either `saved-requests` or `history-requests`
    * @return {PouchDB} PouchDB instance for the datastore.
    */
-  getDatabase: function(type) {
+  getDatabase(type) {
     switch (type) {
       case 'saved-requests': return this.savedDb;
       case 'history-requests': return this.historyDb;
       default: throw new Error('Unknown database type');
     }
-  },
-
-  _fireUpdated: function(type, detail) {
-    return this.fire(type, detail, {
-      cancelable: false,
-      composed: true
-    });
-  },
+  }
   /**
    * Reads an entry from the datastore.
    *
@@ -288,14 +283,14 @@ Polymer({
    * @param {?String} rev Specific revision to read. Defaults to latest revision.
    * @return {Promise} Promise resolved to a project object.
    */
-  read: function(type, id, rev) {
-    var opts = {};
+  read(type, id, rev) {
+    const opts = {};
     if (rev) {
       opts.rev = rev;
     }
-    var db = this.getDatabase(type);
+    const db = this.getDatabase(type);
     return db.get(id, opts);
-  },
+  }
   /**
    * Updates / saves the request object in the datastore.
    * This function fires `request-object-changed` event.
@@ -307,18 +302,17 @@ Polymer({
    * @param {Object} request An object to save / update
    * @return {Promise} Resolved promise to request object with updated `_rev`
    */
-  update: function(type, request) {
-    var db = this.getDatabase(type);
-
-    var promise;
-    var oldRev = request._rev;
-    var oldId = request._id;
-    var regenerateId = false;
-    var isHistory = type === 'history-requests';
+  update(type, request) {
+    const db = this.getDatabase(type);
+    let promise;
+    let oldRev = request._rev;
+    let oldId = request._id;
+    let regenerateId = false;
+    const isHistory = type === 'history-requests';
     if (request._id) {
       // Checks if the ID has to be regenerated if parts of the ID changes.
       promise = this.read(type, request._id, request._rev)
-      .then(req => {
+      .then((req) => {
         oldId = req._id;
         oldRev = request._rev = req._rev;
         if (!isHistory && request.name !== req.name) {
@@ -341,8 +335,8 @@ Polymer({
     return promise
     .then(() => {
       if (regenerateId) {
-        let removeId = request._id;
-        let removeRev = request._rev;
+        const removeId = request._id;
+        const removeRev = request._rev;
         request._id = this._generateId(request, isHistory);
         delete request._rev;
         return db.remove(removeId, removeRev);
@@ -354,9 +348,9 @@ Polymer({
       request.updated = Date.now();
       return db.put(request);
     })
-    .then(result => {
+    .then((result) => {
       request._rev = result.rev;
-      let detail = {
+      const detail = {
         request: request,
         oldRev: oldRev,
         oldId: oldId,
@@ -365,16 +359,16 @@ Polymer({
       this._fireUpdated('request-object-changed', detail);
       return request;
     });
-  },
+  }
   /**
    * Updates more than one request in a bulk.
    * @param {String} type Request type: `saved-requests` or `history-requests`
    * @param {Array} request List of requests to update.
    * @return {Array} List of PouchDB responses to each insert
    */
-  updateBulk: function(type, requests) {
-    var promises = requests.map(item => {
-      let options = {
+  updateBulk(type, requests) {
+    const promises = requests.map((item) => {
+      const options = {
         oldRev: item._rev,
         oldId: item._id,
         regenerateId: false,
@@ -383,7 +377,7 @@ Polymer({
       };
       if (item._id) {
         return this.read(type, item._id, item._rev)
-        .then(req => {
+        .then((req) => {
           options.oldId = req._id;
           options.oldRev = options.request._rev = req._rev;
           if (!options.isHistory && item.name !== req.name) {
@@ -401,14 +395,14 @@ Polymer({
         return Promise.resolve(options);
       }
     });
-    var db = this.getDatabase(type);
-    var toInsert = [];
+    const db = this.getDatabase(type);
+    const toInsert = [];
     return Promise.all(promises)
-    .then(list => {
-      let toRemove = [];
-      list.forEach(item => {
+    .then((list) => {
+      const toRemove = [];
+      list.forEach((item) => {
         if (item.regenerateId) {
-          let clone = Object.assign({}, item.request);
+          const clone = Object.assign({}, item.request);
           clone._deleted = true;
           toRemove.push(clone);
           item.request._id = this._generateId(item.request, item.isHistory);
@@ -421,9 +415,9 @@ Polymer({
       });
       if (toRemove.length) {
         return db.bulkDocs(toRemove)
-        .then(response => {
+        .then((response) => {
           response.forEach((item, index) => {
-            let detail = {
+            const detail = {
               id: item.id,
               rev: item.rev,
               oldRev: toRemove[index]._rev,
@@ -434,19 +428,17 @@ Polymer({
         });
       }
     })
-    .then(() => {
-      return db.bulkDocs(toInsert.map(item => item.request));
-    })
-    .then(response => {
+    .then(() => db.bulkDocs(toInsert.map((item) => item.request)))
+    .then((response) => {
       response.forEach((item, index) => {
         if (!item.ok) {
           console.warn('Update error', item);
           return;
         }
-        let options = toInsert[index];
-        let request = options.request;
+        const options = toInsert[index];
+        const request = options.request;
         request._rev = item.rev;
-        let detail = {
+        const detail = {
           request: request,
           oldRev: options.oldRev,
           oldId: options.oldId,
@@ -456,8 +448,7 @@ Polymer({
       });
       return response;
     });
-  },
-
+  }
   /**
    * Removed an object from the datastore.
    * This function fires `request-object-deleted` event.
@@ -467,20 +458,20 @@ Polymer({
    * @param {?String} rev Specific revision to read. Defaults to latest revision.
    * @return {Promise} Promise resolved to a new `_rev` property of deleted object.
    */
-  remove: function(type, id, rev) {
-    var promise;
+  remove(type, id, rev) {
+    let promise;
     if (!rev) {
       promise = this.read(type, id)
-      .then(obj => rev = obj._rev);
+      .then((obj) => rev = obj._rev);
     } else {
       promise = Promise.resolve();
     }
     return promise.then(() => {
-      var db = this.getDatabase(type);
+      const db = this.getDatabase(type);
       return db.remove(id, rev);
     })
     .then(response => {
-      let detail = {
+      const detail = {
         id: id,
         rev: response.rev,
         oldRev: rev,
@@ -489,7 +480,7 @@ Polymer({
       this._fireUpdated('request-object-deleted', detail);
       return response.rev;
     });
-  },
+  }
   /**
    * Reverts deleted items.
    * This function fires `request-object-changed` event for each restored
@@ -501,19 +492,18 @@ Polymer({
    * @return {Promise} Resolved promise with restored objects. Objects have
    * updated `_rev` property.
    */
-  revertRemove: function(type, items) {
-    var db = this.getDatabase(type);
+  revertRemove(type, items) {
+    const db = this.getDatabase(type);
     // first get information about previous revision (before delete)
-
     return this._findNotDeleted(db, items)
-    .then(restored => {
+    .then((restored) => {
       restored = restored.map((doc, i) => {
         doc._rev = items[i]._rev;
         return doc;
       });
       return db.bulkDocs(restored);
     })
-    .then(result => {
+    .then((result) => {
       return db.allDocs({
         keys: result.map(item => item.id),
         // jscs:disable
@@ -521,9 +511,9 @@ Polymer({
         // jscs:enable
       });
     })
-    .then(result => {
+    .then((result) => {
       result.rows.forEach((request, i) => {
-        let detail = {
+        const detail = {
           request: request.doc,
           oldRev: items[i]._rev,
           oldId: request.id,
@@ -533,33 +523,33 @@ Polymer({
       });
       return result.rows;
     });
-  },
+  }
 
-  _findNotDeleted: function(db, items) {
-    var list = items.map(item => {
+  _findNotDeleted(db, items) {
+    const list = items.map((item) => {
       return {
         id: item._id,
         rev: item._rev
       };
     });
-    var options = {
+    const options = {
       docs: list,
       revs: true
     };
     return db.bulkGet(options)
-    .then(result => {
+    .then((result) => {
       return result.results.map((item, i) => {
-        let doc = item.docs[0].ok;
-        let revs = doc._revisions;
-        let undeletedRevision = this._findUndeletedRevision(revs, items[i]._rev);
+        const doc = item.docs[0].ok;
+        const revs = doc._revisions;
+        const undeletedRevision = this._findUndeletedRevision(revs, items[i]._rev);
         if (!undeletedRevision) {
           throw new Error('Previous version of the object not found');
         }
         return db.get(doc._id, {rev: undeletedRevision});
       });
     })
-    .then(promises => Promise.all(promises));
-  },
+    .then((promises) => Promise.all(promises));
+  }
   /**
    * Finds a next revision after the `deletedRevision` in the revisions history
    * which is the one that reverts any changes made after it.
@@ -569,13 +559,13 @@ Polymer({
    * @return {String} Revision ID of the object before a change registered in
    * `deletedRevision`
    */
-  _findUndeletedRevision: function(revs, deletedRevision) {
+  _findUndeletedRevision(revs, deletedRevision) {
     // find a revision matching deleted item's updated rev
     let index = revs.start;
-    let ids = revs.ids;
+    const ids = revs.ids;
     let found = false;
     for (let i = 0, len = ids.length; i < len; i++) {
-      let revision = index + '-' + ids[i];
+      const revision = index + '-' + ids[i];
       if (found) {
         return revision;
       }
@@ -585,7 +575,7 @@ Polymer({
       }
       index--;
     }
-  },
+  }
   /**
    * Generates the IS for the request depending on it's type and properties.
    *
@@ -594,22 +584,22 @@ Polymer({
    * item
    * @return {String} A database ID
    */
-  _generateId: function(request, isHistory) {
-    var id;
+  _generateId(request, isHistory) {
+    let id;
     if (isHistory) {
       let time = request.updated || request.created;
       time = Number(time);
       if (time !== time) {
         time = request.updated = request.created = Date.now();
       }
-      id = this._getDayToday(time);
+      id = this._computeMidnight(time);
     } else {
       request.name = request.name || '';
-      let name = request.name.toLowerCase();
+      const name = request.name.toLowerCase();
       id = encodeURIComponent(name);
     }
     id += '/';
-    var url = request.url || '';
+    let url = request.url || '';
     url = url.toLowerCase();
     id += encodeURIComponent(url) + '/';
     id += (request.method || '').toLowerCase();
@@ -617,106 +607,89 @@ Polymer({
       id += '/' + request.legacyProject;
     }
     return id;
-  },
-  /**
-   * Setss hours, minutes, seconds and ms to 0 and returns timestamp.
-   *
-   * @return {Number} Timestamp to the day.
-   */
-  _getDayToday: function(timestamp) {
-    var d = new Date(timestamp);
-    var tCheck = d.getTime();
-    if (tCheck !== tCheck) {
-      throw new Error('Invalid timestamp: ' + timestamp);
-    }
-    d.setMilliseconds(0);
-    d.setSeconds(0);
-    d.setMinutes(0);
-    d.setHours(0);
-    return d.getTime();
-  },
+  }
   /**
    * Handler for request read event request.
    */
-  _handleRead: function(e, detail) {
-    if (!e.cancelable || e.target === this) {
+  _handleRead(e) {
+    if (!e.cancelable || e.composedPath()[0] === this) {
       return;
     }
     e.preventDefault();
     e.stopPropagation();
 
-    if (!detail.id) {
+    if (!e.detail.id) {
       e.detail.result = Promise.reject(new Error('Request "id" property is missing.'));
       return;
     }
-    if (!detail.type) {
+    if (!e.detail.type) {
       e.detail.result = Promise.reject(new Error('Request "type" property is missing.'));
       return;
     }
-    e.detail.result = this.read(detail.type, detail.id, detail.rev)
+    e.detail.result = this.read(e.detail.type, e.detail.id, e.detail.rev)
     .catch((e) => this._handleException(e));
-  },
+  }
 
   // Updates name of a request.
-  _handleNameChange: function(e, detail) {
-    if (!e.cancelable || e.target === this) {
+  _handleNameChange(e) {
+    if (!e.cancelable || e.composedPath()[0] === this) {
       return;
     }
     e.preventDefault();
     e.stopPropagation();
 
-    if (!detail.name) {
+    if (!e.detail.name) {
       e.detail.result = Promise.reject(new Error('The "name" property is missing'));
       return;
     }
-    if (!detail.type) {
+    if (!e.detail.type) {
       e.detail.result = Promise.reject(new Error('Request "type" property is missing.'));
       return;
     }
-    var missingDataMsg = 'Either "request" object or request "id" must be set.';
-    if (!detail.request && !detail.id) {
+    const missingDataMsg = 'Either "request" object or request "id" must be set.';
+    if (!e.detail.request && !e.detail.id) {
       e.detail.result = Promise.reject(new Error(missingDataMsg));
       return;
     }
-    var request = detail.request;
-    var promise;
+    const request = e.detail.request;
+    let promise;
     if (request && request._id && request._rev) {
       promise = Promise.resolve(request);
     } else {
-      if (!detail.id) {
+      if (!e.detail.id) {
         e.detail.result = Promise.reject(new Error(missingDataMsg));
         return;
       }
-      promise = this.read(detail.type, detail.id);
+      promise = this.read(e.detail.type, e.detail.id);
     }
 
     e.detail.result = promise
-    .then(obj => {
+    .then((obj) => {
       obj = Object.assign({}, obj);
-      obj.name = detail.name;
-      return this.update(detail.type, obj);
+      obj.name = e.detail.name;
+      return this.update(e.detail.type, obj);
     })
     .catch((e) => this._handleException(e));
-  },
+  }
   // Handles onject save / update
-  _handleObjectSave: function(e, detail) {
-    if (!e.cancelable || e.target === this) {
+  _handleObjectSave(e) {
+    if (!e.cancelable || e.composedPath()[0] === this) {
       return;
     }
     e.preventDefault();
     e.stopPropagation();
 
-    var request = detail.request;
-    if (!detail.request) {
+    const request = e.detail.request;
+    if (!request) {
       e.detail.result = Promise.reject(new Error('The "request" property is missing.'));
       return;
     }
-    if (!detail.type) {
+    if (!e.detail.type) {
       e.detail.result = Promise.reject(new Error('The "type" property is missing.'));
       return;
     }
-    var db = this.getDatabase(detail.type);
-    var p;
+    const db = this.getDatabase(e.detail.type);
+    let p;
     if (request._id && !request._rev) {
       p = db.get(request._id)
       .catch((e) => {
@@ -730,65 +703,65 @@ Polymer({
       p = Promise.resolve({});
     }
     e.detail.result = p
-    .then(result => {
+    .then((result) => {
       result = Object.assign({}, result, request);
-      return this.update(detail.type, result);
+      return this.update(e.detail.type, result);
     })
     .catch((e) => this._handleException(e));
-  },
+  }
   // Deletes the object from the datastore.
-  _handleObjectDelete: function(e, detail) {
-    if (!e.cancelable || e.target === this) {
+  _handleObjectDelete(e) {
+    if (!e.cancelable || e.composedPath()[0] === this) {
       return;
     }
     e.preventDefault();
     e.stopPropagation();
 
-    if (!detail.type) {
+    if (!e.detail.type) {
       e.detail.result = Promise.reject(new Error('Request "type" property is missing.'));
       return;
     }
 
-    if (!detail.id) {
+    if (!e.detail.id) {
       e.detail.result = Promise.reject(new Error('Missing "id" property.'));
       return;
     }
 
-    e.detail.result = this.remove(detail.type, detail.id, detail.rev)
+    e.detail.result = this.remove(e.detail.type, e.detail.id, e.detail.rev)
     .catch((e) => this._handleException(e));
-  },
+  }
   // Queries for a list of projects.
-  _handleObjectsDelete: function(e, detail) {
-    if (!e.cancelable || e.target === this) {
+  _handleObjectsDelete(e) {
+    if (!e.cancelable || e.composedPath()[0] === this) {
       return;
     }
     e.preventDefault();
     e.stopPropagation();
 
-    if (!detail.type) {
+    if (!e.detail.type) {
       e.detail.result = Promise.reject(new Error('Request "type" property is missing.'));
       return;
     }
 
-    if (!detail.items) {
+    if (!e.detail.items) {
       e.detail.result = Promise.reject(new Error('The "items" property is missing.'));
       return;
     }
-    var db = this.getDatabase(detail.type);
-    var removed = [];
+    const db = this.getDatabase(e.detail.type);
+    let removed = [];
     e.detail.result = db.allDocs({
-      keys: detail.items
+      keys: e.detail.items
     })
-    .then(res => this._filterExistingItems(res))
-    .then(res => {
+    .then((res) => this._filterExistingItems(res))
+    .then((res) => {
       removed = res;
-      return Promise.all(res.map(i => db.remove(i.id, i.value.rev)));
+      return Promise.all(res.map((i) => db.remove(i.id, i.value.rev)));
     })
-    .then(result => {
-      var data = {};
-      result.forEach(item => {
+    .then((result) => {
+      const data = {};
+      result.forEach((item) => {
         if (item.ok) {
-          let detail = {
+          const detail = {
             id: item.id,
             rev: item.rev,
             oldRev: this._findOldRef(removed, item.id)
@@ -799,34 +772,34 @@ Polymer({
       });
       return data;
     });
-  },
+  }
   // handlers `request-objects-undeleted` event to restore deleted items
-  _handleObjectsUndelete: function(e, detail) {
-    if (!e.cancelable || e.target === this) {
+  _handleObjectsUndelete(e) {
+    if (!e.cancelable || e.composedPath()[0] === this) {
       return;
     }
     e.preventDefault();
     e.stopPropagation();
 
-    if (!detail.type) {
+    if (!e.detail.type) {
       e.detail.result = Promise.reject(new Error('Request "type" property is missing.'));
       return;
     }
 
-    if (!detail.items) {
+    if (!e.detail.items) {
       e.detail.result = Promise.reject(new Error('The "items" property is missing.'));
       return;
     }
-    e.detail.result = this.revertRemove(detail.type, detail.items)
+    e.detail.result = this.revertRemove(e.detail.type, e.detail.items)
     .catch((e) => this._handleException(e));
-  },
+  }
   /**
    * Filters query results to return only successfuly read data.
    * @param {Object} result PouchDB query result
    * @return {Array} List of request that has been read.
    */
-  _filterExistingItems: function(result) {
-    result = result.rows.filter(item => {
+  _filterExistingItems(result) {
+    result = result.rows.filter((item) => {
       if (item.error) {
         console.error(item);
         return false;
@@ -834,31 +807,34 @@ Polymer({
       return true;
     });
     return result;
-  },
-
-  _findOldRef: function(docs, id) {
-    var result = docs.find(item => item._id === id);
-    return result ? result._rev : undefined;
-  },
-  // Handles any exception in the model.
-  _handleException: function(e) {
-    this.fire('app-log', {
-      'message': ['Project model', e],
-      'level': 'error'
-    });
-    var message;
-    if (e instanceof Error) {
-      message = e.message;
-    } else {
-      message = JSON.stringify(e);
-    }
-    this.fire('send-analytics', {
-      type: 'exception',
-      description: message,
-      fatal: true
-    });
-    console.error('Project model', e);
-    throw e;
   }
-});
+
+  _findOldRef(docs, id) {
+    const result = docs.find((item) => item._id === id);
+    return result ? result._rev : undefined;
+  }
+
+  /**
+   * Fired when the project entity has been saved / updated in the datastore.
+   *
+   * @event request-object-changed
+   * @param {Object} request Request object with new `_rev`.
+   * @param {String} oldRev Entity old `_rev` property. May be `undefined` when
+   * creating new entity.
+   * @param {String} oldId Entity old `_id` property. May be `undefined` when
+   * creating new entity.
+   * @param {String} type Request object type. Can be either `saved-requests` or
+   * `history-requests`
+   */
+
+  /**
+   * @event request-object-deleted
+   * @param {String} id Removed request ID
+   * @param {String} rev Updated `_rev` property of the object.
+   * @param {String} oldRev Entity old `_rev` property (before delete).
+   * @param {String} type Request object type. Can be either `saved-requests` or
+   * `history-requests`
+   */
+}
+window.customElements.define(RequestModel.is, RequestModel);
 </script>

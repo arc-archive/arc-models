@@ -11,212 +11,170 @@ WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
 License for the specific language governing permissions and limitations under
 the License.
 -->
-<link rel="import" href="../polymer/polymer.html">
-<link rel="import" href="../app-pouchdb/pouchdb.html">
-<link rel="import" href="../events-target-behavior/events-target-behavior.html">
+<link rel="import" href="base-model.html">
+<script>
+/**
+ * Model for host rules.
+ *
+ * @polymer
+ * @customElement
+ * @memberof LogicElements
+ */
+class HostRulesModel extends ArcBaseModel {
+  /* global ArcBaseModel */
+  static get is() { return 'host-rules-model'; }
 
-<dom-module id="host-rules-model">
-  <template>
-    <style>
-      :host {
-        display: block;
-      }
-    </style>
+  constructor() {
+    super();
+    this._updatedHandler = this._updatedHandler.bind(this);
+    this._deletedHandler = this._deletedHandler.bind(this);
+    this._listHandler = this._listHandler.bind(this);
+  }
 
-  </template>
-  <script>
-    Polymer({
-      is: 'host-rules-model',
+  _attachListeners(node) {
+    node.addEventListener('host-rules-changed', this._updatedHandler);
+    node.addEventListener('host-rules-deleted', this._deletedHandler);
+    node.addEventListener('host-rules-list', this._listHandler);
+  }
 
-      behaviors: [ArcBehaviors.EventsTargetBehavior],
-
-      _attachListeners: function(node) {
-        this.listen(node, 'host-rules-changed', '_updatedHandler');
-        this.listen(node, 'host-rules-deleted', '_deletedHandler');
-        this.listen(node, 'host-rules-list', '_listHandler');
-      },
-
-      _detachListeners: function(node) {
-        this.unlisten(node, 'host-rules-changed', '_updatedHandler');
-        this.unlisten(node, 'host-rules-deleted', '_deletedHandler');
-        this.unlisten(node, 'host-rules-list', '_listHandler');
-      },
-      // A handler to host rules database
-      get db() {
-        return new PouchDB('host-rules');
-      },
-
-      _fireUpdated: function(type, detail) {
-        return this.fire(type, detail, {
-          cancelable: false,
-          composed: true
-        });
-      },
-
-      /**
-       * Reads an entry from the datastore.
-       *
-       * @param {String} id The ID of the datastore entry.
-       * @param {?String} rev Specific revision to read. Defaults to latest revision.
-       * @return {Promise} Promise resolved to a project object.
-       */
-      read: function(id, rev) {
-        var opts = {};
-        if (rev) {
-          opts.rev = rev;
-        }
-        return this.db.get(id, opts);
-      },
-
-      /**
-       * Updates / saves the host rule object in the datastore.
-       * This function fires `host-rules-changed` event.
-       *
-       * @param {Object} rule A rule object to save / update
-       * @return {Promise} Resolved promise to updated object with updated `_rev`
-       */
-      update: function(rule) {
-        rule.updated = Date.now();
-        var oldRev = rule._rev;
-        return this.db.put(rule)
-        .then(result => {
-          rule._rev = result.rev;
-          this._fireUpdated('host-rules-changed', {
-            rule: rule,
-            oldRev: oldRev
-          });
-          return rule;
-        });
-      },
-      /**
-       * Removed an object from the datastore.
-       * This function fires `host-rules-deleted` event.
-       *
-       * @param {String} id The ID of the datastore entry.
-       * @param {?String} rev Specific revision to read. Defaults to latest revision.
-       * @return {Promise} Promise resolved to a new `_rev` property of deleted object.
-       */
-      remove: function(id, rev) {
-        var promise;
-        if (!rev) {
-          promise = this.read(id)
-          .then(obj => rev = obj._rev);
-        } else {
-          promise = Promise.resolve();
-        }
-        return promise.then(() => {
-          return this.db.remove(id, rev);
-        })
-        .then(response => {
-          let detail = {
-            id: id,
-            rev: response.rev,
-            oldRev: rev
-          };
-          this._fireUpdated('host-rules-deleted', detail);
-          return response.rev;
-        });
-      },
-      /**
-       * Lists all existing host rules
-       *
-       * @return {Promise} Promise resolved to list of the host rules
-       */
-      list: function() {
-        var queryOptions = {
-          // jscs:disable
-          include_docs: true
-          // jscs:enable
-        };
-        return this.db.allDocs(queryOptions)
-        .then(response => {
-          let data = [];
-          if (response && response.rows.length > 0) {
-            data = response.rows.map(item => item.doc);
-          }
-          return data;
-        });
-      },
-
-      _updatedHandler: function(e) {
-        if (!e.cancelable || e.target === this) {
-          return;
-        }
-        e.preventDefault();
-        e.stopPropagation();
-        var rule = e.detail.rule;
-        if (!rule || !rule._id) {
-          e.detail.result = Promise.reject(new Error('The "rule" property is missing'));
-          return;
-        }
-        var db = this.db;
-        var p;
-        if (!rule._rev) {
-          p = db.get(rule._id).catch((e) => {
-            if (e.status === 404) {
-              // create new
-              return {};
-            }
-            this._handleException(e);
-          });
-        } else {
-          p = Promise.resolve({});
-        }
-        e.detail.result = p
-        .then(result => {
-          result = Object.assign({}, result, rule);
-          return this.update(result);
-        })
-        .catch((e) => this._handleException(e));
-      },
-
-      _deletedHandler: function(e) {
-        if (!e.cancelable || e.target === this) {
-          return;
-        }
-        e.preventDefault();
-        e.stopPropagation();
-
-        var id = e.detail.id;
-        if (!id) {
-          e.detail.result = Promise.reject(new Error('Missing "id" property.'));
-          return;
-        }
-
-        e.detail.result = this.remove(id, e.detail.rev)
-        .catch((e) => this._handleException(e));
-      },
-
-      _listHandler: function(e) {
-        if (!e.cancelable || e.target === this) {
-          return;
-        }
-        e.preventDefault();
-        e.stopPropagation();
-        e.detail.result = this.list()
-        .catch((e) => this._handleException(e));
-      },
-
-      // Handles any exception in the model.
-      _handleException: function(e) {
-        this.fire('app-log', {
-          'message': ['Host rules model', e],
-          'level': 'error'
-        });
-        console.error('Host rules model', e);
-        var message;
-        if (e instanceof Error) {
-          message = e.message;
-        } else {
-          message = JSON.stringify(e);
-        }
-        this.fire('send-analytics', {
-          type: 'exception',
-          description: message,
-          fatal: true
-        });
-        throw e;
-      }
+  _detachListeners(node) {
+    node.removeEventListener('host-rules-changed', this._updatedHandler);
+    node.removeEventListener('host-rules-deleted', this._deletedHandler);
+    node.removeEventListener('host-rules-list', this._listHandler);
+  }
+  // A handler to host rules database
+  get db() {
+    /* global PouchDB */
+    return new PouchDB('host-rules');
+  }
+  /**
+   * Updates / saves the host rule object in the datastore.
+   * This function fires `host-rules-changed` event.
+   *
+   * @param {Object} rule A rule object to save / update
+   * @return {Promise} Resolved promise to updated object with updated `_rev`
+   */
+  update(rule) {
+    rule.updated = Date.now();
+    const oldRev = rule._rev;
+    return this.db.put(rule)
+    .then((result) => {
+      rule._rev = result.rev;
+      this._fireUpdated('host-rules-changed', {
+        rule: rule,
+        oldRev: oldRev
+      });
+      return rule;
     });
-  </script>
-</dom-module>
+  }
+  /**
+   * Removed an object from the datastore.
+   * This function fires `host-rules-deleted` event.
+   *
+   * @param {String} id The ID of the datastore entry.
+   * @param {?String} rev Specific revision to read. Defaults to latest revision.
+   * @return {Promise} Promise resolved to a new `_rev` property of deleted object.
+   */
+  remove(id, rev) {
+    let promise;
+    if (!rev) {
+      promise = this.read(id)
+      .then((obj) => rev = obj._rev);
+    } else {
+      promise = Promise.resolve();
+    }
+    return promise
+    .then(() => this.db.remove(id, rev))
+    .then(response => {
+      const detail = {
+        id: id,
+        rev: response.rev,
+        oldRev: rev
+      };
+      this._fireUpdated('host-rules-deleted', detail);
+      return response.rev;
+    });
+  }
+  /**
+   * Lists all existing host rules
+   *
+   * @return {Promise} Promise resolved to list of the host rules
+   */
+  list() {
+    const queryOptions = {
+      // jscs:disable
+      include_docs: true
+      // jscs:enable
+    };
+    return this.db.allDocs(queryOptions)
+    .then(response => {
+      let data = [];
+      if (response && response.rows.length > 0) {
+        data = response.rows.map(item => item.doc);
+      }
+      return data;
+    });
+  }
+
+  _updatedHandler(e) {
+    if (!e.cancelable || e.composedPath()[0] === this) {
+      return;
+    }
+    e.preventDefault();
+    e.stopPropagation();
+    var rule = e.detail.rule;
+    if (!rule || !rule._id) {
+      e.detail.result = Promise.reject(new Error('The "rule" property is missing'));
+      return;
+    }
+    const db = this.db;
+    let p;
+    if (!rule._rev) {
+      p = db.get(rule._id)
+      .catch((e) => {
+        if (e.status === 404) {
+          // create new
+          return {};
+        }
+        this._handleException(e);
+      });
+    } else {
+      p = Promise.resolve({});
+    }
+    e.detail.result = p
+    .then((result) => {
+      result = Object.assign({}, result, rule);
+      return this.update(result);
+    })
+    .catch((e) => this._handleException(e));
+  }
+
+  _deletedHandler(e) {
+    if (!e.cancelable || e.composedPath()[0] === this) {
+      return;
+    }
+    e.preventDefault();
+    e.stopPropagation();
+
+    const id = e.detail.id;
+    if (!id) {
+      e.detail.result = Promise.reject(new Error('Missing "id" property.'));
+      return;
+    }
+
+    e.detail.result = this.remove(id, e.detail.rev)
+    .catch((e) => this._handleException(e));
+  }
+
+  _listHandler(e) {
+    if (!e.cancelable || e.composedPath()[0] === this) {
+      return;
+    }
+    e.preventDefault();
+    e.stopPropagation();
+    e.detail.result = this.list()
+    .catch((e) => this._handleException(e));
+  }
+}
+window.customElements.define(HostRulesModel.is, HostRulesModel);
+</script>

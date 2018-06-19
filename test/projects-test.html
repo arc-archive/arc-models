@@ -1,19 +1,9 @@
 <!doctype html>
-<!--
-@license
-Copyright (c) 2015 The Polymer Project Authors. All rights reserved.
-This code may only be used under the BSD style license found at http://polymer.github.io/LICENSE.txt
-The complete set of authors may be found at http://polymer.github.io/AUTHORS.txt
-The complete set of contributors may be found at http://polymer.github.io/CONTRIBUTORS.txt
-Code distributed by Google as part of the polymer project is also
-subject to an additional IP rights grant found at http://polymer.github.io/PATENTS.txt
--->
 <html>
   <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, minimum-scale=1.0, initial-scale=1.0, user-scalable=yes">
-
-    <script src="../../webcomponentsjs/webcomponents-lite.js"></script>
+    <script src="../../webcomponentsjs/webcomponents-loader.js"></script>
     <script src="../../web-component-tester/browser.js"></script>
     <script src="../../iron-test-helpers/test-helpers.js"></script>
     <script src="database-helper.js"></script>
@@ -36,8 +26,8 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
           return DatabaseHelper.clearProjects();
         });
 
-        var element;
-        var dataObj;
+        let element;
+        let dataObj;
         setup(function() {
           element = fixture('basic');
           dataObj = {
@@ -58,7 +48,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
         });
 
         test('Updates created object', function() {
-          var originalRev;
+          let originalRev;
           return element.update(dataObj)
           .then(result => {
             originalRev = result._rev;
@@ -74,7 +64,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
         });
 
         test('Fires project-object-changed custom event', function() {
-          var spy = sinon.spy();
+          const spy = sinon.spy();
           element.addEventListener('project-object-changed', spy);
           return element.update(dataObj)
           .then(() => {
@@ -83,7 +73,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
         });
 
         test('The project-object-changed event has properties of newly created object', function() {
-          var eventData;
+          let eventData;
           element.addEventListener('project-object-changed', function(e) {
             eventData = e.detail;
           });
@@ -96,8 +86,8 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
         });
 
         test('The project-object-changed event has properties of updated object', function() {
-          var eventData;
-          var originalRev;
+          let eventData;
+          let originalRev;
           return element.update(dataObj)
           .then(result => {
             element.addEventListener('project-object-changed', function(e) {
@@ -120,8 +110,8 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
           return DatabaseHelper.clearProjects();
         });
 
-        var element;
-        var dataObj;
+        let element;
+        let dataObj;
         setup(function() {
           element = fixture('basic');
           dataObj = {
@@ -140,8 +130,8 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
         });
 
         test('Reads a revision', function() {
-          var originalRev;
-          var updatedRev;
+          let originalRev;
+          let updatedRev;
           return element.read(dataObj._id)
           .then(result => {
             originalRev = result._rev;
@@ -164,8 +154,8 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
           return DatabaseHelper.clearProjects();
         });
 
-        var element;
-        var dataObj;
+        let element;
+        let dataObj;
         setup(function() {
           element = fixture('basic');
           dataObj = {
@@ -191,7 +181,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
         });
 
         test('Fires project-object-deleted custom event', function() {
-          var spy = sinon.spy();
+          const spy = sinon.spy();
           element.addEventListener('project-object-deleted', spy);
           return element.remove(dataObj._id, dataObj._rev)
           .then(() => {
@@ -200,7 +190,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
         });
 
         test('project-object-deleted event contains project data', function() {
-          var eventData;
+          let eventData;
           element.addEventListener('project-object-deleted', function(e) {
             eventData = e.detail;
           });
@@ -219,8 +209,8 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
           return DatabaseHelper.clearProjects();
         });
 
-        var element;
-        var dataObj;
+        let element;
+        let dataObj;
         setup(function() {
           element = fixture('basic');
           dataObj = {
@@ -242,6 +232,5 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
       });
     });
     </script>
-
   </body>
 </html>

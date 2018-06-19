@@ -11,150 +11,188 @@ WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
 License for the specific language governing permissions and limitations under
 the License.
 -->
-<link rel="import" href="../polymer/polymer.html">
-<link rel="import" href="../app-pouchdb/pouchdb.html">
-<link rel="import" href="../events-target-behavior/events-target-behavior.html">
-<!--
-Events based access to websockets URL history datastore.
 
-Note: **All events must be cancelable.** When the event is cancelled by an instance
-of the element it won't be handled again by other instance that possibly exists
-in the DOM.
-
-Cancellable event is a request to models for change. Non-cancellable event
-is a notification for views to update their values.
-For example `request-object-changed` event notifies model to update object in
-the datastore if the event is cancelable and to update views if it's not
-cancellable.
-
-Each handled event contains the `result` property on the `detail` object. It
-contains a `Promise` object with a result of the operation. Also, for update / delete
-events the same non-cancelable event is fired.
-
-Events handled by this element are cancelled and propagation of the event is
-stopped.
-
-@group Logic Elements
-@element websocket-url-history-model
--->
+<link rel="import" href="base-model.html">
 <script>
-Polymer({
-  is: 'websocket-url-history-model',
+/**
+ * Events based access to websockets URL history datastore.
+ *
+ * Note: **All events must be cancelable.** When the event is cancelled by an instance
+ * of the element it won't be handled again by other instance that possibly exists
+ * in the DOM.
+ *
+ * Cancellable event is a request to models for change. Non-cancellable event
+ * is a notification for views to update their values.
+ * For example `request-object-changed` event notifies model to update object in
+ * the datastore if the event is cancelable and to update views if it's not
+ * cancellable.
+ *
+ * Each handled event contains the `result` property on the `detail` object. It
+ * contains a `Promise` object with a result of the operation. Also, for update / delete
+ * events the same non-cancelable event is fired.
+ *
+ * Events handled by this element are cancelled and propagation of the event is
+ * stopped.
+ *
+ * @polymer
+ * @customElement
+ * @memberof LogicElements
+ */
+class WebsocketUrlHistoryModel extends ArcBaseModel {
+  /* global ArcBaseModel */
+  static get is() { return 'websocket-url-history-model'; }
 
-  behaviors: [ArcBehaviors.EventsTargetBehavior],
+  constructor() {
+    super();
+    this._handleChange = this._handleChange.bind(this);
+    this._handleRead = this._handleRead.bind(this);
+    this._handleQuery = this._handleQuery.bind(this);
+    this._handleQueryHistory = this._handleQueryHistory.bind(this);
+  }
 
-  _attachListeners: function(node) {
-    this.listen(node, 'websocket-url-history-changed', '_handleChange');
-    this.listen(node, 'websocket-url-history-read', '_handleRead');
-    this.listen(node, 'websocket-url-history-query', '_handleQuery');
-    this.listen(node, 'websocket-url-history-list', '_handleQueryHistory');
-  },
+  _attachListeners(node) {
+    node.addEventListener('websocket-url-history-changed', this._handleChange);
+    node.addEventListener('websocket-url-history-read', this._handleRead);
+    node.addEventListener('websocket-url-history-query', this._handleQuery);
+    node.addEventListener('websocket-url-history-list', this._handleQueryHistory);
+  }
 
-  _detachListeners: function(node) {
-    this.unlisten(node, 'websocket-url-history-changed', '_handleChange');
-    this.unlisten(node, 'websocket-url-history-read', '_handleRead');
-    this.unlisten(node, 'websocket-url-history-query', '_handleQuery');
-    this.unlisten(node, 'websocket-url-history-list', '_handleQueryHistory');
-  },
+  _detachListeners(node) {
+    node.removeEventListener('websocket-url-history-changed', this._handleChange);
+    node.removeEventListener('websocket-url-history-read', this._handleRead);
+    node.removeEventListener('websocket-url-history-query', this._handleQuery);
+    node.removeEventListener('websocket-url-history-list', this._handleQueryHistory);
+  }
 
   get db() {
+    /* global PouchDB */
     return new PouchDB('websocket-url-history', {
       // jscs:disable
       revs_limit: 100
       // jscs:enable
     });
-  },
+  }
   // Handles the read object event
-  _handleRead: function(e, detail) {
-    if (!e.cancelable || e.target === this) {
+  _handleRead(e) {
+    if (!e.cancelable || e.composedPath()[0] === this) {
       return;
     }
     e.preventDefault();
     e.stopPropagation();
 
-    if (!detail.url) {
+    if (!e.detail.url) {
       e.detail.result = Promise.reject(new Error('The "url" property is missing.'));
       return;
     }
 
-    e.detail.result = this.db.get(detail.url)
-    .catch(e => {
+    e.detail.result = this.read(e.detail.url)
+    .catch((e) => {
       if (e.status === 404) {
         return undefined;
       }
       this._handleException(e);
     });
-  },
+  }
 
-  _handleChange: function(e, detail) {
-    if (!e.cancelable || e.target === this) {
+  _handleChange(e) {
+    if (!e.cancelable || e.composedPath()[0] === this) {
       return;
     }
     e.preventDefault();
     e.stopPropagation();
 
-    if (!detail.item) {
+    if (!e.detail.item) {
       e.detail.result = Promise.reject(new Error('Missing "item" property.'));
       return;
     }
-    if (!detail.item._id) {
+    if (!e.detail.item._id) {
       e.detail.result = Promise.reject(new Error('Missing "_id" property.'));
       return;
     }
-    var obj = Object.assign({}, detail.item);
-    e.detail.result = this.db.put(obj)
-    .then(insertResult => {
-      let oldRev = obj._rev;
-      obj._rev = insertResult.rev;
-      this.fire('websocket-url-history-changed', {
+    const obj = Object.assign({}, e.detail.item);
+    e.detail.result = this.update(obj)
+    .catch((e) => this._handleException(e));
+  }
+
+  /**
+   * Updates / saves the object in the datastore.
+   * This function fires `websocket-url-history-changed` event.
+   *
+   * @param {Object} obj A project to save / update
+   * @return {Promise} Resolved promise to project object with updated `_rev`
+   */
+  update(obj) {
+    const oldRev = obj._rev;
+    return this.db.put(obj)
+    .then((result) => {
+      obj._rev = result.rev;
+      this._fireUpdated('websocket-url-history-changed', {
         item: obj,
         oldRev: oldRev
-      }, {
-        cancelable: false,
-        composed: true
       });
       return obj;
-    })
-    .catch(e => this._handleException(e));
-  },
+    });
+  }
 
-  _handleQuery: function(e, detail) {
-    if (!e.cancelable || e.target === this) {
+  _handleQueryHistory(e) {
+    if (!e.cancelable || e.composedPath()[0] === this) {
       return;
     }
     e.preventDefault();
     e.stopPropagation();
-    var q = detail.q;
+
+    e.detail.result = this.list()
+    .catch((e) => this._handleException(e));
+  }
+
+  _handleQuery(e) {
+    if (!e.cancelable || e.composedPath()[0] === this) {
+      return;
+    }
+    e.preventDefault();
+    e.stopPropagation();
+    const q = e.detail.q;
     if (q === undefined) {
       e.detail.result = Promise.reject(new Error('Missing "q" property.'));
       return;
     }
-
-    var db = this.db;
-    e.detail.result = db.allDocs()
-    .then(r => {
-      if (q) {
-        r.rows = r.rows.filter(item => item.id.indexOf(q) !== -1);
-      }
-      let promises = r.rows.map(item => db.get(item.id));
+    e.detail.result = this.list(q)
+    .catch((e) => this._handleException(e));
+  }
+  /**
+   * Lists websocket history objects.
+   *
+   * @param {?String} query A partial url to match results.
+   * @return {Promise} A promise resolved to a list of PouchDB documents.
+   */
+  list(query) {
+    const db = this.db;
+    return db.allDocs()
+    .then((response) => {
+      const promises = [];
+      response.rows.forEach((item) => {
+        if (query && item.id.indexOf(query) === -1) {
+          return;
+        }
+        promises.push(db.get(item.id));
+      });
       return Promise.all(promises);
     })
-    .then(result => {
-      result = result.map(item => this._computeTime(item));
+    .then((result) => {
+      result = result.map((item) => this._computeTime(item));
       return result.sort(this._sortFunction);
-    })
-    .catch(e => this._handleException(e));
-  },
+    });
+  }
 
-  _sortFunction: function(a, b) {
-    var aTime = a._time;
-    var bTime = b._time;
+  _sortFunction(a, b) {
+    const aTime = a._time;
+    const bTime = b._time;
     if (aTime > bTime) {
       return 1;
     }
     if (aTime === bTime) {
-      var aCnt = a.cnt;
-      var bCnt = b.cnt;
+      const aCnt = a.cnt;
+      const bCnt = b.cnt;
       if (aCnt > bCnt) {
         return 1;
       }
@@ -164,60 +202,16 @@ Polymer({
       return -1;
     }
     return -1;
-  },
-
-  _handleException: function(e) {
-    this.fire('app-log', {
-      'message': ['Url history model', e],
-      'level': 'error'
-    });
-    console.error('Url history model', e);
-    var message;
-    if (e instanceof Error) {
-      message = e.message;
-    } else {
-      message = JSON.stringify(e);
-    }
-    this.fire('send-analytics', {
-      type: 'exception',
-      description: message,
-      fatal: true
-    });
-    throw e;
-  },
-
-  _handleQueryHistory: function(e) {
-    if (!e.cancelable || e.target === this) {
-      return;
-    }
-    e.preventDefault();
-    e.stopPropagation();
-
-    var db = this.db;
-    e.detail.result = db.allDocs()
-    .then(result => {
-      let promises = result.rows.map(item => db.get(item.id));
-      return Promise.all(promises);
-    })
-    .then(result => {
-      result = result.map(item => this._computeTime(item));
-      return result.sort(this._sortFunction);
-    })
-    .catch((e) => this._handleException(e));
-  },
+  }
   /**
    * Computes time for timestamp's day, month and year and time set to 0.
    * @param {Object} item Database entry item.
    * @return {Object} The same database item with `_time` property.
    */
-  _computeTime: function(item) {
-    let day = item.time ? new Date(item.time) : Date.now();
-    day.setHours(0);
-    day.setMinutes(0);
-    day.setSeconds(0);
-    day.setMilliseconds(0);
-    item._time = day.getTime();
+  _computeTime(item) {
+    item._time = this._computeMidnight(item.time);
     return item;
   }
-});
+}
+window.customElements.define(WebsocketUrlHistoryModel.is, WebsocketUrlHistoryModel);
 </script>

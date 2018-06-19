@@ -1,19 +1,9 @@
 <!doctype html>
-<!--
-@license
-Copyright (c) 2015 The Polymer Project Authors. All rights reserved.
-This code may only be used under the BSD style license found at http://polymer.github.io/LICENSE.txt
-The complete set of authors may be found at http://polymer.github.io/AUTHORS.txt
-The complete set of contributors may be found at http://polymer.github.io/CONTRIBUTORS.txt
-Code distributed by Google as part of the polymer project is also
-subject to an additional IP rights grant found at http://polymer.github.io/PATENTS.txt
--->
 <html>
   <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, minimum-scale=1.0, initial-scale=1.0, user-scalable=yes">
-
-    <script src="../../webcomponentsjs/webcomponents-lite.js"></script>
+    <script src="../../webcomponentsjs/webcomponents-loader.js"></script>
     <script src="../../web-component-tester/browser.js"></script>
     <script src="database-helper.js"></script>
     <link rel="import" href="../arc-models.html">
@@ -38,7 +28,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
       }
 
       function fireChanged(item) {
-        var event = new CustomEvent('websocket-url-history-changed', {
+        const event = new CustomEvent('websocket-url-history-changed', {
           detail: {
             item: item
           },
@@ -55,8 +45,8 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
           return DatabaseHelper.clearWebsocketUrlHostory();
         });
 
-        var element;
-        var dataObj;
+        let element;
+        let dataObj;
         setup(function() {
           element = fixture('basic');
           dataObj = {
@@ -67,19 +57,19 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
         });
 
         test('Event is canceled', function() {
-          var event = fireChanged(dataObj);
+          const event = fireChanged(dataObj);
           assert.isTrue(event.defaultPrevented);
         });
 
         test('Event detail contains "result" as promise', function() {
-          var event = fireChanged(dataObj);
+          const event = fireChanged(dataObj);
           assert.typeOf(event.detail.result, 'promise');
         });
 
         test('Creates a new object in the datastore', function() {
-          var event = fireChanged(dataObj);
+          const event = fireChanged(dataObj);
           return event.detail.result
-          .then(result => {
+          .then((result) => {
             assert.typeOf(result._rev, 'string', '_rev is set');
             assert.typeOf(result._id, 'string', '_id is set');
             assert.equal(result.cnt, dataObj.cnt, 'cnt is set');
@@ -88,18 +78,18 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
         });
 
         test('Updates created object', function() {
-          var originalRev;
-          var originalId;
-          var event = fireChanged(dataObj);
+          let originalRev;
+          let originalId;
+          const event = fireChanged(dataObj);
           return event.detail.result
-          .then(result => {
+          .then((result) => {
             originalRev = result._rev;
             originalId = result._id;
             result.cnt = 2;
-            var event = fireChanged(result);
+            const event = fireChanged(result);
             return event.detail.result;
           })
-          .then(result => {
+          .then((result) => {
             assert.notEqual(result._rev, originalRev, '_rev is regenerated');
             assert.equal(result._id, originalId, '_id is the same');
             assert.equal(result.cnt, 2, 'Name is set');
@@ -107,7 +97,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
         });
 
         test('Rejects promise when save object is not set', function() {
-          var event = fireChanged();
+          const event = fireChanged();
           return event.detail.result
           .then(() => {
             return Promise.reject('Expected method to reject.');
@@ -124,8 +114,8 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
           return DatabaseHelper.clearWebsocketUrlHostory();
         });
 
-        var element;
-        var dataObj;
+        let element;
+        let dataObj;
         setup(function() {
           element = fixture('basic');
           dataObj = {
@@ -133,13 +123,13 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
             cnt: 1,
             time: Date.now()
           };
-          var event = fireChanged(dataObj);
+          const event = fireChanged(dataObj);
           return event.detail.result
-          .then(result => dataObj = result);
+          .then((result) => dataObj = result);
         });
 
         function fire(id) {
-          var event = new CustomEvent('websocket-url-history-read', {
+          const event = new CustomEvent('websocket-url-history-read', {
             detail: {
               url: id
             },
@@ -152,25 +142,25 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
         }
 
         test('Event is canceled', function() {
-          var event = fire(dataObj._id);
+          const event = fire(dataObj._id);
           assert.isTrue(event.defaultPrevented);
         });
 
         test('Event detail contains "result" as promise', function() {
-          var event = fire(dataObj._id);
+          const event = fire(dataObj._id);
           assert.typeOf(event.detail.result, 'promise');
         });
 
         test('Reads an object', function() {
-          var event = fire(dataObj._id);
+          const event = fire(dataObj._id);
           return event.detail.result
-          .then(result => {
+          .then((result) => {
             assert.equal(result._id, dataObj._id);
           });
         });
 
         test('Rejects promise when no ID', function() {
-          var event = fire();
+          const event = fire();
           return event.detail.result
           .then(() => {
             return Promise.reject('Expected method to reject.');
@@ -187,8 +177,8 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
           return DatabaseHelper.clearWebsocketUrlHostory();
         });
 
-        var element;
-        var dataObj;
+        let element;
+        let dataObj;
         setup(function() {
           element = fixture('basic');
           dataObj = {
@@ -196,13 +186,13 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
             cnt: 1,
             time: Date.now()
           };
-          var event = fireChanged(dataObj);
+          const event = fireChanged(dataObj);
           return event.detail.result
-          .then(result => dataObj = result);
+          .then((result) => dataObj = result);
         });
 
         function fire(q) {
-          var event = new CustomEvent('websocket-url-history-query', {
+          const event = new CustomEvent('websocket-url-history-query', {
             detail: {
               q: q
             },
@@ -215,28 +205,28 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
         }
 
         test('Event is canceled', function() {
-          var event = fire('http');
+          const event = fire('http');
           assert.isTrue(event.defaultPrevented);
         });
 
         test('Event detail contains "result" as promise', function() {
-          var event = fire('http');
+          const event = fire('http');
           assert.typeOf(event.detail.result, 'promise');
         });
 
         test('Returns a list of results', function() {
-          var event = fire('http');
+          const event = fire('http');
           return event.detail.result
-          .then(result => {
+          .then((result) => {
             assert.typeOf(result, 'array', 'Result is an array');
             assert.lengthOf(result, 1, 'Length is OK');
           });
         });
 
         test('Returned items contains _time property', function() {
-          var event = fire('http');
+          const event = fire('http');
           return event.detail.result
-          .then(result => {
+          .then((result) => {
             assert.typeOf(result[0]._time, 'number', '_time is a number');
           });
         });
@@ -247,8 +237,8 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
           return DatabaseHelper.clearWebsocketUrlHostory();
         });
 
-        var element;
-        var dataObj;
+        let element;
+        let dataObj;
         setup(function() {
           element = fixture('basic');
           dataObj = {
@@ -256,13 +246,13 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
             cnt: 1,
             time: Date.now()
           };
-          var event = fireChanged(dataObj);
+          const event = fireChanged(dataObj);
           return event.detail.result
-          .then(result => dataObj = result);
+          .then((result) => dataObj = result);
         });
 
         function fire() {
-          var event = new CustomEvent('websocket-url-history-list', {
+          const event = new CustomEvent('websocket-url-history-list', {
             detail: {},
             bubbles: true,
             composed: true,
@@ -273,28 +263,28 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
         }
 
         test('Event is canceled', function() {
-          var event = fire();
+          const event = fire();
           assert.isTrue(event.defaultPrevented);
         });
 
         test('Event detail contains "result" as promise', function() {
-          var event = fire();
+          const event = fire();
           assert.typeOf(event.detail.result, 'promise');
         });
 
         test('Returns a list of history objects', function() {
-          var event = fire();
+          const event = fire();
           return event.detail.result
-          .then(result => {
+          .then((result) => {
             assert.typeOf(result, 'array', 'Result is an array');
             assert.lengthOf(result, 1, 'Length is OK');
           });
         });
 
         test('Returned items contains _time property', function() {
-          var event = fire();
+          const event = fire();
           return event.detail.result
-          .then(result => {
+          .then((result) => {
             assert.typeOf(result[0]._time, 'number', '_time is a number');
           });
         });

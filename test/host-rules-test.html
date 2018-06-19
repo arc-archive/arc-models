@@ -1,19 +1,9 @@
 <!doctype html>
-<!--
-@license
-Copyright (c) 2015 The Polymer Project Authors. All rights reserved.
-This code may only be used under the BSD style license found at http://polymer.github.io/LICENSE.txt
-The complete set of authors may be found at http://polymer.github.io/AUTHORS.txt
-The complete set of contributors may be found at http://polymer.github.io/CONTRIBUTORS.txt
-Code distributed by Google as part of the polymer project is also
-subject to an additional IP rights grant found at http://polymer.github.io/PATENTS.txt
--->
 <html>
   <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, minimum-scale=1.0, initial-scale=1.0, user-scalable=yes">
-
-    <script src="../../webcomponentsjs/webcomponents-lite.js"></script>
+    <script src="../../webcomponentsjs/webcomponents-loader.js"></script>
     <script src="../../web-component-tester/browser.js"></script>
     <script src="../../iron-test-helpers/test-helpers.js"></script>
     <script src="database-helper.js"></script>
@@ -36,8 +26,8 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
           return DatabaseHelper.clearHostRules();
         });
 
-        var element;
-        var dataObj;
+        let element;
+        let dataObj;
         setup(function() {
           element = fixture('basic');
           dataObj = {
@@ -51,7 +41,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 
         test('Creates a new object in the datastore', function() {
           return element.update(dataObj)
-          .then(result => {
+          .then((result) => {
             assert.typeOf(result._rev, 'string', '_rev is set');
             assert.equal(result._id, 'test-id-1', '_id is set');
             assert.equal(result.from, dataObj.from, 'from is set');
@@ -59,14 +49,14 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
         });
 
         test('Updates created object', function() {
-          var originalRev;
+          let originalRev;
           return element.update(dataObj)
-          .then(result => {
+          .then((result) => {
             originalRev = result._rev;
             result.comment = 'test-2';
             return element.update(result);
           })
-          .then(result => {
+          .then((result) => {
             assert.notEqual(result._rev, originalRev, '_rev is regenerated');
             assert.equal(result._id, 'test-id-1', '_id is the same');
             assert.equal(result.comment, 'test-2', 'comment is set');
@@ -75,7 +65,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
         });
 
         test('Fires host-rules-changed custom event', function() {
-          var spy = sinon.spy();
+          const spy = sinon.spy();
           element.addEventListener('host-rules-changed', spy);
           return element.update(dataObj)
           .then(() => {
@@ -84,12 +74,12 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
         });
 
         test('The host-rules-changed event has properties of newly created object', function() {
-          var eventData;
+          let eventData;
           element.addEventListener('host-rules-changed', function(e) {
             eventData = e.detail;
           });
           return element.update(dataObj)
-          .then(result => {
+          .then((result) => {
             assert.isUndefined(eventData.oldRev);
             assert.isUndefined(result.oldRev);
             assert.typeOf(eventData.rule, 'object');
@@ -97,10 +87,10 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
         });
 
         test('The host-rules-changed event has properties of updated object', function() {
-          var eventData;
-          var originalRev;
+          let eventData;
+          let originalRev;
           return element.update(dataObj)
-          .then(result => {
+          .then((result) => {
             element.addEventListener('host-rules-changed', function(e) {
               eventData = e.detail;
             });
@@ -121,8 +111,8 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
           return DatabaseHelper.clearHostRules();
         });
 
-        var element;
-        var dataObj;
+        let element;
+        let dataObj;
         setup(function() {
           element = fixture('basic');
           dataObj = {
@@ -137,25 +127,25 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 
         test('Reads project object by id only', function() {
           return element.read(dataObj._id)
-          .then(result => {
+          .then((result) => {
             assert.equal(result._id, dataObj._id);
           });
         });
 
         test('Reads a revision', function() {
-          var originalRev;
-          var updatedRev;
+          let originalRev;
+          let updatedRev;
           return element.read(dataObj._id)
-          .then(result => {
+          .then((result) => {
             originalRev = result._rev;
             result.comment = 'test-2';
             return element.update(result);
           })
-          .then(result => {
+          .then((result) => {
             updatedRev = result._rev;
             return element.read(dataObj._id, originalRev);
           })
-          .then(result => {
+          .then((result) => {
             assert.equal(result.comment, dataObj.comment);
             assert.notEqual(originalRev, updatedRev);
           });
@@ -167,8 +157,8 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
           return DatabaseHelper.clearHostRules();
         });
 
-        var element;
-        var dataObj;
+        let element;
+        let dataObj;
         setup(function() {
           element = fixture('basic');
           dataObj = {
@@ -179,7 +169,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
             comment: 'test'
           };
           return element.update(dataObj)
-          .then(result => dataObj = result);
+          .then((result) => dataObj = result);
         });
 
         test('Removes object from the datastore', function() {
@@ -190,13 +180,13 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
           .then(() => {
             throw new Error('TEST');
           })
-          .catch(cause => {
+          .catch((cause) => {
             assert.equal(cause.status, 404);
           });
         });
 
         test('Fires host-rules-deleted custom event', function() {
-          var spy = sinon.spy();
+          const spy = sinon.spy();
           element.addEventListener('host-rules-deleted', spy);
           return element.remove(dataObj._id, dataObj._rev)
           .then(() => {
@@ -205,7 +195,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
         });
 
         test('host-rules-deleted event contains project data', function() {
-          var eventData;
+          let eventData;
           element.addEventListener('host-rules-deleted', function(e) {
             eventData = e.detail;
           });
@@ -224,8 +214,8 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
           return DatabaseHelper.clearHostRules();
         });
 
-        var element;
-        var dataObj;
+        let element;
+        let dataObj;
         setup(function() {
           element = fixture('basic');
           dataObj = {
@@ -236,12 +226,12 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
             comment: 'test'
           };
           return element.update(dataObj)
-          .then(result => dataObj = result);
+          .then((result) => dataObj = result);
         });
 
         test('Lists host rules', function() {
           return element.list()
-          .then(result => {
+          .then((result) => {
             assert.typeOf(result, 'array');
             assert.lengthOf(result, 1);
           });

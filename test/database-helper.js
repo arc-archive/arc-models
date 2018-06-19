@@ -4,7 +4,7 @@ const DatabaseHelper = {};
 // };
 
 DatabaseHelper.clearDatabases = function(...names) {
-  var promises = names.map(name => new PouchDB(name).destroy());
+  var promises = names.map((name) => new PouchDB(name).destroy());
   return Promise.all(promises);
 };
 
