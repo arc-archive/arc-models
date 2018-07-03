@@ -7,16 +7,15 @@
     <script src="../../web-component-tester/browser.js"></script>
     <script src="../../iron-test-helpers/test-helpers.js"></script>
     <script src="database-helper.js"></script>
+    <link rel="import" href="../../app-pouchdb/pouchdb.html">
     <link rel="import" href="../arc-models.html">
   </head>
   <body>
-
     <test-fixture id="basic">
       <template>
         <project-model></project-model>
       </template>
     </test-fixture>
-
     <script>
     /* global DatabaseHelper, fixture, assert, sinon */
     suite('Static methods', function() {

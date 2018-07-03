@@ -1,0 +1,342 @@
+<!--
+@license
+Copyright 2018 The Advanced REST client authors <arc@mulesoft.com>
+Licensed under the Apache License, Version 2.0 (the "License"); you may not
+use this file except in compliance with the License. You may obtain a copy of
+the License at
+http://www.apache.org/licenses/LICENSE-2.0
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+License for the specific language governing permissions and limitations under
+the License.
+-->
+<link rel="import" href="base-model.html">
+<script>
+class BaseSearchModel {
+  /**
+   * @param {String} query User search term.
+   */
+  constructor(query) {
+    this._term = query; //this._prepareQuery(query);
+  }
+  /**
+   * Prepares the user query to be used in the datasore simple search.
+   * @param {String} query User query
+   * @return {String} Transformed query
+   */
+  _prepareQuery(query) {
+    query = String(query);
+    query = query.toLowerCase();
+    if (query[0] === '_') {
+      query = query.substr(1);
+    }
+    return query;
+  }
+  /**
+   * Maps PouchDB response to a list of documents
+   * @param {Object} response Query result
+   * @return {Array<Object>} List of documents.
+   */
+  _processResults(response) {
+    if (!response || !response.rows.length) {
+      return [];
+    }
+    return response.rows.map((item) => item.doc);
+  }
+
+  /**
+   * Performs the query.
+   * @return {Promise}
+   */
+  query() {
+    const mm = Math.round(100 / this._term.split(/\s/).length);
+    return this.db.search({
+      query: this._term,
+      fields: this.fields,
+      mm: mm + '%',
+      // jscs:disable
+      include_docs: true
+      // jscs:enable
+    })
+    .then((response) => this._processResults(response))
+    .catch((cause) => {
+      console.error('ARC search error', cause);
+      return [];
+    });
+  }
+}
+/**
+ * A class responsible for searching in the history data store.
+ */
+class HistorySearchModel extends BaseSearchModel {
+  /**
+   * Returns a handler to the datastore instance
+   * @return {PouchDB}
+   */
+  get db() {
+    /* global PouchDB */
+    return new PouchDB('history-requests');
+  }
+  /**
+   * @return {Array<String>} List of datastore fields to search
+   */
+  get fields() {
+    return ['url', 'headers', 'payload', 'description'];
+  }
+}
+
+/**
+ * A class responsible for searching in the history data store.
+ */
+class SavedSearchModel extends BaseSearchModel {
+  /**
+   * Returns a handler to the datastore instance
+   * @return {PouchDB}
+   */
+  get db() {
+    /* global PouchDB */
+    return new PouchDB('saved-requests');
+  }
+  /**
+   * @return {Array<String>} List of datastore fields to search
+   */
+  get fields() {
+    return ['headers', 'payload', 'description', 'url', 'name'];
+  }
+}
+
+/**
+ * A class responsible for searching in the history data store.
+ */
+class RestApiSearchModel extends BaseSearchModel {
+  /**
+   * Returns a handler to the datastore instance
+   * @return {PouchDB}
+   */
+  get db() {
+    /* global PouchDB */
+    return new PouchDB('saved-requests');
+  }
+  /**
+   * @return {Array<String>} List of datastore fields to search
+   */
+  get fields() {
+    return ['title', 'baseUri', 'description'];
+  }
+}
+/**
+ * A model responsible for performing a database search.
+ *
+ * It listens for `arc-search` custom event and performs a search on all or
+ * defined in the event data stories.
+ *
+ * Example usage:
+ *
+ * ```javascript
+ * const e = new CustomEvent('arc-search', {
+ *  bubbles: true,
+ *  composed: true,
+ *  cancelable: true,
+ *  detail: {
+ *    q: 'test query',
+ *    incremental: false,
+ *    type: ['saved', 'history', rest-apis]
+ *  }
+ * });
+ * ```
+ * The event must be cancelable or otherwise it is ignored.
+ *
+ * When `incremental` is set to `false` then it always performs new query.
+ * When it's `true` then it restores previous query state and resutls with
+ * next page of results.
+ *
+ * Types defines list of data stories to search. Is omnited or empty array
+ * it searches all data stories.
+ *
+ * As a result it dispatches `arc-search-results` custom event. The detail
+ * object on the event has list of results for each requested data store.
+ * The event is dispatched when all results are available.
+ *
+ * Depends on `type` property in the `arc-search` event it contaions 1 to
+ * all data stories keys. Each key is the name of the data store.
+ * Each value is an object wioth results details accoring to the following
+ * data model:
+ *
+ * ```json
+ * {
+ *  "data": [],
+ *  "moreResults": true,
+ *  "pageSize": 50,
+ *  "resultsSize": 50
+ * }
+ * ```
+ *
+ * `data` entry contains a list of PouchDB documents.
+ * `moreResults` can be only `false` when number of results is lower than
+ * page size. Note, it does not check if there are actually more results.
+ * It may happen that the last page result is the last in the data store and
+ * therefore it will be set to `true` even though there's no more results.
+ *
+ * @polymer
+ * @customElement
+ * @memberof LogicElements
+ */
+class SearchModel extends ArcBaseModel {
+  static get is() { return 'search-model'; }
+
+  static get properties() {
+    return {
+      /**
+       * Cached query instances
+       */
+      _cachedQuery: {
+        type: Object,
+        value() {
+          return {};
+        }
+      },
+      /**
+       * Database query options for pagination.
+       * Override this value to change the query options like limit of the results in one call.
+       *
+       * This is query options passed to the PouchDB `allDocs` function. Note that it will not
+       * set `include_docs` option. A conviniet shortcut is to set the the `includeDocs` property
+       * and the directive will be added automatically.
+       */
+      defaultQueryOptions: {
+        type: Object,
+        readOnly: true,
+        value() {
+          return {
+            limit: 50,
+            descending: true,
+            // jscs:disable
+            include_docs: true
+            // jscs:enable
+          };
+        }
+      }
+    };
+  }
+
+  get types() {
+    return ['saved', 'history', 'rest-api'];
+  }
+
+  constructor() {
+    super();
+    this._searchHandler = this._searchHandler.bind(this);
+  }
+
+  _attachListeners(node) {
+    node.addEventListener('arc-search', this._searchHandler);
+  }
+
+  _detachListeners(node) {
+    node.removeEventListener('arc-search', this._searchHandler);
+  }
+  /**
+   * Performs a database query when requested.
+   *
+   * @param {CustomEvent} e
+   */
+  _searchHandler(e) {
+    if (!e.cancelable || e.defaultPrevented) {
+      return;
+    }
+    e.preventDefault();
+
+    return this.query(e.detail.q, e.detail.type)
+    .then((response) => this._publish(response))
+    .catch((cause) => this._error(cause, e.detail.q));
+  }
+  /**
+   * Performs a query to ARC database.
+   * @return {Promise}
+   */
+  query(term, types) {
+    let dataTypes = [];
+    const supportedTypes = this.types;
+    if (types instanceof Array) {
+      types.forEach((_type) => {
+        if (supportedTypes.indexOf(_type) !== -1) {
+          dataTypes.push(_type);
+        }
+      });
+    }
+    if (!dataTypes.length) {
+      dataTypes = supportedTypes;
+    }
+    const promises = dataTypes.forEach((store) => this._queryStore(store, term));
+    return Promise.all(promises)
+    .then((results) => this._prepareResponse(results, term))
+    .catch((cause) => this._error(cause, term));
+  }
+  /**
+   * Calles an appropiate function to query a data store.
+   * @param {String} name Name of the data store to query
+   * @param {String} term Search term
+   * @return {Promise} Promise resolved to a number of documents.
+   */
+  _queryStore(name, term) {
+    name = Polymer.CaseMap.dashToCamelCase(name);
+    name = name[0].toUpperCase() + name.substr(1);
+    const fnName = `_query${name}`;
+    if (typeof this[fnName] !== 'function') {
+      return Promise.reject(`Datastore ${name} does not exist`);
+    }
+    return this[fnName](term);
+  }
+  /**
+   * Performs a query on a history model.
+   * @param {String} query Query term.
+   * @return {Promise}
+   */
+  _queryHistory(query) {
+    const model = new HistorySearchModel(query);
+    return model.query();
+  }
+  /**
+   * Performs a query on a saved model.
+   * @param {String} query Query term.
+   * @return {Promise}
+   */
+  _querySaved(query) {
+    const model = new SavedSearchModel(query);
+    return model.query();
+  }
+  /**
+   * Performs a query on a rest apis model.
+   * @param {String} query Query term.
+   * @return {Promise}
+   */
+  _queryRestApi(query) {
+    const model = new RestApiSearchModel(query);
+    return model.query();
+  }
+
+  _publish(response) {
+    console.log(response);
+    debugger;
+  }
+
+  _prepareResponse(results, query) {
+    console.log(results, query);
+    debugger;
+  }
+
+  _error(cause, query) {
+    const e = new CustomEvent('arc-search-error', {
+      composed: true,
+      bubbles: true,
+      detail: {
+        message: cause.message,
+        q: query
+      }
+    });
+    this.dispatchEvent(e);
+  }
+}
+window.customElements.define(SearchModel.is, SearchModel);
+</script>

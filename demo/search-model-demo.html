@@ -1,0 +1,94 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, minimum-scale=1, initial-scale=1, user-scalable=yes">
+  <title>api-url-params-editor demo</title>
+  <script src="../../webcomponentsjs/webcomponents-loader.js"></script>
+  <link rel="import" href="../../shadycss/apply-shim.html">
+  <link rel="import" href="../../polymer/lib/elements/custom-style.html">
+  <link rel="import" href="../../polymer/lib/elements/dom-bind.html">
+  <link rel="import" href="../../iron-demo-helpers/demo-pages-shared-styles.html">
+  <link rel="import" href="../../paper-input/paper-input.html">
+  <link rel="import" href="../../paper-button/paper-button.html">
+  <link rel="import" href="../../app-pouchdb/pouchdb.html">
+  <link rel="import" href="../../app-pouchdb-quick-search/pouchdb-quick-search.html">
+  <link rel="import" href="../search-model.html">
+  <script src="database-helper.js"></script>
+  <script src="../../chance/chance.js"></script>
+  <custom-style>
+    <style is="custom-style" include="demo-pages-shared-styles">
+    :root {
+      --arc-font-body1: {
+        @apply --paper-font-body1;
+      }
+    }
+
+    h1 {
+      @apply --paper-font-headline;
+    }
+
+    output {
+      white-space: pre-wrap;
+      @apply --paper-font-code1;
+      font-size: 16px;
+    }
+    </style>
+  </custom-style>
+</head>
+<body>
+  <header>
+    <h1>Search model demo<h1>
+  </header>
+  <dom-bind id="demo">
+    <template is="dom-bind">
+      <div class="vertical-section-container centered options">
+        <h2>Options</h2>
+        <paper-button on-click="genData">Generate data</paper-button>
+        <paper-button on-click="deleteData">Destroy data</paper-button>
+      </div>
+      <div class="vertical-section-container centered" role="main">
+        <h2>Search data store</h2>
+        <paper-input label="Search term" id="q" name="q"></paper-input>
+        <paper-button on-click="search">Search</paper-button>
+      </div>
+
+      <search-model></search-model>
+    </template>
+  </dom-bind>
+  <script>
+  (function(scope) {
+    /* global DatabaseHelper */
+    scope.genData = function() {
+      DatabaseHelper.insertSavedRequestData({
+        projectsSize: 5,
+        requestsSize: 100
+      })
+      .then((generated) => {
+        console.log('Saved', generated);
+        return DatabaseHelper.insertHistoryRequestData({
+          requestsSize: 100
+        });
+      })
+      .then((generated) => {
+        console.log('History', generated);
+      });
+    };
+    scope.deleteData = function() {
+      DatabaseHelper.clearRequests()
+      .then(() => DatabaseHelper.clearHistory());
+      // .then(() => DatabaseHelper.clearRestAPi());
+    };
+    scope.search = function() {
+      const query = document.getElementById('q').value;
+      const model = document.body.querySelector('search-model');
+      model.query(query, ['saved', 'history', 'rest-api'])
+      .then((result) => {
+        console.log('Query result', result);
+      });
+    };
+  })(document.getElementById('demo'));
+  </script>
+</body>
+</html>
