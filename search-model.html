@@ -12,13 +12,15 @@ License for the specific language governing permissions and limitations under
 the License.
 -->
 <link rel="import" href="base-model.html">
+<link rel="import" href="arc-search-index.html">
+
 <script>
 class BaseSearchModel {
   /**
    * @param {String} query User search term.
    */
   constructor(query) {
-    this._term = query; //this._prepareQuery(query);
+    this._term = query;
   }
   /**
    * Prepares the user query to be used in the datasore simple search.
@@ -42,27 +44,36 @@ class BaseSearchModel {
     if (!response || !response.rows.length) {
       return [];
     }
+    response.rows.sort(this._scoreSort);
     return response.rows.map((item) => item.doc);
   }
-
+  /**
+   * Sorts the query results by PouchDB score.
+   * @param {Object} a
+   * @param {Object} b
+   * @return {Number}
+   */
+  _scoreSort(a, b) {
+    if (a.score > b.score) {
+      return 1;
+    }
+    if (a.score < b.score) {
+      return -1;
+    }
+    return 0;
+  }
   /**
    * Performs the query.
    * @return {Promise}
    */
-  query() {
-    const mm = Math.round(100 / this._term.split(/\s/).length);
-    return this.db.search({
-      query: this._term,
-      fields: this.fields,
-      mm: mm + '%',
-      // jscs:disable
-      include_docs: true
-      // jscs:enable
-    })
-    .then((response) => this._processResults(response))
-    .catch((cause) => {
-      console.error('ARC search error', cause);
-      return [];
+  query(indexer) {
+    const promises = this.indexes.map((index) => {
+      console.info('Searching index', index, 'for query', this._term);
+      return indexer.searchIndex(index, this._term);
+    });
+    return Promise.all(promises)
+    .then((result) => {
+      console.log('Datastore query result', result);
     });
   }
 }
@@ -71,18 +82,14 @@ class BaseSearchModel {
  */
 class HistorySearchModel extends BaseSearchModel {
   /**
-   * Returns a handler to the datastore instance
-   * @return {PouchDB}
+   * @return {Array<String>} List of index names to search
    */
-  get db() {
-    /* global PouchDB */
-    return new PouchDB('history-requests');
-  }
-  /**
-   * @return {Array<String>} List of datastore fields to search
-   */
-  get fields() {
-    return ['url', 'headers', 'payload', 'description'];
+  get indexes() {
+    return [
+      'history-headers',
+      'history-payload',
+      'history-url'
+    ];
   }
 }
 
@@ -91,18 +98,16 @@ class HistorySearchModel extends BaseSearchModel {
  */
 class SavedSearchModel extends BaseSearchModel {
   /**
-   * Returns a handler to the datastore instance
-   * @return {PouchDB}
+   * @return {Array<String>} List of index names to search
    */
-  get db() {
-    /* global PouchDB */
-    return new PouchDB('saved-requests');
-  }
-  /**
-   * @return {Array<String>} List of datastore fields to search
-   */
-  get fields() {
-    return ['headers', 'payload', 'description', 'url', 'name'];
+  get indexes() {
+    return [
+      'saved-description',
+      'saved-name',
+      'saved-headers',
+      'saved-payload',
+      'saved-url'
+    ];
   }
 }
 
@@ -165,10 +170,7 @@ class RestApiSearchModel extends BaseSearchModel {
  *
  * ```json
  * {
- *  "data": [],
- *  "moreResults": true,
- *  "pageSize": 50,
- *  "resultsSize": 50
+ *  "data": []
  * }
  * ```
  *
@@ -221,12 +223,18 @@ class SearchModel extends ArcBaseModel {
   }
 
   get types() {
-    return ['saved', 'history', 'rest-api'];
+    return ['saved', 'history']; //, 'rest-api'
   }
 
   constructor() {
     super();
     this._searchHandler = this._searchHandler.bind(this);
+  }
+
+  connectedCallback() {
+    super.connectedCallback();
+    this._index = document.createElement('arc-search-index');
+    this._index.ensureIndexes();
   }
 
   _attachListeners(node) {
@@ -268,7 +276,7 @@ class SearchModel extends ArcBaseModel {
     if (!dataTypes.length) {
       dataTypes = supportedTypes;
     }
-    const promises = dataTypes.forEach((store) => this._queryStore(store, term));
+    const promises = dataTypes.map((store) => this._queryStore(store, term));
     return Promise.all(promises)
     .then((results) => this._prepareResponse(results, term))
     .catch((cause) => this._error(cause, term));
@@ -295,7 +303,7 @@ class SearchModel extends ArcBaseModel {
    */
   _queryHistory(query) {
     const model = new HistorySearchModel(query);
-    return model.query();
+    return model.query(this._index);
   }
   /**
    * Performs a query on a saved model.
@@ -304,7 +312,7 @@ class SearchModel extends ArcBaseModel {
    */
   _querySaved(query) {
     const model = new SavedSearchModel(query);
-    return model.query();
+    return model.query(this._index);
   }
   /**
    * Performs a query on a rest apis model.
@@ -313,7 +321,7 @@ class SearchModel extends ArcBaseModel {
    */
   _queryRestApi(query) {
     const model = new RestApiSearchModel(query);
-    return model.query();
+    return model.query(this._index);
   }
 
   _publish(response) {

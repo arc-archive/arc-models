@@ -16,6 +16,7 @@
   <link rel="import" href="../../app-pouchdb-quick-search/pouchdb-quick-search.html">
   <link rel="import" href="../search-model.html">
   <script src="database-helper.js"></script>
+  <script src="index-search.js"></script>
   <script src="../../chance/chance.js"></script>
   <custom-style>
     <style is="custom-style" include="demo-pages-shared-styles">
@@ -27,6 +28,10 @@
 
     h1 {
       @apply --paper-font-headline;
+    }
+
+    h2 {
+      @apply --paper-font-title;
     }
 
     output {
@@ -53,7 +58,6 @@
         <paper-input label="Search term" id="q" name="q"></paper-input>
         <paper-button on-click="search">Search</paper-button>
       </div>
-
       <search-model></search-model>
     </template>
   </dom-bind>
@@ -63,12 +67,12 @@
     scope.genData = function() {
       DatabaseHelper.insertSavedRequestData({
         projectsSize: 5,
-        requestsSize: 100
+        requestsSize: 50000
       })
       .then((generated) => {
         console.log('Saved', generated);
         return DatabaseHelper.insertHistoryRequestData({
-          requestsSize: 100
+          requestsSize: 50000
         });
       })
       .then((generated) => {
@@ -77,7 +81,11 @@
     };
     scope.deleteData = function() {
       DatabaseHelper.clearRequests()
-      .then(() => DatabaseHelper.clearHistory());
+      .then(() => DatabaseHelper.clearHistory())
+      .then(() => {
+        const model = document.querySelector('search-model');
+        return model._index.deleteIndexes();
+      });
       // .then(() => DatabaseHelper.clearRestAPi());
     };
     scope.search = function() {

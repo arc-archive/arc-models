@@ -1,0 +1,12 @@
+| History store    |
+-------------------
+| _id | String     |
+| url | String     |
+| method | String  |
+| headers | String |
+| payload | String |
+
+
+
+| History index    |
+--------------------
