@@ -380,7 +380,7 @@ DatabaseHelper.clearProjects = function() {
   return DatabaseHelper.clearDatabases('legacy-projects');
 };
 DatabaseHelper.clearRequests = function() {
-  return DatabaseHelper.clearDatabases('saved-requests'); //, 'history-requests'
+  return DatabaseHelper.clearDatabases('saved-requests'); // 'history-requests'
 };
 DatabaseHelper.clearHistory = function() {
   return DatabaseHelper.clearDatabases('history-requests');
@@ -393,4 +393,7 @@ DatabaseHelper.clearRestAPi = function() {
 };
 DatabaseHelper.clearHostRules = function() {
   return DatabaseHelper.clearDatabases('host-rules');
+};
+DatabaseHelper.clearAuthData = function() {
+  return DatabaseHelper.clearDatabases('auth-data');
 };
