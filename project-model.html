@@ -167,9 +167,15 @@ the License.
  * @extends RequestBaseModel
  */
 class ProjectModel extends RequestBaseModel {
-  /* global ArcBaseModel */
-  static get is() { return 'project-model'; }
-
+  /**
+   * @type {String}
+   */
+  static get is() {
+    return 'project-model';
+  }
+  /**
+   * @constructor
+   */
   constructor() {
     super();
     this._handleRead = this._handleRead.bind(this);
@@ -178,7 +184,9 @@ class ProjectModel extends RequestBaseModel {
     this._handleObjectDelete = this._handleObjectDelete.bind(this);
     this._queryHandler = this._queryHandler.bind(this);
   }
-
+  /**
+   * @param {HTMLElement} node
+   */
   _attachListeners(node) {
     node.addEventListener('project-read', this._handleRead);
     node.addEventListener('project-name-changed', this._handleNameChange);
@@ -186,17 +194,37 @@ class ProjectModel extends RequestBaseModel {
     node.addEventListener('project-object-deleted', this._handleObjectDelete);
     node.addEventListener('project-model-query', this._queryHandler);
   }
-
+  /**
+   * @param {HTMLElement} node
+   */
   _detachListeners(node) {
     node.removeEventListener('project-read', this._handleRead);
     node.removeEventListener('project-name-changed', this._handleNameChange);
     node.removeEventListener('project-object-changed', this._handleObjectSave);
-    node.removeEventListener('project-object-deleted', this._handleObjectDelete);
+    node.removeEventListener('project-object-deleted',
+      this._handleObjectDelete);
     node.removeEventListener('project-model-query', this._queryHandler);
   }
 
   /**
+   * Reads an entry from the datastore.
+   *
+   * @param {String} id The ID of the datastore entry.
+   * @param {?String} rev Specific revision to read. Defaults to latest
+   * revision.
+   * @return {Promise} Promise resolved to a datastore object.
+   */
+  readProject(id, rev) {
+    const opts = {};
+    if (rev) {
+      opts.rev = rev;
+    }
+    return this.projectDb.get(id, opts);
+  }
+
+  /**
    * Handler for project read event request.
+   * @param {CustomEvent} e
    */
   _handleRead(e) {
     if (!e.cancelable || e.composedPath()[0] === this) {
@@ -206,7 +234,8 @@ class ProjectModel extends RequestBaseModel {
     e.stopPropagation();
 
     if (!e.detail.id) {
-      e.detail.result = Promise.reject(new Error('Project "id" property must be set.'));
+      e.detail.result = Promise.reject(
+        new Error('Project "id" property must be set.'));
       return;
     }
     e.detail.result = this.readProject(e.detail.id, e.detail.rev)
@@ -225,7 +254,10 @@ class ProjectModel extends RequestBaseModel {
     .then((result) => result.rows.map((item) => item.doc));
   }
 
-  // Updates name of a project.
+  /**
+   * Updates name of a project.
+   * @param {CustomEvent} e
+   */
   _handleNameChange(e) {
     if (!e.cancelable || e.composedPath()[0] === this) {
       return;
@@ -237,9 +269,9 @@ class ProjectModel extends RequestBaseModel {
       e.detail.result = Promise.reject(new Error('New name must be set'));
       return;
     }
-    const missingDataMsg = 'Either "project" object or project "id" must be set.';
+    const missingMsg = 'Either "project" object or project "id" must be set.';
     if (!e.detail.project && !e.detail.id) {
-      e.detail.result = Promise.reject(new Error(missingDataMsg));
+      e.detail.result = Promise.reject(new Error(missingMsg));
       return;
     }
     const project = e.detail.project;
@@ -248,7 +280,7 @@ class ProjectModel extends RequestBaseModel {
       promise = Promise.resolve(project);
     } else {
       if (!e.detail.id) {
-        e.detail.result = Promise.reject(new Error(missingDataMsg));
+        e.detail.result = Promise.reject(new Error(missingMsg));
         return;
       }
       promise = this.readProject(e.detail.id);
@@ -262,7 +294,10 @@ class ProjectModel extends RequestBaseModel {
     })
     .catch((e) => this._handleException(e));
   }
-  // Handles object save / update
+  /**
+   * Handles object save / update
+   * @param {CustomEvent} e
+   */
   _handleObjectSave(e) {
     if (!e.cancelable || e.composedPath()[0] === this) {
       return;
@@ -272,7 +307,8 @@ class ProjectModel extends RequestBaseModel {
 
     const project = e.detail.project;
     if (!project || !project._id) {
-      e.detail.result = Promise.reject(new Error('The "project" property is missing'));
+      e.detail.result = Promise.reject(
+        new Error('The "project" property is missing'));
       return;
     }
     const db = this.projectDb;
@@ -296,7 +332,10 @@ class ProjectModel extends RequestBaseModel {
     })
     .catch((e) => this._handleException(e));
   }
-  // Deletes the object from the datastore.
+  /**
+   * Deletes the object from the datastore.
+   * @param {CustomEvent} e
+   */
   _handleObjectDelete(e) {
     if (!e.cancelable || e.composedPath()[0] === this) {
       return;
@@ -312,13 +351,17 @@ class ProjectModel extends RequestBaseModel {
     e.detail.result = this.removeProject(id, e.detail.rev)
     .catch((e) => this._handleException(e));
   }
-  // Queries for a list of projects.
+  /**
+   * Queries for a list of projects.
+   * @param {CustomEvent} e
+   */
   _queryHandler(e) {
     if (!e.cancelable || e.composedPath()[0] === this) {
       return;
     }
     if (!e.detail) {
-      throw new Error('The `detail` object must be set prior sending the event');
+      throw new Error(
+        'The `detail` object must be set prior sending the event');
     }
     e.stopImmediatePropagation();
     e.preventDefault();

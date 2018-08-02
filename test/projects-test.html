@@ -19,8 +19,7 @@
     <script>
     /* global DatabaseHelper */
     suite('Static methods', function() {
-
-      suite('update()', function() {
+      suite('updateProject()', function() {
         teardown(function() {
           return DatabaseHelper.clearProjects();
         });
@@ -37,8 +36,8 @@
         });
 
         test('Creates a new object in the datastore', function() {
-          return element.update(dataObj)
-          .then(result => {
+          return element.updateProject(dataObj)
+          .then((result) => {
             assert.typeOf(result._rev, 'string', '_rev is set');
             assert.equal(result._id, 'test-id-1', '_id is set');
             assert.equal(result.name, 'test-1', 'Name is set');
@@ -48,13 +47,13 @@
 
         test('Updates created object', function() {
           let originalRev;
-          return element.update(dataObj)
-          .then(result => {
+          return element.updateProject(dataObj)
+          .then((result) => {
             originalRev = result._rev;
             result.name = 'test-2';
-            return element.update(result);
+            return element.updateProject(result);
           })
-          .then(result => {
+          .then((result) => {
             assert.notEqual(result._rev, originalRev, '_rev is regenerated');
             assert.equal(result._id, 'test-id-1', '_id is the same');
             assert.equal(result.name, 'test-2', 'Name is set');
@@ -65,36 +64,37 @@
         test('Fires project-object-changed custom event', function() {
           const spy = sinon.spy();
           element.addEventListener('project-object-changed', spy);
-          return element.update(dataObj)
+          return element.updateProject(dataObj)
           .then(() => {
             assert.isTrue(spy.calledOnce);
           });
         });
 
-        test('The project-object-changed event has properties of newly created object', function() {
+        test('The project-object-changed event has new properties ', function() {
           let eventData;
           element.addEventListener('project-object-changed', function(e) {
             eventData = e.detail;
           });
-          return element.update(dataObj)
-          .then(result => {
+          return element.updateProject(dataObj)
+          .then((result) => {
             assert.isUndefined(eventData.oldRev);
             assert.isUndefined(result.oldRev);
             assert.typeOf(eventData.project, 'object');
           });
         });
 
-        test('The project-object-changed event has properties of updated object', function() {
+        test('The project-object-changed event has properties of updated object',
+        function() {
           let eventData;
           let originalRev;
-          return element.update(dataObj)
-          .then(result => {
+          return element.updateProject(dataObj)
+          .then((result) => {
             element.addEventListener('project-object-changed', function(e) {
               eventData = e.detail;
             });
             originalRev = result._rev;
             result.name = 'test-2';
-            return element.update(result);
+            return element.updateProject(result);
           })
           .then(() => {
             assert.equal(eventData.oldRev, originalRev);
@@ -118,12 +118,12 @@
             name: 'test-1',
             order: 1
           };
-          return element.update(dataObj);
+          return element.updateProject(dataObj);
         });
 
         test('Reads project object by id only', function() {
-          return element.read(dataObj._id)
-          .then(result => {
+          return element.readProject(dataObj._id)
+          .then((result) => {
             assert.equal(result._id, dataObj._id);
           });
         });
@@ -131,17 +131,17 @@
         test('Reads a revision', function() {
           let originalRev;
           let updatedRev;
-          return element.read(dataObj._id)
-          .then(result => {
+          return element.readProject(dataObj._id)
+          .then((result) => {
             originalRev = result._rev;
             result.name = 'test-2';
-            return element.update(result);
+            return element.updateProject(result);
           })
-          .then(result => {
+          .then((result) => {
             updatedRev = result._rev;
-            return element.read(dataObj._id, originalRev);
+            return element.readProject(dataObj._id, originalRev);
           })
-          .then(result => {
+          .then((result) => {
             assert.equal(result.name, dataObj.name);
             assert.notEqual(originalRev, updatedRev);
           });
@@ -162,19 +162,19 @@
             name: 'test-1',
             order: 1
           };
-          return element.update(dataObj)
-          .then(result => dataObj = result);
+          return element.updateProject(dataObj)
+          .then((result) => dataObj = result);
         });
 
         test('Removes object from the datastore', function() {
-          return element.remove(dataObj._id, dataObj._rev)
+          return element.removeProject(dataObj._id, dataObj._rev)
           .then(() => {
-            return element.read(dataObj._id);
+            return element.readProject(dataObj._id);
           })
           .then(() => {
             throw new Error('TEST');
           })
-          .catch(cause => {
+          .catch((cause) => {
             assert.equal(cause.status, 404);
           });
         });
@@ -182,7 +182,7 @@
         test('Fires project-object-deleted custom event', function() {
           const spy = sinon.spy();
           element.addEventListener('project-object-deleted', spy);
-          return element.remove(dataObj._id, dataObj._rev)
+          return element.removeProject(dataObj._id, dataObj._rev)
           .then(() => {
             assert.isTrue(spy.calledOnce);
           });
@@ -193,7 +193,7 @@
           element.addEventListener('project-object-deleted', function(e) {
             eventData = e.detail;
           });
-          return element.remove(dataObj._id, dataObj._rev)
+          return element.removeProject(dataObj._id, dataObj._rev)
           .then(() => {
             assert.equal(eventData.id, dataObj._id);
             assert.equal(eventData.oldRev, dataObj._rev);
@@ -217,13 +217,13 @@
             name: 'test-1',
             order: 1
           };
-          return element.update(dataObj)
-          .then(result => dataObj = result);
+          return element.updateProject(dataObj)
+          .then((result) => dataObj = result);
         });
 
         test('Lists saved projects', function() {
-          return element.list()
-          .then(result => {
+          return element.listProjects()
+          .then((result) => {
             assert.typeOf(result, 'array');
             assert.lengthOf(result, 1);
           });

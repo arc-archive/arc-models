@@ -21,7 +21,11 @@
     <script>
     /* global DatabaseHelper, fixture, assert */
     suite('Events API for projects', function() {
-      // See https://gist.github.com/haroldtreen/5f1055eee5fcf01da3e0e15b8ec86bf6
+      /**
+       * See https://gist.github.com/haroldtreen/5f1055eee5fcf01da3e0e15b8ec86bf6
+       * @param {any} e
+       * @return {Promise}
+       */
       function isError(e) {
         if (typeof e === 'string') {
           return Promise.reject(new Error(e));
@@ -33,9 +37,8 @@
         teardown(function() {
           return DatabaseHelper.clearProjects();
         });
-
-        let element;
         let dataObj;
+        let element;
         setup(function() {
           element = fixture('basic');
           dataObj = {
@@ -44,9 +47,13 @@
             order: 1
           };
         });
-
+        /**
+         * Dispatches `project-object-changed` event
+         * @param {Object} project
+         * @return {CustomEvent}
+         */
         function fire(project) {
-          const event = new CustomEvent('project-object-changed', {
+          const e = new CustomEvent('project-object-changed', {
             detail: {
               project: project
             },
@@ -54,23 +61,23 @@
             composed: true,
             cancelable: true
           });
-          document.body.dispatchEvent(event);
-          return event;
+          document.body.dispatchEvent(e);
+          return e;
         }
 
         test('Event is canceled', function() {
-          const event = fire(dataObj);
-          assert.isTrue(event.defaultPrevented);
+          const e = fire(dataObj);
+          assert.isTrue(e.defaultPrevented);
         });
 
         test('Event detail contains "result" as promise', function() {
-          const event = fire(dataObj);
-          assert.typeOf(event.detail.result, 'promise');
+          const e = fire(dataObj);
+          assert.typeOf(e.detail.result, 'promise');
         });
 
         test('Creates a new object in the datastore', function() {
-          const event = fire(dataObj);
-          return event.detail.result
+          const e = fire(dataObj);
+          return e.detail.result
           .then((result) => {
             assert.typeOf(result._rev, 'string', '_rev is set');
             assert.equal(result._id, 'test-id-1', '_id is set');
@@ -142,9 +149,14 @@
             name: 'test-1',
             order: 1
           };
-          return element.update(dataObj);
+          return element.updateProject(dataObj);
         });
-
+        /**
+         * Dispatches `project-read` event
+         * @param {String} id
+         * @param {String} rev
+         * @return {CustomEvent}
+         */
         function fire(id, rev) {
           const event = new CustomEvent('project-read', {
             detail: {
@@ -172,7 +184,7 @@
         test('Reads project object by id only', function() {
           const event = fire(dataObj._id);
           return event.detail.result
-          .then(result => {
+          .then((result) => {
             assert.equal(result._id, dataObj._id);
           });
         });
@@ -185,7 +197,7 @@
           .then((result) => {
             originalRev = result._rev;
             result.name = 'test-2';
-            return element.update(result);
+            return element.updateProject(result);
           })
           .then((result) => {
             updatedRev = result._rev;
@@ -225,12 +237,18 @@
             name: 'test-1',
             order: 1
           };
-          return element.update(dataObj)
-          .then(result => dataObj = result);
+          return element.updateProject(dataObj)
+          .then((result) => dataObj = result);
         });
-
+        /**
+         * Dispatches `project-name-changed` event
+         * @param {String} name
+         * @param {String} id
+         * @param {Object} project
+         * @return {CustomEvent}
+         */
         function fire(name, id, project) {
-          const event = new CustomEvent('project-name-changed', {
+          const e = new CustomEvent('project-name-changed', {
             detail: {
               id: id,
               project: project,
@@ -241,7 +259,7 @@
             cancelable: true
           });
           document.body.dispatchEvent(event);
-          return event;
+          return e;
         }
 
         test('Event is canceled', function() {
@@ -257,7 +275,7 @@
         test('Updates project object by id only', function() {
           const event = fire('test-2', dataObj._id);
           return event.detail.result
-          .then(result => {
+          .then((result) => {
             assert.equal(result.name, 'test-2');
             assert.notEqual(result._rev, dataObj._rev);
           });
@@ -266,7 +284,7 @@
         test('Updates project object', function() {
           const event = fire('test-2', undefined, dataObj);
           return event.detail.result
-          .then(result => {
+          .then((result) => {
             assert.equal(result.name, 'test-2');
             assert.notEqual(result._rev, dataObj._rev);
           });
@@ -311,10 +329,15 @@
             name: 'test-1',
             order: 1
           };
-          return element.update(dataObj)
-          .then(result => dataObj = result);
+          return element.updateProject(dataObj)
+          .then((result) => dataObj = result);
         });
-
+        /**
+         * Dispates custom event
+         * @param {String} id Project id
+         * @param {String} rev Project rev
+         * @return {CustomEvent}
+         */
         function fire(id, rev) {
           const event = new CustomEvent('project-object-deleted', {
             detail: {
@@ -343,12 +366,12 @@
           const event = fire(dataObj._id, dataObj._rev);
           return event.detail.result
           .then(() => {
-            return element.read(dataObj._id);
+            return element.readProject(dataObj._id);
           })
           .then(() => {
             throw new Error('TEST');
           })
-          .catch(cause => {
+          .catch((cause) => {
             assert.equal(cause.status, 404);
           });
         });
@@ -380,10 +403,13 @@
             name: 'test-1',
             order: 1
           };
-          return element.update(dataObj)
-          .then(result => dataObj = result);
+          return element.updateProject(dataObj)
+          .then((result) => dataObj = result);
         });
-
+        /**
+         * Dispatches 'project-model-query' event
+         * @return {CustomEvent}
+         */
         function fire() {
           const event = new CustomEvent('project-model-query', {
             detail: {},
@@ -408,7 +434,7 @@
         test('Lists saved projects', function() {
           const event = fire();
           return event.detail.result
-          .then(result => {
+          .then((result) => {
             assert.typeOf(result, 'array');
             assert.lengthOf(result, 1);
           });
