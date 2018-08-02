@@ -11,7 +11,7 @@ WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
 License for the specific language governing permissions and limitations under
 the License.
 -->
-<link rel="import" href="base-model.html">
+<link rel="import" href="request-base-model.html">
 <script>
 /**
  * Events based access to saved request datastore.
@@ -221,9 +221,10 @@ the License.
  * @polymer
  * @customElement
  * @memberof LogicElements
+ * @extends RequestBaseModel
  */
-class RequestModel extends ArcBaseModel {
-  /* global ArcBaseModel */
+class RequestModel extends RequestBaseModel {
+  /* global RequestBaseModel */
   static get is() { return 'request-model'; }
 
   constructor() {
@@ -234,9 +235,11 @@ class RequestModel extends ArcBaseModel {
     this._handleObjectDelete = this._handleObjectDelete.bind(this);
     this._handleObjectsDelete = this._handleObjectsDelete.bind(this);
     this._handleObjectsUndelete = this._handleObjectsUndelete.bind(this);
+    this._saveRequestHandler = this._saveRequestHandler.bind(this);
   }
 
   _attachListeners(node) {
+    node.addEventListener('save-request', this._saveRequestHandler);
     node.addEventListener('request-object-read', this._handleRead);
     node.addEventListener('request-name-changed', this._handleNameChange);
     node.addEventListener('request-object-changed', this._handleObjectSave);
@@ -246,6 +249,7 @@ class RequestModel extends ArcBaseModel {
   }
 
   _detachListeners(node) {
+    node.removeEventListener('save-request', this._saveRequestHandler);
     node.removeEventListener('request-object-read', this._handleRead);
     node.removeEventListener('request-name-changed', this._handleNameChange);
     node.removeEventListener('request-object-changed', this._handleObjectSave);
@@ -253,27 +257,166 @@ class RequestModel extends ArcBaseModel {
     node.removeEventListener('request-objects-deleted', this._handleObjectsDelete);
     node.removeEventListener('request-objects-undeleted', this._handleObjectsUndelete);
   }
-
-  get savedDb() {
-    /* global PouchDB */
-    return new PouchDB('saved-requests');
-  }
-
-  get historyDb() {
-    return new PouchDB('history-requests');
+  /**
+   * A handler for `save-request-data` custom event. It's special event to
+   * save / update request data dispatched by the request editor.
+   *
+   * @param {CustomEvent} e
+   */
+  _saveRequestHandler(e) {
+    if (e.defaultPrevented) {
+      return;
+    }
+    e.preventDefault();
+    e.stopPropagation();
+    const request = e.detail.request;
+    const projects = e.detail.projects;
+    const options = e.detail.options;
+    if (!request._id) {
+      request._id = this.uuid.generate();
+    }
+    let p;
+    if (projects && projects.length) {
+      p = this._createProjects(projects, request._id);
+    } else {
+      p = Promise.resolve();
+    }
+    e.detail.result = p
+    .then((projectIds) => {
+      if (!request.projects) {
+        request.projects = [];
+      }
+      if (request.legacyProject) {
+        if (request.projects.indexOf(request.legacyProject) === -1) {
+          request.projects.push(request.legacyProject);
+        }
+        delete request.legacyProject;
+      }
+      if (projectIds) {
+        request.projects = request.projects.concat(projectIds);
+      }
+      request.type = 'saved';
+      return this.saveRequest(request, options);
+    });
   }
   /**
-   * Returns a reference to a PouchDB database instance for given type.
+   * Create projects from project names.
+   * It is used when creating a request with a new project.
    *
-   * @param {String} type Either `saved-requests` or `history-requests`
-   * @return {PouchDB} PouchDB instance for the datastore.
+   * @param {Array<String>} names Names of projects
+   * @param {?String} requestId Request ID to add to the projects.
+   * @return {Promise<Array<String>>} Promise resolved to list of project IDs
    */
-  getDatabase(type) {
-    switch (type) {
-      case 'saved-requests': return this.savedDb;
-      case 'history-requests': return this.historyDb;
-      default: throw new Error('Unknown database type');
+  _createProjects(names, requestId) {
+    const requests = [];
+    if (requestId) {
+      requests.push(requestId);
     }
+    const projects = names.map((name) => {
+      return {
+        updated: Date.now(),
+        order: 0,
+        requests,
+        name
+      };
+    });
+    return this.projectDb.bulkDocs(projects)
+    .then((response) => {
+      const result = [];
+      for (let i = 0, len = response.length; i < len; i++) {
+        const r = response[i];
+        if (r.error) {
+          this._handleException(r, true);
+          continue;
+        }
+        const project = projects[i];
+        project._rev = r.rev;
+        project._id = r.id;
+        this._fireUpdated('project-object-changed', {
+          project: project
+        });
+        result[result.length] = r.id;
+      }
+      return result;
+    });
+  }
+
+  saveRequest(request, opts) {
+    opts = opts || {};
+    if (!request.type) {
+      if (request.name) {
+        request.type = 'saved';
+      } else {
+        request.type = 'history';
+      }
+    } else if (request.type === 'drive' || request.type === 'google-drive') {
+      request.type = 'saved';
+    }
+    return this._preparePayload(request)
+    .then((result) => {
+      request = result;
+      return this._saveGoogleDrive(request, opts);
+    })
+    .then((request) => this.update(request.type, request))
+    .then((request) => this._syncProjects(request._id, request.projects))
+    .catch((cause) => this._handleException(cause));
+  }
+  /**
+   * Sunchronizes project requests to ensure each project contains this
+   * `requestId` on their list of requests.
+   *
+   * @param {String} requestId Request ID
+   * @param {?Array<String>} projects List of request projects.
+   * @return {Promise}
+   */
+  _syncProjects(requestId, projects) {
+    if (!projects || !projects.length) {
+      return Promise.resolve();
+    }
+    const db = this.projectDb;
+    const update = [];
+    return db.allDocs({
+      // jscs:disable
+      include_docs: true,
+      // jscs:enable
+      keys: projects
+    })
+    .then((response) => {
+      const rows = response.rows;
+      for (let i = 0, len = rows.length; i < len; i++) {
+        const project = rows[i];
+        if (project.error) {
+          continue;
+        }
+        if (!project.requests) {
+          project.requests = [requestId];
+          update.push(project);
+        } else if (project.requests.indexOf(requestId) === -1) {
+          project.requests.push(requestId);
+          update.push(project);
+        }
+      }
+      if (update.length) {
+        return db.bulkDocs(update);
+      }
+    })
+    .then((response) => {
+      if (!response) {
+        return;
+      }
+      for (let i = 0, len = response.length; i < len; i++) {
+        const r = response[i];
+        if (r.error) {
+          this._handleException(r, true);
+          continue;
+        }
+        const project = update[i];
+        project._rev = r.rev;
+        this._fireUpdated('project-object-changed', {
+          project: project
+        });
+      }
+    });
   }
   /**
    * Reads an entry from the datastore.
@@ -304,56 +447,18 @@ class RequestModel extends ArcBaseModel {
    */
   update(type, request) {
     const db = this.getDatabase(type);
-    let promise;
     let oldRev = request._rev;
-    let oldId = request._id;
-    let regenerateId = false;
-    const isHistory = type === 'history-requests';
-    if (request._id) {
-      // Checks if the ID has to be regenerated if parts of the ID changes.
-      promise = this.read(type, request._id, request._rev)
-      .then((req) => {
-        oldId = req._id;
-        oldRev = request._rev = req._rev;
-        if (!isHistory && request.name !== req.name) {
-          regenerateId = true;
-        }
-        if (!isHistory && request.legacyProject !== req.legacyProject) {
-          regenerateId = true;
-        }
-        if (request.url !== req.url) {
-          regenerateId = true;
-        }
-        if (request.method !== req.method) {
-          regenerateId = true;
-        }
-      });
-    } else {
-      promise = Promise.resolve();
+    if (!request._id) {
+      request._id = this.uuid.generate();
     }
-
-    return promise
-    .then(() => {
-      if (regenerateId) {
-        const removeId = request._id;
-        const removeRev = request._rev;
-        request._id = this._generateId(request, isHistory);
-        delete request._rev;
-        return db.remove(removeId, removeRev);
-      } else if (!request._id) {
-        request._id = this._generateId(request, isHistory);
-      }
-    })
-    .then(() => {
-      request.updated = Date.now();
-      return db.put(request);
-    })
+    request.updated = Date.now();
+    return db.put(request)
     .then((result) => {
       request._rev = result.rev;
       const detail = {
         request: request,
         oldRev: oldRev,
-        oldId: oldId,
+        oldId: request._id,
         type: type
       };
       this._fireUpdated('request-object-changed', detail);
@@ -367,85 +472,26 @@ class RequestModel extends ArcBaseModel {
    * @return {Array} List of PouchDB responses to each insert
    */
   updateBulk(type, requests) {
-    const promises = requests.map((item) => {
-      const options = {
-        oldRev: item._rev,
-        oldId: item._id,
-        regenerateId: false,
-        isHistory: type === 'history-requests',
-        request: item
-      };
-      if (item._id) {
-        return this.read(type, item._id, item._rev)
-        .then((req) => {
-          options.oldId = req._id;
-          options.oldRev = options.request._rev = req._rev;
-          if (!options.isHistory && item.name !== req.name) {
-            options.regenerateId = true;
-          } else if (!options.isHistory && item.legacyProject !== req.legacyProject) {
-            options.regenerateId = true;
-          } else if (item.url !== req.url) {
-            options.regenerateId = true;
-          } else if (item.method !== req.method) {
-            options.regenerateId = true;
-          }
-          return options;
-        });
-      } else {
-        return Promise.resolve(options);
-      }
-    });
     const db = this.getDatabase(type);
-    const toInsert = [];
-    return Promise.all(promises)
-    .then((list) => {
-      const toRemove = [];
-      list.forEach((item) => {
-        if (item.regenerateId) {
-          const clone = Object.assign({}, item.request);
-          clone._deleted = true;
-          toRemove.push(clone);
-          item.request._id = this._generateId(item.request, item.isHistory);
-          delete item.request._rev;
-        } else if (!item.request._id) {
-          item.request._id = this._generateId(item.request, item.isHistory);
-        }
-        item.request.updated = Date.now();
-        toInsert.push(item);
-      });
-      if (toRemove.length) {
-        return db.bulkDocs(toRemove)
-        .then((response) => {
-          response.forEach((item, index) => {
-            const detail = {
-              id: item.id,
-              rev: item.rev,
-              oldRev: toRemove[index]._rev,
-              type: type
-            };
-            this._fireUpdated('request-object-deleted', detail);
-          });
-        });
-      }
-    })
-    .then(() => db.bulkDocs(toInsert.map((item) => item.request)))
+    return db.bulkDocs(requests)
     .then((response) => {
-      response.forEach((item, index) => {
-        if (!item.ok) {
-          console.warn('Update error', item);
-          return;
+      for (let i = 0, len = response.length; i < len; i++) {
+        const r = response[i];
+        if (r.error) {
+          this._handleException(r, true);
+          continue;
         }
-        const options = toInsert[index];
-        const request = options.request;
-        request._rev = item.rev;
+        const request = requests[i];
+        const oldRev = request._rev;
+        request._rev = r.rev;
         const detail = {
-          request: request,
-          oldRev: options.oldRev,
-          oldId: options.oldId,
-          type: type
+          request,
+          oldRev: oldRev,
+          oldId: request._id,
+          type: request.type
         };
         this._fireUpdated('request-object-changed', detail);
-      });
+      }
       return response;
     });
   }
@@ -470,7 +516,7 @@ class RequestModel extends ArcBaseModel {
       const db = this.getDatabase(type);
       return db.remove(id, rev);
     })
-    .then(response => {
+    .then((response) => {
       const detail = {
         id: id,
         rev: response.rev,
@@ -577,38 +623,6 @@ class RequestModel extends ArcBaseModel {
     }
   }
   /**
-   * Generates the IS for the request depending on it's type and properties.
-   *
-   * @param {Object} request The request object to store.
-   * @param {Boolean} isHistory Is true then it generates an ID for a history
-   * item
-   * @return {String} A database ID
-   */
-  _generateId(request, isHistory) {
-    let id;
-    if (isHistory) {
-      let time = request.updated || request.created;
-      time = Number(time);
-      if (time !== time) {
-        time = request.updated = request.created = Date.now();
-      }
-      id = this._computeMidnight(time);
-    } else {
-      request.name = request.name || '';
-      const name = request.name.toLowerCase();
-      id = encodeURIComponent(name);
-    }
-    id += '/';
-    let url = request.url || '';
-    url = url.toLowerCase();
-    id += encodeURIComponent(url) + '/';
-    id += (request.method || '').toLowerCase();
-    if (!isHistory && request.legacyProject) {
-      id += '/' + request.legacyProject;
-    }
-    return id;
-  }
-  /**
    * Handler for request read event request.
    */
   _handleRead(e) {
@@ -642,10 +656,6 @@ class RequestModel extends ArcBaseModel {
       e.detail.result = Promise.reject(new Error('The "name" property is missing'));
       return;
     }
-    if (!e.detail.type) {
-      e.detail.result = Promise.reject(new Error('Request "type" property is missing.'));
-      return;
-    }
     const missingDataMsg = 'Either "request" object or request "id" must be set.';
     if (!e.detail.request && !e.detail.id) {
       e.detail.result = Promise.reject(new Error(missingDataMsg));
@@ -660,14 +670,14 @@ class RequestModel extends ArcBaseModel {
         e.detail.result = Promise.reject(new Error(missingDataMsg));
         return;
       }
-      promise = this.read(e.detail.type, e.detail.id);
+      promise = this.read('saved', e.detail.id);
     }
 
     e.detail.result = promise
     .then((obj) => {
       obj = Object.assign({}, obj);
       obj.name = e.detail.name;
-      return this.update(e.detail.type, obj);
+      return this.update('saved', obj);
     })
     .catch((e) => this._handleException(e));
   }
@@ -813,6 +823,181 @@ class RequestModel extends ArcBaseModel {
     const result = docs.find((item) => item._id === id);
     return result ? result._rev : undefined;
   }
+
+  /**
+   * Saves the request on Google Drive.
+   * It sends `drive-request-save` event to call a component responsible
+   * for saving the request.
+   *
+   * This do nothing if `opts.drive is not set.`
+   *
+   * @param {Object} data Data to save
+   * @param {Object} opts Save request options. See `saveRequest` for more info.
+   * @return {Promise} Resolved promise to updated object.
+   */
+  _saveGoogleDrive(data, opts) {
+    if (!opts.isDrive) {
+      return Promise.resolve(data);
+    }
+    const copy = Object.assign({}, data);
+    const e = new CustomEvent('export-google-drive', {
+      bubbles: true,
+      cancelable: true,
+      composed: true,
+      detail: {
+        content: copy,
+        contentType: 'application/json',
+        file: copy.name + '.arc'
+      }
+    });
+    this.dispatchEvent(e);
+    if (!e.defaultPrevented) {
+      console.warn('Unable to export request to Google Drive.');
+      console.warn('The drive-request-save was not handled.');
+      return Promise.reject(new Error('Drive export module not found'));
+    }
+    return e.detail.result
+    .then((insertResult) => {
+      const driveId = insertResult.id;
+      if (driveId) {
+        data.driveId = driveId;
+      }
+      return data;
+    });
+  }
+  /**
+   * Prepares payload data to be stored in the datastore.
+   * FormData are translated to a `multipart` entry property.
+   * Payload is cleared from the request object.
+   *
+   * @param {Object} request The request object.
+   * @return {Promise} Promise resolved to a request object.
+   */
+  _preparePayload(data) {
+    if (!data.payload) {
+      return Promise.resolve(data);
+    }
+    if (data.payload instanceof FormData) {
+      data = Object.assign({}, data);
+      if (!data.payload.entries) {
+        data.payload = undefined;
+        return Promise.resolve(data);
+      }
+      return this._createMultipartEntry(data.payload)
+      .then((entry) => {
+        data.payload = undefined;
+        data.multipart = entry;
+        return data;
+      });
+    } else if (data.payload instanceof Blob) {
+      data = Object.assign({}, data);
+      return this._blobToString(data.payload)
+      .then((str) => {
+        data.payload = undefined;
+        data.blob = str;
+        return data;
+      });
+    }
+    return Promise.resolve(data);
+  }
+  /**
+   * Computes `multipart` list value to replace FormData with array that can
+   * be stored in the datastore.
+   *
+   * @param {FormData} payload FormData object
+   * @return {Promise} Promise resolved to a form part representation.
+   */
+  _createMultipartEntry(payload) {
+    const iterator = payload.entries();
+    let textParts;
+    if (payload._arcMeta && payload._arcMeta.textParts) {
+      textParts = payload._arcMeta.textParts;
+    }
+    return this._computeFormDataEntry(iterator, textParts);
+  }
+  /**
+   * Recuresively iterates over form data and appends result of creating the
+   * part object to the `result` array.
+   *
+   * Each part entry contains `name` as a form part name, value as a string
+   * representation of the value and `isFile` to determine is the value is
+   * acttually a string or a file data.
+   *
+   * @param {Iterator} iterator FormData iterator
+   * @param {?Array<String>} textParts From `_arcMeta` property. List of blobs
+   * that should be treated as text parts.
+   * @param {?Array<Object>} result An array where the results are appended to.
+   * It creates new result object when it's not passed.
+   * @return {Promise} A promise resolved to the `result` array.
+   */
+  _computeFormDataEntry(iterator, textParts, result) {
+    result = result || [];
+    const item = iterator.next();
+    if (item.done) {
+      return Promise.resolve(result);
+    }
+    let entry = item.value;
+    let name = entry[0];
+    let value = entry[1];
+    let promise;
+    let isBlob = false;
+    let isTextBlob = false;
+    if (value instanceof Blob) {
+      promise = this._blobToString(value);
+      if (textParts && textParts.indexOf(name) !== -1) {
+        isBlob = false;
+        isTextBlob = true;
+      } else {
+        isBlob = true;
+      }
+    } else {
+      promise = Promise.resolve(value);
+    }
+    return promise
+    .then((str) => {
+      const _part = {
+        name: name,
+        value: str,
+        isFile: isBlob
+      };
+      if (isTextBlob) {
+        _part.isTextBlob = isTextBlob;
+      }
+      return _part;
+    })
+    .then((part) => {
+      result.push(part);
+      return this._computeFormDataEntry(iterator, textParts, result);
+    });
+  }
+  /**
+   * Converts blob data to base64 string.
+   *
+   * @param {Blob} blob File or blob object to be translated to string
+   * @return {Promise} Promise resolved to a base64 string data from the file.
+   */
+  _blobToString(blob) {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onloadend = function(e) {
+        resolve(e.target.result);
+      };
+      reader.onerror = function() {
+        reject(new Error('Unable to convert blob to string.'));
+      };
+      reader.readAsDataURL(blob);
+    });
+  }
+
+  /**
+   * Fired when the request should be expored to Google Drive.
+   * This element doesn't support this operation but this way it queries for
+   * an element that can export data to Google Drive.
+   *
+   * @event drive-request-save
+   * @param {Object} request Request data to export
+   * @param {String} fileName Google Drive file name.
+   */
 
   /**
    * Fired when the project entity has been saved / updated in the datastore.

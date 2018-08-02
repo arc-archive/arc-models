@@ -22,7 +22,8 @@
   "dependencies": {
     "polymer": "Polymer/polymer#^2.0.0",
     "events-target-behavior": "advanced-rest-client/events-target-behavior#^2.0.0",
-    "app-pouchdb-quick-search": "advanced-rest-client/app-pouchdb-quick-search#^2.0.0"
+    "app-pouchdb-quick-search": "advanced-rest-client/app-pouchdb-quick-search#^2.0.0",
+    "uuid-generator": "advanced-rest-client/uuid-generator#^2.0.0"
   },
   "devDependencies": {
     "iron-component-page": "PolymerElements/iron-component-page#^3.0.1",

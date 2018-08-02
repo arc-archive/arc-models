@@ -11,7 +11,7 @@ WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
 License for the specific language governing permissions and limitations under
 the License.
 -->
-<link rel="import" href="base-model.html">
+<link rel="import" href="request-base-model.html">
 <script>
 /**
  * Events based access to projects datastore.
@@ -164,8 +164,9 @@ the License.
  * @polymer
  * @customElement
  * @memberof LogicElements
+ * @extends RequestBaseModel
  */
-class ProjectModel extends ArcBaseModel {
+class ProjectModel extends RequestBaseModel {
   /* global ArcBaseModel */
   static get is() { return 'project-model'; }
 
@@ -193,13 +194,7 @@ class ProjectModel extends ArcBaseModel {
     node.removeEventListener('project-object-deleted', this._handleObjectDelete);
     node.removeEventListener('project-model-query', this._queryHandler);
   }
-  /**
-   * @return {PouchDB} Reference to legacy projects datastore
-   */
-  get db() {
-    /* global PouchDB */
-    return new PouchDB('legacy-projects');
-  }
+
   /**
    * Handler for project read event request.
    */
@@ -214,63 +209,15 @@ class ProjectModel extends ArcBaseModel {
       e.detail.result = Promise.reject(new Error('Project "id" property must be set.'));
       return;
     }
-    e.detail.result = this.read(e.detail.id, e.detail.rev)
+    e.detail.result = this.readProject(e.detail.id, e.detail.rev)
     .catch((e) => this._handleException(e));
-  }
-  /**
-   * Updates / saves the project object in the datastore.
-   * This function fires `project-object-changed` event.
-   *
-   * @param {Object} project A project to save / update
-   * @return {Promise} Resolved promise to project object with updated `_rev`
-   */
-  update(project) {
-    project.updated = Date.now();
-    const oldRev = project._rev;
-    return this.db.put(project)
-    .then((result) => {
-      project._rev = result.rev;
-      this._fireUpdated('project-object-changed', {
-        project: project,
-        oldRev: oldRev
-      });
-      return project;
-    });
-  }
-  /**
-   * Removed an object from the datastore.
-   * This function fires `project-object-deleted` event.
-   *
-   * @param {String} id The ID of the datastore entry.
-   * @param {?String} rev Specific revision to read. Defaults to latest revision.
-   * @return {Promise} Promise resolved to a new `_rev` property of deleted object.
-   */
-  remove(id, rev) {
-    let promise;
-    if (!rev) {
-      promise = this.read(id)
-      .then((obj) => rev = obj._rev);
-    } else {
-      promise = Promise.resolve();
-    }
-    return promise
-    .then(() => this.db.remove(id, rev))
-    .then((response) => {
-      const detail = {
-        id: id,
-        rev: response.rev,
-        oldRev: rev
-      };
-      this._fireUpdated('project-object-deleted', detail);
-      return response.rev;
-    });
   }
   /**
    * Lists all project objects.
    * @return {Promise} A promise resolved to a list of projects.
    */
-  list() {
-    return this.db.allDocs({
+  listProjects() {
+    return this.projectDb.allDocs({
       // jscs:disable
       include_docs: true
       // jscs:enable
@@ -304,18 +251,18 @@ class ProjectModel extends ArcBaseModel {
         e.detail.result = Promise.reject(new Error(missingDataMsg));
         return;
       }
-      promise = this.read(e.detail.id);
+      promise = this.readProject(e.detail.id);
     }
 
     e.detail.result = promise
     .then((obj) => {
       obj = Object.assign({}, obj);
       obj.name = e.detail.name;
-      return this.update(obj);
+      return this.updateProject(obj);
     })
     .catch((e) => this._handleException(e));
   }
-  // Handles onject save / update
+  // Handles object save / update
   _handleObjectSave(e) {
     if (!e.cancelable || e.composedPath()[0] === this) {
       return;
@@ -328,7 +275,7 @@ class ProjectModel extends ArcBaseModel {
       e.detail.result = Promise.reject(new Error('The "project" property is missing'));
       return;
     }
-    const db = this.db;
+    const db = this.projectDb;
     let p;
     if (!project._rev) {
       p = db.get(project._id)
@@ -345,7 +292,7 @@ class ProjectModel extends ArcBaseModel {
     e.detail.result = p
     .then((result) => {
       result = Object.assign({}, result, project);
-      return this.update(result);
+      return this.updateProject(result);
     })
     .catch((e) => this._handleException(e));
   }
@@ -362,7 +309,7 @@ class ProjectModel extends ArcBaseModel {
       e.detail.result = Promise.reject(new Error('Missing "id" property.'));
       return;
     }
-    e.detail.result = this.remove(id, e.detail.rev)
+    e.detail.result = this.removeProject(id, e.detail.rev)
     .catch((e) => this._handleException(e));
   }
   // Queries for a list of projects.
@@ -375,7 +322,7 @@ class ProjectModel extends ArcBaseModel {
     }
     e.stopImmediatePropagation();
     e.preventDefault();
-    e.detail.result = this.list();
+    e.detail.result = this.listProjects();
   }
   /**
    * Fired when the project entity has been saved / updated in the datastore.

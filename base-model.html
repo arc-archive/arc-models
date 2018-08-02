@@ -12,18 +12,29 @@ License for the specific language governing permissions and limitations under
 the License.
 -->
 <link rel="import" href="../polymer/polymer-element.html">
+<link rel="import" href="../uuid-generator/uuid-generator.html">
 <link rel="import" href="../events-target-behavior/events-target-behavior.html">
 <script>
 /**
  * A base class for all models.
  *
- * @polymer
- * @customElement
  * @appliesMixin ArcBehaviors.EventsTargetBehavior
- * @memberof LogicElements
  */
 class ArcBaseModel extends ArcBehaviors.EventsTargetBehavior(Polymer.Element) {
-  static get is() { return 'arc-base-model'; }
+  get uuid() {
+    if (this._uuid) {
+      return this._uuid;
+    }
+    this._uuid = document.createElement('uuid-generator');
+    return this._uuid;
+  }
+
+  disconnectedCallback() {
+    super.disconnectedCallback();
+    if (this._uuid) {
+      delete this._uuid;
+    }
+  }
 
   /**
    * Reads an entry from the datastore.
@@ -73,10 +84,11 @@ class ArcBaseModel extends ArcBehaviors.EventsTargetBehavior(Polymer.Element) {
 
   /**
    * Handles any exception in the model in a unified way.
-   * @param {[type]} e [description]
-   * @return {[type]} [description]
+   * @param {Error|Object} e An error object
+   * @param {?Boolean} noThrow If set the function will not throw error.
+   * This allow to do the logic without stopping program.
    */
-  _handleException(e) {
+  _handleException(e, noThrow) {
     let message;
     if (e instanceof Error) {
       message = e.message;
@@ -93,8 +105,9 @@ class ArcBaseModel extends ArcBehaviors.EventsTargetBehavior(Polymer.Element) {
       }
     }));
     console.error(this.constructor.name, e);
-    throw e;
+    if (!noThrow) {
+      throw e;
+    }
   }
 }
-window.customElements.define(ArcBaseModel.is, ArcBaseModel);
 </script>
