@@ -226,11 +226,15 @@ the License.
  */
 class RequestModel extends RequestBaseModel {
   /* global RequestBaseModel */
-  /**
-   * @type {String}
-   */
-  static get is() {
-    return 'request-model';
+  static get is() {return 'request-model';}
+
+  static get properties() {
+    return {
+      /**
+       * When set it skips request indexing.
+       */
+      noIndexing: Boolean
+    };
   }
   /**
    * @constructor
@@ -414,23 +418,28 @@ class RequestModel extends RequestBaseModel {
     const update = [];
     return db.allDocs({
       // jscs:disable
-      include_docs: true,
+      include_docs: true
       // jscs:enable
-      keys: projects
     })
     .then((response) => {
       const rows = response.rows;
       for (let i = 0, len = rows.length; i < len; i++) {
         const project = rows[i];
-        if (project.error) {
+        const doc = project.doc;
+        if (projects.indexOf(project.id) === -1) {
+          const index = doc.requests ? doc.requests.indexOf(requestId) : -1;
+          if (index !== -1) {
+            doc.requests.splice(index, 1);
+            update.push(doc);
+          }
           continue;
         }
-        if (!project.requests) {
-          project.requests = [requestId];
-          update.push(project);
-        } else if (project.requests.indexOf(requestId) === -1) {
-          project.requests.push(requestId);
-          update.push(project);
+        if (!doc.requests) {
+          doc.requests = [requestId];
+          update.push(doc);
+        } else if (doc.requests.indexOf(requestId) === -1) {
+          doc.requests.push(requestId);
+          update.push(doc);
         }
       }
       if (update.length) {
@@ -529,7 +538,7 @@ class RequestModel extends RequestBaseModel {
           request,
           oldRev: oldRev,
           oldId: request._id,
-          type: request.type
+          type: type
         };
         this._fireUpdated('request-object-changed', detail);
       }
@@ -1082,6 +1091,9 @@ class RequestModel extends RequestBaseModel {
    * @param {Array<Object>} requests List of requests to index.
    */
   _indexRequest(requests) {
+    if (this.noIndexing) {
+      return;
+    }
     const worker = this._getIndexWorker();
     worker.postMessage({
       task: 'index-requests',
@@ -1136,9 +1148,17 @@ class RequestModel extends RequestBaseModel {
     const data = e.data;
     switch (data.task) {
       case 'task-finished':
-        console.log('Request indexing finished');
+        this.dispatchEvent(new CustomEvent('request-indexing-finished', {
+          composed: true
+        }));
         break;
       case 'task-error':
+        this.dispatchEvent(new CustomEvent('request-indexing-error', {
+          composed: true,
+          detail: {
+            message: data.message
+          }
+        }));
         this._handleException(new Error(data.message), true);
         break;
     }
@@ -1150,6 +1170,12 @@ class RequestModel extends RequestBaseModel {
    */
   _onIndexWorkerError(e) {
     console.error(e);
+    this.dispatchEvent(new CustomEvent('request-indexing-error', {
+      composed: true,
+      detail: {
+        message: e.message || 'Indexing worker error'
+      }
+    }));
   }
 
   /**
@@ -1182,6 +1208,33 @@ class RequestModel extends RequestBaseModel {
    * @param {String} oldRev Entity old `_rev` property (before delete).
    * @param {String} type Request object type. Can be either `saved-requests` or
    * `history-requests`
+   */
+
+  /**
+   * Dispatched when request object indexing finishes.
+   * This event does not bubbles.
+   *
+   * @event request-indexing-finished
+   */
+  /**
+   * Dispatched when request object indexing finishes with error.
+   * This event does not bubbles.
+   *
+   * @event request-indexing-error
+   * @param {String} message Error message
+   */
+
+  /**
+   * Dispatched when saving request object to the data store and configuration
+   * option says to save request to Google Drive.
+   * This component does not handles the logic responsible for Drive integration.
+   *
+   * Note, The request save flow fails when this event is not handled.
+   *
+   * @event export-google-drive
+   * @param {Object} content Data to store in the Drive
+   * @param {String} contentType Always 'application/json'
+   * @param {String} file Drive file name
    */
 }
 window.customElements.define(RequestModel.is, RequestModel);
