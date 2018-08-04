@@ -258,13 +258,13 @@
             composed: true,
             cancelable: true
           });
-          document.body.dispatchEvent(event);
+          document.body.dispatchEvent(e);
           return e;
         }
 
         test('Event is canceled', function() {
-          const event = fire('test-2', dataObj._id);
-          assert.isTrue(event.defaultPrevented);
+          const e = fire('test-2', dataObj._id);
+          assert.isTrue(e.defaultPrevented);
         });
 
         test('Event detail contains "result" as promise', function() {

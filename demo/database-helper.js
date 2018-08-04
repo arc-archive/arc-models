@@ -137,9 +137,8 @@ DatabaseHelper.generateDescription = function(opts) {
 DatabaseHelper.createProjectObject = function() {
   const project = {
     /* global chance */
-    _id: chance.string({
-      length: 12,
-      pool: stringPool
+    _id: chance.guid({
+      version: 5
     }),
     name: chance.sentence({words: 2}),
     order: 0,
@@ -191,13 +190,8 @@ DatabaseHelper.generateSavedItem = function(opts) {
   if (payload) {
     item.payload = payload;
   }
-
-  item._id = encodeURIComponent(requestName.toLowerCase()) + '/' +
-    encodeURIComponent(item.url.toLowerCase()) + '/' +
-    item.method.toLowerCase();
   if (opts.project) {
-    item._id += '/' + opts.project;
-    item.legacyProject = opts.project;
+    item.projects = [opts.project];
     item.projectOrder = chance.integer({min: 0, max: 10});
   }
   return item;
@@ -235,10 +229,6 @@ DatabaseHelper.generateHistoryObject = function(opts) {
   if (payload) {
     item.payload = payload;
   }
-
-  item._id = DatabaseHelper.setMidninght(LAST_TIME) + '/' +
-    encodeURIComponent(url.toLowerCase()) + '/' +
-    method.toLowerCase();
   return item;
 };
 /**
@@ -353,6 +343,16 @@ DatabaseHelper.insertSavedRequestData = function(opts) {
   .then(function() {
     return data;
   });
+};
+/**
+ * @return {Promise} Promise resolved to all documents in the projects store.
+ */
+DatabaseHelper.allProjects = function() {
+  const projectsDb = new PouchDB('legacy-projects');
+  return projectsDb.allDocs({
+    include_docs: true
+  })
+  .then((response) => response.rows.map((item) => item.doc));
 };
 /**
  * Generates and saves cookies data to the data store.
