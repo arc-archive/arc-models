@@ -68,9 +68,26 @@
         });
 
         suiteTeardown(function(done) {
-          const request = indexedDB.deleteDatabase(INDEX_STORE_NAME);
-          request.onsuccess = () => done();
-          request.onerror = () => done(new Error('Unable to delete store'));
+          if (worker) {
+            worker.terminate();
+            worker = null;
+          }
+          const request = indexedDB.open(INDEX_STORE_NAME, INDEX_STORE_VERSION);
+          request.onsuccess = (e) => {
+            const db = e.target.result;
+            const tx = db.transaction('urls', 'readwrite');
+            const store = tx.objectStore('urls');
+            tx.onerror = () => {
+              done(new Error('Unable to clear the store'));
+            };
+            tx.oncomplete = () => {
+              done();
+            };
+            store.clear();
+          };
+          request.onerror = function() {
+            done(new Error('Unable to open the store'));
+          };
         });
 
         test('Indexes single request', (done) => {
