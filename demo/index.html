@@ -1,0 +1,140 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, minimum-scale=1, initial-scale=1, user-scalable=yes">
+  <title>api-url-params-editor demo</title>
+  <script src="../../webcomponentsjs/webcomponents-loader.js"></script>
+  <link rel="import" href="../../shadycss/apply-shim.html">
+  <link rel="import" href="../../polymer/lib/elements/custom-style.html">
+  <link rel="import" href="../../polymer/lib/elements/dom-bind.html">
+  <link rel="import" href="../../iron-demo-helpers/demo-pages-shared-styles.html">
+  <link rel="import" href="../../paper-input/paper-input.html">
+  <link rel="import" href="../../paper-button/paper-button.html">
+  <script>
+  window.importScripts = () => {};
+  </script>
+  <script src="../../chance/chance.js"></script>
+  <script src="../workers/request-db.js"></script>
+  <script src="../workers/request-indexer.js"></script>
+  <custom-style>
+    <style is="custom-style" include="demo-pages-shared-styles">
+    :root {
+      --arc-font-body1: {
+        @apply --paper-font-body1;
+      }
+    }
+
+    h1 {
+      @apply --paper-font-headline;
+    }
+
+    h2 {
+      @apply --paper-font-title;
+    }
+
+    output {
+      white-space: pre-wrap;
+      @apply --paper-font-code1;
+      font-size: 16px;
+    }
+    </style>
+  </custom-style>
+</head>
+<body>
+  <header>
+    <h1>Search model demo<h1>
+  </header>
+  <dom-bind id="demo">
+    <template is="dom-bind">
+      <div class="vertical-section-container centered options">
+        <h2>Options</h2>
+        <paper-button on-click="genData">Generate data</paper-button>
+        <paper-button on-click="deleteData">Destroy data</paper-button>
+      </div>
+      <div class="vertical-section-container centered" role="main">
+        <h2>Search data store</h2>
+        <paper-input label="Search term" id="q" name="q" value="{{q}}"></paper-input>
+        <paper-button on-click="search">Search</paper-button>
+      </div>
+    </template>
+  </dom-bind>
+  <script>
+  (function(scope) {
+    /* global chance, RequestIndexer */
+    scope.q = 'api';
+    scope.genData = function() {
+      const domains = [
+        'https://domain.com/',
+        'https://api.domain.com/',
+        'https://domain.com/domain/',
+        'https://mulesoft.com/',
+        'https://api.mulesoft.com/',
+        'http://other.com/'
+      ];
+      const toIndex = [];
+      for (let i = 0; i < 1000; i++) {
+        let url = chance.pickone(domains);
+        for (let j = 0; j < chance.integer({min: 0, max: 3}); j++) {
+          url += chance.word() + '/';
+        }
+        url = url.substr(0, url.length - 1);
+        if (chance.bool()) {
+          url += '?a=b&c=d';
+        }
+        toIndex[toIndex.length] = {
+          id: 'r' + i,
+          url,
+          type: chance.bool() ? 'history' : 'saved'
+        };
+      }
+      const indexer = new RequestIndexer();
+      return indexer._indexRequests(toIndex)
+      .then(() => console.log('Indexed'));
+    };
+    scope.deleteData = function() {
+      const indexer = new RequestIndexer();
+      return indexer.openSearchStore()
+      .then((db) => {
+        return new Promise((resolve, reject) => {
+          const tx = db.transaction('urls', 'readwrite');
+          const store = tx.objectStore('urls');
+          const results = [];
+          tx.onerror = () => {
+            reject(results);
+          };
+          tx.oncomplete = () => {
+            resolve(results);
+          };
+          store.clear();
+        });
+      })
+      .then(() => console.log('Cleared'));
+    };
+
+    scope.search = function() {
+      const query = document.getElementById('q').value;
+      const indexer = new RequestIndexer();
+      console.log('Querying for', query);
+      return indexer._queryIndex('a', query, {detailed: true})
+      .then((result) => {
+        console.log(result, Object.keys(result).length);
+        return indexer._queryIndex('a', query, {detailed: false});
+      })
+      .then((result) => {
+        console.log(result, Object.keys(result).length);
+        const ms = performance.getEntriesByType('measure');
+        console.table(ms.map((item) => {
+          return {
+            name: item.name,
+            duration: item.duration
+          };
+        }));
+        performance.clearMeasures();
+      });
+    };
+  })(document.getElementById('demo'));
+  </script>
+</body>
+</html>

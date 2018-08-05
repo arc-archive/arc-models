@@ -1,0 +1,179 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, minimum-scale=1.0, initial-scale=1.0, user-scalable=yes">
+    <script src="../../webcomponentsjs/webcomponents-loader.js"></script>
+    <script src="../../web-component-tester/browser.js"></script>
+    <script>
+    window.importScripts = () => {};
+    </script>
+    <script src="../../chance/chance.js"></script>
+    <script src="../workers/request-db.js"></script>
+    <script src="../workers/request-indexer.js"></script>
+  </head>
+  <body>
+    <script>
+    /* global RequestIndexer, chance */
+    suite('Request indexer search test', function() {
+      function allIndexes(db) {
+        return new Promise((resolve, reject) => {
+          const tx = db.transaction('urls', 'readonly');
+          const store = tx.objectStore('urls');
+          const results = [];
+          tx.onerror = () => {
+            reject(results);
+          };
+          tx.oncomplete = () => {
+            resolve(results);
+          };
+          const request = store.openCursor();
+          request.onsuccess = function(e) {
+            const cursor = e.target.result;
+            if (cursor) {
+              results[results.length] = cursor.value;
+              cursor.continue();
+            }
+          };
+        });
+      }
+      function clearAllIndexes(db) {
+        return new Promise((resolve, reject) => {
+          const tx = db.transaction('urls', 'readwrite');
+          const store = tx.objectStore('urls');
+          const results = [];
+          tx.onerror = () => {
+            reject(results);
+          };
+          tx.oncomplete = () => {
+            resolve(results);
+          };
+          store.clear();
+        });
+      }
+
+      const hasUrlSupport = typeof URL !== 'undefined';
+      suite('Querying for data', function() {
+        let indexer;
+
+        suiteSetup(function() {
+          indexer = new RequestIndexer();
+          const toIndex = [{
+            id: 'test-id-1',
+            url: 'https://domain.com/Api/Path?p1=1&p2=2',
+            type: 'saved'
+          }, {
+            id: 'test-id-2',
+            url: 'https://domain.com/',
+            type: 'saved'
+          }, {
+            id: 'test-id-3',
+            url: 'https://api.domain.com/',
+            type: 'history'
+          }, {
+            id: 'test-id-4',
+            url: 'https://api.mulesoft.com/path/to?param=1',
+            type: 'history'
+          }];
+          return indexer._indexRequests(toIndex);
+        });
+
+        suiteTeardown(() => {
+          return indexer.openSearchStore()
+          .then((db) => clearAllIndexes(db));
+        });
+
+        suite('Case search', function() {
+          [
+            ['https:', 4, 2, 2],
+            ['api', 2, 0, 2],
+            ['domain.com', 3, 2, 1],
+            ['mulesoft.com', 0, 0, 0]
+          ].forEach(function(data) {
+            test(`Querying for "${data[0]}"`, function() {
+              if (!hasUrlSupport) {
+                return;
+              }
+              return indexer._queryIndex('id', data[0], {detailed: false})
+              .then((result) => {
+                assert.lengthOf(Object.keys(result), data[1]);
+              });
+            });
+
+            test(`Querying for "${data[0]}" - saved only `, function() {
+              if (!hasUrlSupport) {
+                return;
+              }
+              return indexer._queryIndex('id', data[0], {
+                detailed: false,
+                type: 'saved'
+              })
+              .then((result) => {
+                assert.lengthOf(Object.keys(result), data[2]);
+              });
+            });
+
+            test(`Querying for "${data[0]}" - history only `, function() {
+              if (!hasUrlSupport) {
+                return;
+              }
+              return indexer._queryIndex('id', data[0], {
+                detailed: false,
+                type: 'history'
+              })
+              .then((result) => {
+                assert.lengthOf(Object.keys(result), data[3]);
+              });
+            });
+          });
+        });
+
+        suite('Detailed search', function() {
+          [
+            ['https:', 4, 2, 2],
+            ['api', 3, 1, 2],
+            ['domain.com', 3, 2, 1],
+            ['mulesoft.com', 1, 0, 1]
+          ].forEach(function(data) {
+            test(`Querying for "${data[0]}"`, function() {
+              if (!hasUrlSupport) {
+                return;
+              }
+              return indexer._queryIndex('id', data[0], {detailed: true})
+              .then((result) => {
+                assert.lengthOf(Object.keys(result), data[1]);
+              });
+            });
+
+            test(`Querying for "${data[0]}" - saved only `, function() {
+              if (!hasUrlSupport) {
+                return;
+              }
+              return indexer._queryIndex('id', data[0], {
+                detailed: true,
+                type: 'saved'
+              })
+              .then((result) => {
+                assert.lengthOf(Object.keys(result), data[2]);
+              });
+            });
+
+            test(`Querying for "${data[0]}" - history only `, function() {
+              if (!hasUrlSupport) {
+                return;
+              }
+              return indexer._queryIndex('id', data[0], {
+                detailed: true,
+                type: 'history'
+              })
+              .then((result) => {
+                assert.lengthOf(Object.keys(result), data[3]);
+              });
+            });
+          });
+        });
+      });
+    });
+    </script>
+  </body>
+</html>

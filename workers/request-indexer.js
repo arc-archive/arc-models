@@ -1,5 +1,5 @@
 this.importScripts('request-db.js');
-/* global RequestDb, RequestDb, self */
+/* global RequestDb, self, IDBKeyRange */
 /**
  * A web worker responsible for indexing request data.
  *
@@ -30,6 +30,13 @@ class RequestIndexer extends RequestDb {
           return;
         }
         this._indexRequests(data.requests);
+        break;
+      case 'query-data':
+        const opts = {
+          type: data.type,
+          detailed: data.detailed || false
+        };
+        this._queryIndex(data.id, data.q, opts);
         break;
     }
   }
@@ -141,6 +148,7 @@ class RequestIndexer extends RequestDb {
     }
     const urlIndex = this._getUrlObject(request, indexed);
     if (urlIndex) {
+      urlIndex.fullUrl = 1;
       result[result.length] = urlIndex;
     }
 
@@ -191,7 +199,8 @@ class RequestIndexer extends RequestDb {
       id: this._generateId(lowerUrl, type),
       url,
       requestId: id,
-      type
+      type,
+      fullUrl: 0
     };
   }
   /**
@@ -322,6 +331,195 @@ class RequestIndexer extends RequestDb {
         store.delete(items[i].id);
       }
     });
+  }
+  /**
+   * Queries for indexed data
+   * @param {String} id An ID returned to the calling application
+   * @param {String} query The query
+   * @param {Object} opts Search options:
+   * - type (string: saved || history): Request type
+   * - detailed (Booelan): If set it uses slower algorithm but performs full
+   * search on the index. When false it only uses filer like query + '*'.
+   * @return {Promise}
+   */
+  _queryIndex(id, query, opts) {
+    opts = opts || {};
+    return this.openSearchStore()
+    .then((db) => {
+      if (opts.detailed) {
+        return this._searchIndexOf(db, query, opts.type);
+      } else {
+        return this._searchCasing(db, query, opts.type);
+      }
+    })
+    .then((results) => {
+      try {
+        self.postMessage({
+          task: 'query-finished',
+          id,
+          results
+        });
+      } catch (_) {}
+      return results;
+    });
+  }
+  /**
+   * Performance search on the data store using `indexOf` on the primary key.
+   * This function is slower than `_searchCasing` but much, much faster than
+   * other ways to search for this data.
+   * It allows to perform a search on the part of the url only like:
+   * `'*' + q + '*'` while `_searchCasing` only allows `q + '*'` type search.
+   *
+   * @param {Object} db Reference to the database
+   * @param {String} q A string to search for
+   * @param {?String} type A type of the request to include into results.
+   * @return {Promise}
+   */
+  _searchIndexOf(db, q, type) {
+    const lowerNeedle = q.toLowerCase();
+    return new Promise((resolve) => {
+      // performance.mark('search-key-scan-2-start');
+      const tx = db.transaction('urls', 'readonly');
+      const store = tx.objectStore('urls');
+      const results = {};
+      tx.onerror = () => {
+        console.log('Transaction error');
+        resolve(results);
+      };
+      tx.oncomplete = () => {
+        // performance.mark('search-key-scan-2-end');
+        // performance.measure('search-key-scan-2-end', 'search-key-scan-2-start');
+        resolve(results);
+      };
+      const keyRange = IDBKeyRange.only(1);
+      const index = store.index('fullUrl');
+      const request = index.openCursor(keyRange);
+      request.onsuccess = (e) => {
+        const cursor = e.target.result;
+        if (!cursor) {
+          return;
+        }
+        const record = cursor.value;
+        if (type && record.type !== type) {
+          cursor.continue();
+          return;
+        }
+        const key = record.id;
+        const keyUrl = key.substr(0, key.indexOf('::'));
+        if (keyUrl.indexOf(lowerNeedle) !== -1) {
+          if (!results[record.requestId]) {
+            results[record.requestId] = {
+              hits: 1,
+              type: record.type
+            };
+          }
+        }
+        cursor.continue();
+      };
+    });
+  }
+  /**
+   * Uses (in most parts) algorithm described at
+   * https://www.codeproject.com/Articles/744986/How-to-do-some-magic-with-indexedDB
+   * Distributed under Apache 2 license
+   *
+   * This is much faster than `_searchIndexOf` function. However may not find
+   * some results. For ARC it's a default search function.
+   *
+   * @param {Object} db Reference to the database
+   * @param {String} q A string to search for
+   * @param {?String} type A type of the request to include into results.
+   * @return {Promise}
+   */
+  _searchCasing(db, q, type) {
+    const lowerNeedle = q.toLowerCase();
+    return new Promise((resolve) => {
+      // performance.mark('search-casing-start');
+      const tx = db.transaction('urls', 'readonly');
+      const store = tx.objectStore('urls');
+      const results = {};
+      tx.onerror = () => {
+        console.log('Transaction error');
+        resolve(results);
+      };
+
+      tx.oncomplete = () => {
+        // performance.mark('search-casing-end');
+        // performance.measure('search-casing-end', 'search-casing-start');
+        resolve(results);
+      };
+      const request = store.openCursor();
+      request.onsuccess = (e) => {
+        const cursor = e.target.result;
+        if (!cursor) {
+          return;
+        }
+        const record = cursor.value;
+        if (type && record.type !== type) {
+          cursor.continue();
+          return;
+        }
+        const key = cursor.key;
+        const keyUrl = key.substr(0, key.indexOf('::'));
+        if (keyUrl.indexOf(lowerNeedle) !== -1) {
+          if (!results[record.requestId]) {
+            results[record.requestId] = {
+              hits: 1,
+              type: record.type
+            };
+          }
+          cursor.continue();
+          return;
+        }
+        const upperNeedle = q.toUpperCase();
+        const nextNeedle = this._nextCasing(keyUrl, keyUrl, upperNeedle, lowerNeedle);
+        if (nextNeedle) {
+          cursor.continue(nextNeedle);
+        }
+      };
+    });
+  }
+  /**
+   * https://www.codeproject.com/Articles/744986/How-to-do-some-magic-with-indexedDB
+   * Distributed under Apache 2 license
+   * @param {String} key [description]
+   * @param {String} lowerKey [description]
+   * @param {String} upperNeedle [description]
+   * @param {String} lowerNeedle [description]
+   * @return {String|undefined}
+   */
+  _nextCasing(key, lowerKey, upperNeedle, lowerNeedle) {
+    let length = Math.min(key.length, lowerNeedle.length);
+    let llp = -1;
+    for (let i = 0; i < length; ++i) {
+      let lwrKeyChar = lowerKey[i];
+      if (lwrKeyChar === lowerNeedle[i]) {
+        continue;
+      }
+      if (lwrKeyChar !== lowerNeedle[i]) {
+        if (key[i] < upperNeedle[i]) {
+          return key.substr(0, i) + upperNeedle[i] + upperNeedle.substr(i + 1);
+        }
+        if (key[i] < lowerNeedle[i]) {
+          return key.substr(0, i) + lowerNeedle[i] + upperNeedle.substr(i + 1);
+        }
+        if (llp >= 0) {
+          return key.substr(0, llp) + lowerKey[llp] + upperNeedle.substr(llp + 1);
+        }
+        return;
+      }
+      if (key[i] < lwrKeyChar) {
+        llp = i;
+      }
+      if (length < lowerNeedle.length) {
+        return key + upperNeedle.substr(key.length);
+      }
+      if (llp < 0) {
+        return;
+      } else {
+        return key.substr(0, llp) + lowerNeedle[llp] + upperNeedle.substr(llp + 1);
+      }
+    }
   }
 }
 const indexer = new RequestIndexer();

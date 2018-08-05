@@ -40,6 +40,7 @@ class RequestDb {
     const store = db.createObjectStore('urls', {keyPath: 'id'});
     store.createIndex('url', 'url', {unique: false});
     store.createIndex('requestId', 'requestId', {unique: false});
+    store.createIndex('fullUrl', 'fullUrl', {unique: false});
   }
   /**
    * Generates UUID
