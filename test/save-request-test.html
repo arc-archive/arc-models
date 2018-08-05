@@ -78,17 +78,26 @@
       });
 
       test('Returns a promise', function() {
+        if (!hasFormDataSupport()) {
+          return;
+        }
         const result = element._createMultipartEntry(fd);
         assert.typeOf(result.then, 'function');
         return result;
       });
 
       test('Promise results to an array', function() {
+        if (!hasFormDataSupport()) {
+          return;
+        }
         return element._createMultipartEntry(fd)
         .then((result) => assert.typeOf(result, 'array'));
       });
 
       test('Computes file part', () => {
+        if (!hasFormDataSupport()) {
+          return;
+        }
         return element._createMultipartEntry(fd)
         .then((data) => {
           const part = data[0];
@@ -99,6 +108,9 @@
       });
 
       test('Computes text part', () => {
+        if (!hasFormDataSupport()) {
+          return;
+        }
         return element._createMultipartEntry(fd)
         .then((data) => {
           const part = data[1];
@@ -109,6 +121,9 @@
       });
 
       test('Sets isTextBlob', () => {
+        if (!hasFormDataSupport()) {
+          return;
+        }
         return element._createMultipartEntry(fd)
         .then((data) => {
           const part = data[2];

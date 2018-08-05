@@ -38,6 +38,9 @@ class RequestIndexer extends RequestDb {
    * @param {String} task Task name
    */
   notifyEnd(task) {
+    if (self.mocha) {
+      return;
+    }
     self.postMessage({
       task: 'task-finished',
       name: task
@@ -49,6 +52,9 @@ class RequestIndexer extends RequestDb {
    */
   notifyError(cause) {
     console.error(cause);
+    if (self.mocha) {
+      return;
+    }
     self.postMessage({
       task: 'task-error',
       message: cause.message || 'Unknown error'
@@ -57,17 +63,18 @@ class RequestIndexer extends RequestDb {
   /**
    * Indexes request data in dedicated index store for requests.
    * @param {Array} requests List of requests to index.
+   * @return {Promise}
    */
   _indexRequests(requests) {
     const request = requests.shift();
     if (!request) {
       this.notifyEnd('index-requests');
-      return;
+      return Promise.resolve();
     }
-    this.openSearchStore()
+    return this.openSearchStore()
     .then((db) => {
       let dbIndexes;
-      this._getIndexedData(db, request.id)
+      return this._getIndexedData(db, request.id)
       .then((indexed) => {
         dbIndexes = indexed;
         return this._prepareRequestIndexData(request, indexed);
@@ -130,7 +137,7 @@ class RequestIndexer extends RequestDb {
     try {
       parser = new URL(url);
     } catch (_) {
-      return url;
+      return [];
     }
     const urlIndex = this._getUrlObject(request, indexed);
     if (urlIndex) {
@@ -175,7 +182,7 @@ class RequestIndexer extends RequestDb {
    */
   _createIndexIfMissing(url, id, type, indexed) {
     const lowerUrl = url.toLowerCase();
-    const index = indexed.findIndex((item) => item.url.toLowerCase() === url);
+    const index = indexed.findIndex((item) => item.url.toLowerCase() === lowerUrl);
     if (index !== -1) {
       indexed.splice(index, 1);
       return;
@@ -278,6 +285,7 @@ class RequestIndexer extends RequestDb {
    * @param {Object} db
    * @param {Array<Object>} indexes List of indexes to store.
    * @return {Promise}
+    window
    */
   _storeIndexes(db, indexes) {
     return new Promise((resolve, reject) => {

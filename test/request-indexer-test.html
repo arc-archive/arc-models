@@ -1,0 +1,243 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, minimum-scale=1.0, initial-scale=1.0, user-scalable=yes">
+    <script src="../../webcomponentsjs/webcomponents-loader.js"></script>
+    <script src="../../web-component-tester/browser.js"></script>
+    <script>
+    window.importScripts = () => {};
+    </script>
+    <script src="../workers/request-db.js"></script>
+    <script src="../workers/request-indexer.js"></script>
+  </head>
+  <body>
+    <script>
+    /* global RequestIndexer */
+    suite('Request indexer test', function() {
+      function allIndexes(db) {
+        return new Promise((resolve, reject) => {
+          const tx = db.transaction('urls', 'readonly');
+          const store = tx.objectStore('urls');
+          const results = [];
+          tx.onerror = () => {
+            reject(results);
+          };
+          tx.oncomplete = () => {
+            resolve(results);
+          };
+          const request = store.openCursor();
+          request.onsuccess = function(e) {
+            const cursor = e.target.result;
+            if (cursor) {
+              results[results.length] = cursor.value;
+              cursor.continue();
+            }
+          };
+        });
+      }
+      function clearAllIndexes(db) {
+        return new Promise((resolve, reject) => {
+          const tx = db.transaction('urls', 'readwrite');
+          const store = tx.objectStore('urls');
+          const results = [];
+          tx.onerror = () => {
+            reject(results);
+          };
+          tx.oncomplete = () => {
+            resolve(results);
+          };
+          store.clear();
+        });
+      }
+
+      const hasUrlSupport = typeof URL !== 'undefined';
+      suite('Database open', () => {
+        let indexer;
+        setup(function() {
+          indexer = new RequestIndexer();
+        });
+
+        test('Promise returs handler to the data store', () => {
+          return indexer.openSearchStore()
+          .then((db) => assert.ok(db));
+        });
+      });
+
+      suite('_storeIndexes()', function() {
+        let indexer;
+        let inserts;
+        setup(function() {
+          indexer = new RequestIndexer();
+          inserts = [{
+            id: 't1',
+            url: 'u1',
+            requestId: 'r1',
+            type: 'saved'
+          }, {
+            id: 't2',
+            url: 'u2',
+            requestId: 'r2',
+            type: 'saved'
+          }];
+        });
+
+        teardown(() => {
+          return indexer.openSearchStore()
+          .then((db) => clearAllIndexes(db));
+        });
+
+        test('Stores data into the data store', function() {
+          let database;
+          return indexer.openSearchStore()
+          .then((db) => {
+            database = db;
+            return indexer._storeIndexes(db, inserts);
+          })
+          .then(() => allIndexes(database))
+          .then((data) => {
+            assert.lengthOf(data, 2);
+          });
+        });
+      });
+
+      suite('_getIndexedData()', function() {
+        let indexer;
+        let inserts;
+        setup(function() {
+          indexer = new RequestIndexer();
+          inserts = [{
+            id: 't1',
+            url: 'u1',
+            requestId: 'r1',
+            type: 'saved'
+          }, {
+            id: 't2',
+            url: 'u2',
+            requestId: 'r1',
+            type: 'saved'
+          }, {
+            id: 't3',
+            url: 'u3',
+            requestId: 'r2',
+            type: 'saved'
+          }];
+        });
+
+        teardown(() => {
+          return indexer.openSearchStore()
+          .then((db) => clearAllIndexes(db));
+        });
+
+        test('Results to empty array when no indexes found', function() {
+          return indexer.openSearchStore()
+          .then((db) => indexer._getIndexedData(db, 'test'))
+          .then((result) => {
+            assert.typeOf(result, 'array');
+            assert.lengthOf(result, 0);
+          });
+        });
+
+        test('Returns requests for given ID', function() {
+          let database;
+          return indexer.openSearchStore()
+          .then((db) => {
+            database = db;
+            return indexer._storeIndexes(db, inserts);
+          })
+          .then(() => indexer._getIndexedData(database, 'r1'))
+          .then((result) => {
+            assert.typeOf(result, 'array');
+            assert.lengthOf(result, 2);
+          });
+        });
+      });
+
+      suite('_prepareRequestIndexData()', function() {
+        let indexer;
+        let request;
+        setup(function() {
+          indexer = new RequestIndexer();
+          request = {
+            id: 'test-id',
+            url: 'https://domain.com/Api/Path?p1=1&p2=2',
+            type: 'saved'
+          };
+        });
+
+        test('Always returns an array', function() {
+          const result = indexer._prepareRequestIndexData(request, []);
+          assert.typeOf(result, 'array');
+        });
+
+        test('Returns 8 items', function() {
+          if (!hasUrlSupport) {
+            return;
+          }
+          const result = indexer._prepareRequestIndexData(request, []);
+          assert.lengthOf(result, 8);
+        });
+
+        test('Skips already indexed items', function() {
+          if (!hasUrlSupport) {
+            return;
+          }
+          const result = indexer._prepareRequestIndexData(request, [{
+            url: 'p1=1&p2=2'
+          }, {
+            url: '/api/path?p1=1&p2=2'
+          }, {
+            url: '/notexist'
+          }]);
+          assert.lengthOf(result, 6);
+        });
+
+        test('Items has required structure', function() {
+          if (!hasUrlSupport) {
+            return;
+          }
+          const result = indexer._prepareRequestIndexData(request, []);
+          for (let i = 0; i < result.length; i++) {
+            const item = result[i];
+            assert.equal(item.type, 'saved');
+            assert.typeOf(item.url, 'string');
+            assert.equal(item.id.indexOf(item.url.toLowerCase() + '::' + item.type), 0);
+          }
+        });
+      });
+
+      suite('_indexRequests()', function() {
+        let indexer;
+        let requests;
+        setup(function() {
+          indexer = new RequestIndexer();
+          requests = [{
+            id: 'test-id-1',
+            url: 'https://domain.com/Api/Path?p1=1&p2=2',
+            type: 'saved'
+          }, {
+            id: 'test-id-2',
+            url: 'https://domain.com/',
+            type: 'saved'
+          }];
+        });
+
+        teardown(() => {
+          return indexer.openSearchStore()
+          .then((db) => clearAllIndexes(db));
+        });
+
+        test('Stores indexes in the data store', function() {
+          return indexer._indexRequests(requests)
+          .then(() => indexer.openSearchStore())
+          .then((db) => allIndexes(db))
+          .then((result) => {
+            assert.typeOf(result, 'array');
+            assert.lengthOf(result, 11);
+          });
+        });
+      });
+    });
+    </script>
+  </body>
+</html>
