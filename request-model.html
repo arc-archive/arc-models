@@ -523,7 +523,6 @@ class RequestModel extends RequestBaseModel {
         type: type
       };
       this._fireUpdated('request-object-changed', detail);
-      setTimeout(() => this._indexRequest([request]), 1);
       return request;
     });
   }
@@ -537,7 +536,6 @@ class RequestModel extends RequestBaseModel {
     const db = this.getDatabase(type);
     return db.bulkDocs(requests)
     .then((response) => {
-      const index = [];
       for (let i = 0, len = response.length; i < len; i++) {
         const r = response[i];
         if (r.error) {
@@ -545,7 +543,6 @@ class RequestModel extends RequestBaseModel {
           continue;
         }
         const request = requests[i];
-        index[index.length] = request;
         const oldRev = request._rev;
         request._rev = r.rev;
         const detail = {
@@ -556,7 +553,6 @@ class RequestModel extends RequestBaseModel {
         };
         this._fireUpdated('request-object-changed', detail);
       }
-      setTimeout(() => this._indexRequest(index), 1);
       return response;
     });
   }
@@ -769,7 +765,11 @@ class RequestModel extends RequestBaseModel {
    * @param {CustomEvent} e
    */
   _handleObjectSave(e) {
-    if (!e.cancelable || e.composedPath()[0] === this) {
+    if (!e.cancelable) {
+      return;
+    }
+    if (e.composedPath()[0] === this) {
+      this._indexRequest(e.detail.request);
       return;
     }
     e.preventDefault();
@@ -813,7 +813,11 @@ class RequestModel extends RequestBaseModel {
    * @param {CustomEvent} e
    */
   _handleObjectDelete(e) {
-    if (!e.cancelable || e.composedPath()[0] === this) {
+    if (!e.cancelable) {
+      return;
+    }
+    if (e.composedPath()[0] === this) {
+      this._deleteIndex(e.detail.id);
       return;
     }
     e.preventDefault();
@@ -1102,29 +1106,69 @@ class RequestModel extends RequestBaseModel {
    *
    * This operation is async and in a web worker (separate thred).
    *
-   * @param {Array<Object>} requests List of requests to index.
+   * @param {Object} request A request to index.
    */
-  _indexRequest(requests) {
+  _indexRequest(request) {
     if (this.noIndexing) {
       return;
     }
-    const worker = this._getIndexWorker();
-    worker.postMessage({
-      task: 'index-requests',
-      requests: requests.map((item) => {
-        let type = item.type;
-        if (type === 'saved-requests') {
-          type = 'saved';
-        } else if (type === 'history-requests') {
-          type = 'history';
-        }
-        return {
-          id: item._id,
-          url: item.url,
-          type: type
-        };
-      })
-    });
+    if (!this.__indexRequestQueue) {
+      this.__indexRequestQueue = [];
+    }
+    this.__indexRequestQueue.push(request);
+    if (this.__indexRequestDebounce) {
+      return;
+    }
+    this.__indexRequestDebounce = true;
+    setTimeout(() => {
+      const worker = this._getIndexWorker();
+      const requests = this.__indexRequestQueue;
+      this.__indexRequestQueue = [];
+      this.__indexRequestDebounce = false;
+      worker.postMessage({
+        task: 'index-requests',
+        requests: requests.map((item) => {
+          let type = item.type;
+          if (type === 'saved-requests') {
+            type = 'saved';
+          } else if (type === 'history-requests') {
+            type = 'history';
+          }
+          return {
+            id: item._id,
+            url: item.url,
+            type: type
+          };
+        })
+      });
+    }, 250);
+  }
+  /**
+   * Removed URL index data when the request is deleted.
+   * @param {String} id Request IDs to delete.
+   */
+  _deleteIndex(id) {
+    if (this.noIndexing) {
+      return;
+    }
+    if (!this.__indexDeleteQueue) {
+      this.__indexDeleteQueue = [];
+    }
+    this.__indexDeleteQueue.push(id);
+    if (this.__indexDeleteDebounce) {
+      return;
+    }
+    this.__indexDeleteDebounce = true;
+    setTimeout(() => {
+      const worker = this._getIndexWorker();
+      const ids = this.__indexDeleteQueue;
+      this.__indexDeleteQueue = [];
+      this.__indexDeleteDebounce = false;
+      worker.postMessage({
+        task: 'delete-index',
+        ids
+      });
+    }, 250);
   }
   /**
    * Creates if nescesary and returns indexing web worker.

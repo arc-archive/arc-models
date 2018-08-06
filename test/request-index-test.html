@@ -54,6 +54,30 @@
         return indexed.find((item) =>
           item.url.toLowerCase() === url.toLowerCase());
       }
+      /**
+       * Removes all indexes from the index data store.
+       * @return {Promise}
+       */
+      function clearData() {
+        return new Promise((resolve, reject) => {
+          const request = indexedDB.open(INDEX_STORE_NAME, INDEX_STORE_VERSION);
+          request.onsuccess = (e) => {
+            const db = e.target.result;
+            const tx = db.transaction('urls', 'readwrite');
+            const store = tx.objectStore('urls');
+            tx.onerror = () => {
+              reject(new Error('Unable to clear the store'));
+            };
+            tx.oncomplete = () => {
+              resolve();
+            };
+            store.clear();
+          };
+          request.onerror = function() {
+            reject(new Error('Unable to open the store'));
+          };
+        });
+      }
 
       suite('Basic indexing', function() {
         const FULL_URL = 'https://domain.com/api?a=b&c=d';
@@ -67,27 +91,12 @@
           }
         });
 
-        suiteTeardown(function(done) {
+        suiteTeardown(function() {
           if (worker) {
             worker.terminate();
             worker = null;
           }
-          const request = indexedDB.open(INDEX_STORE_NAME, INDEX_STORE_VERSION);
-          request.onsuccess = (e) => {
-            const db = e.target.result;
-            const tx = db.transaction('urls', 'readwrite');
-            const store = tx.objectStore('urls');
-            tx.onerror = () => {
-              done(new Error('Unable to clear the store'));
-            };
-            tx.oncomplete = () => {
-              done();
-            };
-            store.clear();
-          };
-          request.onerror = function() {
-            done(new Error('Unable to open the store'));
-          };
+          return clearData();
         });
 
         test('Indexes single request', (done) => {
@@ -214,6 +223,94 @@
               id: REQUEST_ID,
               type: REQUEST_TYPE
             }]
+          });
+        });
+      });
+
+      suite('Deletes indexed data', function() {
+        const FULL_URL = 'https://domain.com/api?a=b&c=d';
+        const REQUEST_ID = 'test-id';
+        const REQUEST_ID_2 = 'test-id-2';
+        const REQUEST_TYPE = 'saved';
+        let worker;
+        setup((done) => {
+          worker = new Worker('../workers/request-indexer.js');
+          worker.addEventListener('message', function f(e) {
+            if (e.data.task === 'task-finished') {
+              worker.removeEventListener('message', f);
+              done();
+            }
+            if (e.data.task === 'task-error') {
+              worker.removeEventListener('message', f);
+              done(new Error(e.data.message));
+            }
+          });
+          worker.addEventListener('error', function() {
+            done(new Error('Worker error'));
+          });
+          worker.postMessage({
+            task: 'index-requests',
+            requests: [{
+              url: FULL_URL,
+              id: REQUEST_ID,
+              type: REQUEST_TYPE
+            }, {
+              url: FULL_URL,
+              id: REQUEST_ID_2,
+              type: REQUEST_TYPE
+            }]
+          });
+        });
+
+        teardown(() => {
+          if (worker) {
+            worker.terminate();
+            worker = null;
+          }
+          return clearData();
+        });
+
+        test('Deletes index of a single request', (done) => {
+          worker.addEventListener('message', function(e) {
+            if (e.data.task === 'task-finished') {
+              readAllIndexes()
+              .then((data) => {
+                assert.lengthOf(data, 8);
+                done();
+              });
+            }
+            if (e.data.task === 'task-error') {
+              done(new Error(e.data.message));
+            }
+          });
+          worker.addEventListener('error', function() {
+            done(new Error('Worker error'));
+          });
+          worker.postMessage({
+            task: 'delete-index',
+            ids: [REQUEST_ID]
+          });
+        });
+
+        test('Deletes both indexes', (done) => {
+          worker.addEventListener('message', function(e) {
+            if (e.data.task === 'task-finished') {
+              readAllIndexes()
+              .then((data) => {
+                assert.lengthOf(data, 0);
+                done();
+              });
+            }
+            if (e.data.task === 'task-error') {
+              done(new Error(e.data.message));
+            }
+          });
+          worker.addEventListener('error', function() {
+            done(new Error('Worker error'));
+          });
+          worker.postMessage({
+            task: 'delete-index',
+            ids: [REQUEST_ID, REQUEST_ID_2]
           });
         });
       });

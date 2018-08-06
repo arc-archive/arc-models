@@ -31,6 +31,9 @@ class RequestIndexer extends RequestDb {
         }
         this._indexRequests(data.requests);
         break;
+      case 'delete-index':
+        this._deleteIndexedData(data.ids);
+        break;
       case 'query-data':
         const opts = {
           type: data.type,
@@ -100,6 +103,39 @@ class RequestIndexer extends RequestDb {
       })
       .then(() => this._indexRequests(requests));
     });
+  }
+  /**
+   * Removes indexed data for given requests.
+   * @param {Array<String>} ids List of request ids to remove.
+   * @return {Promise}
+   */
+  _deleteIndexedData(ids) {
+    let database;
+    return this.openSearchStore()
+    .then((db) => {
+      database = db;
+      const p = [];
+      for (let i = 0, len = ids.length; i < len; i++) {
+        p.push(this._getIndexedData(db, ids[i]));
+      }
+      return Promise.all(p);
+    })
+    .then((results) => {
+      let items = [];
+      for (let i = 0, len = results.length; i < len; i++) {
+        const list = results[i];
+        if (list.length) {
+          items = items.concat(list);
+        }
+      }
+      if (items.length) {
+        return this._removeRedundantIndexes(database, items);
+      }
+    })
+    .then(() => {
+      this.notifyEnd('delete-index');
+    })
+    .catch((cause) => this.notifyError(cause));
   }
   /**
    * Retreives existing index data for the request.
