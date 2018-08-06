@@ -48,10 +48,12 @@ class RequestIndexer extends RequestDb {
     if (self.mocha) {
       return;
     }
-    self.postMessage({
-      task: 'task-finished',
-      name: task
-    });
+    try {
+      self.postMessage({
+        task: 'task-finished',
+        name: task
+      });
+    } catch (_) {}
   }
   /**
    * Notifies owner about error
@@ -190,7 +192,8 @@ class RequestIndexer extends RequestDb {
    */
   _createIndexIfMissing(url, id, type, indexed) {
     const lowerUrl = url.toLowerCase();
-    const index = indexed.findIndex((item) => item.url.toLowerCase() === lowerUrl);
+    const index = indexed.findIndex((item) =>
+      item.url.toLowerCase() === lowerUrl);
     if (index !== -1) {
       indexed.splice(index, 1);
       return;
@@ -361,6 +364,16 @@ class RequestIndexer extends RequestDb {
         });
       } catch (_) {}
       return results;
+    })
+    .catch((cause) => {
+      try {
+        self.postMessage({
+          task: 'task-error',
+          id,
+          message: cause.message
+        });
+      } catch (_) {}
+      throw cause;
     });
   }
   /**
@@ -388,7 +401,8 @@ class RequestIndexer extends RequestDb {
       };
       tx.oncomplete = () => {
         // performance.mark('search-key-scan-2-end');
-        // performance.measure('search-key-scan-2-end', 'search-key-scan-2-start');
+        // performance.measure('search-key-scan-2-end',
+        //  'search-key-scan-2-start');
         resolve(results);
       };
       const keyRange = IDBKeyRange.only(1);
@@ -408,10 +422,7 @@ class RequestIndexer extends RequestDb {
         const keyUrl = key.substr(0, key.indexOf('::'));
         if (keyUrl.indexOf(lowerNeedle) !== -1) {
           if (!results[record.requestId]) {
-            results[record.requestId] = {
-              hits: 1,
-              type: record.type
-            };
+            results[record.requestId] = record.type;
           }
         }
         cursor.continue();
@@ -463,16 +474,14 @@ class RequestIndexer extends RequestDb {
         const keyUrl = key.substr(0, key.indexOf('::'));
         if (keyUrl.indexOf(lowerNeedle) !== -1) {
           if (!results[record.requestId]) {
-            results[record.requestId] = {
-              hits: 1,
-              type: record.type
-            };
+            results[record.requestId] = record.type;
           }
           cursor.continue();
           return;
         }
         const upperNeedle = q.toUpperCase();
-        const nextNeedle = this._nextCasing(keyUrl, keyUrl, upperNeedle, lowerNeedle);
+        const nextNeedle = this._nextCasing(keyUrl, keyUrl, upperNeedle,
+          lowerNeedle);
         if (nextNeedle) {
           cursor.continue(nextNeedle);
         }
@@ -504,7 +513,8 @@ class RequestIndexer extends RequestDb {
           return key.substr(0, i) + lowerNeedle[i] + upperNeedle.substr(i + 1);
         }
         if (llp >= 0) {
-          return key.substr(0, llp) + lowerKey[llp] + upperNeedle.substr(llp + 1);
+          return key.substr(0, llp) + lowerKey[llp] +
+            upperNeedle.substr(llp + 1);
         }
         return;
       }
@@ -517,7 +527,8 @@ class RequestIndexer extends RequestDb {
       if (llp < 0) {
         return;
       } else {
-        return key.substr(0, llp) + lowerNeedle[llp] + upperNeedle.substr(llp + 1);
+        return key.substr(0, llp) + lowerNeedle[llp] +
+          upperNeedle.substr(llp + 1);
       }
     }
   }

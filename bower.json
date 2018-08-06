@@ -34,7 +34,13 @@
     "app-pouchdb": "PolymerElements/app-pouchdb#^2.0.0",
     "chance": "^1.0.16",
     "paper-input": "PolymerElements/paper-input#^2.2.0",
-    "paper-button": "PolymerElements/paper-button#^2.1.0"
+    "paper-button": "PolymerElements/paper-button#^2.1.0",
+    "paper-toast": "PolymerElements/paper-toast#^2.0.0",
+    "paper-checkbox": "PolymerElements/paper-checkbox#^2.0.0",
+    "paper-listbox": "PolymerElements/paper-listbox#^2.0.0",
+    "paper-item": "PolymerElements/paper-item#^2.0.0",
+    "paper-dropdown-menu": "PolymerElements/paper-dropdown-menu#^2.0.0",
+    "web-animations-js": "web-animations/web-animations-js#^2.3"
   },
   "ignore": [
     "**/.*",

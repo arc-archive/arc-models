@@ -1,5 +1,4 @@
 <!--
-@license
 Copyright 2016 The Advanced REST client authors <arc@mulesoft.com>
 Licensed under the Apache License, Version 2.0 (the "License"); you may not
 use this file except in compliance with the License. You may obtain a copy of
@@ -12,6 +11,8 @@ License for the specific language governing permissions and limitations under
 the License.
 -->
 <link rel="import" href="request-base-model.html">
+<link rel="import" href="../app-pouchdb-quick-search/pouchdb-quick-search.html">
+
 <script>
 /**
  * Events based access to saved request datastore.
@@ -233,7 +234,17 @@ class RequestModel extends RequestBaseModel {
       /**
        * When set it skips request indexing.
        */
-      noIndexing: Boolean
+      noIndexing: Boolean,
+      _workerRequestId: {
+        type: Number,
+        value: function() {
+          return 0;
+        }
+      },
+      _workerPromises: {
+        type: Array,
+        value: []
+      }
     };
   }
   /**
@@ -250,6 +261,7 @@ class RequestModel extends RequestBaseModel {
     this._saveRequestHandler = this._saveRequestHandler.bind(this);
     this._onIndexWorkerData = this._onIndexWorkerData.bind(this);
     this._onIndexWorkerError = this._onIndexWorkerError.bind(this);
+    this._handleQuery = this._handleQuery.bind(this);
   }
   /**
    * Adds event listeners.
@@ -264,6 +276,7 @@ class RequestModel extends RequestBaseModel {
     node.addEventListener('request-objects-deleted', this._handleObjectsDelete);
     node.addEventListener('request-objects-undeleted',
       this._handleObjectsUndelete);
+    node.addEventListener('request-query', this._handleQuery);
   }
   /**
    * Removes event listeners.
@@ -280,6 +293,7 @@ class RequestModel extends RequestBaseModel {
       this._handleObjectsDelete);
     node.removeEventListener('request-objects-undeleted',
       this._handleObjectsUndelete);
+    node.removeEventListener('request-query', this._handleQuery);
     this._unregisterWorker();
   }
   /**
@@ -1152,6 +1166,9 @@ class RequestModel extends RequestBaseModel {
           composed: true
         }));
         break;
+      case 'query-finished':
+        this._urlQueryHandler(data.id, data.results);
+        break;
       case 'task-error':
         this.dispatchEvent(new CustomEvent('request-indexing-error', {
           composed: true,
@@ -1160,6 +1177,11 @@ class RequestModel extends RequestBaseModel {
           }
         }));
         this._handleException(new Error(data.message), true);
+        if (data.id) {
+          const callbacks = this._workerPromises[data.id];
+          delete this._workerPromises[data.id];
+          callbacks.reject(new Error(data.message));
+        }
         break;
     }
   }
@@ -1177,7 +1199,217 @@ class RequestModel extends RequestBaseModel {
       }
     }));
   }
+  /**
+   * A handler for the `request-query` custom event. Queries the datastore for
+   * request data.
+   * The event must have `q` property set on the detail object.
+   *
+   * @param {CustomEvent} e
+   */
+  _handleQuery(e) {
+    if (!e.cancelable) {
+      return;
+    }
+    e.preventDefault();
+    e.stopPropagation();
 
+    if (!e.detail.q) {
+      e.detail.result = Promise.reject(
+        new Error('The "q" property is missing.'));
+      return;
+    }
+    e.detail.result = this.queryUrlData(e.detail.q, e.detail.type, e.detail.detailed)
+    .then((urlSearechResults) => {
+      const ignore = urlSearechResults.map((item) => item._id);
+      return this.query(e.detail.q, e.detail.type, ignore)
+      .then((result) => urlSearechResults.concat(result));
+    });
+  }
+  /**
+   * Performs a query on the URL index data.
+   *
+   * @param {String} q User query
+   * @param {?String} type Optional, type of the requests to search for.
+   * By default it returns all data.
+   * @param {?Boolean} detailed If set it uses slower algorithm but performs full
+   * search on the index. When false it only uses filer like query + '*'.
+   * @return {Promise<Array<Object>>} Promise resolved to the list of requests.
+   */
+  queryUrlData(q, type, detailed) {
+    return new Promise((resolve, reject) => {
+      const reqId = ++this._workerRequestId;
+      this._workerPromises[reqId] = {
+        resolve,
+        reject
+      };
+      const worker = this._getIndexWorker();
+      worker.postMessage({
+        task: 'query-data',
+        id: reqId,
+        type,
+        q,
+        detailed
+      });
+    });
+  }
+  /**
+   * Handler for URL index results search.
+   *
+   * @param {String} id The ID sent to the web worker to identify callback
+   * function.
+   * @param {Object} results Map of request id - request type.
+   * @return {Promise}
+   */
+  _urlQueryHandler(id, results) {
+    const callbacks = this._workerPromises[id];
+    delete this._workerPromises[id];
+    const keys = Object.keys(results);
+    if (!keys.length) {
+      callbacks.resolve(results);
+      return;
+    }
+    const savedKeys = [];
+    const historyKeys = [];
+    for (let i = 0, len = keys.length; i < len; i++) {
+      if (results[keys[i]] === 'history') {
+        historyKeys[historyKeys.length] = keys[i];
+      } else {
+        savedKeys[savedKeys.length] = keys[i];
+      }
+    }
+    const p = [];
+    if (savedKeys.length) {
+      p[p.length] = this.savedDb.allDocs({
+        keys: savedKeys,
+        // jscs:disable
+        include_docs: true
+        // jscs:enable
+      });
+    }
+    if (historyKeys.length) {
+      p[p.length] = this.historyDb.allDocs({
+        keys: historyKeys,
+        // jscs:disable
+        include_docs: true
+        // jscs:enable
+      });
+    }
+    return Promise.all(p)
+    .then((results) => {
+      const data = [];
+      for (let i = 0, iLen = results.length; i < iLen; i++) {
+        const response = results[i];
+        for (let j = 0, jLen = response.rows.length; j < jLen; j++) {
+          if (response.rows[j].error) {
+            continue;
+          }
+          data[data.length] = response.rows[j].doc;
+        }
+      }
+      callbacks.resolve(data);
+      // This is for tests
+      return data;
+    });
+  }
+  /**
+   * Performs a query on the request data store.
+   * It uses PouchDB `query` function on built indexes.
+   * Note, it does not query URL data.
+   *
+   * @param {String} q User query
+   * @param {?String} type Optional, type of the requests to search for.
+   * By default it returns all data for both history and saved.
+   * @param {?Array<String>} ignore List of IDs to ignore.
+   * @return {Promise<Array<Object>>} Promise resolved to the list of requests.
+   */
+  query(q, type, ignore) {
+    if (!q) {
+      return Promise.reject('The "q" parameter is required.');
+    }
+    if (type === 'history') {
+      return this.queryHistory(q, ignore);
+    }
+    if (type === 'saved') {
+      return this.querySaved(q, ignore);
+    }
+    return Promise.all([this.queryHistory(q, ignore), this.querySaved(q, ignore)])
+    .then((results) => results[0].concat(results[1]));
+  }
+  /**
+   * List of fields to index in the history store.
+   * @return {Array<String>}
+   */
+  get historyIndexes() {
+    return ['headers', 'payload', 'method'];
+  }
+  /**
+   * List of fields to index in the saved store.
+   * @return {Array<String>}
+   */
+  get savedIndexes() {
+    return ['headers', 'payload', 'method', 'description', 'name'];
+  }
+  /**
+   * Queries history store using PouchDB quick search plugin (full text search).
+   *
+   * @param {String} q User query
+   * @param {?Array<String>} ignore List of IDs to ignore.
+   * @return {Promise<Array<Object>>} Promise resolved to the list of requests.
+   */
+  queryHistory(q, ignore) {
+    return this._queryStore(q, ignore, this.historyDb, this.historyIndexes);
+  }
+  /**
+   * Queries Saved store using PouchDB quick search plugin (full text search).
+   *
+   * @param {String} q User query
+   * @param {?Array<String>} ignore List of IDs to ignore.
+   * @return {Promise<Array<Object>>} Promise resolved to the list of requests.
+   */
+  querySaved(q, ignore) {
+    return this._queryStore(q, ignore, this.savedDb, this.savedIndexes);
+  }
+
+  _queryStore(q, ignore, db, indexes) {
+    if (!q) {
+      return Promise.reject('The "q" parameter is required.');
+    }
+    if (ignore !== undefined && !(ignore instanceof Array)) {
+      return Promise.reject('The "ignore" parameter must be an array.');
+    }
+    q = String(q);
+    return db.search({
+      query: q,
+      fields: indexes,
+      // jscs:disable
+      include_docs: true,
+      // jscs:enable
+      mm: (100 / q.split(' ').length)
+    })
+    .then((data) => {
+      const rows = data.rows || [];
+      const result = [];
+      for (let i = rows.length - 1; i >= 0; i--) {
+        if (!(ignore && ignore.indexOf(data[i].id) !== -1)) {
+          result[result.length] = data[i].doc;
+        }
+      }
+      return result;
+    });
+  }
+  /**
+   * Performs data index using PouchDB api.
+   *
+   * @param {String} type Data type - saved or history.
+   * @return {Promise}
+   */
+  indexData(type) {
+    const db = type === 'history' ? this.historyDb : this.savedDb;
+    return db.search({
+      fields: ['title', 'text'],
+      build: true
+    });
+  }
   /**
    * Fired when the request should be expored to Google Drive.
    * This element doesn't support this operation but this way it queries for
