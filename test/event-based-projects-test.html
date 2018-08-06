@@ -68,11 +68,13 @@
         test('Event is canceled', function() {
           const e = fire(dataObj);
           assert.isTrue(e.defaultPrevented);
+          return e.detail.result;
         });
 
         test('Event detail contains "result" as promise', function() {
           const e = fire(dataObj);
           assert.typeOf(e.detail.result, 'promise');
+          return e.detail.result;
         });
 
         test('Creates a new object in the datastore', function() {
@@ -88,13 +90,13 @@
 
         test('Updates created object', function() {
           let originalRev;
-          const event = fire(dataObj);
-          return event.detail.result
+          const e = fire(dataObj);
+          return e.detail.result
           .then((result) => {
             originalRev = result._rev;
             result.name = 'test-2';
-            const event = fire(result);
-            return event.detail.result;
+            const e = fire(result);
+            return e.detail.result;
           })
           .then((result) => {
             assert.notEqual(result._rev, originalRev, '_rev is regenerated');
@@ -106,14 +108,14 @@
 
         test('Updates created object without "_rev" property', function() {
           let originalRev;
-          const event = fire(dataObj);
-          return event.detail.result
+          const e = fire(dataObj);
+          return e.detail.result
           .then((result) => {
             originalRev = result._rev;
             result.name = 'test-2';
             delete result._rev;
-            const event = fire(result);
-            return event.detail.result;
+            const e = fire(result);
+            return e.detail.result;
           })
           .then((result) => {
             assert.notEqual(result._rev, originalRev, '_rev is regenerated');
@@ -123,8 +125,8 @@
           });
         });
         test('Rejects promise when save object is not set', function() {
-          const event = fire();
-          return event.detail.result
+          const e = fire();
+          return e.detail.result
           .then(() => {
             return Promise.reject('Expected method to reject.');
           })
@@ -158,7 +160,7 @@
          * @return {CustomEvent}
          */
         function fire(id, rev) {
-          const event = new CustomEvent('project-read', {
+          const e = new CustomEvent('project-read', {
             detail: {
               id: id,
               rev: rev
@@ -167,23 +169,25 @@
             composed: true,
             cancelable: true
           });
-          document.body.dispatchEvent(event);
-          return event;
+          document.body.dispatchEvent(e);
+          return e;
         }
 
         test('Event is canceled', function() {
-          const event = fire(dataObj._id);
-          assert.isTrue(event.defaultPrevented);
+          const e = fire(dataObj._id);
+          assert.isTrue(e.defaultPrevented);
+          return e.detail.result;
         });
 
         test('Event detail contains "result" as promise', function() {
-          const event = fire(dataObj._id);
-          assert.typeOf(event.detail.result, 'promise');
+          const e = fire(dataObj._id);
+          assert.typeOf(e.detail.result, 'promise');
+          return e.detail.result;
         });
 
         test('Reads project object by id only', function() {
-          const event = fire(dataObj._id);
-          return event.detail.result
+          const e = fire(dataObj._id);
+          return e.detail.result
           .then((result) => {
             assert.equal(result._id, dataObj._id);
           });
@@ -192,8 +196,8 @@
         test('Reads a revision', function() {
           let originalRev;
           let updatedRev;
-          const event = fire(dataObj._id);
-          return event.detail.result
+          const e = fire(dataObj._id);
+          return e.detail.result
           .then((result) => {
             originalRev = result._rev;
             result.name = 'test-2';
@@ -201,8 +205,8 @@
           })
           .then((result) => {
             updatedRev = result._rev;
-            const event = fire(dataObj._id, originalRev);
-            return event.detail.result;
+            const e = fire(dataObj._id, originalRev);
+            return e.detail.result;
           })
           .then((result) => {
             assert.equal(result.name, dataObj.name);
@@ -211,8 +215,8 @@
         });
 
         test('Rejects promise when no ID', function() {
-          const event = fire();
-          return event.detail.result
+          const e = fire();
+          return e.detail.result
           .then(() => {
             return Promise.reject('Expected method to reject.');
           })
@@ -265,16 +269,18 @@
         test('Event is canceled', function() {
           const e = fire('test-2', dataObj._id);
           assert.isTrue(e.defaultPrevented);
+          return e.detail.result;
         });
 
         test('Event detail contains "result" as promise', function() {
-          const event = fire('test-2', dataObj._id);
-          assert.typeOf(event.detail.result, 'promise');
+          const e = fire('test-2', dataObj._id);
+          assert.typeOf(e.detail.result, 'promise');
+          return e.detail.result;
         });
 
         test('Updates project object by id only', function() {
-          const event = fire('test-2', dataObj._id);
-          return event.detail.result
+          const e = fire('test-2', dataObj._id);
+          return e.detail.result
           .then((result) => {
             assert.equal(result.name, 'test-2');
             assert.notEqual(result._rev, dataObj._rev);
@@ -282,8 +288,8 @@
         });
 
         test('Updates project object', function() {
-          const event = fire('test-2', undefined, dataObj);
-          return event.detail.result
+          const e = fire('test-2', undefined, dataObj);
+          return e.detail.result
           .then((result) => {
             assert.equal(result.name, 'test-2');
             assert.notEqual(result._rev, dataObj._rev);
@@ -291,8 +297,8 @@
         });
 
         test('Rejects promise when no ID and no project', function() {
-          const event = fire('test-2');
-          return event.detail.result
+          const e = fire('test-2');
+          return e.detail.result
           .then(() => {
             return Promise.reject('Expected method to reject.');
           })
@@ -303,8 +309,8 @@
         });
 
         test('Rejects promise when no name', function() {
-          const event = fire(undefined, dataObj._id);
-          return event.detail.result
+          const e = fire(undefined, dataObj._id);
+          return e.detail.result
           .then(() => {
             return Promise.reject('Expected method to reject.');
           })
@@ -339,7 +345,7 @@
          * @return {CustomEvent}
          */
         function fire(id, rev) {
-          const event = new CustomEvent('project-object-deleted', {
+          const e = new CustomEvent('project-object-deleted', {
             detail: {
               id: id,
               rev: rev
@@ -348,18 +354,20 @@
             composed: true,
             cancelable: true
           });
-          document.body.dispatchEvent(event);
-          return event;
+          document.body.dispatchEvent(e);
+          return e;
         }
 
         test('Event is canceled', function() {
-          const event = fire(dataObj._id);
-          assert.isTrue(event.defaultPrevented);
+          const e = fire(dataObj._id);
+          assert.isTrue(e.defaultPrevented);
+          return e.detail.result;
         });
 
         test('Event detail contains "result" as promise', function() {
-          const event = fire(dataObj._id);
-          assert.typeOf(event.detail.result, 'promise');
+          const e = fire(dataObj._id);
+          assert.typeOf(e.detail.result, 'promise');
+          return e.detail.result;
         });
 
         test('Removes object from the datastore', function() {
@@ -377,8 +385,8 @@
         });
 
         test('Rejects promise when no ID', function() {
-          const event = fire();
-          return event.detail.result
+          const e = fire();
+          return e.detail.result
           .then(() => {
             return Promise.reject('Expected method to reject.');
           })
@@ -411,29 +419,30 @@
          * @return {CustomEvent}
          */
         function fire() {
-          const event = new CustomEvent('project-model-query', {
+          const e = new CustomEvent('project-model-query', {
             detail: {},
             bubbles: true,
             composed: true,
             cancelable: true
           });
-          document.body.dispatchEvent(event);
-          return event;
+          document.body.dispatchEvent(e);
+          return e;
         }
 
         test('Event is canceled', function() {
-          const event = fire();
-          assert.isTrue(event.defaultPrevented);
+          const e = fire();
+          assert.isTrue(e.defaultPrevented);
+          return e.detail.result;
         });
 
         test('Event detail contains "result" as promise', function() {
-          const event = fire();
-          assert.typeOf(event.detail.result, 'promise');
+          const e = fire();
+          assert.typeOf(e.detail.result, 'promise');
         });
 
         test('Lists saved projects', function() {
-          const event = fire();
-          return event.detail.result
+          const e = fire();
+          return e.detail.result
           .then((result) => {
             assert.typeOf(result, 'array');
             assert.lengthOf(result, 1);

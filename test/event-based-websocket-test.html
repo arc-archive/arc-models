@@ -70,8 +70,8 @@
         });
 
         test('Creates a new object in the datastore', function() {
-          const event = fireChanged(dataObj);
-          return event.detail.result
+          const e = fireChanged(dataObj);
+          return e.detail.result
           .then((result) => {
             assert.typeOf(result._rev, 'string', '_rev is set');
             assert.typeOf(result._id, 'string', '_id is set');
@@ -83,14 +83,14 @@
         test('Updates created object', function() {
           let originalRev;
           let originalId;
-          const event = fireChanged(dataObj);
-          return event.detail.result
+          const e = fireChanged(dataObj);
+          return e.detail.result
           .then((result) => {
             originalRev = result._rev;
             originalId = result._id;
             result.cnt = 2;
-            const event = fireChanged(result);
-            return event.detail.result;
+            const e = fireChanged(result);
+            return e.detail.result;
           })
           .then((result) => {
             assert.notEqual(result._rev, originalRev, '_rev is regenerated');
@@ -100,8 +100,8 @@
         });
 
         test('Rejects promise when save object is not set', function() {
-          const event = fireChanged();
-          return event.detail.result
+          const e = fireChanged();
+          return e.detail.result
           .then(() => {
             return Promise.reject('Expected method to reject.');
           })
@@ -126,8 +126,8 @@
             cnt: 1,
             time: Date.now()
           };
-          const event = fireChanged(dataObj);
-          return event.detail.result
+          const e = fireChanged(dataObj);
+          return e.detail.result
           .then((result) => dataObj = result);
         });
 
@@ -191,8 +191,8 @@
             cnt: 1,
             time: Date.now()
           };
-          const event = fireChanged(dataObj);
-          return event.detail.result
+          const e = fireChanged(dataObj);
+          return e.detail.result
           .then((result) => dataObj = result);
         });
 
@@ -253,8 +253,8 @@
             cnt: 1,
             time: Date.now()
           };
-          const event = fireChanged(dataObj);
-          return event.detail.result
+          const e = fireChanged(dataObj);
+          return e.detail.result
           .then((result) => dataObj = result);
         });
 
@@ -291,8 +291,8 @@
         });
 
         test('Returned items contains _time property', function() {
-          const event = fire();
-          return event.detail.result
+          const e = fire();
+          return e.detail.result
           .then((result) => {
             assert.typeOf(result[0]._time, 'number', '_time is a number');
           });
