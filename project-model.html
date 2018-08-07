@@ -179,7 +179,6 @@ class ProjectModel extends RequestBaseModel {
   constructor() {
     super();
     this._handleRead = this._handleRead.bind(this);
-    this._handleNameChange = this._handleNameChange.bind(this);
     this._handleObjectSave = this._handleObjectSave.bind(this);
     this._handleObjectDelete = this._handleObjectDelete.bind(this);
     this._queryHandler = this._queryHandler.bind(this);
@@ -189,7 +188,6 @@ class ProjectModel extends RequestBaseModel {
    */
   _attachListeners(node) {
     node.addEventListener('project-read', this._handleRead);
-    node.addEventListener('project-name-changed', this._handleNameChange);
     node.addEventListener('project-object-changed', this._handleObjectSave);
     node.addEventListener('project-object-deleted', this._handleObjectDelete);
     node.addEventListener('project-model-query', this._queryHandler);
@@ -199,7 +197,6 @@ class ProjectModel extends RequestBaseModel {
    */
   _detachListeners(node) {
     node.removeEventListener('project-read', this._handleRead);
-    node.removeEventListener('project-name-changed', this._handleNameChange);
     node.removeEventListener('project-object-changed', this._handleObjectSave);
     node.removeEventListener('project-object-deleted',
       this._handleObjectDelete);
@@ -252,47 +249,6 @@ class ProjectModel extends RequestBaseModel {
       // jscs:enable
     })
     .then((result) => result.rows.map((item) => item.doc));
-  }
-
-  /**
-   * Updates name of a project.
-   * @param {CustomEvent} e
-   */
-  _handleNameChange(e) {
-    if (!e.cancelable || e.composedPath()[0] === this) {
-      return;
-    }
-    e.preventDefault();
-    e.stopPropagation();
-
-    if (!e.detail.name) {
-      e.detail.result = Promise.reject(new Error('New name must be set'));
-      return;
-    }
-    const missingMsg = 'Either "project" object or project "id" must be set.';
-    if (!e.detail.project && !e.detail.id) {
-      e.detail.result = Promise.reject(new Error(missingMsg));
-      return;
-    }
-    const project = e.detail.project;
-    let promise;
-    if (project && project._id && project._rev) {
-      promise = Promise.resolve(project);
-    } else {
-      if (!e.detail.id) {
-        e.detail.result = Promise.reject(new Error(missingMsg));
-        return;
-      }
-      promise = this.readProject(e.detail.id);
-    }
-
-    e.detail.result = promise
-    .then((obj) => {
-      obj = Object.assign({}, obj);
-      obj.name = e.detail.name;
-      return this.updateProject(obj);
-    })
-    .catch((e) => this._handleException(e));
   }
   /**
    * Handles object save / update
