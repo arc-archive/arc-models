@@ -765,11 +765,11 @@ class RequestModel extends RequestBaseModel {
    * @param {CustomEvent} e
    */
   _handleObjectSave(e) {
-    if (!e.cancelable) {
-      return;
-    }
     if (e.composedPath()[0] === this) {
       this._indexRequest(e.detail.request);
+      return;
+    }
+    if (!e.cancelable) {
       return;
     }
     e.preventDefault();
@@ -813,11 +813,11 @@ class RequestModel extends RequestBaseModel {
    * @param {CustomEvent} e
    */
   _handleObjectDelete(e) {
-    if (!e.cancelable) {
-      return;
-    }
     if (e.composedPath()[0] === this) {
       this._deleteIndex(e.detail.id);
+      return;
+    }
+    if (!e.cancelable) {
       return;
     }
     e.preventDefault();
