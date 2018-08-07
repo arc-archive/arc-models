@@ -253,11 +253,10 @@ class RequestModel extends RequestBaseModel {
   constructor() {
     super();
     this._handleRead = this._handleRead.bind(this);
-    this._handleNameChange = this._handleNameChange.bind(this);
     this._handleObjectSave = this._handleObjectSave.bind(this);
     this._handleObjectDelete = this._handleObjectDelete.bind(this);
     this._handleObjectsDelete = this._handleObjectsDelete.bind(this);
-    this._handleObjectsUndelete = this._handleObjectsUndelete.bind(this);
+    this._handleUndelete = this._handleUndelete.bind(this);
     this._saveRequestHandler = this._saveRequestHandler.bind(this);
     this._onIndexWorkerData = this._onIndexWorkerData.bind(this);
     this._onIndexWorkerError = this._onIndexWorkerError.bind(this);
@@ -270,12 +269,10 @@ class RequestModel extends RequestBaseModel {
   _attachListeners(node) {
     node.addEventListener('save-request', this._saveRequestHandler);
     node.addEventListener('request-object-read', this._handleRead);
-    node.addEventListener('request-name-changed', this._handleNameChange);
     node.addEventListener('request-object-changed', this._handleObjectSave);
     node.addEventListener('request-object-deleted', this._handleObjectDelete);
     node.addEventListener('request-objects-deleted', this._handleObjectsDelete);
-    node.addEventListener('request-objects-undeleted',
-      this._handleObjectsUndelete);
+    node.addEventListener('request-objects-undeleted', this._handleUndelete);
     node.addEventListener('request-query', this._handleQuery);
   }
   /**
@@ -285,14 +282,12 @@ class RequestModel extends RequestBaseModel {
   _detachListeners(node) {
     node.removeEventListener('save-request', this._saveRequestHandler);
     node.removeEventListener('request-object-read', this._handleRead);
-    node.removeEventListener('request-name-changed', this._handleNameChange);
     node.removeEventListener('request-object-changed', this._handleObjectSave);
     node.removeEventListener('request-object-deleted',
       this._handleObjectDelete);
     node.removeEventListener('request-objects-deleted',
       this._handleObjectsDelete);
-    node.removeEventListener('request-objects-undeleted',
-      this._handleObjectsUndelete);
+    node.removeEventListener('request-objects-undeleted', this._handleUndelete);
     node.removeEventListener('request-query', this._handleQuery);
     this._unregisterWorker();
   }
@@ -715,50 +710,6 @@ class RequestModel extends RequestBaseModel {
     e.detail.result = this.read(e.detail.type, e.detail.id, e.detail.rev)
     .catch((e) => this._handleException(e));
   }
-
-  /**
-   * Updates name of a request.
-   *
-   * @deprecated This function will be removed. Use `update()` instead.
-   * @param {CustomEvent} e
-   */
-  _handleNameChange(e) {
-    if (!e.cancelable || e.composedPath()[0] === this) {
-      return;
-    }
-    e.preventDefault();
-    e.stopPropagation();
-
-    if (!e.detail.name) {
-      e.detail.result = Promise.reject(
-        new Error('The "name" property is missing'));
-      return;
-    }
-    const missingMsg = 'Either "request" object or request "id" must be set.';
-    if (!e.detail.request && !e.detail.id) {
-      e.detail.result = Promise.reject(new Error(missingMsg));
-      return;
-    }
-    const request = e.detail.request;
-    let promise;
-    if (request && request._id && request._rev) {
-      promise = Promise.resolve(request);
-    } else {
-      if (!e.detail.id) {
-        e.detail.result = Promise.reject(new Error(missingMsg));
-        return;
-      }
-      promise = this.read('saved', e.detail.id);
-    }
-
-    e.detail.result = promise
-    .then((obj) => {
-      obj = Object.assign({}, obj);
-      obj.name = e.detail.name;
-      return this.update('saved', obj);
-    })
-    .catch((e) => this._handleException(e));
-  }
   /**
    * Handles onject save / update
    *
@@ -889,7 +840,7 @@ class RequestModel extends RequestBaseModel {
    * handlers `request-objects-undeleted` event to restore deleted items
    * @param {CustomEvent} e
    */
-  _handleObjectsUndelete(e) {
+  _handleUndelete(e) {
     if (!e.cancelable || e.composedPath()[0] === this) {
       return;
     }
