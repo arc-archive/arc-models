@@ -33,6 +33,10 @@ the License.
  * Events handled by this element are cancelled and propagation of the event is
  * stopped.
  *
+ * See model description here:
+ * https://github.com/advanced-rest-client/api-components-api/blob/master/docs/
+ * arc-models.md#arcproject
+ *
  * Supported operations:
  *
  * -   Read project object (`project-read`)
@@ -57,31 +61,6 @@ the License.
  * ```javascript
  * var event = new CustomEvent('project-read', {
  *    detail: { id: 'some-id' },
- *    bubbles: true,
- *    composed: true,
- *    cancelable: true
- * });
- * document.body.dispatchEvent(event);
- * if (event.defaultPrevented) {
- *    event.detail.result.then(project => console.log(project));
- * }
- * ```
- *
- * #### `project-name-changed` event
- *
- * Changes name of a project. Promise result has updated name and `_rev` properties.
- *
- * ##### Properties
- * -   `id` (String, required if `project` is not set) ID of the datastore entry
- * -   `project` (Object, required if `id` is not set) The database entity
- * -   `name` (String, required) New name of the project. It doesn't matter if
- * `project` property already has new name.
- *
- * ##### Example
- *
- * ```javascript
- * var event = new CustomEvent('project-name-changed', {
- *    detail: { id: 'some-id', name: 'new name' },
  *    bubbles: true,
  *    composed: true,
  *    cancelable: true
@@ -167,12 +146,7 @@ the License.
  * @extends RequestBaseModel
  */
 class ProjectModel extends RequestBaseModel {
-  /**
-   * @type {String}
-   */
-  static get is() {
-    return 'project-model';
-  }
+  static get is() {return 'project-model';}
   /**
    * @constructor
    */
