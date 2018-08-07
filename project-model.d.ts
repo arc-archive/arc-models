@@ -124,6 +124,12 @@ declare namespace LogicElements {
    * Reads the list of all projects. Promise resolves to the list of projects.
    * This event doesn't requeire any properties but **the `details` object must be set**.
    *
+   * ##### Properties
+   *
+   * -   `ids` (Array<String>, optional) If present it only returns data for
+   * ids passed in this array. If the data does not exists in the store anymore
+   * this item is `undefined` in the response.
+   *
    * ##### Example
    *
    * ```javascript
@@ -161,9 +167,11 @@ declare namespace LogicElements {
     /**
      * Lists all project objects.
      *
+     * @param ids Optional, list of project IDs to limit the
+     * response to
      * @returns A promise resolved to a list of projects.
      */
-    listProjects(): Promise<any>|null;
+    listProjects(ids: Array<String|null>|null): Promise<any>|null;
 
     /**
      * Handles object save / update

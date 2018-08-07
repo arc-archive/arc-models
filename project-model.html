@@ -125,6 +125,12 @@ the License.
  * Reads the list of all projects. Promise resolves to the list of projects.
  * This event doesn't requeire any properties but **the `details` object must be set**.
  *
+ * ##### Properties
+ *
+ * -   `ids` (Array<String>, optional) If present it only returns data for
+ * ids passed in this array. If the data does not exists in the store anymore
+ * this item is `undefined` in the response.
+ *
  * ##### Example
  *
  * ```javascript
@@ -214,14 +220,21 @@ class ProjectModel extends RequestBaseModel {
   }
   /**
    * Lists all project objects.
+   *
+   * @param {?Array<String>} ids Optional, list of project IDs to limit the
+   * response to
    * @return {Promise} A promise resolved to a list of projects.
    */
-  listProjects() {
-    return this.projectDb.allDocs({
+  listProjects(ids) {
+    const opts = {
       // jscs:disable
       include_docs: true
       // jscs:enable
-    })
+    };
+    if (ids && ids.length) {
+      opts.keys = ids;
+    }
+    return this.projectDb.allDocs(opts)
     .then((result) => result.rows.map((item) => item.doc));
   }
   /**
@@ -295,7 +308,7 @@ class ProjectModel extends RequestBaseModel {
     }
     e.stopImmediatePropagation();
     e.preventDefault();
-    e.detail.result = this.listProjects();
+    e.detail.result = this.listProjects(e.detail.keys);
   }
   /**
    * Fired when the project entity has been saved / updated in the datastore.
