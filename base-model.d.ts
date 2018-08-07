@@ -9,54 +9,48 @@
  */
 
 /// <reference path="../polymer/types/polymer-element.d.ts" />
-/// <reference path="../app-pouchdb/pouchdb.d.ts" />
+/// <reference path="../uuid-generator/uuid-generator.d.ts" />
 /// <reference path="../events-target-behavior/events-target-behavior.d.ts" />
 
-declare namespace LogicElements {
+/**
+ * A base class for all models.
+ */
+declare class ArcBaseModel {
+  readonly uuid: any;
+  disconnectedCallback(): void;
 
   /**
-   * A base class for all models.
+   * Reads an entry from the datastore.
+   *
+   * @param id The ID of the datastore entry.
+   * @param rev Specific revision to read. Defaults to latest revision.
+   * @returns Promise resolved to a datastore object.
    */
-  class ArcBaseModel extends
-    ArcBehaviors.EventsTargetBehavior(
-    Polymer.Element) {
+  read(id: String|null, rev: String|null): Promise<any>|null;
 
-    /**
-     * Reads an entry from the datastore.
-     *
-     * @param id The ID of the datastore entry.
-     * @param rev Specific revision to read. Defaults to latest revision.
-     * @returns Promise resolved to a datastore object.
-     */
-    read(id: String|null, rev: String|null): Promise<any>|null;
+  /**
+   * Computes past mindnight for given timestamp.
+   *
+   * @param time Timestamp
+   * @returns Time reduced to midnight.
+   */
+  _computeMidnight(time: Number|null): Number|null;
 
-    /**
-     * Computes past mindnight for given timestamp.
-     *
-     * @param time Timestamp
-     * @returns Time reduced to midnight.
-     */
-    _computeMidnight(time: Number|null): Number|null;
+  /**
+   * Dispatches non-cancelable change event.
+   *
+   * @param type Event type
+   * @param detail A detail object to dispatch.
+   * @returns Created and dispatched event.
+   */
+  _fireUpdated(type: String|null, detail: object|null): CustomEvent|null;
 
-    /**
-     * Dispatches non-cancelable change event.
-     *
-     * @param type Event type
-     * @param detail A detail object to dispatch.
-     * @returns Created and dispatched event.
-     */
-    _fireUpdated(type: String|null, detail: object|null): CustomEvent|null;
-
-    /**
-     * Handles any exception in the model in a unified way.
-     *
-     * @param e [description]
-     * @returns [description]
-     */
-    _handleException(e: any): any;
-  }
-}
-
-interface HTMLElementTagNameMap {
-  "arc-base-model": LogicElements.ArcBaseModel;
+  /**
+   * Handles any exception in the model in a unified way.
+   *
+   * @param e An error object
+   * @param noThrow If set the function will not throw error.
+   * This allow to do the logic without stopping program.
+   */
+  _handleException(e: Error|object|null, noThrow: Boolean|null): void;
 }

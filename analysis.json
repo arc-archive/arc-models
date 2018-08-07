@@ -2,9 +2,9 @@
   "schema_version": "1.0.0",
   "elements": [
     {
-      "description": "A base class for all models.",
+      "description": "Events based access to projects datastore.\n\nNote: **All events must be cancelable.** When the event is cancelled by an\ninstance of the element it won't be handled again by other instance that\npossibly exists in the DOM.\n\nCancellable event is a request to models for change. Non-cancellable event\nis a notification for views to update their values.\nFor example `project-object-changed` event notifies model to update object in\nthe datastore if the event is cancelable and to update views if it's not\ncancellable.\n\nEach handled event contains the `result` property on the `detail` object. It\ncontains a `Promise` object with a result of the operation. Also, for update\n/ delete events the same non-cancelable event is fired.\n\nEvents handled by this element are cancelled and propagation of the event is\nstopped.\n\nSee model description here:\nhttps://github.com/advanced-rest-client/api-components-api/blob/master/docs/\narc-models.md#arcproject\n\nSupported operations:\n\n-   Read project object (`project-read`)\n-   Update name only (`project-name-changed`)\n-   Update project object (`project-object-changed`)\n-   Delete object (`project-object-deleted`)\n-   Query for projects (`project-model-query`)\n\n### Events description\n\n#### `project-read` event\n\nReads a project object from the datastore.\n\n##### Properties\n-   `id` (String, required) ID of the datastore entry\n-   `rev` (String, optional) Specific revision to retrieve from the datastore.\nLatest by default.\n\n##### Example\n\n```javascript\nvar event = new CustomEvent('project-read', {\n   detail: { id: 'some-id' },\n   bubbles: true,\n   composed: true,\n   cancelable: true\n});\ndocument.body.dispatchEvent(event);\nif (event.defaultPrevented) {\n   event.detail.result.then(project => console.log(project));\n}\n```\n\n#### `project-object-changed` event\n\nUpdates / saves new object in the datastore.\n\n##### Properties\n\n-   `project` (Object, required) An object to store\n\n##### Example\n\n```javascript\nvar event = new CustomEvent('project-object-changed', {\n   detail: { project: {...} },\n   bubbles: true,\n   composed: true,\n   cancelable: true\n});\ndocument.body.dispatchEvent(event);\nif (event.defaultPrevented) {\n   event.detail.result.then(project => console.log(project));\n}\n```\n\n#### `project-object-deleted` event\n\nDeletes the object from the datastore. This operation fires\n`project-object-deleted` custom event. Promise returns object's\nnew `_rev` value.\n\n##### Properties\n-   `id` (String, required) ID of the datastore entry\n-   `rev` (String, optional) The `_rev` property of the PouchDB datastore\nobject. If not set it will use latest revision.\n\n##### Example\n\n```javascript\nvar event = new CustomEvent('project-object-deleted', {\n   detail: { id: 'some-id' },\n   bubbles: true,\n   composed: true,\n   cancelable: true\n});\ndocument.body.dispatchEvent(event);\nif (event.defaultPrevented) {\n   event.detail.result.then(newRev => console.log(newRev));\n}\n```\n\n#### `project-model-query` event\n\nReads the list of all projects. Promise resolves to the list of projects.\nThis event doesn't requeire any properties but **the `details` object must be set**.\n\n##### Example\n\n```javascript\nvar event = new CustomEvent('project-model-query', {\n   detail: {}, // THIS MUST BE SET\n   bubbles: true,\n   composed: true,\n   cancelable: true\n});\ndocument.body.dispatchEvent(event);\nif (event.defaultPrevented) {\n   event.detail.result.then(list => console.log(list));\n}\n```",
       "summary": "",
-      "path": "base-model.html",
+      "path": "project-model.html",
       "properties": [
         {
           "name": "eventsTarget",
@@ -52,6 +52,98 @@
             }
           },
           "inheritedFrom": "ArcBehaviors.EventsTargetBehavior"
+        },
+        {
+          "name": "uuid",
+          "type": "?",
+          "description": "",
+          "privacy": "public",
+          "sourceRange": {
+            "file": "base-model.html",
+            "start": {
+              "line": 23,
+              "column": 2
+            },
+            "end": {
+              "line": 29,
+              "column": 3
+            }
+          },
+          "metadata": {
+            "polymer": {
+              "readOnly": true
+            }
+          },
+          "inheritedFrom": "ArcBaseModel"
+        },
+        {
+          "name": "savedDb",
+          "type": "?",
+          "description": "",
+          "privacy": "public",
+          "sourceRange": {
+            "file": "request-base-model.html",
+            "start": {
+              "line": 21,
+              "column": 2
+            },
+            "end": {
+              "line": 24,
+              "column": 3
+            }
+          },
+          "metadata": {
+            "polymer": {
+              "readOnly": true
+            }
+          },
+          "inheritedFrom": "RequestBaseModel"
+        },
+        {
+          "name": "historyDb",
+          "type": "?",
+          "description": "",
+          "privacy": "public",
+          "sourceRange": {
+            "file": "request-base-model.html",
+            "start": {
+              "line": 26,
+              "column": 2
+            },
+            "end": {
+              "line": 28,
+              "column": 3
+            }
+          },
+          "metadata": {
+            "polymer": {
+              "readOnly": true
+            }
+          },
+          "inheritedFrom": "RequestBaseModel"
+        },
+        {
+          "name": "projectDb",
+          "type": "PouchDB",
+          "description": "",
+          "privacy": "public",
+          "sourceRange": {
+            "file": "request-base-model.html",
+            "start": {
+              "line": 33,
+              "column": 2
+            },
+            "end": {
+              "line": 36,
+              "column": 3
+            }
+          },
+          "metadata": {
+            "polymer": {
+              "readOnly": true
+            }
+          },
+          "inheritedFrom": "RequestBaseModel"
         }
       ],
       "methods": [
@@ -82,14 +174,14 @@
           "description": "",
           "privacy": "public",
           "sourceRange": {
-            "file": "../events-target-behavior/events-target-behavior.html",
+            "file": "base-model.html",
             "start": {
-              "line": 86,
-              "column": 5
+              "line": 31,
+              "column": 2
             },
             "end": {
-              "line": 91,
-              "column": 6
+              "line": 36,
+              "column": 3
             }
           },
           "metadata": {},
@@ -97,7 +189,7 @@
           "return": {
             "type": "void"
           },
-          "inheritedFrom": "ArcBehaviors.EventsTargetBehavior"
+          "inheritedFrom": "ArcBaseModel"
         },
         {
           "name": "_eventsTargetChanged",
@@ -129,59 +221,66 @@
         },
         {
           "name": "_attachListeners",
-          "description": "To be implement by the element to set event listeners on the target",
+          "description": "",
           "privacy": "protected",
           "sourceRange": {
-            "file": "../events-target-behavior/events-target-behavior.html",
             "start": {
-              "line": 107,
-              "column": 4
+              "line": 162,
+              "column": 2
             },
             "end": {
-              "line": 109,
-              "column": 5
+              "line": 167,
+              "column": 3
             }
           },
           "metadata": {},
-          "params": [],
+          "params": [
+            {
+              "name": "node",
+              "type": "HTMLElement"
+            }
+          ],
           "return": {
             "type": "void"
-          },
-          "inheritedFrom": "ArcBehaviors.EventsTargetBehavior"
+          }
         },
         {
           "name": "_detachListeners",
-          "description": "To be implement by the element to remove event listeners from the target",
+          "description": "",
           "privacy": "protected",
           "sourceRange": {
-            "file": "../events-target-behavior/events-target-behavior.html",
             "start": {
-              "line": 111,
-              "column": 4
+              "line": 171,
+              "column": 2
             },
             "end": {
-              "line": 113,
-              "column": 5
+              "line": 177,
+              "column": 3
             }
           },
           "metadata": {},
-          "params": [],
+          "params": [
+            {
+              "name": "node",
+              "type": "HTMLElement"
+            }
+          ],
           "return": {
             "type": "void"
-          },
-          "inheritedFrom": "ArcBehaviors.EventsTargetBehavior"
+          }
         },
         {
           "name": "read",
           "description": "Reads an entry from the datastore.",
           "privacy": "public",
           "sourceRange": {
+            "file": "base-model.html",
             "start": {
-              "line": 35,
+              "line": 45,
               "column": 2
             },
             "end": {
-              "line": 41,
+              "line": 51,
               "column": 3
             }
           },
@@ -201,19 +300,21 @@
           "return": {
             "type": "Promise",
             "desc": "Promise resolved to a datastore object."
-          }
+          },
+          "inheritedFrom": "ArcBaseModel"
         },
         {
           "name": "_computeMidnight",
           "description": "Computes past mindnight for given timestamp.",
           "privacy": "protected",
           "sourceRange": {
+            "file": "base-model.html",
             "start": {
-              "line": 48,
+              "line": 58,
               "column": 2
             },
             "end": {
-              "line": 55,
+              "line": 65,
               "column": 3
             }
           },
@@ -228,19 +329,21 @@
           "return": {
             "type": "Number",
             "desc": "Time reduced to midnight."
-          }
+          },
+          "inheritedFrom": "ArcBaseModel"
         },
         {
           "name": "_fireUpdated",
           "description": "Dispatches non-cancelable change event.",
           "privacy": "protected",
           "sourceRange": {
+            "file": "base-model.html",
             "start": {
-              "line": 63,
+              "line": 73,
               "column": 2
             },
             "end": {
-              "line": 72,
+              "line": 82,
               "column": 3
             }
           },
@@ -260,19 +363,21 @@
           "return": {
             "type": "CustomEvent",
             "desc": "Created and dispatched event."
-          }
+          },
+          "inheritedFrom": "ArcBaseModel"
         },
         {
           "name": "_handleException",
           "description": "Handles any exception in the model in a unified way.",
           "privacy": "protected",
           "sourceRange": {
+            "file": "base-model.html",
             "start": {
-              "line": 79,
+              "line": 90,
               "column": 2
             },
             "end": {
-              "line": 97,
+              "line": 110,
               "column": 3
             }
           },
@@ -280,174 +385,61 @@
           "params": [
             {
               "name": "e",
-              "type": "[type]",
-              "description": "[description]"
+              "type": "(Error | Object)",
+              "description": "An error object"
+            },
+            {
+              "name": "noThrow",
+              "type": "?Boolean",
+              "description": "If set the function will not throw error.\nThis allow to do the logic without stopping program."
             }
           ],
           "return": {
-            "type": "[type]",
-            "desc": "[description]"
-          }
-        }
-      ],
-      "staticMethods": [],
-      "demos": [],
-      "metadata": {},
-      "sourceRange": {
-        "start": {
-          "line": 25,
-          "column": 0
-        },
-        "end": {
-          "line": 98,
-          "column": 1
-        }
-      },
-      "privacy": "public",
-      "superclass": "HTMLElement",
-      "name": "LogicElements.ArcBaseModel",
-      "attributes": [
-        {
-          "name": "events-target",
-          "description": "Events handlers target. By default the element listens on\n`window` object. If set, all events listeners will be attached to this\nobject instead of `window`.",
-          "sourceRange": {
-            "file": "../events-target-behavior/events-target-behavior.html",
-            "start": {
-              "line": 73,
-              "column": 8
-            },
-            "end": {
-              "line": 76,
-              "column": 9
-            }
+            "type": "void"
           },
-          "metadata": {},
-          "type": "Object | null | undefined",
-          "inheritedFrom": "ArcBehaviors.EventsTargetBehavior"
-        }
-      ],
-      "events": [],
-      "styling": {
-        "cssVariables": [],
-        "selectors": []
-      },
-      "slots": [],
-      "tagname": "arc-base-model",
-      "mixins": [
-        "ArcBehaviors.EventsTargetBehavior"
-      ]
-    },
-    {
-      "description": "Events based access to projects datastore.\n\nNote: **All events must be cancelable.** When the event is cancelled by an\ninstance of the element it won't be handled again by other instance that\npossibly exists in the DOM.\n\nCancellable event is a request to models for change. Non-cancellable event\nis a notification for views to update their values.\nFor example `project-object-changed` event notifies model to update object in\nthe datastore if the event is cancelable and to update views if it's not\ncancellable.\n\nEach handled event contains the `result` property on the `detail` object. It\ncontains a `Promise` object with a result of the operation. Also, for update\n/ delete events the same non-cancelable event is fired.\n\nEvents handled by this element are cancelled and propagation of the event is\nstopped.\n\nSupported operations:\n\n-   Read project object (`project-read`)\n-   Update name only (`project-name-changed`)\n-   Update project object (`project-object-changed`)\n-   Delete object (`project-object-deleted`)\n-   Query for projects (`project-model-query`)\n\n### Events description\n\n#### `project-read` event\n\nReads a project object from the datastore.\n\n##### Properties\n-   `id` (String, required) ID of the datastore entry\n-   `rev` (String, optional) Specific revision to retrieve from the datastore.\nLatest by default.\n\n##### Example\n\n```javascript\nvar event = new CustomEvent('project-read', {\n   detail: { id: 'some-id' },\n   bubbles: true,\n   composed: true,\n   cancelable: true\n});\ndocument.body.dispatchEvent(event);\nif (event.defaultPrevented) {\n   event.detail.result.then(project => console.log(project));\n}\n```\n\n#### `project-name-changed` event\n\nChanges name of a project. Promise result has updated name and `_rev` properties.\n\n##### Properties\n-   `id` (String, required if `project` is not set) ID of the datastore entry\n-   `project` (Object, required if `id` is not set) The database entity\n-   `name` (String, required) New name of the project. It doesn't matter if\n`project` property already has new name.\n\n##### Example\n\n```javascript\nvar event = new CustomEvent('project-name-changed', {\n   detail: { id: 'some-id', name: 'new name' },\n   bubbles: true,\n   composed: true,\n   cancelable: true\n});\ndocument.body.dispatchEvent(event);\nif (event.defaultPrevented) {\n   event.detail.result.then(project => console.log(project));\n}\n```\n\n#### `project-object-changed` event\n\nUpdates / saves new object in the datastore.\n\n##### Properties\n\n-   `project` (Object, required) An object to store\n\n##### Example\n\n```javascript\nvar event = new CustomEvent('project-object-changed', {\n   detail: { project: {...} },\n   bubbles: true,\n   composed: true,\n   cancelable: true\n});\ndocument.body.dispatchEvent(event);\nif (event.defaultPrevented) {\n   event.detail.result.then(project => console.log(project));\n}\n```\n\n#### `project-object-deleted` event\n\nDeletes the object from the datastore. This operation fires\n`project-object-deleted` custom event. Promise returns object's\nnew `_rev` value.\n\n##### Properties\n-   `id` (String, required) ID of the datastore entry\n-   `rev` (String, optional) The `_rev` property of the PouchDB datastore\nobject. If not set it will use latest revision.\n\n##### Example\n\n```javascript\nvar event = new CustomEvent('project-object-deleted', {\n   detail: { id: 'some-id' },\n   bubbles: true,\n   composed: true,\n   cancelable: true\n});\ndocument.body.dispatchEvent(event);\nif (event.defaultPrevented) {\n   event.detail.result.then(newRev => console.log(newRev));\n}\n```\n\n#### `project-model-query` event\n\nReads the list of all projects. Promise resolves to the list of projects.\nThis event doesn't requeire any properties but **the `details` object must be set**.\n\n##### Example\n\n```javascript\nvar event = new CustomEvent('project-model-query', {\n   detail: {}, // THIS MUST BE SET\n   bubbles: true,\n   composed: true,\n   cancelable: true\n});\ndocument.body.dispatchEvent(event);\nif (event.defaultPrevented) {\n   event.detail.result.then(list => console.log(list));\n}\n```",
-      "summary": "",
-      "path": "project-model.html",
-      "properties": [
+          "inheritedFrom": "ArcBaseModel"
+        },
         {
-          "name": "db",
-          "type": "PouchDB",
-          "description": "",
+          "name": "getDatabase",
+          "description": "Returns a reference to a PouchDB database instance for given type.",
           "privacy": "public",
           "sourceRange": {
+            "file": "request-base-model.html",
             "start": {
-              "line": 198,
+              "line": 44,
               "column": 2
             },
             "end": {
-              "line": 201,
-              "column": 3
-            }
-          },
-          "metadata": {
-            "polymer": {
-              "readOnly": true
-            }
-          }
-        }
-      ],
-      "methods": [
-        {
-          "name": "_attachListeners",
-          "description": "",
-          "privacy": "protected",
-          "sourceRange": {
-            "start": {
-              "line": 180,
-              "column": 2
-            },
-            "end": {
-              "line": 186,
+              "line": 57,
               "column": 3
             }
           },
           "metadata": {},
           "params": [
             {
-              "name": "node"
+              "name": "type",
+              "type": "String",
+              "description": "Either `saved-requests` or `history-requests`"
             }
           ],
           "return": {
-            "type": "void"
-          }
-        },
-        {
-          "name": "_detachListeners",
-          "description": "",
-          "privacy": "protected",
-          "sourceRange": {
-            "start": {
-              "line": 188,
-              "column": 2
-            },
-            "end": {
-              "line": 194,
-              "column": 3
-            }
+            "type": "PouchDB",
+            "desc": "PouchDB instance for the datastore."
           },
-          "metadata": {},
-          "params": [
-            {
-              "name": "node"
-            }
-          ],
-          "return": {
-            "type": "void"
-          }
+          "inheritedFrom": "RequestBaseModel"
         },
         {
-          "name": "_handleRead",
-          "description": "Handler for project read event request.",
-          "privacy": "protected",
-          "sourceRange": {
-            "start": {
-              "line": 205,
-              "column": 2
-            },
-            "end": {
-              "line": 218,
-              "column": 3
-            }
-          },
-          "metadata": {},
-          "params": [
-            {
-              "name": "e"
-            }
-          ],
-          "return": {
-            "type": "void"
-          }
-        },
-        {
-          "name": "update",
-          "description": "Updates / saves the project object in the datastore.\nThis function fires `project-object-changed` event.",
+          "name": "updateProject",
+          "description": "Updates / saves a project object in the datastore.\nThis function fires `project-object-changed` event.",
           "privacy": "public",
           "sourceRange": {
+            "file": "request-base-model.html",
             "start": {
-              "line": 226,
+              "line": 65,
               "column": 2
             },
             "end": {
-              "line": 238,
+              "line": 77,
               "column": 3
             }
           },
@@ -462,19 +454,21 @@
           "return": {
             "type": "Promise",
             "desc": "Resolved promise to project object with updated `_rev`"
-          }
+          },
+          "inheritedFrom": "RequestBaseModel"
         },
         {
-          "name": "remove",
+          "name": "removeProject",
           "description": "Removed an object from the datastore.\nThis function fires `project-object-deleted` event.",
           "privacy": "public",
           "sourceRange": {
+            "file": "request-base-model.html",
             "start": {
-              "line": 247,
+              "line": 87,
               "column": 2
             },
             "end": {
-              "line": 266,
+              "line": 106,
               "column": 3
             }
           },
@@ -494,19 +488,77 @@
           "return": {
             "type": "Promise",
             "desc": "Promise resolved to a new `_rev` property of deleted object."
+          },
+          "inheritedFrom": "RequestBaseModel"
+        },
+        {
+          "name": "readProject",
+          "description": "Reads an entry from the datastore.",
+          "privacy": "public",
+          "sourceRange": {
+            "start": {
+              "line": 187,
+              "column": 2
+            },
+            "end": {
+              "line": 193,
+              "column": 3
+            }
+          },
+          "metadata": {},
+          "params": [
+            {
+              "name": "id",
+              "type": "String",
+              "description": "The ID of the datastore entry."
+            },
+            {
+              "name": "rev",
+              "type": "?String",
+              "description": "Specific revision to read. Defaults to latest\nrevision."
+            }
+          ],
+          "return": {
+            "type": "Promise",
+            "desc": "Promise resolved to a datastore object."
           }
         },
         {
-          "name": "list",
+          "name": "_handleRead",
+          "description": "Handler for project read event request.",
+          "privacy": "protected",
+          "sourceRange": {
+            "start": {
+              "line": 199,
+              "column": 2
+            },
+            "end": {
+              "line": 213,
+              "column": 3
+            }
+          },
+          "metadata": {},
+          "params": [
+            {
+              "name": "e",
+              "type": "CustomEvent"
+            }
+          ],
+          "return": {
+            "type": "void"
+          }
+        },
+        {
+          "name": "listProjects",
           "description": "Lists all project objects.",
           "privacy": "public",
           "sourceRange": {
             "start": {
-              "line": 271,
+              "line": 218,
               "column": 2
             },
             "end": {
-              "line": 278,
+              "line": 225,
               "column": 3
             }
           },
@@ -518,47 +570,24 @@
           }
         },
         {
-          "name": "_handleNameChange",
-          "description": "Updates name of a project.",
-          "privacy": "protected",
-          "sourceRange": {
-            "start": {
-              "line": 281,
-              "column": 2
-            },
-            "end": {
-              "line": 316,
-              "column": 3
-            }
-          },
-          "metadata": {},
-          "params": [
-            {
-              "name": "e"
-            }
-          ],
-          "return": {
-            "type": "void"
-          }
-        },
-        {
           "name": "_handleObjectSave",
-          "description": "Handles onject save / update",
+          "description": "Handles object save / update",
           "privacy": "protected",
           "sourceRange": {
             "start": {
-              "line": 318,
+              "line": 230,
               "column": 2
             },
             "end": {
-              "line": 350,
+              "line": 263,
               "column": 3
             }
           },
           "metadata": {},
           "params": [
             {
-              "name": "e"
+              "name": "e",
+              "type": "CustomEvent"
             }
           ],
           "return": {
@@ -571,18 +600,19 @@
           "privacy": "protected",
           "sourceRange": {
             "start": {
-              "line": 352,
+              "line": 268,
               "column": 2
             },
             "end": {
-              "line": 366,
+              "line": 282,
               "column": 3
             }
           },
           "metadata": {},
           "params": [
             {
-              "name": "e"
+              "name": "e",
+              "type": "CustomEvent"
             }
           ],
           "return": {
@@ -595,18 +625,19 @@
           "privacy": "protected",
           "sourceRange": {
             "start": {
-              "line": 368,
+              "line": 287,
               "column": 2
             },
             "end": {
-              "line": 378,
+              "line": 298,
               "column": 3
             }
           },
           "metadata": {},
           "params": [
             {
-              "name": "e"
+              "name": "e",
+              "type": "CustomEvent"
             }
           ],
           "return": {
@@ -619,16 +650,16 @@
       "metadata": {},
       "sourceRange": {
         "start": {
-          "line": 167,
+          "line": 147,
           "column": 0
         },
         "end": {
-          "line": 394,
+          "line": 314,
           "column": 1
         }
       },
       "privacy": "public",
-      "superclass": "ArcBaseModel",
+      "superclass": "RequestBaseModel",
       "name": "LogicElements.ProjectModel",
       "attributes": [],
       "events": [
@@ -653,22 +684,161 @@
       "tagname": "project-model"
     },
     {
-      "description": "Events based access to saved request datastore.\n\nNote: **All events must be cancelable.** When the event is cancelled by an instance\nof the element it won't be handled again by other instance that possibly exists\nin the DOM.\n\nCancellable event is a request to models for change. Non-cancellable event\nis a notification for views to update their values. For example\n`request-object-changed` event notifies model to update object in\nthe datastore if the event is cancelable and to update views if it's not\ncancellable.\n\nEach handled event contains the `result` property on the `detail` object. It\ncontains a `Promise` object with a result of the operation. Also, for update / delete\nevents the same non-cancelable event is fired.\n\nEvents handled by this element are cancelled and propagation of the event is\nstopped.\n\nSupported operations:\n\n-   Read request object (`request-object-read`)\n-   Update name only (`request-name-changed`)\n-   Update request object (`request-object-changed`)\n-   Delete object (`request-object-deleted`)\n-   Deletes list of request objects (`request-objects-deleted`)\n\n## Request object types\n\nThere are two request object types: `saved-requests` and `history-requests`.\nEach event must contain a `type` property to determine which database to query\nfor an object.\n\n### Events description\n\n#### `request-object-read` event\n\nReads a request object from the datastore.\n\n##### Properties\n\n-   `id` (String, required) ID of the datastore entry\n-   `rev` (String, optional) Specific revision to retrieve from the\ndatastore. Latest by default.\n-   `type` {String, required} Request object type. Either `saved-requests`\nor `history-requests`\n\n##### Example\n\n```javascript\nvar event = new CustomEvent('request-object-read', {\n   detail: { id: 'some-id', type: 'saved-requests' },\n   bubbles: true,\n   composed: true,\n   cancelable: true\n});\nif (event.defaultPrevented) {\n   event.detail.result.then(request => console.log(request));\n}\n```\n\n#### `request-name-changed` Event\n\nChanges name of a request. Promise result has updated `name` and `_rev` properties.\nThis operation deletes old object because it changes the `name` of the request\nthat is used to build the datastore key.\n\n##### Properties\n-   `id` (String, required if `project` is not set) ID of the datastore entry\n-   `request` (Object, required if `id` is not set) The database entity\n-   `name` (String, required) New name of the project. It doesn't matter\nif `project` property already has new name.\n-   `type` {String, required} Request object type. Either `saved-requests`\nor `history-requests`\n\n##### Example\n\n```javascript\nvar event = new CustomEvent('request-name-changed', {\n   detail: { id: 'some-id', name: 'new name', type: 'history-requests' },\n   bubbles: true,\n   composed: true,\n   cancelable: true\n});\nif (event.defaultPrevented) {\n   event.detail.result.then(request => console.log(request));\n}\n```\n\n#### `request-object-changed` event\n\nUpdates / saves new object in the datastore.\n\n##### Properties\n\n-   `request` (Object, required) An object to store\n-   `type` {String, required} Request object type. Either `saved-requests`\nor `history-requests`\n\n##### Example\n*\n```javascript\nvar event = new CustomEvent('request-object-changed', {\n   detail: { request: {...}, type: 'saved-requests' },\n   bubbles: true,\n   composed: true,\n   cancelable: true\n});\nif (event.defaultPrevented) {\n   event.detail.result.then(request => console.log(request));\n}\n```\n\n#### `request-object-deleted` event\n\nDeletes the object from the datastore. This operation fires `request-object-deleted`\ncustom event. Promise returns object's new `_rev` value.\n\n##### Properties\n-   `id` (String, required) ID of the datastore entry\n-   `rev` (String, optional) The `_rev` property of the PouchDB datastore\nobject. If not set it will use latest revision.\n-   `type` {String, required} Request object type. Either `saved-requests` or\n`history-requests`\n\n##### Example\n\n```javascript\nvar event = new CustomEvent('request-object-deleted', {\n   detail: { id: 'some-id', type: 'saved-requests' },\n   bubbles: true,\n   composed: true,\n   cancelable: true\n});\nif (event.defaultPrevented) {\n   event.detail.result.then(newRev => console.log(newRev));\n}\n```\n\n#### `request-objects-deleted` event\n\nRemoves list of requests in batch operation. Promise results to the map where keys\nare request ids and values are new revision hash.\n\n##### Properties\n\n-   `items` (Array, required) List of IDs to delete\n-   `type` {String, required} Request object type. Either `saved-requests` or `history-requests`\n\n##### Example\n\n```javascript\nvar event = new CustomEvent('request-objects-deleted', {\n   detail: {\n     items: ['some-id', 'other-id'],\n     type: 'saved-requests'\n   },\n   bubbles: true,\n   composed: true,\n   cancelable: true\n });\n if (event.defaultPrevented) {\n   event.detail.result.then(deleted => console.log(deleted));\n }\n ```<link rel=\"import\" href=\"../polymer/polymer.html\">\n <link rel=\"import\" href=\"../app-pouchdb/pouchdb.html\">\n <link rel=\"import\" href=\"../events-target-behavior/events-target-behavior.html\">\n\n#### `request-objects-undeleted` event\n\nRestores previously deleted requests from the history.\nIt searches in the revision history of each object to find a revision before\npassed `_rev` and restores this object as a new one in the revision tree.\n\nThis operation fires `request-object-deleted` custom event. Promise returns\nrequest objects with updated `_rev` value.\n\n##### Properties\n\n-   `items` (Array, required) List of requests to restore. It required `_id`\nand `_rev` properties to be set on each object. The `_rev` property must be\na revision updated after the deletion of the object.\n-   `type` {String, required} Request object type. Either `saved-requests`\nor `history-requests`\n\n##### Example\n\n```javascript\nvar event = new CustomEvent('request-objects-deleted', {\n   detail: {\n     items: [{_id: 'some-id', '_rev': '2-xyz']},\n     type: 'saved-requests'\n   },\n   bubbles: true,<link rel=\"import\" href=\"../polymer/polymer.html\">\n<link rel=\"import\" href=\"../app-pouchdb/pouchdb.html\">\n<link rel=\"import\" href=\"../events-target-behavior/events-target-behavior.html\">\n   composed: true,\n   cancelable: true\n});\nif (event.defaultPrevented) {\n   event.detail.result.then(restored => console.log(restored));\n}\n```",
+      "description": "Event based access to saved and history request datastore.\n\nThis model creates and updates updates request objects and updates\nURL index associated with the request.\nIt also supports querying for request data, deleting request data and\nundeleting it.\n\n## Events API\n\nAll events must be marked as cancelable or will be ignore by the model.\nIn ARC ecosystem models dispatch the same event after the object is updated\n(deleted, created, updated) but the event is not cancelable.\nComponents should only react on non cancelable model events as it means\nthat the change has been commited to the datastore.\n\nEach handled event is canceled so it's safe to put more than one model in\nthe DOM. Event's detail object will get `result` property with the promise\nresolved when operation commits.\n\n**save-request**\nThis event should be used when dealing with unprocessed request data.\nRequest object may contain Blob or FormData as a payload which would be lost\nif trying to store it in the data store. This flow handles payload\ntransformation.\n\nDetail's parameteres:\n- request - Required, ArcRequest object\n- projects - Optional, Array of strings, List of project names to create\nwith this request and associate with the request object.\n- options - Optional, map of additional options. Currently only `isDrive` is\nsupported. When set `export-google-drive` is dispatched. If the event is not\nhandled by the application the save flow fails.\n\n```javascript\nconst e = new CustomEvent('save-request', {\n bubbles: true,\n composed: true,\n cancelable: true,\n detail: {\n   request: {...}\n   projects: ['Test project'],\n   options: {\n     isDrive: true\n   }\n }\n};\nthis.dispatchEvent(e);\n```\n\n**request-object-read**\n\nReads the request from the data store.\n\nDetail's parameteres:\n\n- `id` - Required, String. Request ID\n- `type` - Required, String. Either `history` or `saved`\n- `rev` - Optional, String. Specific revision to read\n\n**request-object-changed**\n\nShould be only used if the payload is not `Blob` or `FormData` and\nall request properties are set. By default `save-request` event should be\nused.\n\nDetail's parameteres: ArcRequest object.\nhttps://github.com/advanced-rest-client/api-components-api/blob/master/docs/\narc-models.md#arcrequest\n\n**request-object-deleted**\n\nDeletes the object from the data store.\n\nDetail's parameteres:\n\n- `id` - Required, String. Request ID\n- `type` - Required, String. Either `history` or `saved`\n\n**request-objects-deleted**\n\nDeletes number of requests in bulk.\n\nDetail's parameteres:\n\n- `type` - Required, String. Either `history` or `saved`\n- `items` - Required, Array<String>. List of request IDs to delete.\n\n**request-objects-undeleted**\n\nUsed to restore deleted request data.\n\nDetail's parameteres:\n\n- `type` - Required, String. Either `history` or `saved`\n- `items` - Required, Array<Object>. List of requests to restore.\nEach object must contain `_rev` and `_id`.\n\nThe `result` property contains result of calling `revertRemove()` function.\n\n**request-query**\n\nQueries for request data. This flow searches for URL data in a separate index\nand then performs full text search on the request data store.\n\nDetail's parameteres:\n\n- `q` - Required, String. User query.\n- `type` - Optional, String. Either `history` or `saved`. By default it\nsearches in both data stores.\n- `detailed` - Optional, Boolean. If set it uses slower algorithm but performs full\nsearch on the index. When false it only uses filer like query + '*'.",
       "summary": "",
       "path": "request-model.html",
       "properties": [
+        {
+          "name": "eventsTarget",
+          "type": "Object | null | undefined",
+          "description": "Events handlers target. By default the element listens on\n`window` object. If set, all events listeners will be attached to this\nobject instead of `window`.",
+          "privacy": "public",
+          "sourceRange": {
+            "file": "../events-target-behavior/events-target-behavior.html",
+            "start": {
+              "line": 73,
+              "column": 8
+            },
+            "end": {
+              "line": 76,
+              "column": 9
+            }
+          },
+          "metadata": {
+            "polymer": {
+              "observer": "\"_eventsTargetChanged\"",
+              "attributeType": "Object"
+            }
+          },
+          "inheritedFrom": "ArcBehaviors.EventsTargetBehavior"
+        },
+        {
+          "name": "_oldEventsTarget",
+          "type": "Object | null | undefined",
+          "description": "An event target used to attach listeners.",
+          "privacy": "protected",
+          "sourceRange": {
+            "file": "../events-target-behavior/events-target-behavior.html",
+            "start": {
+              "line": 78,
+              "column": 8
+            },
+            "end": {
+              "line": 78,
+              "column": 32
+            }
+          },
+          "metadata": {
+            "polymer": {
+              "attributeType": "Object"
+            }
+          },
+          "inheritedFrom": "ArcBehaviors.EventsTargetBehavior"
+        },
+        {
+          "name": "uuid",
+          "type": "?",
+          "description": "",
+          "privacy": "public",
+          "sourceRange": {
+            "file": "base-model.html",
+            "start": {
+              "line": 23,
+              "column": 2
+            },
+            "end": {
+              "line": 29,
+              "column": 3
+            }
+          },
+          "metadata": {
+            "polymer": {
+              "readOnly": true
+            }
+          },
+          "inheritedFrom": "ArcBaseModel"
+        },
         {
           "name": "savedDb",
           "type": "?",
           "description": "",
           "privacy": "public",
           "sourceRange": {
+            "file": "request-base-model.html",
             "start": {
-              "line": 256,
+              "line": 21,
               "column": 2
             },
             "end": {
-              "line": 259,
+              "line": 24,
+              "column": 3
+            }
+          },
+          "metadata": {
+            "polymer": {
+              "readOnly": true
+            }
+          },
+          "inheritedFrom": "RequestBaseModel"
+        },
+        {
+          "name": "historyDb",
+          "type": "?",
+          "description": "",
+          "privacy": "public",
+          "sourceRange": {
+            "file": "request-base-model.html",
+            "start": {
+              "line": 26,
+              "column": 2
+            },
+            "end": {
+              "line": 28,
+              "column": 3
+            }
+          },
+          "metadata": {
+            "polymer": {
+              "readOnly": true
+            }
+          },
+          "inheritedFrom": "RequestBaseModel"
+        },
+        {
+          "name": "projectDb",
+          "type": "PouchDB",
+          "description": "",
+          "privacy": "public",
+          "sourceRange": {
+            "file": "request-base-model.html",
+            "start": {
+              "line": 33,
+              "column": 2
+            },
+            "end": {
+              "line": 36,
+              "column": 3
+            }
+          },
+          "metadata": {
+            "polymer": {
+              "readOnly": true
+            }
+          },
+          "inheritedFrom": "RequestBaseModel"
+        },
+        {
+          "name": "historyIndexes",
+          "type": "Array.<String>",
+          "description": "List of fields to index in the history store.",
+          "privacy": "public",
+          "sourceRange": {
+            "start": {
+              "line": 1243,
+              "column": 2
+            },
+            "end": {
+              "line": 1245,
               "column": 3
             }
           },
@@ -679,17 +849,17 @@
           }
         },
         {
-          "name": "historyDb",
-          "type": "?",
-          "description": "",
+          "name": "savedIndexes",
+          "type": "Array.<String>",
+          "description": "List of fields to index in the saved store.",
           "privacy": "public",
           "sourceRange": {
             "start": {
-              "line": 261,
+              "line": 1250,
               "column": 2
             },
             "end": {
-              "line": 263,
+              "line": 1252,
               "column": 3
             }
           },
@@ -698,27 +868,165 @@
               "readOnly": true
             }
           }
-        }
-      ],
-      "methods": [
+        },
         {
-          "name": "_attachListeners",
+          "name": "noIndexing",
+          "type": "boolean | null | undefined",
+          "description": "When set it skips request indexing.",
+          "privacy": "public",
+          "sourceRange": {
+            "start": {
+              "line": 143,
+              "column": 6
+            },
+            "end": {
+              "line": 143,
+              "column": 25
+            }
+          },
+          "metadata": {
+            "polymer": {
+              "attributeType": "Boolean"
+            }
+          }
+        },
+        {
+          "name": "_workerRequestId",
+          "type": "number | null | undefined",
           "description": "",
           "privacy": "protected",
           "sourceRange": {
             "start": {
-              "line": 238,
+              "line": 144,
+              "column": 6
+            },
+            "end": {
+              "line": 149,
+              "column": 7
+            }
+          },
+          "metadata": {
+            "polymer": {
+              "attributeType": "Number"
+            }
+          },
+          "defaultValue": "0"
+        },
+        {
+          "name": "_workerPromises",
+          "type": "Array | null | undefined",
+          "description": "",
+          "privacy": "protected",
+          "sourceRange": {
+            "start": {
+              "line": 150,
+              "column": 6
+            },
+            "end": {
+              "line": 153,
+              "column": 7
+            }
+          },
+          "metadata": {
+            "polymer": {
+              "attributeType": "Array"
+            }
+          },
+          "defaultValue": "[]"
+        }
+      ],
+      "methods": [
+        {
+          "name": "connectedCallback",
+          "description": "",
+          "privacy": "public",
+          "sourceRange": {
+            "file": "../events-target-behavior/events-target-behavior.html",
+            "start": {
+              "line": 81,
+              "column": 4
+            },
+            "end": {
+              "line": 84,
+              "column": 6
+            }
+          },
+          "metadata": {},
+          "params": [],
+          "return": {
+            "type": "void"
+          },
+          "inheritedFrom": "ArcBehaviors.EventsTargetBehavior"
+        },
+        {
+          "name": "disconnectedCallback",
+          "description": "",
+          "privacy": "public",
+          "sourceRange": {
+            "file": "base-model.html",
+            "start": {
+              "line": 31,
               "column": 2
             },
             "end": {
-              "line": 245,
+              "line": 36,
+              "column": 3
+            }
+          },
+          "metadata": {},
+          "params": [],
+          "return": {
+            "type": "void"
+          },
+          "inheritedFrom": "ArcBaseModel"
+        },
+        {
+          "name": "_eventsTargetChanged",
+          "description": "Removes old handlers (if any) and attaches listeners on new event\nevent target.",
+          "privacy": "protected",
+          "sourceRange": {
+            "file": "../events-target-behavior/events-target-behavior.html",
+            "start": {
+              "line": 99,
+              "column": 4
+            },
+            "end": {
+              "line": 105,
+              "column": 5
+            }
+          },
+          "metadata": {},
+          "params": [
+            {
+              "name": "eventsTarget",
+              "type": "?Node",
+              "description": "Event target to set handlers on. If not set it\nwill set handlers on the `window` object."
+            }
+          ],
+          "return": {
+            "type": "void"
+          },
+          "inheritedFrom": "ArcBehaviors.EventsTargetBehavior"
+        },
+        {
+          "name": "_attachListeners",
+          "description": "Adds event listeners.",
+          "privacy": "protected",
+          "sourceRange": {
+            "start": {
+              "line": 175,
+              "column": 2
+            },
+            "end": {
+              "line": 183,
               "column": 3
             }
           },
           "metadata": {},
           "params": [
             {
-              "name": "node"
+              "name": "node",
+              "type": "HTMLElement"
             }
           ],
           "return": {
@@ -727,53 +1035,27 @@
         },
         {
           "name": "_detachListeners",
-          "description": "",
+          "description": "Removes event listeners.",
           "privacy": "protected",
           "sourceRange": {
             "start": {
-              "line": 247,
+              "line": 188,
               "column": 2
             },
             "end": {
-              "line": 254,
+              "line": 199,
               "column": 3
             }
           },
           "metadata": {},
           "params": [
             {
-              "name": "node"
+              "name": "node",
+              "type": "HTMLElement"
             }
           ],
           "return": {
             "type": "void"
-          }
-        },
-        {
-          "name": "getDatabase",
-          "description": "Returns a reference to a PouchDB database instance for given type.",
-          "privacy": "public",
-          "sourceRange": {
-            "start": {
-              "line": 270,
-              "column": 2
-            },
-            "end": {
-              "line": 276,
-              "column": 3
-            }
-          },
-          "metadata": {},
-          "params": [
-            {
-              "name": "type",
-              "type": "String",
-              "description": "Either `saved-requests` or `history-requests`"
-            }
-          ],
-          "return": {
-            "type": "PouchDB",
-            "desc": "PouchDB instance for the datastore."
           }
         },
         {
@@ -782,11 +1064,11 @@
           "privacy": "public",
           "sourceRange": {
             "start": {
-              "line": 285,
+              "line": 391,
               "column": 2
             },
             "end": {
-              "line": 292,
+              "line": 398,
               "column": 3
             }
           },
@@ -805,7 +1087,7 @@
             {
               "name": "rev",
               "type": "?String",
-              "description": "Specific revision to read. Defaults to latest revision."
+              "description": "Specific revision to read. Defaults to\nlatest revision."
             }
           ],
           "return": {
@@ -814,16 +1096,324 @@
           }
         },
         {
+          "name": "_computeMidnight",
+          "description": "Computes past mindnight for given timestamp.",
+          "privacy": "protected",
+          "sourceRange": {
+            "file": "base-model.html",
+            "start": {
+              "line": 58,
+              "column": 2
+            },
+            "end": {
+              "line": 65,
+              "column": 3
+            }
+          },
+          "metadata": {},
+          "params": [
+            {
+              "name": "time",
+              "type": "Number",
+              "description": "Timestamp"
+            }
+          ],
+          "return": {
+            "type": "Number",
+            "desc": "Time reduced to midnight."
+          },
+          "inheritedFrom": "ArcBaseModel"
+        },
+        {
+          "name": "_fireUpdated",
+          "description": "Dispatches non-cancelable change event.",
+          "privacy": "protected",
+          "sourceRange": {
+            "file": "base-model.html",
+            "start": {
+              "line": 73,
+              "column": 2
+            },
+            "end": {
+              "line": 82,
+              "column": 3
+            }
+          },
+          "metadata": {},
+          "params": [
+            {
+              "name": "type",
+              "type": "String",
+              "description": "Event type"
+            },
+            {
+              "name": "detail",
+              "type": "Object",
+              "description": "A detail object to dispatch."
+            }
+          ],
+          "return": {
+            "type": "CustomEvent",
+            "desc": "Created and dispatched event."
+          },
+          "inheritedFrom": "ArcBaseModel"
+        },
+        {
+          "name": "_handleException",
+          "description": "Handles any exception in the model in a unified way.",
+          "privacy": "protected",
+          "sourceRange": {
+            "file": "base-model.html",
+            "start": {
+              "line": 90,
+              "column": 2
+            },
+            "end": {
+              "line": 110,
+              "column": 3
+            }
+          },
+          "metadata": {},
+          "params": [
+            {
+              "name": "e",
+              "type": "(Error | Object)",
+              "description": "An error object"
+            },
+            {
+              "name": "noThrow",
+              "type": "?Boolean",
+              "description": "If set the function will not throw error.\nThis allow to do the logic without stopping program."
+            }
+          ],
+          "return": {
+            "type": "void"
+          },
+          "inheritedFrom": "ArcBaseModel"
+        },
+        {
+          "name": "getDatabase",
+          "description": "Returns a reference to a PouchDB database instance for given type.",
+          "privacy": "public",
+          "sourceRange": {
+            "file": "request-base-model.html",
+            "start": {
+              "line": 44,
+              "column": 2
+            },
+            "end": {
+              "line": 57,
+              "column": 3
+            }
+          },
+          "metadata": {},
+          "params": [
+            {
+              "name": "type",
+              "type": "String",
+              "description": "Either `saved-requests` or `history-requests`"
+            }
+          ],
+          "return": {
+            "type": "PouchDB",
+            "desc": "PouchDB instance for the datastore."
+          },
+          "inheritedFrom": "RequestBaseModel"
+        },
+        {
+          "name": "updateProject",
+          "description": "Updates / saves a project object in the datastore.\nThis function fires `project-object-changed` event.",
+          "privacy": "public",
+          "sourceRange": {
+            "file": "request-base-model.html",
+            "start": {
+              "line": 65,
+              "column": 2
+            },
+            "end": {
+              "line": 77,
+              "column": 3
+            }
+          },
+          "metadata": {},
+          "params": [
+            {
+              "name": "project",
+              "type": "Object",
+              "description": "A project to save / update"
+            }
+          ],
+          "return": {
+            "type": "Promise",
+            "desc": "Resolved promise to project object with updated `_rev`"
+          },
+          "inheritedFrom": "RequestBaseModel"
+        },
+        {
+          "name": "removeProject",
+          "description": "Removed an object from the datastore.\nThis function fires `project-object-deleted` event.",
+          "privacy": "public",
+          "sourceRange": {
+            "file": "request-base-model.html",
+            "start": {
+              "line": 87,
+              "column": 2
+            },
+            "end": {
+              "line": 106,
+              "column": 3
+            }
+          },
+          "metadata": {},
+          "params": [
+            {
+              "name": "id",
+              "type": "String",
+              "description": "The ID of the datastore entry."
+            },
+            {
+              "name": "rev",
+              "type": "?String",
+              "description": "Specific revision to read. Defaults to latest revision."
+            }
+          ],
+          "return": {
+            "type": "Promise",
+            "desc": "Promise resolved to a new `_rev` property of deleted object."
+          },
+          "inheritedFrom": "RequestBaseModel"
+        },
+        {
+          "name": "_saveRequestHandler",
+          "description": "A handler for `save-request-data` custom event. It's special event to\nsave / update request data dispatched by the request editor.",
+          "privacy": "protected",
+          "sourceRange": {
+            "start": {
+              "line": 206,
+              "column": 2
+            },
+            "end": {
+              "line": 241,
+              "column": 3
+            }
+          },
+          "metadata": {},
+          "params": [
+            {
+              "name": "e",
+              "type": "CustomEvent"
+            }
+          ],
+          "return": {
+            "type": "void"
+          }
+        },
+        {
+          "name": "_createProjects",
+          "description": "Create projects from project names.\nIt is used when creating a request with a new project.",
+          "privacy": "protected",
+          "sourceRange": {
+            "start": {
+              "line": 250,
+              "column": 2
+            },
+            "end": {
+              "line": 282,
+              "column": 3
+            }
+          },
+          "metadata": {},
+          "params": [
+            {
+              "name": "names",
+              "type": "Array.<String>",
+              "description": "Names of projects"
+            },
+            {
+              "name": "requestId",
+              "type": "?String",
+              "description": "Request ID to add to the projects."
+            }
+          ],
+          "return": {
+            "type": "Promise.<Array.<String>>",
+            "desc": "Promise resolved to list of project IDs"
+          }
+        },
+        {
+          "name": "saveRequest",
+          "description": "Saves a request into a data store.\nIt handles payload to string conversion, handles types, and syncs request\nwith projects. Use `update()` method only if you are storing already\nprepared request object to the store.",
+          "privacy": "public",
+          "sourceRange": {
+            "start": {
+              "line": 294,
+              "column": 2
+            },
+            "end": {
+              "line": 319,
+              "column": 3
+            }
+          },
+          "metadata": {},
+          "params": [
+            {
+              "name": "request",
+              "type": "Object",
+              "description": "ArcRequest object"
+            },
+            {
+              "name": "opts",
+              "type": "Object",
+              "description": "Save request object. Currently only `isDrive`\nis supported"
+            }
+          ],
+          "return": {
+            "type": "Promise",
+            "desc": "A promise resilved to updated request object."
+          }
+        },
+        {
+          "name": "_syncProjects",
+          "description": "Sunchronizes project requests to ensure each project contains this\n`requestId` on their list of requests.",
+          "privacy": "protected",
+          "sourceRange": {
+            "start": {
+              "line": 328,
+              "column": 2
+            },
+            "end": {
+              "line": 381,
+              "column": 3
+            }
+          },
+          "metadata": {},
+          "params": [
+            {
+              "name": "requestId",
+              "type": "String",
+              "description": "Request ID"
+            },
+            {
+              "name": "projects",
+              "type": "?Array.<String>",
+              "description": "List of request projects."
+            }
+          ],
+          "return": {
+            "type": "Promise"
+          }
+        },
+        {
           "name": "update",
           "description": "Updates / saves the request object in the datastore.\nThis function fires `request-object-changed` event.\n\nIf any of `name`, `method`, `url` or `legacyProject` properties change\nthen the old object is deleted and new is created with new ID.",
           "privacy": "public",
           "sourceRange": {
             "start": {
-              "line": 304,
+              "line": 410,
               "column": 2
             },
             "end": {
-              "line": 361,
+              "line": 429,
               "column": 3
             }
           },
@@ -851,11 +1441,11 @@
           "privacy": "public",
           "sourceRange": {
             "start": {
-              "line": 368,
+              "line": 436,
               "column": 2
             },
             "end": {
-              "line": 450,
+              "line": 459,
               "column": 3
             }
           },
@@ -867,7 +1457,9 @@
               "description": "Request type: `saved-requests` or `history-requests`"
             },
             {
-              "name": "requests"
+              "name": "requests",
+              "type": "Array.<Object>",
+              "description": "List of requests to update."
             }
           ],
           "return": {
@@ -881,11 +1473,11 @@
           "privacy": "public",
           "sourceRange": {
             "start": {
-              "line": 460,
+              "line": 471,
               "column": 2
             },
             "end": {
-              "line": 482,
+              "line": 493,
               "column": 3
             }
           },
@@ -904,12 +1496,12 @@
             {
               "name": "rev",
               "type": "?String",
-              "description": "Specific revision to read. Defaults to latest revision."
+              "description": "Specific revision to read. Defaults to\nlatest revision."
             }
           ],
           "return": {
             "type": "Promise",
-            "desc": "Promise resolved to a new `_rev` property of deleted object."
+            "desc": "Promise resolved to a new `_rev` property of deleted\nobject."
           }
         },
         {
@@ -918,11 +1510,11 @@
           "privacy": "public",
           "sourceRange": {
             "start": {
-              "line": 494,
+              "line": 505,
               "column": 2
             },
             "end": {
-              "line": 525,
+              "line": 536,
               "column": 3
             }
           },
@@ -946,27 +1538,35 @@
         },
         {
           "name": "_findNotDeleted",
-          "description": "",
+          "description": "Finds last not deleted revision of a document.",
           "privacy": "protected",
           "sourceRange": {
             "start": {
-              "line": 527,
+              "line": 543,
               "column": 2
             },
             "end": {
-              "line": 551,
+              "line": 568,
               "column": 3
             }
           },
           "metadata": {},
           "params": [
             {
-              "name": "db"
+              "name": "db",
+              "type": "Object",
+              "description": "PouchDB instance"
             },
             {
-              "name": "items"
+              "name": "items",
+              "type": "Array",
+              "description": "List of documents to process"
             }
-          ]
+          ],
+          "return": {
+            "type": "Promise.<Array>",
+            "desc": "Last not deleted version of each document."
+          }
         },
         {
           "name": "_findUndeletedRevision",
@@ -974,11 +1574,11 @@
           "privacy": "protected",
           "sourceRange": {
             "start": {
-              "line": 561,
+              "line": 578,
               "column": 2
             },
             "end": {
-              "line": 577,
+              "line": 594,
               "column": 3
             }
           },
@@ -1001,79 +1601,24 @@
           }
         },
         {
-          "name": "_generateId",
-          "description": "Generates the IS for the request depending on it's type and properties.",
-          "privacy": "protected",
-          "sourceRange": {
-            "start": {
-              "line": 586,
-              "column": 2
-            },
-            "end": {
-              "line": 609,
-              "column": 3
-            }
-          },
-          "metadata": {},
-          "params": [
-            {
-              "name": "request",
-              "type": "Object",
-              "description": "The request object to store."
-            },
-            {
-              "name": "isHistory",
-              "type": "Boolean",
-              "description": "Is true then it generates an ID for a history\nitem"
-            }
-          ],
-          "return": {
-            "type": "String",
-            "desc": "A database ID"
-          }
-        },
-        {
           "name": "_handleRead",
           "description": "Handler for request read event request.",
           "privacy": "protected",
           "sourceRange": {
             "start": {
-              "line": 613,
+              "line": 599,
               "column": 2
             },
             "end": {
-              "line": 630,
+              "line": 618,
               "column": 3
             }
           },
           "metadata": {},
           "params": [
             {
-              "name": "e"
-            }
-          ],
-          "return": {
-            "type": "void"
-          }
-        },
-        {
-          "name": "_handleNameChange",
-          "description": "Updates name of a request.",
-          "privacy": "protected",
-          "sourceRange": {
-            "start": {
-              "line": 633,
-              "column": 2
-            },
-            "end": {
-              "line": 672,
-              "column": 3
-            }
-          },
-          "metadata": {},
-          "params": [
-            {
-              "name": "e"
+              "name": "e",
+              "type": "CustomEvent"
             }
           ],
           "return": {
@@ -1086,18 +1631,19 @@
           "privacy": "protected",
           "sourceRange": {
             "start": {
-              "line": 674,
+              "line": 624,
               "column": 2
             },
             "end": {
-              "line": 710,
+              "line": 666,
               "column": 3
             }
           },
           "metadata": {},
           "params": [
             {
-              "name": "e"
+              "name": "e",
+              "type": "CustomEvent"
             }
           ],
           "return": {
@@ -1110,18 +1656,19 @@
           "privacy": "protected",
           "sourceRange": {
             "start": {
-              "line": 712,
+              "line": 672,
               "column": 2
             },
             "end": {
-              "line": 731,
+              "line": 696,
               "column": 3
             }
           },
           "metadata": {},
           "params": [
             {
-              "name": "e"
+              "name": "e",
+              "type": "CustomEvent"
             }
           ],
           "return": {
@@ -1134,18 +1681,19 @@
           "privacy": "protected",
           "sourceRange": {
             "start": {
-              "line": 733,
+              "line": 701,
               "column": 2
             },
             "end": {
-              "line": 774,
+              "line": 744,
               "column": 3
             }
           },
           "metadata": {},
           "params": [
             {
-              "name": "e"
+              "name": "e",
+              "type": "CustomEvent"
             }
           ],
           "return": {
@@ -1153,23 +1701,24 @@
           }
         },
         {
-          "name": "_handleObjectsUndelete",
+          "name": "_handleUndelete",
           "description": "handlers `request-objects-undeleted` event to restore deleted items",
           "privacy": "protected",
           "sourceRange": {
             "start": {
-              "line": 776,
+              "line": 749,
               "column": 2
             },
             "end": {
-              "line": 794,
+              "line": 769,
               "column": 3
             }
           },
           "metadata": {},
           "params": [
             {
-              "name": "e"
+              "name": "e",
+              "type": "CustomEvent"
             }
           ],
           "return": {
@@ -1182,11 +1731,11 @@
           "privacy": "protected",
           "sourceRange": {
             "start": {
-              "line": 800,
+              "line": 775,
               "column": 2
             },
             "end": {
-              "line": 809,
+              "line": 784,
               "column": 3
             }
           },
@@ -1205,27 +1754,580 @@
         },
         {
           "name": "_findOldRef",
-          "description": "",
+          "description": "Finds a `_rev` for a doc.",
           "privacy": "protected",
           "sourceRange": {
             "start": {
-              "line": 811,
+              "line": 791,
               "column": 2
             },
             "end": {
-              "line": 814,
+              "line": 794,
               "column": 3
             }
           },
           "metadata": {},
           "params": [
             {
-              "name": "docs"
+              "name": "docs",
+              "type": "Array",
+              "description": "List of PouchDB documents to search for `_rev`"
             },
             {
-              "name": "id"
+              "name": "id",
+              "type": "String",
+              "description": "Document ID"
+            }
+          ],
+          "return": {
+            "type": "String",
+            "desc": "Associated `_rev`"
+          }
+        },
+        {
+          "name": "_saveGoogleDrive",
+          "description": "Saves the request on Google Drive.\nIt sends `drive-request-save` event to call a component responsible\nfor saving the request.\n\nThis do nothing if `opts.drive is not set.`",
+          "privacy": "protected",
+          "sourceRange": {
+            "start": {
+              "line": 807,
+              "column": 2
+            },
+            "end": {
+              "line": 836,
+              "column": 3
+            }
+          },
+          "metadata": {},
+          "params": [
+            {
+              "name": "data",
+              "type": "Object",
+              "description": "Data to save"
+            },
+            {
+              "name": "opts",
+              "type": "Object",
+              "description": "Save request options. See `saveRequest` for more info."
+            }
+          ],
+          "return": {
+            "type": "Promise",
+            "desc": "Resolved promise to updated object."
+          }
+        },
+        {
+          "name": "_preparePayload",
+          "description": "Prepares payload data to be stored in the datastore.\nFormData are translated to a `multipart` entry property.\nPayload is cleared from the request object.",
+          "privacy": "protected",
+          "sourceRange": {
+            "start": {
+              "line": 845,
+              "column": 2
+            },
+            "end": {
+              "line": 871,
+              "column": 3
+            }
+          },
+          "metadata": {},
+          "params": [
+            {
+              "name": "data",
+              "type": "Object",
+              "description": "The request object."
+            }
+          ],
+          "return": {
+            "type": "Promise",
+            "desc": "Promise resolved to a request object."
+          }
+        },
+        {
+          "name": "_createMultipartEntry",
+          "description": "Computes `multipart` list value to replace FormData with array that can\nbe stored in the datastore.",
+          "privacy": "protected",
+          "sourceRange": {
+            "start": {
+              "line": 879,
+              "column": 2
+            },
+            "end": {
+              "line": 886,
+              "column": 3
+            }
+          },
+          "metadata": {},
+          "params": [
+            {
+              "name": "payload",
+              "type": "FormData",
+              "description": "FormData object"
+            }
+          ],
+          "return": {
+            "type": "Promise",
+            "desc": "Promise resolved to a form part representation."
+          }
+        },
+        {
+          "name": "_computeFormDataEntry",
+          "description": "Recuresively iterates over form data and appends result of creating the\npart object to the `result` array.\n\nEach part entry contains `name` as a form part name, value as a string\nrepresentation of the value and `isFile` to determine is the value is\nacttually a string or a file data.",
+          "privacy": "protected",
+          "sourceRange": {
+            "start": {
+              "line": 902,
+              "column": 2
+            },
+            "end": {
+              "line": 941,
+              "column": 3
+            }
+          },
+          "metadata": {},
+          "params": [
+            {
+              "name": "iterator",
+              "type": "Iterator",
+              "description": "FormData iterator"
+            },
+            {
+              "name": "textParts",
+              "type": "?Array.<String>",
+              "description": "From `_arcMeta` property. List of blobs\nthat should be treated as text parts."
+            },
+            {
+              "name": "result",
+              "type": "?Array.<Object>",
+              "description": "An array where the results are appended to.\nIt creates new result object when it's not passed."
+            }
+          ],
+          "return": {
+            "type": "Promise",
+            "desc": "A promise resolved to the `result` array."
+          }
+        },
+        {
+          "name": "_blobToString",
+          "description": "Converts blob data to base64 string.",
+          "privacy": "protected",
+          "sourceRange": {
+            "start": {
+              "line": 948,
+              "column": 2
+            },
+            "end": {
+              "line": 959,
+              "column": 3
+            }
+          },
+          "metadata": {},
+          "params": [
+            {
+              "name": "blob",
+              "type": "Blob",
+              "description": "File or blob object to be translated to string"
+            }
+          ],
+          "return": {
+            "type": "Promise",
+            "desc": "Promise resolved to a base64 string data from the file."
+          }
+        },
+        {
+          "name": "_indexRequest",
+          "description": "Updates or creates request search index used when querying for request\ndata.\n\nThis operation is async and in a web worker (separate thred).",
+          "privacy": "protected",
+          "sourceRange": {
+            "start": {
+              "line": 968,
+              "column": 2
+            },
+            "end": {
+              "line": 1002,
+              "column": 3
+            }
+          },
+          "metadata": {},
+          "params": [
+            {
+              "name": "request",
+              "type": "Object",
+              "description": "A request to index."
+            }
+          ],
+          "return": {
+            "type": "void"
+          }
+        },
+        {
+          "name": "_deleteIndex",
+          "description": "Removed URL index data when the request is deleted.",
+          "privacy": "protected",
+          "sourceRange": {
+            "start": {
+              "line": 1007,
+              "column": 2
+            },
+            "end": {
+              "line": 1029,
+              "column": 3
+            }
+          },
+          "metadata": {},
+          "params": [
+            {
+              "name": "id",
+              "type": "String",
+              "description": "Request IDs to delete."
+            }
+          ],
+          "return": {
+            "type": "void"
+          }
+        },
+        {
+          "name": "_getIndexWorker",
+          "description": "Creates if nescesary and returns indexing web worker.",
+          "privacy": "protected",
+          "sourceRange": {
+            "start": {
+              "line": 1034,
+              "column": 2
+            },
+            "end": {
+              "line": 1043,
+              "column": 3
+            }
+          },
+          "metadata": {},
+          "params": [],
+          "return": {
+            "type": "Worker",
+            "desc": "An indexing web worker instance."
+          }
+        },
+        {
+          "name": "_unregisterWorker",
+          "description": "Terminates the worker (if exists) and removes event listeners",
+          "privacy": "protected",
+          "sourceRange": {
+            "start": {
+              "line": 1048,
+              "column": 2
+            },
+            "end": {
+              "line": 1056,
+              "column": 3
+            }
+          },
+          "metadata": {},
+          "params": [],
+          "return": {
+            "type": "void"
+          }
+        },
+        {
+          "name": "_onIndexWorkerData",
+          "description": "A handler for data returned from the request indexing worker.",
+          "privacy": "protected",
+          "sourceRange": {
+            "start": {
+              "line": 1062,
+              "column": 2
+            },
+            "end": {
+              "line": 1088,
+              "column": 3
+            }
+          },
+          "metadata": {},
+          "params": [
+            {
+              "name": "e",
+              "type": "Event",
+              "description": "Worker event"
+            }
+          ],
+          "return": {
+            "type": "void"
+          }
+        },
+        {
+          "name": "_onIndexWorkerError",
+          "description": "A handler for error returned from the request indexing worker.",
+          "privacy": "protected",
+          "sourceRange": {
+            "start": {
+              "line": 1094,
+              "column": 2
+            },
+            "end": {
+              "line": 1102,
+              "column": 3
+            }
+          },
+          "metadata": {},
+          "params": [
+            {
+              "name": "e",
+              "type": "Event",
+              "description": "Worker event"
+            }
+          ],
+          "return": {
+            "type": "void"
+          }
+        },
+        {
+          "name": "_handleQuery",
+          "description": "A handler for the `request-query` custom event. Queries the datastore for\nrequest data.\nThe event must have `q` property set on the detail object.",
+          "privacy": "protected",
+          "sourceRange": {
+            "start": {
+              "line": 1110,
+              "column": 2
+            },
+            "end": {
+              "line": 1128,
+              "column": 3
+            }
+          },
+          "metadata": {},
+          "params": [
+            {
+              "name": "e",
+              "type": "CustomEvent"
+            }
+          ],
+          "return": {
+            "type": "void"
+          }
+        },
+        {
+          "name": "queryUrlData",
+          "description": "Performs a query on the URL index data.",
+          "privacy": "public",
+          "sourceRange": {
+            "start": {
+              "line": 1139,
+              "column": 2
+            },
+            "end": {
+              "line": 1155,
+              "column": 3
+            }
+          },
+          "metadata": {},
+          "params": [
+            {
+              "name": "q",
+              "type": "String",
+              "description": "User query"
+            },
+            {
+              "name": "type",
+              "type": "?String",
+              "description": "Optional, type of the requests to search for.\nBy default it returns all data."
+            },
+            {
+              "name": "detailed",
+              "type": "?Boolean",
+              "description": "If set it uses slower algorithm but performs full\nsearch on the index. When false it only uses filer like query + '*'."
+            }
+          ],
+          "return": {
+            "type": "Promise.<Array.<Object>>",
+            "desc": "Promise resolved to the list of requests."
+          }
+        },
+        {
+          "name": "_urlQueryHandler",
+          "description": "Handler for URL index results search.",
+          "privacy": "protected",
+          "sourceRange": {
+            "start": {
+              "line": 1164,
+              "column": 2
+            },
+            "end": {
+              "line": 1214,
+              "column": 3
+            }
+          },
+          "metadata": {},
+          "params": [
+            {
+              "name": "id",
+              "type": "String",
+              "description": "The ID sent to the web worker to identify callback\nfunction."
+            },
+            {
+              "name": "results",
+              "type": "Object",
+              "description": "Map of request id - request type."
+            }
+          ],
+          "return": {
+            "type": "Promise"
+          }
+        },
+        {
+          "name": "query",
+          "description": "Performs a query on the request data store.\nIt uses PouchDB `query` function on built indexes.\nNote, it does not query URL data.",
+          "privacy": "public",
+          "sourceRange": {
+            "start": {
+              "line": 1226,
+              "column": 2
+            },
+            "end": {
+              "line": 1238,
+              "column": 3
+            }
+          },
+          "metadata": {},
+          "params": [
+            {
+              "name": "q",
+              "type": "String",
+              "description": "User query"
+            },
+            {
+              "name": "type",
+              "type": "?String",
+              "description": "Optional, type of the requests to search for.\nBy default it returns all data for both history and saved."
+            },
+            {
+              "name": "ignore",
+              "type": "?Array.<String>",
+              "description": "List of IDs to ignore."
+            }
+          ],
+          "return": {
+            "type": "Promise.<Array.<Object>>",
+            "desc": "Promise resolved to the list of requests."
+          }
+        },
+        {
+          "name": "queryHistory",
+          "description": "Queries history store using PouchDB quick search plugin (full text search).",
+          "privacy": "public",
+          "sourceRange": {
+            "start": {
+              "line": 1260,
+              "column": 2
+            },
+            "end": {
+              "line": 1262,
+              "column": 3
+            }
+          },
+          "metadata": {},
+          "params": [
+            {
+              "name": "q",
+              "type": "String",
+              "description": "User query"
+            },
+            {
+              "name": "ignore",
+              "type": "?Array.<String>",
+              "description": "List of IDs to ignore."
+            }
+          ],
+          "return": {
+            "type": "Promise.<Array.<Object>>",
+            "desc": "Promise resolved to the list of requests."
+          }
+        },
+        {
+          "name": "querySaved",
+          "description": "Queries Saved store using PouchDB quick search plugin (full text search).",
+          "privacy": "public",
+          "sourceRange": {
+            "start": {
+              "line": 1270,
+              "column": 2
+            },
+            "end": {
+              "line": 1272,
+              "column": 3
+            }
+          },
+          "metadata": {},
+          "params": [
+            {
+              "name": "q",
+              "type": "String",
+              "description": "User query"
+            },
+            {
+              "name": "ignore",
+              "type": "?Array.<String>",
+              "description": "List of IDs to ignore."
+            }
+          ],
+          "return": {
+            "type": "Promise.<Array.<Object>>",
+            "desc": "Promise resolved to the list of requests."
+          }
+        },
+        {
+          "name": "_queryStore",
+          "description": "",
+          "privacy": "protected",
+          "sourceRange": {
+            "start": {
+              "line": 1274,
+              "column": 2
+            },
+            "end": {
+              "line": 1300,
+              "column": 3
+            }
+          },
+          "metadata": {},
+          "params": [
+            {
+              "name": "q"
+            },
+            {
+              "name": "ignore"
+            },
+            {
+              "name": "db"
+            },
+            {
+              "name": "indexes"
             }
           ]
+        },
+        {
+          "name": "indexData",
+          "description": "Performs data index using PouchDB api.",
+          "privacy": "public",
+          "sourceRange": {
+            "start": {
+              "line": 1307,
+              "column": 2
+            },
+            "end": {
+              "line": 1313,
+              "column": 3
+            }
+          },
+          "metadata": {},
+          "params": [
+            {
+              "name": "type",
+              "type": "String",
+              "description": "Data type - saved or history."
+            }
+          ],
+          "return": {
+            "type": "Promise"
+          }
         }
       ],
       "staticMethods": [],
@@ -1233,19 +2335,60 @@
       "metadata": {},
       "sourceRange": {
         "start": {
-          "line": 224,
+          "line": 134,
           "column": 0
         },
         "end": {
-          "line": 837,
+          "line": 1372,
           "column": 1
         }
       },
       "privacy": "public",
-      "superclass": "ArcBaseModel",
+      "superclass": "RequestBaseModel",
       "name": "LogicElements.RequestModel",
-      "attributes": [],
+      "attributes": [
+        {
+          "name": "no-indexing",
+          "description": "When set it skips request indexing.",
+          "sourceRange": {
+            "start": {
+              "line": 143,
+              "column": 6
+            },
+            "end": {
+              "line": 143,
+              "column": 25
+            }
+          },
+          "metadata": {},
+          "type": "boolean | null | undefined"
+        }
+      ],
       "events": [
+        {
+          "type": "CustomEvent",
+          "name": "drive-request-save",
+          "description": "Fired when the request should be expored to Google Drive.\nThis element doesn't support this operation but this way it queries for\nan element that can export data to Google Drive.",
+          "metadata": {}
+        },
+        {
+          "type": "CustomEvent",
+          "name": "export-google-drive",
+          "description": "Dispatched when saving request object to the data store and configuration\noption says to save request to Google Drive.\nThis component does not handles the logic responsible for Drive integration.\n\nNote, The request save flow fails when this event is not handled.",
+          "metadata": {}
+        },
+        {
+          "type": "CustomEvent",
+          "name": "request-indexing-error",
+          "description": "Dispatched when request object indexing finishes with error.\nThis event does not bubbles.",
+          "metadata": {}
+        },
+        {
+          "type": "CustomEvent",
+          "name": "request-indexing-finished",
+          "description": "Dispatched when request object indexing finishes.\nThis event does not bubbles.",
+          "metadata": {}
+        },
         {
           "type": "CustomEvent",
           "name": "request-object-changed",
@@ -1272,6 +2415,76 @@
       "path": "websocket-url-history-model.html",
       "properties": [
         {
+          "name": "eventsTarget",
+          "type": "Object | null | undefined",
+          "description": "Events handlers target. By default the element listens on\n`window` object. If set, all events listeners will be attached to this\nobject instead of `window`.",
+          "privacy": "public",
+          "sourceRange": {
+            "file": "../events-target-behavior/events-target-behavior.html",
+            "start": {
+              "line": 73,
+              "column": 8
+            },
+            "end": {
+              "line": 76,
+              "column": 9
+            }
+          },
+          "metadata": {
+            "polymer": {
+              "observer": "\"_eventsTargetChanged\"",
+              "attributeType": "Object"
+            }
+          },
+          "inheritedFrom": "ArcBehaviors.EventsTargetBehavior"
+        },
+        {
+          "name": "_oldEventsTarget",
+          "type": "Object | null | undefined",
+          "description": "An event target used to attach listeners.",
+          "privacy": "protected",
+          "sourceRange": {
+            "file": "../events-target-behavior/events-target-behavior.html",
+            "start": {
+              "line": 78,
+              "column": 8
+            },
+            "end": {
+              "line": 78,
+              "column": 32
+            }
+          },
+          "metadata": {
+            "polymer": {
+              "attributeType": "Object"
+            }
+          },
+          "inheritedFrom": "ArcBehaviors.EventsTargetBehavior"
+        },
+        {
+          "name": "uuid",
+          "type": "?",
+          "description": "",
+          "privacy": "public",
+          "sourceRange": {
+            "file": "base-model.html",
+            "start": {
+              "line": 23,
+              "column": 2
+            },
+            "end": {
+              "line": 29,
+              "column": 3
+            }
+          },
+          "metadata": {
+            "polymer": {
+              "readOnly": true
+            }
+          },
+          "inheritedFrom": "ArcBaseModel"
+        },
+        {
           "name": "db",
           "type": "?",
           "description": "",
@@ -1294,6 +2507,78 @@
         }
       ],
       "methods": [
+        {
+          "name": "connectedCallback",
+          "description": "",
+          "privacy": "public",
+          "sourceRange": {
+            "file": "../events-target-behavior/events-target-behavior.html",
+            "start": {
+              "line": 81,
+              "column": 4
+            },
+            "end": {
+              "line": 84,
+              "column": 6
+            }
+          },
+          "metadata": {},
+          "params": [],
+          "return": {
+            "type": "void"
+          },
+          "inheritedFrom": "ArcBehaviors.EventsTargetBehavior"
+        },
+        {
+          "name": "disconnectedCallback",
+          "description": "",
+          "privacy": "public",
+          "sourceRange": {
+            "file": "base-model.html",
+            "start": {
+              "line": 31,
+              "column": 2
+            },
+            "end": {
+              "line": 36,
+              "column": 3
+            }
+          },
+          "metadata": {},
+          "params": [],
+          "return": {
+            "type": "void"
+          },
+          "inheritedFrom": "ArcBaseModel"
+        },
+        {
+          "name": "_eventsTargetChanged",
+          "description": "Removes old handlers (if any) and attaches listeners on new event\nevent target.",
+          "privacy": "protected",
+          "sourceRange": {
+            "file": "../events-target-behavior/events-target-behavior.html",
+            "start": {
+              "line": 99,
+              "column": 4
+            },
+            "end": {
+              "line": 105,
+              "column": 5
+            }
+          },
+          "metadata": {},
+          "params": [
+            {
+              "name": "eventsTarget",
+              "type": "?Node",
+              "description": "Event target to set handlers on. If not set it\nwill set handlers on the `window` object."
+            }
+          ],
+          "return": {
+            "type": "void"
+          },
+          "inheritedFrom": "ArcBehaviors.EventsTargetBehavior"
+        },
         {
           "name": "_attachListeners",
           "description": "",
@@ -1341,6 +2626,136 @@
           "return": {
             "type": "void"
           }
+        },
+        {
+          "name": "read",
+          "description": "Reads an entry from the datastore.",
+          "privacy": "public",
+          "sourceRange": {
+            "file": "base-model.html",
+            "start": {
+              "line": 45,
+              "column": 2
+            },
+            "end": {
+              "line": 51,
+              "column": 3
+            }
+          },
+          "metadata": {},
+          "params": [
+            {
+              "name": "id",
+              "type": "String",
+              "description": "The ID of the datastore entry."
+            },
+            {
+              "name": "rev",
+              "type": "?String",
+              "description": "Specific revision to read. Defaults to latest revision."
+            }
+          ],
+          "return": {
+            "type": "Promise",
+            "desc": "Promise resolved to a datastore object."
+          },
+          "inheritedFrom": "ArcBaseModel"
+        },
+        {
+          "name": "_computeMidnight",
+          "description": "Computes past mindnight for given timestamp.",
+          "privacy": "protected",
+          "sourceRange": {
+            "file": "base-model.html",
+            "start": {
+              "line": 58,
+              "column": 2
+            },
+            "end": {
+              "line": 65,
+              "column": 3
+            }
+          },
+          "metadata": {},
+          "params": [
+            {
+              "name": "time",
+              "type": "Number",
+              "description": "Timestamp"
+            }
+          ],
+          "return": {
+            "type": "Number",
+            "desc": "Time reduced to midnight."
+          },
+          "inheritedFrom": "ArcBaseModel"
+        },
+        {
+          "name": "_fireUpdated",
+          "description": "Dispatches non-cancelable change event.",
+          "privacy": "protected",
+          "sourceRange": {
+            "file": "base-model.html",
+            "start": {
+              "line": 73,
+              "column": 2
+            },
+            "end": {
+              "line": 82,
+              "column": 3
+            }
+          },
+          "metadata": {},
+          "params": [
+            {
+              "name": "type",
+              "type": "String",
+              "description": "Event type"
+            },
+            {
+              "name": "detail",
+              "type": "Object",
+              "description": "A detail object to dispatch."
+            }
+          ],
+          "return": {
+            "type": "CustomEvent",
+            "desc": "Created and dispatched event."
+          },
+          "inheritedFrom": "ArcBaseModel"
+        },
+        {
+          "name": "_handleException",
+          "description": "Handles any exception in the model in a unified way.",
+          "privacy": "protected",
+          "sourceRange": {
+            "file": "base-model.html",
+            "start": {
+              "line": 90,
+              "column": 2
+            },
+            "end": {
+              "line": 110,
+              "column": 3
+            }
+          },
+          "metadata": {},
+          "params": [
+            {
+              "name": "e",
+              "type": "(Error | Object)",
+              "description": "An error object"
+            },
+            {
+              "name": "noThrow",
+              "type": "?Boolean",
+              "description": "If set the function will not throw error.\nThis allow to do the logic without stopping program."
+            }
+          ],
+          "return": {
+            "type": "void"
+          },
+          "inheritedFrom": "ArcBaseModel"
         },
         {
           "name": "_handleRead",
@@ -1575,6 +2990,76 @@
       "path": "rest-api-model.html",
       "properties": [
         {
+          "name": "eventsTarget",
+          "type": "Object | null | undefined",
+          "description": "Events handlers target. By default the element listens on\n`window` object. If set, all events listeners will be attached to this\nobject instead of `window`.",
+          "privacy": "public",
+          "sourceRange": {
+            "file": "../events-target-behavior/events-target-behavior.html",
+            "start": {
+              "line": 73,
+              "column": 8
+            },
+            "end": {
+              "line": 76,
+              "column": 9
+            }
+          },
+          "metadata": {
+            "polymer": {
+              "observer": "\"_eventsTargetChanged\"",
+              "attributeType": "Object"
+            }
+          },
+          "inheritedFrom": "ArcBehaviors.EventsTargetBehavior"
+        },
+        {
+          "name": "_oldEventsTarget",
+          "type": "Object | null | undefined",
+          "description": "An event target used to attach listeners.",
+          "privacy": "protected",
+          "sourceRange": {
+            "file": "../events-target-behavior/events-target-behavior.html",
+            "start": {
+              "line": 78,
+              "column": 8
+            },
+            "end": {
+              "line": 78,
+              "column": 32
+            }
+          },
+          "metadata": {
+            "polymer": {
+              "attributeType": "Object"
+            }
+          },
+          "inheritedFrom": "ArcBehaviors.EventsTargetBehavior"
+        },
+        {
+          "name": "uuid",
+          "type": "?",
+          "description": "",
+          "privacy": "public",
+          "sourceRange": {
+            "file": "base-model.html",
+            "start": {
+              "line": 23,
+              "column": 2
+            },
+            "end": {
+              "line": 29,
+              "column": 3
+            }
+          },
+          "metadata": {
+            "polymer": {
+              "readOnly": true
+            }
+          },
+          "inheritedFrom": "ArcBaseModel"
+        },
+        {
           "name": "indexDb",
           "type": "?",
           "description": "A handler to the datastroe contains listing data\n   ",
@@ -1662,6 +3147,78 @@
       ],
       "methods": [
         {
+          "name": "connectedCallback",
+          "description": "",
+          "privacy": "public",
+          "sourceRange": {
+            "file": "../events-target-behavior/events-target-behavior.html",
+            "start": {
+              "line": 81,
+              "column": 4
+            },
+            "end": {
+              "line": 84,
+              "column": 6
+            }
+          },
+          "metadata": {},
+          "params": [],
+          "return": {
+            "type": "void"
+          },
+          "inheritedFrom": "ArcBehaviors.EventsTargetBehavior"
+        },
+        {
+          "name": "disconnectedCallback",
+          "description": "",
+          "privacy": "public",
+          "sourceRange": {
+            "file": "base-model.html",
+            "start": {
+              "line": 31,
+              "column": 2
+            },
+            "end": {
+              "line": 36,
+              "column": 3
+            }
+          },
+          "metadata": {},
+          "params": [],
+          "return": {
+            "type": "void"
+          },
+          "inheritedFrom": "ArcBaseModel"
+        },
+        {
+          "name": "_eventsTargetChanged",
+          "description": "Removes old handlers (if any) and attaches listeners on new event\nevent target.",
+          "privacy": "protected",
+          "sourceRange": {
+            "file": "../events-target-behavior/events-target-behavior.html",
+            "start": {
+              "line": 99,
+              "column": 4
+            },
+            "end": {
+              "line": 105,
+              "column": 5
+            }
+          },
+          "metadata": {},
+          "params": [
+            {
+              "name": "eventsTarget",
+              "type": "?Node",
+              "description": "Event target to set handlers on. If not set it\nwill set handlers on the `window` object."
+            }
+          ],
+          "return": {
+            "type": "void"
+          },
+          "inheritedFrom": "ArcBehaviors.EventsTargetBehavior"
+        },
+        {
           "name": "_attachListeners",
           "description": "",
           "privacy": "protected",
@@ -1708,6 +3265,136 @@
           "return": {
             "type": "void"
           }
+        },
+        {
+          "name": "read",
+          "description": "Reads an entry from the datastore.",
+          "privacy": "public",
+          "sourceRange": {
+            "file": "base-model.html",
+            "start": {
+              "line": 45,
+              "column": 2
+            },
+            "end": {
+              "line": 51,
+              "column": 3
+            }
+          },
+          "metadata": {},
+          "params": [
+            {
+              "name": "id",
+              "type": "String",
+              "description": "The ID of the datastore entry."
+            },
+            {
+              "name": "rev",
+              "type": "?String",
+              "description": "Specific revision to read. Defaults to latest revision."
+            }
+          ],
+          "return": {
+            "type": "Promise",
+            "desc": "Promise resolved to a datastore object."
+          },
+          "inheritedFrom": "ArcBaseModel"
+        },
+        {
+          "name": "_computeMidnight",
+          "description": "Computes past mindnight for given timestamp.",
+          "privacy": "protected",
+          "sourceRange": {
+            "file": "base-model.html",
+            "start": {
+              "line": 58,
+              "column": 2
+            },
+            "end": {
+              "line": 65,
+              "column": 3
+            }
+          },
+          "metadata": {},
+          "params": [
+            {
+              "name": "time",
+              "type": "Number",
+              "description": "Timestamp"
+            }
+          ],
+          "return": {
+            "type": "Number",
+            "desc": "Time reduced to midnight."
+          },
+          "inheritedFrom": "ArcBaseModel"
+        },
+        {
+          "name": "_fireUpdated",
+          "description": "Dispatches non-cancelable change event.",
+          "privacy": "protected",
+          "sourceRange": {
+            "file": "base-model.html",
+            "start": {
+              "line": 73,
+              "column": 2
+            },
+            "end": {
+              "line": 82,
+              "column": 3
+            }
+          },
+          "metadata": {},
+          "params": [
+            {
+              "name": "type",
+              "type": "String",
+              "description": "Event type"
+            },
+            {
+              "name": "detail",
+              "type": "Object",
+              "description": "A detail object to dispatch."
+            }
+          ],
+          "return": {
+            "type": "CustomEvent",
+            "desc": "Created and dispatched event."
+          },
+          "inheritedFrom": "ArcBaseModel"
+        },
+        {
+          "name": "_handleException",
+          "description": "Handles any exception in the model in a unified way.",
+          "privacy": "protected",
+          "sourceRange": {
+            "file": "base-model.html",
+            "start": {
+              "line": 90,
+              "column": 2
+            },
+            "end": {
+              "line": 110,
+              "column": 3
+            }
+          },
+          "metadata": {},
+          "params": [
+            {
+              "name": "e",
+              "type": "(Error | Object)",
+              "description": "An error object"
+            },
+            {
+              "name": "noThrow",
+              "type": "?Boolean",
+              "description": "If set the function will not throw error.\nThis allow to do the logic without stopping program."
+            }
+          ],
+          "return": {
+            "type": "void"
+          },
+          "inheritedFrom": "ArcBaseModel"
         },
         {
           "name": "readIndex",
@@ -2254,6 +3941,76 @@
       "path": "host-rules-model.html",
       "properties": [
         {
+          "name": "eventsTarget",
+          "type": "Object | null | undefined",
+          "description": "Events handlers target. By default the element listens on\n`window` object. If set, all events listeners will be attached to this\nobject instead of `window`.",
+          "privacy": "public",
+          "sourceRange": {
+            "file": "../events-target-behavior/events-target-behavior.html",
+            "start": {
+              "line": 73,
+              "column": 8
+            },
+            "end": {
+              "line": 76,
+              "column": 9
+            }
+          },
+          "metadata": {
+            "polymer": {
+              "observer": "\"_eventsTargetChanged\"",
+              "attributeType": "Object"
+            }
+          },
+          "inheritedFrom": "ArcBehaviors.EventsTargetBehavior"
+        },
+        {
+          "name": "_oldEventsTarget",
+          "type": "Object | null | undefined",
+          "description": "An event target used to attach listeners.",
+          "privacy": "protected",
+          "sourceRange": {
+            "file": "../events-target-behavior/events-target-behavior.html",
+            "start": {
+              "line": 78,
+              "column": 8
+            },
+            "end": {
+              "line": 78,
+              "column": 32
+            }
+          },
+          "metadata": {
+            "polymer": {
+              "attributeType": "Object"
+            }
+          },
+          "inheritedFrom": "ArcBehaviors.EventsTargetBehavior"
+        },
+        {
+          "name": "uuid",
+          "type": "?",
+          "description": "",
+          "privacy": "public",
+          "sourceRange": {
+            "file": "base-model.html",
+            "start": {
+              "line": 23,
+              "column": 2
+            },
+            "end": {
+              "line": 29,
+              "column": 3
+            }
+          },
+          "metadata": {
+            "polymer": {
+              "readOnly": true
+            }
+          },
+          "inheritedFrom": "ArcBaseModel"
+        },
+        {
           "name": "db",
           "type": "?",
           "description": " A handler to host rules database",
@@ -2276,6 +4033,78 @@
         }
       ],
       "methods": [
+        {
+          "name": "connectedCallback",
+          "description": "",
+          "privacy": "public",
+          "sourceRange": {
+            "file": "../events-target-behavior/events-target-behavior.html",
+            "start": {
+              "line": 81,
+              "column": 4
+            },
+            "end": {
+              "line": 84,
+              "column": 6
+            }
+          },
+          "metadata": {},
+          "params": [],
+          "return": {
+            "type": "void"
+          },
+          "inheritedFrom": "ArcBehaviors.EventsTargetBehavior"
+        },
+        {
+          "name": "disconnectedCallback",
+          "description": "",
+          "privacy": "public",
+          "sourceRange": {
+            "file": "base-model.html",
+            "start": {
+              "line": 31,
+              "column": 2
+            },
+            "end": {
+              "line": 36,
+              "column": 3
+            }
+          },
+          "metadata": {},
+          "params": [],
+          "return": {
+            "type": "void"
+          },
+          "inheritedFrom": "ArcBaseModel"
+        },
+        {
+          "name": "_eventsTargetChanged",
+          "description": "Removes old handlers (if any) and attaches listeners on new event\nevent target.",
+          "privacy": "protected",
+          "sourceRange": {
+            "file": "../events-target-behavior/events-target-behavior.html",
+            "start": {
+              "line": 99,
+              "column": 4
+            },
+            "end": {
+              "line": 105,
+              "column": 5
+            }
+          },
+          "metadata": {},
+          "params": [
+            {
+              "name": "eventsTarget",
+              "type": "?Node",
+              "description": "Event target to set handlers on. If not set it\nwill set handlers on the `window` object."
+            }
+          ],
+          "return": {
+            "type": "void"
+          },
+          "inheritedFrom": "ArcBehaviors.EventsTargetBehavior"
+        },
         {
           "name": "_attachListeners",
           "description": "",
@@ -2323,6 +4152,136 @@
           "return": {
             "type": "void"
           }
+        },
+        {
+          "name": "read",
+          "description": "Reads an entry from the datastore.",
+          "privacy": "public",
+          "sourceRange": {
+            "file": "base-model.html",
+            "start": {
+              "line": 45,
+              "column": 2
+            },
+            "end": {
+              "line": 51,
+              "column": 3
+            }
+          },
+          "metadata": {},
+          "params": [
+            {
+              "name": "id",
+              "type": "String",
+              "description": "The ID of the datastore entry."
+            },
+            {
+              "name": "rev",
+              "type": "?String",
+              "description": "Specific revision to read. Defaults to latest revision."
+            }
+          ],
+          "return": {
+            "type": "Promise",
+            "desc": "Promise resolved to a datastore object."
+          },
+          "inheritedFrom": "ArcBaseModel"
+        },
+        {
+          "name": "_computeMidnight",
+          "description": "Computes past mindnight for given timestamp.",
+          "privacy": "protected",
+          "sourceRange": {
+            "file": "base-model.html",
+            "start": {
+              "line": 58,
+              "column": 2
+            },
+            "end": {
+              "line": 65,
+              "column": 3
+            }
+          },
+          "metadata": {},
+          "params": [
+            {
+              "name": "time",
+              "type": "Number",
+              "description": "Timestamp"
+            }
+          ],
+          "return": {
+            "type": "Number",
+            "desc": "Time reduced to midnight."
+          },
+          "inheritedFrom": "ArcBaseModel"
+        },
+        {
+          "name": "_fireUpdated",
+          "description": "Dispatches non-cancelable change event.",
+          "privacy": "protected",
+          "sourceRange": {
+            "file": "base-model.html",
+            "start": {
+              "line": 73,
+              "column": 2
+            },
+            "end": {
+              "line": 82,
+              "column": 3
+            }
+          },
+          "metadata": {},
+          "params": [
+            {
+              "name": "type",
+              "type": "String",
+              "description": "Event type"
+            },
+            {
+              "name": "detail",
+              "type": "Object",
+              "description": "A detail object to dispatch."
+            }
+          ],
+          "return": {
+            "type": "CustomEvent",
+            "desc": "Created and dispatched event."
+          },
+          "inheritedFrom": "ArcBaseModel"
+        },
+        {
+          "name": "_handleException",
+          "description": "Handles any exception in the model in a unified way.",
+          "privacy": "protected",
+          "sourceRange": {
+            "file": "base-model.html",
+            "start": {
+              "line": 90,
+              "column": 2
+            },
+            "end": {
+              "line": 110,
+              "column": 3
+            }
+          },
+          "metadata": {},
+          "params": [
+            {
+              "name": "e",
+              "type": "(Error | Object)",
+              "description": "An error object"
+            },
+            {
+              "name": "noThrow",
+              "type": "?Boolean",
+              "description": "If set the function will not throw error.\nThis allow to do the logic without stopping program."
+            }
+          ],
+          "return": {
+            "type": "void"
+          },
+          "inheritedFrom": "ArcBaseModel"
         },
         {
           "name": "update",
@@ -2501,6 +4460,788 @@
       },
       "slots": [],
       "tagname": "host-rules-model"
+    }
+  ],
+  "classes": [
+    {
+      "description": "A base class for all models.",
+      "summary": "",
+      "path": "base-model.html",
+      "properties": [
+        {
+          "name": "eventsTarget",
+          "type": "Object | null | undefined",
+          "description": "Events handlers target. By default the element listens on\n`window` object. If set, all events listeners will be attached to this\nobject instead of `window`.",
+          "privacy": "public",
+          "sourceRange": {
+            "file": "../events-target-behavior/events-target-behavior.html",
+            "start": {
+              "line": 73,
+              "column": 8
+            },
+            "end": {
+              "line": 76,
+              "column": 9
+            }
+          },
+          "metadata": {},
+          "inheritedFrom": "ArcBehaviors.EventsTargetBehavior"
+        },
+        {
+          "name": "_oldEventsTarget",
+          "type": "Object | null | undefined",
+          "description": "An event target used to attach listeners.",
+          "privacy": "protected",
+          "sourceRange": {
+            "file": "../events-target-behavior/events-target-behavior.html",
+            "start": {
+              "line": 78,
+              "column": 8
+            },
+            "end": {
+              "line": 78,
+              "column": 32
+            }
+          },
+          "metadata": {},
+          "inheritedFrom": "ArcBehaviors.EventsTargetBehavior"
+        },
+        {
+          "name": "uuid",
+          "type": "?",
+          "description": "",
+          "privacy": "public",
+          "sourceRange": {
+            "start": {
+              "line": 23,
+              "column": 2
+            },
+            "end": {
+              "line": 29,
+              "column": 3
+            }
+          },
+          "metadata": {}
+        }
+      ],
+      "methods": [
+        {
+          "name": "connectedCallback",
+          "description": "",
+          "privacy": "public",
+          "sourceRange": {
+            "file": "../events-target-behavior/events-target-behavior.html",
+            "start": {
+              "line": 81,
+              "column": 4
+            },
+            "end": {
+              "line": 84,
+              "column": 6
+            }
+          },
+          "metadata": {},
+          "params": [],
+          "return": {
+            "type": "void"
+          },
+          "inheritedFrom": "ArcBehaviors.EventsTargetBehavior"
+        },
+        {
+          "name": "disconnectedCallback",
+          "description": "",
+          "privacy": "public",
+          "sourceRange": {
+            "start": {
+              "line": 31,
+              "column": 2
+            },
+            "end": {
+              "line": 36,
+              "column": 3
+            }
+          },
+          "metadata": {},
+          "params": [],
+          "return": {
+            "type": "void"
+          }
+        },
+        {
+          "name": "_eventsTargetChanged",
+          "description": "Removes old handlers (if any) and attaches listeners on new event\nevent target.",
+          "privacy": "protected",
+          "sourceRange": {
+            "file": "../events-target-behavior/events-target-behavior.html",
+            "start": {
+              "line": 99,
+              "column": 4
+            },
+            "end": {
+              "line": 105,
+              "column": 5
+            }
+          },
+          "metadata": {},
+          "params": [
+            {
+              "name": "eventsTarget",
+              "type": "?Node",
+              "description": "Event target to set handlers on. If not set it\nwill set handlers on the `window` object."
+            }
+          ],
+          "return": {
+            "type": "void"
+          },
+          "inheritedFrom": "ArcBehaviors.EventsTargetBehavior"
+        },
+        {
+          "name": "_attachListeners",
+          "description": "To be implement by the element to set event listeners on the target",
+          "privacy": "protected",
+          "sourceRange": {
+            "file": "../events-target-behavior/events-target-behavior.html",
+            "start": {
+              "line": 107,
+              "column": 4
+            },
+            "end": {
+              "line": 109,
+              "column": 5
+            }
+          },
+          "metadata": {},
+          "params": [],
+          "return": {
+            "type": "void"
+          },
+          "inheritedFrom": "ArcBehaviors.EventsTargetBehavior"
+        },
+        {
+          "name": "_detachListeners",
+          "description": "To be implement by the element to remove event listeners from the target",
+          "privacy": "protected",
+          "sourceRange": {
+            "file": "../events-target-behavior/events-target-behavior.html",
+            "start": {
+              "line": 111,
+              "column": 4
+            },
+            "end": {
+              "line": 113,
+              "column": 5
+            }
+          },
+          "metadata": {},
+          "params": [],
+          "return": {
+            "type": "void"
+          },
+          "inheritedFrom": "ArcBehaviors.EventsTargetBehavior"
+        },
+        {
+          "name": "read",
+          "description": "Reads an entry from the datastore.",
+          "privacy": "public",
+          "sourceRange": {
+            "start": {
+              "line": 45,
+              "column": 2
+            },
+            "end": {
+              "line": 51,
+              "column": 3
+            }
+          },
+          "metadata": {},
+          "params": [
+            {
+              "name": "id",
+              "type": "String",
+              "description": "The ID of the datastore entry."
+            },
+            {
+              "name": "rev",
+              "type": "?String",
+              "description": "Specific revision to read. Defaults to latest revision."
+            }
+          ],
+          "return": {
+            "type": "Promise",
+            "desc": "Promise resolved to a datastore object."
+          }
+        },
+        {
+          "name": "_computeMidnight",
+          "description": "Computes past mindnight for given timestamp.",
+          "privacy": "protected",
+          "sourceRange": {
+            "start": {
+              "line": 58,
+              "column": 2
+            },
+            "end": {
+              "line": 65,
+              "column": 3
+            }
+          },
+          "metadata": {},
+          "params": [
+            {
+              "name": "time",
+              "type": "Number",
+              "description": "Timestamp"
+            }
+          ],
+          "return": {
+            "type": "Number",
+            "desc": "Time reduced to midnight."
+          }
+        },
+        {
+          "name": "_fireUpdated",
+          "description": "Dispatches non-cancelable change event.",
+          "privacy": "protected",
+          "sourceRange": {
+            "start": {
+              "line": 73,
+              "column": 2
+            },
+            "end": {
+              "line": 82,
+              "column": 3
+            }
+          },
+          "metadata": {},
+          "params": [
+            {
+              "name": "type",
+              "type": "String",
+              "description": "Event type"
+            },
+            {
+              "name": "detail",
+              "type": "Object",
+              "description": "A detail object to dispatch."
+            }
+          ],
+          "return": {
+            "type": "CustomEvent",
+            "desc": "Created and dispatched event."
+          }
+        },
+        {
+          "name": "_handleException",
+          "description": "Handles any exception in the model in a unified way.",
+          "privacy": "protected",
+          "sourceRange": {
+            "start": {
+              "line": 90,
+              "column": 2
+            },
+            "end": {
+              "line": 110,
+              "column": 3
+            }
+          },
+          "metadata": {},
+          "params": [
+            {
+              "name": "e",
+              "type": "(Error | Object)",
+              "description": "An error object"
+            },
+            {
+              "name": "noThrow",
+              "type": "?Boolean",
+              "description": "If set the function will not throw error.\nThis allow to do the logic without stopping program."
+            }
+          ],
+          "return": {
+            "type": "void"
+          }
+        }
+      ],
+      "staticMethods": [],
+      "demos": [],
+      "metadata": {},
+      "sourceRange": {
+        "start": {
+          "line": 22,
+          "column": 0
+        },
+        "end": {
+          "line": 111,
+          "column": 1
+        }
+      },
+      "privacy": "public",
+      "name": "ArcBaseModel"
+    },
+    {
+      "description": "A base class for Request and Projects` models.",
+      "summary": "",
+      "path": "request-base-model.html",
+      "properties": [
+        {
+          "name": "eventsTarget",
+          "type": "Object | null | undefined",
+          "description": "Events handlers target. By default the element listens on\n`window` object. If set, all events listeners will be attached to this\nobject instead of `window`.",
+          "privacy": "public",
+          "sourceRange": {
+            "file": "../events-target-behavior/events-target-behavior.html",
+            "start": {
+              "line": 73,
+              "column": 8
+            },
+            "end": {
+              "line": 76,
+              "column": 9
+            }
+          },
+          "metadata": {},
+          "inheritedFrom": "ArcBehaviors.EventsTargetBehavior"
+        },
+        {
+          "name": "_oldEventsTarget",
+          "type": "Object | null | undefined",
+          "description": "An event target used to attach listeners.",
+          "privacy": "protected",
+          "sourceRange": {
+            "file": "../events-target-behavior/events-target-behavior.html",
+            "start": {
+              "line": 78,
+              "column": 8
+            },
+            "end": {
+              "line": 78,
+              "column": 32
+            }
+          },
+          "metadata": {},
+          "inheritedFrom": "ArcBehaviors.EventsTargetBehavior"
+        },
+        {
+          "name": "uuid",
+          "type": "?",
+          "description": "",
+          "privacy": "public",
+          "sourceRange": {
+            "file": "base-model.html",
+            "start": {
+              "line": 23,
+              "column": 2
+            },
+            "end": {
+              "line": 29,
+              "column": 3
+            }
+          },
+          "metadata": {},
+          "inheritedFrom": "ArcBaseModel"
+        },
+        {
+          "name": "savedDb",
+          "type": "?",
+          "description": "",
+          "privacy": "public",
+          "sourceRange": {
+            "start": {
+              "line": 21,
+              "column": 2
+            },
+            "end": {
+              "line": 24,
+              "column": 3
+            }
+          },
+          "metadata": {}
+        },
+        {
+          "name": "historyDb",
+          "type": "?",
+          "description": "",
+          "privacy": "public",
+          "sourceRange": {
+            "start": {
+              "line": 26,
+              "column": 2
+            },
+            "end": {
+              "line": 28,
+              "column": 3
+            }
+          },
+          "metadata": {}
+        },
+        {
+          "name": "projectDb",
+          "type": "PouchDB",
+          "description": "",
+          "privacy": "public",
+          "sourceRange": {
+            "start": {
+              "line": 33,
+              "column": 2
+            },
+            "end": {
+              "line": 36,
+              "column": 3
+            }
+          },
+          "metadata": {}
+        }
+      ],
+      "methods": [
+        {
+          "name": "connectedCallback",
+          "description": "",
+          "privacy": "public",
+          "sourceRange": {
+            "file": "../events-target-behavior/events-target-behavior.html",
+            "start": {
+              "line": 81,
+              "column": 4
+            },
+            "end": {
+              "line": 84,
+              "column": 6
+            }
+          },
+          "metadata": {},
+          "params": [],
+          "return": {
+            "type": "void"
+          },
+          "inheritedFrom": "ArcBehaviors.EventsTargetBehavior"
+        },
+        {
+          "name": "disconnectedCallback",
+          "description": "",
+          "privacy": "public",
+          "sourceRange": {
+            "file": "base-model.html",
+            "start": {
+              "line": 31,
+              "column": 2
+            },
+            "end": {
+              "line": 36,
+              "column": 3
+            }
+          },
+          "metadata": {},
+          "params": [],
+          "return": {
+            "type": "void"
+          },
+          "inheritedFrom": "ArcBaseModel"
+        },
+        {
+          "name": "_eventsTargetChanged",
+          "description": "Removes old handlers (if any) and attaches listeners on new event\nevent target.",
+          "privacy": "protected",
+          "sourceRange": {
+            "file": "../events-target-behavior/events-target-behavior.html",
+            "start": {
+              "line": 99,
+              "column": 4
+            },
+            "end": {
+              "line": 105,
+              "column": 5
+            }
+          },
+          "metadata": {},
+          "params": [
+            {
+              "name": "eventsTarget",
+              "type": "?Node",
+              "description": "Event target to set handlers on. If not set it\nwill set handlers on the `window` object."
+            }
+          ],
+          "return": {
+            "type": "void"
+          },
+          "inheritedFrom": "ArcBehaviors.EventsTargetBehavior"
+        },
+        {
+          "name": "_attachListeners",
+          "description": "To be implement by the element to set event listeners on the target",
+          "privacy": "protected",
+          "sourceRange": {
+            "file": "../events-target-behavior/events-target-behavior.html",
+            "start": {
+              "line": 107,
+              "column": 4
+            },
+            "end": {
+              "line": 109,
+              "column": 5
+            }
+          },
+          "metadata": {},
+          "params": [],
+          "return": {
+            "type": "void"
+          },
+          "inheritedFrom": "ArcBehaviors.EventsTargetBehavior"
+        },
+        {
+          "name": "_detachListeners",
+          "description": "To be implement by the element to remove event listeners from the target",
+          "privacy": "protected",
+          "sourceRange": {
+            "file": "../events-target-behavior/events-target-behavior.html",
+            "start": {
+              "line": 111,
+              "column": 4
+            },
+            "end": {
+              "line": 113,
+              "column": 5
+            }
+          },
+          "metadata": {},
+          "params": [],
+          "return": {
+            "type": "void"
+          },
+          "inheritedFrom": "ArcBehaviors.EventsTargetBehavior"
+        },
+        {
+          "name": "read",
+          "description": "Reads an entry from the datastore.",
+          "privacy": "public",
+          "sourceRange": {
+            "file": "base-model.html",
+            "start": {
+              "line": 45,
+              "column": 2
+            },
+            "end": {
+              "line": 51,
+              "column": 3
+            }
+          },
+          "metadata": {},
+          "params": [
+            {
+              "name": "id",
+              "type": "String",
+              "description": "The ID of the datastore entry."
+            },
+            {
+              "name": "rev",
+              "type": "?String",
+              "description": "Specific revision to read. Defaults to latest revision."
+            }
+          ],
+          "return": {
+            "type": "Promise",
+            "desc": "Promise resolved to a datastore object."
+          },
+          "inheritedFrom": "ArcBaseModel"
+        },
+        {
+          "name": "_computeMidnight",
+          "description": "Computes past mindnight for given timestamp.",
+          "privacy": "protected",
+          "sourceRange": {
+            "file": "base-model.html",
+            "start": {
+              "line": 58,
+              "column": 2
+            },
+            "end": {
+              "line": 65,
+              "column": 3
+            }
+          },
+          "metadata": {},
+          "params": [
+            {
+              "name": "time",
+              "type": "Number",
+              "description": "Timestamp"
+            }
+          ],
+          "return": {
+            "type": "Number",
+            "desc": "Time reduced to midnight."
+          },
+          "inheritedFrom": "ArcBaseModel"
+        },
+        {
+          "name": "_fireUpdated",
+          "description": "Dispatches non-cancelable change event.",
+          "privacy": "protected",
+          "sourceRange": {
+            "file": "base-model.html",
+            "start": {
+              "line": 73,
+              "column": 2
+            },
+            "end": {
+              "line": 82,
+              "column": 3
+            }
+          },
+          "metadata": {},
+          "params": [
+            {
+              "name": "type",
+              "type": "String",
+              "description": "Event type"
+            },
+            {
+              "name": "detail",
+              "type": "Object",
+              "description": "A detail object to dispatch."
+            }
+          ],
+          "return": {
+            "type": "CustomEvent",
+            "desc": "Created and dispatched event."
+          },
+          "inheritedFrom": "ArcBaseModel"
+        },
+        {
+          "name": "_handleException",
+          "description": "Handles any exception in the model in a unified way.",
+          "privacy": "protected",
+          "sourceRange": {
+            "file": "base-model.html",
+            "start": {
+              "line": 90,
+              "column": 2
+            },
+            "end": {
+              "line": 110,
+              "column": 3
+            }
+          },
+          "metadata": {},
+          "params": [
+            {
+              "name": "e",
+              "type": "(Error | Object)",
+              "description": "An error object"
+            },
+            {
+              "name": "noThrow",
+              "type": "?Boolean",
+              "description": "If set the function will not throw error.\nThis allow to do the logic without stopping program."
+            }
+          ],
+          "return": {
+            "type": "void"
+          },
+          "inheritedFrom": "ArcBaseModel"
+        },
+        {
+          "name": "getDatabase",
+          "description": "Returns a reference to a PouchDB database instance for given type.",
+          "privacy": "public",
+          "sourceRange": {
+            "start": {
+              "line": 44,
+              "column": 2
+            },
+            "end": {
+              "line": 57,
+              "column": 3
+            }
+          },
+          "metadata": {},
+          "params": [
+            {
+              "name": "type",
+              "type": "String",
+              "description": "Either `saved-requests` or `history-requests`"
+            }
+          ],
+          "return": {
+            "type": "PouchDB",
+            "desc": "PouchDB instance for the datastore."
+          }
+        },
+        {
+          "name": "updateProject",
+          "description": "Updates / saves a project object in the datastore.\nThis function fires `project-object-changed` event.",
+          "privacy": "public",
+          "sourceRange": {
+            "start": {
+              "line": 65,
+              "column": 2
+            },
+            "end": {
+              "line": 77,
+              "column": 3
+            }
+          },
+          "metadata": {},
+          "params": [
+            {
+              "name": "project",
+              "type": "Object",
+              "description": "A project to save / update"
+            }
+          ],
+          "return": {
+            "type": "Promise",
+            "desc": "Resolved promise to project object with updated `_rev`"
+          }
+        },
+        {
+          "name": "removeProject",
+          "description": "Removed an object from the datastore.\nThis function fires `project-object-deleted` event.",
+          "privacy": "public",
+          "sourceRange": {
+            "start": {
+              "line": 87,
+              "column": 2
+            },
+            "end": {
+              "line": 106,
+              "column": 3
+            }
+          },
+          "metadata": {},
+          "params": [
+            {
+              "name": "id",
+              "type": "String",
+              "description": "The ID of the datastore entry."
+            },
+            {
+              "name": "rev",
+              "type": "?String",
+              "description": "Specific revision to read. Defaults to latest revision."
+            }
+          ],
+          "return": {
+            "type": "Promise",
+            "desc": "Promise resolved to a new `_rev` property of deleted object."
+          }
+        }
+      ],
+      "staticMethods": [],
+      "demos": [],
+      "metadata": {},
+      "sourceRange": {
+        "start": {
+          "line": 20,
+          "column": 0
+        },
+        "end": {
+          "line": 107,
+          "column": 1
+        }
+      },
+      "privacy": "public",
+      "superclass": "ArcBaseModel",
+      "name": "RequestBaseModel"
     }
   ]
 }

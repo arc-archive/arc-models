@@ -8,7 +8,7 @@
  *   project-model.html
  */
 
-/// <reference path="base-model.d.ts" />
+/// <reference path="request-base-model.d.ts" />
 
 declare namespace LogicElements {
 
@@ -31,6 +31,10 @@ declare namespace LogicElements {
    *
    * Events handled by this element are cancelled and propagation of the event is
    * stopped.
+   *
+   * See model description here:
+   * https://github.com/advanced-rest-client/api-components-api/blob/master/docs/
+   * arc-models.md#arcproject
    *
    * Supported operations:
    *
@@ -56,31 +60,6 @@ declare namespace LogicElements {
    * ```javascript
    * var event = new CustomEvent('project-read', {
    *    detail: { id: 'some-id' },
-   *    bubbles: true,
-   *    composed: true,
-   *    cancelable: true
-   * });
-   * document.body.dispatchEvent(event);
-   * if (event.defaultPrevented) {
-   *    event.detail.result.then(project => console.log(project));
-   * }
-   * ```
-   *
-   * #### `project-name-changed` event
-   *
-   * Changes name of a project. Promise result has updated name and `_rev` properties.
-   *
-   * ##### Properties
-   * -   `id` (String, required if `project` is not set) ID of the datastore entry
-   * -   `project` (Object, required if `id` is not set) The database entity
-   * -   `name` (String, required) New name of the project. It doesn't matter if
-   * `project` property already has new name.
-   *
-   * ##### Example
-   *
-   * ```javascript
-   * var event = new CustomEvent('project-name-changed', {
-   *    detail: { id: 'some-id', name: 'new name' },
    *    bubbles: true,
    *    composed: true,
    *    cancelable: true
@@ -160,61 +139,46 @@ declare namespace LogicElements {
    * }
    * ```
    */
-  class ProjectModel extends Polymer.Element {
-    readonly db: PouchDB|null;
-    _attachListeners(node: any): void;
-    _detachListeners(node: any): void;
+  class ProjectModel extends RequestBaseModel {
+    _attachListeners(node: HTMLElement|null): void;
+    _detachListeners(node: HTMLElement|null): void;
+
+    /**
+     * Reads an entry from the datastore.
+     *
+     * @param id The ID of the datastore entry.
+     * @param rev Specific revision to read. Defaults to latest
+     * revision.
+     * @returns Promise resolved to a datastore object.
+     */
+    readProject(id: String|null, rev: String|null): Promise<any>|null;
 
     /**
      * Handler for project read event request.
      */
-    _handleRead(e: any): void;
-
-    /**
-     * Updates / saves the project object in the datastore.
-     * This function fires `project-object-changed` event.
-     *
-     * @param project A project to save / update
-     * @returns Resolved promise to project object with updated `_rev`
-     */
-    update(project: object|null): Promise<any>|null;
-
-    /**
-     * Removed an object from the datastore.
-     * This function fires `project-object-deleted` event.
-     *
-     * @param id The ID of the datastore entry.
-     * @param rev Specific revision to read. Defaults to latest revision.
-     * @returns Promise resolved to a new `_rev` property of deleted object.
-     */
-    remove(id: String|null, rev: String|null): Promise<any>|null;
+    _handleRead(e: CustomEvent|null): void;
 
     /**
      * Lists all project objects.
      *
      * @returns A promise resolved to a list of projects.
      */
-    list(): Promise<any>|null;
+    listProjects(): Promise<any>|null;
 
     /**
-     * Updates name of a project.
+     * Handles object save / update
      */
-    _handleNameChange(e: any): void;
-
-    /**
-     * Handles onject save / update
-     */
-    _handleObjectSave(e: any): void;
+    _handleObjectSave(e: CustomEvent|null): void;
 
     /**
      * Deletes the object from the datastore.
      */
-    _handleObjectDelete(e: any): void;
+    _handleObjectDelete(e: CustomEvent|null): void;
 
     /**
      * Queries for a list of projects.
      */
-    _queryHandler(e: any): void;
+    _queryHandler(e: CustomEvent|null): void;
   }
 }
 
