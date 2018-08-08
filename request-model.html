@@ -1167,7 +1167,7 @@ class RequestModel extends RequestBaseModel {
     delete this._workerPromises[id];
     const keys = Object.keys(results);
     if (!keys.length) {
-      callbacks.resolve(results);
+      callbacks.resolve(keys);
       return;
     }
     const savedKeys = [];
