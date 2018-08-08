@@ -415,7 +415,13 @@ class RequestModel extends RequestBaseModel {
       request._id = this.uuid.generate();
     }
     request.updated = Date.now();
-    return db.put(request)
+    const copy = Object.assign({}, request);
+    Object.keys(copy).forEach((key) => {
+      if (key[0] === '_' && key !== '_id' && key !== '_rev') {
+        delete copy[key];
+      }
+    });
+    return db.put(copy)
     .then((result) => {
       request._rev = result.rev;
       const detail = {
