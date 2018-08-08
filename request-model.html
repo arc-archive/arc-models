@@ -1298,8 +1298,8 @@ class RequestModel extends RequestBaseModel {
       const rows = data.rows || [];
       const result = [];
       for (let i = rows.length - 1; i >= 0; i--) {
-        if (!(ignore && ignore.indexOf(data[i].id) !== -1)) {
-          result[result.length] = data[i].doc;
+        if (!(ignore && ignore.indexOf(rows[i].id) !== -1)) {
+          result[result.length] = rows[i].doc;
         }
       }
       return result;
