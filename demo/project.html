@@ -1,0 +1,232 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, minimum-scale=1, initial-scale=1, user-scalable=yes">
+  <title>api-url-params-editor demo</title>
+  <base href="../">
+  <script src="../webcomponentsjs/webcomponents-loader.js"></script>
+  <link rel="import" href="../shadycss/apply-shim.html">
+  <link rel="import" href="../polymer/lib/elements/custom-style.html">
+  <link rel="import" href="../polymer/lib/elements/dom-bind.html">
+  <link rel="import" href="../iron-demo-helpers/demo-pages-shared-styles.html">
+  <link rel="import" href="../paper-input/paper-input.html">
+  <link rel="import" href="../paper-button/paper-button.html">
+  <link rel="import" href="../paper-checkbox/paper-checkbox.html">
+  <link rel="import" href="../paper-toast/paper-toast.html">
+  <link rel="import" href="../paper-dropdown-menu/paper-dropdown-menu.html">
+  <link rel="import" href="../paper-item/paper-item.html">
+  <link rel="import" href="../paper-listbox/paper-listbox.html">
+  <link rel="import" href="../neon-animation/web-animations.html">
+  <link rel="import" href="../app-pouchdb/pouchdb.html">
+  <link rel="import" href="../paper-styles/shadow.html">
+  <link rel="import" href="../iron-form/iron-form.html">
+  <link rel="import" href="../arc-data-generator/arc-data-generator.html">
+  <link rel="import" href="request-model.html">
+  <link rel="import" href="project-model.html">
+  <script src="../chance/chance.js"></script>
+  <script src="workers/request-db.js"></script>
+  <custom-style>
+    <style is="custom-style" include="demo-pages-shared-styles">
+    :root {
+      --arc-font-body1: {
+        @apply --paper-font-body1;
+      }
+    }
+
+    h1 {
+      @apply --paper-font-headline;
+    }
+
+    h2 {
+      @apply --paper-font-title;
+    }
+
+    .card {
+      @apply --shadow-elevation-3dp;
+      margin-top: 12px;
+      margin-bottom: 12px;
+      background-color: #fff;
+      padding: 12px;
+    }
+
+    .form-item {
+      @apply --layout-horizontal;
+      @apply --layout-center;
+    }
+
+    .form-item paper-input {
+      @apply --layout-flex;
+    }
+    </style>
+  </custom-style>
+</head>
+<body>
+  <header>
+    <h1>Query model demo<h1>
+  </header>
+  <dom-bind id="demo">
+    <template is="dom-bind">
+      <request-model id="rModel" on-request-indexing-finished="_indexFinished"></request-model>
+      <project-model id="pModel"></project-model>
+      <section class="card centered options">
+        <h2>Data options</h2>
+        <paper-button on-click="genData">Generate data</paper-button>
+        <paper-button on-click="deleteData">Destroy data</paper-button>
+      </section>
+
+      <section class="card centered options">
+        <h2>Select project</h2>
+        <paper-dropdown-menu label="Project name">
+          <paper-listbox slot="dropdown-content" selected="{{project}}">
+            <template is="dom-repeat" items="[[projects]]" index-as="index">
+              <paper-item>[[item.name]]</paper-item>
+            </template>
+          </paper-listbox>
+        </paper-dropdown-menu>
+        <paper-button on-click="getData">Get requests in project</paper-button>
+      </section>
+
+      <template is="dom-if" if="[[hasResults]]">
+        <section class="centered card" role="main">
+          <h2>Search Results ([[results.length]])</h2>
+          <template is="dom-repeat" items="[[results]]">
+            <p>[[index]]: [[item._id]], [[item.type]]</p>
+          </template>
+        </section>
+      </template>
+
+    </template>
+  </dom-bind>
+  <paper-toast text="Data is indexed" id="indexOk"></paper-toast>
+  <paper-toast text="Datastore cleared" id="deleteOk"></paper-toast>
+  <script>
+  (function(scope) {
+    /* global RequestDb */
+    scope.keys = [{'id': ''}];
+    scope.requestType = 0;
+    scope.hasResults = false;
+
+    scope.init = function() {
+      scope.refreshProjects();
+    };
+
+    scope.addKey = function() {
+      scope.push('keys', {'id': ''});
+    };
+
+    scope.removeKey = function(e) {
+      const index = e.model.get('index');
+      scope.splice('keys', index, 1);
+    };
+
+    scope.genData = function() {
+      /* global DataGenerator */
+      const data = DataGenerator.generateSavedRequestData({
+        projectsSize: 25,
+        requestsSize: 500
+      });
+      performance.mark('inserts-start');
+      const rModel = document.getElementById('rModel');
+      const pModel = document.getElementById('pModel');
+      pModel.updateBulk(data.projects)
+      .then(() => rModel.updateBulk('saved', data.requests))
+      .then(() => {
+        data.requests.forEach((request) => {
+          rModel._indexRequest(request);
+        });
+      });
+    };
+
+    scope._dumpMeasurements = function() {
+      const ms = performance.getEntriesByType('measure');
+      console.table(ms.map((item) => {
+        return {
+          name: item.name,
+          duration: item.duration
+        };
+      }));
+      performance.clearMeasures();
+    };
+
+    scope._indexFinished = function() {
+      performance.mark('inserts-end');
+      performance.measure('inserts-end', 'inserts-start');
+      console.log('Indexing finished');
+      scope._dumpMeasurements();
+      document.getElementById('indexOk').opened = true;
+    };
+
+    scope.deleteData = function() {
+      const indexer = new RequestDb();
+      return indexer.openSearchStore()
+      .then((db) => {
+        return new Promise((resolve, reject) => {
+          const tx = db.transaction('urls', 'readwrite');
+          const store = tx.objectStore('urls');
+          const results = [];
+          tx.onerror = () => {
+            reject(results);
+          };
+          tx.oncomplete = () => {
+            resolve(results);
+          };
+          store.clear();
+        });
+      })
+      .then(() => DataGenerator.destroySavedRequestData())
+      .then(() => {
+        document.getElementById('deleteOk').opened = true;
+      });
+    };
+
+    scope.refreshProjects = function() {
+      const e = new CustomEvent('project-model-query', {
+        cancelable: true,
+        bubbles: true,
+        detail: {}
+      });
+      performance.mark('projects-query');
+      document.body.dispatchEvent(e);
+      e.detail.result
+      .then((data) => {
+        performance.mark('projects-query-end');
+        performance.measure('projects-query-end', 'projects-query');
+        scope._dumpMeasurements();
+        console.log('Query result', data);
+        scope.projects = data;
+      });
+    };
+
+    scope.getData = function() {
+      scope.hasResults = false;
+      const project = scope.projects[scope.project];
+      if (!project) {
+        return;
+      }
+      const detail = {
+        id: project._id
+      };
+      const e = new CustomEvent('request-project-list', {
+        cancelable: true,
+        bubbles: true,
+        detail
+      });
+      performance.mark('requests-list');
+      document.body.dispatchEvent(e);
+      e.detail.result
+      .then((data) => {
+        performance.mark('requests-list-end');
+        performance.measure('requests-list-end', 'requests-list');
+        scope._dumpMeasurements();
+        console.log('Query result', data);
+        scope.results = data;
+        scope.hasResults = true;
+      });
+    };
+    window.addEventListener('WebComponentsReady', scope.init);
+  })(document.getElementById('demo'));
+  </script>
+</body>
+</html>

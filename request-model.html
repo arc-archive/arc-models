@@ -168,6 +168,7 @@ class RequestModel extends RequestBaseModel {
     this._onIndexWorkerData = this._onIndexWorkerData.bind(this);
     this._onIndexWorkerError = this._onIndexWorkerError.bind(this);
     this._handleQuery = this._handleQuery.bind(this);
+    this._listProjectRequestsHandler = this._listProjectRequestsHandler.bind(this);
     /* global PayloadProcessor */
     this._payloadProcessor = new PayloadProcessor();
   }
@@ -183,6 +184,7 @@ class RequestModel extends RequestBaseModel {
     node.addEventListener('request-objects-deleted', this._handleObjectsDelete);
     node.addEventListener('request-objects-undeleted', this._handleUndelete);
     node.addEventListener('request-query', this._handleQuery);
+    node.addEventListener('request-project-list', this._listProjectRequestsHandler);
   }
   /**
    * Removes event listeners.
@@ -198,6 +200,7 @@ class RequestModel extends RequestBaseModel {
       this._handleObjectsDelete);
     node.removeEventListener('request-objects-undeleted', this._handleUndelete);
     node.removeEventListener('request-query', this._handleQuery);
+    node.removeEventListener('request-project-list', this._listProjectRequestsHandler);
     this._unregisterWorker();
   }
   /**
@@ -1364,6 +1367,75 @@ class RequestModel extends RequestBaseModel {
       fields: ['title', 'text'],
       build: true
     });
+  }
+  /**
+   * Handler for `request-project-list` event to query for list of requests in
+   * a project.
+   * @param {CustomEvent} e
+   */
+  _listProjectRequestsHandler(e) {
+    if (!e.cancelable) {
+      return;
+    }
+    e.preventDefault();
+    e.stopPropagation();
+
+    if (!e.detail.id) {
+      e.detail.result = new Promise.reject(new Error('Project id not set.'));
+      return;
+    }
+    e.detail.result = this.readProjectRequests(e.detail.id, e.detail.opts);
+  }
+  /**
+   * Reads list of requests associated with a project
+   * @param {String} id Project id
+   * @param {Object} opts Additional options. Currently only `restorePayload`
+   * is supported
+   * @return {Promise}
+   */
+  readProjectRequests(id, opts) {
+    return this.readProject(id)
+    .then((project) => {
+      if (project.requests) {
+        return this.readBulk('saved', project.requests, opts);
+      }
+      return this.readProjectRequestsLegacy(id, opts);
+    });
+  }
+  /**
+   * Reads requests data related to the project from a legacy system.
+   * @param {String} id Project id
+   * @return {Promise}
+   */
+  readProjectRequestsLegacy(id) {
+    const db = this.getDatabase('saved');
+    return db.allDocs()
+    .then((response) => {
+      return response.rows.filter((item) => item.id.indexOf(id) !== -1);
+    })
+    .then((response) => Promise.all(response.map((item) => db.get(item.id))));
+  }
+  /**
+   * Sorts requests list by `projectOrder` property
+   *
+   * @param {Object} a
+   * @param {Object} b
+   * @return {Number}
+   */
+  sortRequestProjectOrder(a, b) {
+    if (a.projectOrder > b.projectOrder) {
+      return 1;
+    }
+    if (a.projectOrder < b.projectOrder) {
+      return -1;
+    }
+    if (a.name > b.name) {
+      return 1;
+    }
+    if (a.name < b.name) {
+      return -1;
+    }
+    return 0;
   }
   /**
    * Fired when the request should be expored to Google Drive.

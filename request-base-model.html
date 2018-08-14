@@ -57,6 +57,21 @@ class RequestBaseModel extends ArcBaseModel {
     }
   }
   /**
+   * Reads an entry from the datastore.
+   *
+   * @param {String} id The ID of the datastore entry.
+   * @param {?String} rev Specific revision to read. Defaults to latest
+   * revision.
+   * @return {Promise} Promise resolved to a datastore object.
+   */
+  readProject(id, rev) {
+    const opts = {};
+    if (rev) {
+      opts.rev = rev;
+    }
+    return this.projectDb.get(id, opts);
+  }
+  /**
    * Updates / saves a project object in the datastore.
    * This function fires `project-object-changed` event.
    *

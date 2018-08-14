@@ -184,22 +184,6 @@ class ProjectModel extends RequestBaseModel {
   }
 
   /**
-   * Reads an entry from the datastore.
-   *
-   * @param {String} id The ID of the datastore entry.
-   * @param {?String} rev Specific revision to read. Defaults to latest
-   * revision.
-   * @return {Promise} Promise resolved to a datastore object.
-   */
-  readProject(id, rev) {
-    const opts = {};
-    if (rev) {
-      opts.rev = rev;
-    }
-    return this.projectDb.get(id, opts);
-  }
-
-  /**
    * Handler for project read event request.
    * @param {CustomEvent} e
    */
@@ -217,6 +201,44 @@ class ProjectModel extends RequestBaseModel {
     }
     e.detail.result = this.readProject(e.detail.id, e.detail.rev)
     .catch((e) => this._handleException(e));
+  }
+  /**
+   * Updates more than one project in a bulk request.
+   * @param {Array<Object>} projects List of requests to update.
+   * @return {Array} List of PouchDB responses to each insert
+   */
+  updateBulk(projects) {
+    projects.forEach((item) => {
+      item.updated = Date.now();
+      if (!item.created) {
+        item.created = item.updated;
+      }
+      if (!item.order) {
+        item.order = 0;
+      }
+    });
+    return this.projectDb.bulkDocs(projects)
+    .then((response) => {
+      const result = [];
+      for (let i = 0, len = response.length; i < len; i++) {
+        const r = response[i];
+        const project = projects[i];
+        if (r.error) {
+          this._handleException(r, true);
+          result.push(Object.assign({error: true}, project));
+          continue;
+        }
+        const oldRev = project._rev;
+        project._rev = r.rev;
+        const detail = {
+          project,
+          oldRev: oldRev
+        };
+        this._fireUpdated('project-object-changed', detail);
+        result.push(project);
+      }
+      return result;
+    });
   }
   /**
    * Lists all project objects.
