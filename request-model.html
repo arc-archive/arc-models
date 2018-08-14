@@ -170,7 +170,6 @@ class RequestModel extends RequestBaseModel {
     this._handleQuery = this._handleQuery.bind(this);
     this._listProjectRequestsHandler = this._listProjectRequestsHandler.bind(this);
     /* global PayloadProcessor */
-    this._payloadProcessor = new PayloadProcessor();
   }
   /**
    * Adds event listeners.
@@ -311,7 +310,7 @@ class RequestModel extends RequestBaseModel {
     if (!request._id) {
       request._id = this.uuid.generate();
     }
-    this._payloadProcessor.payloadToString(request)
+    PayloadProcessor.payloadToString(request)
     .then((result) => {
       request = result;
       return this._saveGoogleDrive(request, opts);
@@ -405,7 +404,7 @@ class RequestModel extends RequestBaseModel {
     return db.get(id, conf)
     .then((request) => {
       if (opts && opts.restorePayload) {
-        request = this._payloadProcessor.restorePayload(request);
+        request = PayloadProcessor.restorePayload(request);
       }
       return request;
     });
@@ -432,7 +431,7 @@ class RequestModel extends RequestBaseModel {
           return;
         }
         if (opts && opts.restorePayload) {
-          this._payloadProcessor.restorePayload(request);
+          PayloadProcessor.restorePayload(request);
         }
         requests[requests.length] = request;
       });
