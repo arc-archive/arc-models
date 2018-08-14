@@ -12,7 +12,7 @@ the License.
 -->
 <link rel="import" href="request-base-model.html">
 <link rel="import" href="../app-pouchdb-quick-search/pouchdb-quick-search.html">
-
+<link rel="import" href="../arc-electron-payload-processor/payload-processor.html">
 <script>
 /**
  * Event based access to saved and history request datastore.
@@ -168,6 +168,8 @@ class RequestModel extends RequestBaseModel {
     this._onIndexWorkerData = this._onIndexWorkerData.bind(this);
     this._onIndexWorkerError = this._onIndexWorkerError.bind(this);
     this._handleQuery = this._handleQuery.bind(this);
+    /* global PayloadProcessor */
+    this._payloadProcessor = new PayloadProcessor();
   }
   /**
    * Adds event listeners.
@@ -306,7 +308,7 @@ class RequestModel extends RequestBaseModel {
     if (!request._id) {
       request._id = this.uuid.generate();
     }
-    return this._preparePayload(request)
+    this._payloadProcessor.payloadToString(request)
     .then((result) => {
       request = result;
       return this._saveGoogleDrive(request, opts);
@@ -387,15 +389,52 @@ class RequestModel extends RequestBaseModel {
    * @param {String} id The ID of the datastore entry.
    * @param {?String} rev Specific revision to read. Defaults to
    * latest revision.
+   * @param {?Object} opts Additional options. Currently only `restorePayload`
+   * is supported
    * @return {Promise} Promise resolved to a project object.
    */
-  read(type, id, rev) {
-    const opts = {};
+  read(type, id, rev, opts) {
+    const conf = {};
     if (rev) {
-      opts.rev = rev;
+      conf.rev = rev;
     }
     const db = this.getDatabase(type);
-    return db.get(id, opts);
+    return db.get(id, conf)
+    .then((request) => {
+      if (opts && opts.restorePayload) {
+        request = this._payloadProcessor.restorePayload(request);
+      }
+      return request;
+    });
+  }
+  /**
+   * The same as `read()` but for a list of requests.
+   * @param {String} type Requests type to restore.
+   * @param {Array<String>} keys Request ids
+   * @param {?Object} opts Additional options. Currently only `restorePayload`
+   * is supported
+   * @return {Promise}
+   */
+  readBulk(type, keys, opts) {
+    const db = this.getDatabase(type);
+    return db.allDocs({
+      include_docs: true,
+      keys
+    })
+    .then((response) => {
+      const requests = [];
+      response.rows.forEach((item) => {
+        const request = item.doc;
+        if (!request) {
+          return;
+        }
+        if (opts && opts.restorePayload) {
+          this._payloadProcessor.restorePayload(request);
+        }
+        requests[requests.length] = request;
+      });
+      return requests;
+    });
   }
   /**
    * Updates / saves the request object in the datastore.
@@ -610,7 +649,9 @@ class RequestModel extends RequestBaseModel {
     e.preventDefault();
     e.stopPropagation();
 
-    if (!e.detail.id) {
+    const {type, id, opts} = e.detail;
+
+    if (!id) {
       e.detail.result = Promise.reject(
         new Error('Request "id" property is missing.'));
       return;
@@ -620,7 +661,13 @@ class RequestModel extends RequestBaseModel {
         new Error('Request "type" property is missing.'));
       return;
     }
-    e.detail.result = this.read(e.detail.type, e.detail.id, e.detail.rev)
+    let p;
+    if (id instanceof Array) {
+      p = this.readBulk(type, id, opts);
+    } else {
+      p = this.read(type, id, e.detail.rev, opts);
+    }
+    e.detail.result = p
     .catch((e) => this._handleException(e));
   }
   /**

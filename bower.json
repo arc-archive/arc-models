@@ -23,7 +23,8 @@
     "polymer": "Polymer/polymer#^2.0.0",
     "events-target-behavior": "advanced-rest-client/events-target-behavior#^2.0.0",
     "app-pouchdb-quick-search": "advanced-rest-client/app-pouchdb-quick-search#^2.0.0",
-    "uuid-generator": "advanced-rest-client/uuid-generator#^2.0.0"
+    "uuid-generator": "advanced-rest-client/uuid-generator#^2.0.0",
+    "arc-electron-payload-processor": "advanced-rest-client/arc-electron-payload-processor#^0.1.1"
   },
   "devDependencies": {
     "iron-component-page": "PolymerElements/iron-component-page#^3.0.1",
@@ -40,7 +41,8 @@
     "paper-listbox": "PolymerElements/paper-listbox#^2.0.0",
     "paper-item": "PolymerElements/paper-item#^2.0.0",
     "paper-dropdown-menu": "PolymerElements/paper-dropdown-menu#^2.0.0",
-    "web-animations-js": "web-animations/web-animations-js#^2.3"
+    "web-animations-js": "web-animations/web-animations-js#^2.3",
+    "iron-form": "PolymerElements/iron-form#^2.4.0"
   },
   "ignore": [
     "**/.*",
