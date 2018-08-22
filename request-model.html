@@ -1288,7 +1288,11 @@ class RequestModel extends RequestBaseModel {
     .then((response) => {
       return response.rows.filter((item) => item.id.indexOf(id) !== -1);
     })
-    .then((response) => Promise.all(response.map((item) => db.get(item.id))));
+    .then((response) => Promise.all(response.map((item) => db.get(item.id))))
+    .then((requests) => {
+      requests.sort(this.sortRequestProjectOrder);
+      return requests;
+    });
   }
   /**
    * Sorts requests list by `projectOrder` property
