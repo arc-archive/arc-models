@@ -13,6 +13,7 @@ the License.
 <link rel="import" href="request-base-model.html">
 <link rel="import" href="../app-pouchdb-quick-search/pouchdb-quick-search.html">
 <link rel="import" href="../arc-electron-payload-processor/payload-processor.html">
+<dom-module id="request-model">
 <script>
 /**
  * Event based access to saved and history request datastore.
@@ -1496,4 +1497,5 @@ class RequestModel extends RequestBaseModel {
    */
 }
 window.customElements.define(RequestModel.is, RequestModel);
+</dom-module>
 </script>
