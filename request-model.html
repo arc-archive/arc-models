@@ -495,6 +495,9 @@ class RequestModel extends RequestBaseModel {
         const request = requests[i];
         const oldRev = request._rev;
         request._rev = r.rev;
+        if (!request._id) {
+          request._id = r.id;
+        }
         const detail = {
           request,
           oldRev: oldRev,
