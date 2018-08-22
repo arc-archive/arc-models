@@ -392,12 +392,14 @@ class RequestModel extends RequestBaseModel {
    * @param {String} id The ID of the datastore entry.
    * @param {?String} rev Specific revision to read. Defaults to
    * latest revision.
+   * @param {?Object} opts Additional options. Currently only `restorePayload`
+   * is supported
    * @return {Promise} Promise resolved to a project object.
    */
-  read(type, id, rev) {
-    const opts = {};
+  read(type, id, rev, opts) {
+    const conf = {};
     if (rev) {
-      opts.rev = rev;
+      conf.rev = rev;
     }
     const db = this.getDatabase(type);
     return db.get(id, conf)
@@ -650,17 +652,24 @@ class RequestModel extends RequestBaseModel {
     e.preventDefault();
     e.stopPropagation();
 
-    if (!e.detail.id) {
+    const {type, id, opts} = e.detail;
+    if (!id) {
       e.detail.result = Promise.reject(
         new Error('Request "id" property is missing.'));
       return;
     }
-    if (!e.detail.type) {
+    if (!type) {
       e.detail.result = Promise.reject(
         new Error('Request "type" property is missing.'));
       return;
     }
-    e.detail.result = this.read(e.detail.type, e.detail.id, e.detail.rev)
+    let p;
+    if (id instanceof Array) {
+      p = this.readBulk(type, id, opts);
+    } else {
+      p = this.read(type, id, e.detail.rev, opts);
+    }
+    e.detail.result = p
     .catch((e) => this._handleException(e));
   }
   /**
@@ -839,7 +848,6 @@ class RequestModel extends RequestBaseModel {
     const result = docs.find((item) => item._id === id);
     return result ? result._rev : undefined;
   }
-
   /**
    * Saves the request on Google Drive.
    * It sends `drive-request-save` event to call a component responsible
@@ -1364,6 +1372,5 @@ class RequestModel extends RequestBaseModel {
    */
 }
 window.customElements.define(RequestModel.is, RequestModel);
-</dom-module>
 </script>
 </dom-module>
