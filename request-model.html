@@ -392,14 +392,12 @@ class RequestModel extends RequestBaseModel {
    * @param {String} id The ID of the datastore entry.
    * @param {?String} rev Specific revision to read. Defaults to
    * latest revision.
-   * @param {?Object} opts Additional options. Currently only `restorePayload`
-   * is supported
    * @return {Promise} Promise resolved to a project object.
    */
-  read(type, id, rev, opts) {
-    const conf = {};
+  read(type, id, rev) {
+    const opts = {};
     if (rev) {
-      conf.rev = rev;
+      opts.rev = rev;
     }
     const db = this.getDatabase(type);
     return db.get(id, conf)
@@ -652,9 +650,7 @@ class RequestModel extends RequestBaseModel {
     e.preventDefault();
     e.stopPropagation();
 
-    const {type, id, opts} = e.detail;
-
-    if (!id) {
+    if (!e.detail.id) {
       e.detail.result = Promise.reject(
         new Error('Request "id" property is missing.'));
       return;
@@ -664,13 +660,7 @@ class RequestModel extends RequestBaseModel {
         new Error('Request "type" property is missing.'));
       return;
     }
-    let p;
-    if (id instanceof Array) {
-      p = this.readBulk(type, id, opts);
-    } else {
-      p = this.read(type, id, e.detail.rev, opts);
-    }
-    e.detail.result = p
+    e.detail.result = this.read(e.detail.type, e.detail.id, e.detail.rev)
     .catch((e) => this._handleException(e));
   }
   /**
@@ -1499,3 +1489,4 @@ class RequestModel extends RequestBaseModel {
 window.customElements.define(RequestModel.is, RequestModel);
 </dom-module>
 </script>
+</dom-module>
