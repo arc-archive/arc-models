@@ -12,7 +12,7 @@ the License.
 -->
 <link rel="import" href="request-base-model.html">
 <link rel="import" href="../app-pouchdb-quick-search/pouchdb-quick-search.html">
-<link rel="import" href="../arc-electron-payload-processor/payload-processor.html">
+<dom-module id="request-model">
 <script>
 /**
  * Event based access to saved and history request datastore.
@@ -168,8 +168,6 @@ class RequestModel extends RequestBaseModel {
     this._onIndexWorkerData = this._onIndexWorkerData.bind(this);
     this._onIndexWorkerError = this._onIndexWorkerError.bind(this);
     this._handleQuery = this._handleQuery.bind(this);
-    this._listProjectRequestsHandler = this._listProjectRequestsHandler.bind(this);
-    /* global PayloadProcessor */
   }
   /**
    * Adds event listeners.
@@ -183,7 +181,6 @@ class RequestModel extends RequestBaseModel {
     node.addEventListener('request-objects-deleted', this._handleObjectsDelete);
     node.addEventListener('request-objects-undeleted', this._handleUndelete);
     node.addEventListener('request-query', this._handleQuery);
-    node.addEventListener('request-project-list', this._listProjectRequestsHandler);
   }
   /**
    * Removes event listeners.
@@ -199,7 +196,6 @@ class RequestModel extends RequestBaseModel {
       this._handleObjectsDelete);
     node.removeEventListener('request-objects-undeleted', this._handleUndelete);
     node.removeEventListener('request-query', this._handleQuery);
-    node.removeEventListener('request-project-list', this._listProjectRequestsHandler);
     this._unregisterWorker();
   }
   /**
@@ -310,7 +306,7 @@ class RequestModel extends RequestBaseModel {
     if (!request._id) {
       request._id = this.uuid.generate();
     }
-    PayloadProcessor.payloadToString(request)
+    return this._preparePayload(request)
     .then((result) => {
       request = result;
       return this._saveGoogleDrive(request, opts);
@@ -391,52 +387,15 @@ class RequestModel extends RequestBaseModel {
    * @param {String} id The ID of the datastore entry.
    * @param {?String} rev Specific revision to read. Defaults to
    * latest revision.
-   * @param {?Object} opts Additional options. Currently only `restorePayload`
-   * is supported
    * @return {Promise} Promise resolved to a project object.
    */
-  read(type, id, rev, opts) {
-    const conf = {};
+  read(type, id, rev) {
+    const opts = {};
     if (rev) {
-      conf.rev = rev;
+      opts.rev = rev;
     }
     const db = this.getDatabase(type);
-    return db.get(id, conf)
-    .then((request) => {
-      if (opts && opts.restorePayload) {
-        request = PayloadProcessor.restorePayload(request);
-      }
-      return request;
-    });
-  }
-  /**
-   * The same as `read()` but for a list of requests.
-   * @param {String} type Requests type to restore.
-   * @param {Array<String>} keys Request ids
-   * @param {?Object} opts Additional options. Currently only `restorePayload`
-   * is supported
-   * @return {Promise}
-   */
-  readBulk(type, keys, opts) {
-    const db = this.getDatabase(type);
-    return db.allDocs({
-      include_docs: true,
-      keys
-    })
-    .then((response) => {
-      const requests = [];
-      response.rows.forEach((item) => {
-        const request = item.doc;
-        if (!request) {
-          return;
-        }
-        if (opts && opts.restorePayload) {
-          PayloadProcessor.restorePayload(request);
-        }
-        requests[requests.length] = request;
-      });
-      return requests;
-    });
+    return db.get(id, opts);
   }
   /**
    * Updates / saves the request object in the datastore.
@@ -651,9 +610,7 @@ class RequestModel extends RequestBaseModel {
     e.preventDefault();
     e.stopPropagation();
 
-    const {type, id, opts} = e.detail;
-
-    if (!id) {
+    if (!e.detail.id) {
       e.detail.result = Promise.reject(
         new Error('Request "id" property is missing.'));
       return;
@@ -663,13 +620,7 @@ class RequestModel extends RequestBaseModel {
         new Error('Request "type" property is missing.'));
       return;
     }
-    let p;
-    if (id instanceof Array) {
-      p = this.readBulk(type, id, opts);
-    } else {
-      p = this.read(type, id, e.detail.rev, opts);
-    }
-    e.detail.result = p
+    e.detail.result = this.read(e.detail.type, e.detail.id, e.detail.rev)
     .catch((e) => this._handleException(e));
   }
   /**
@@ -1368,75 +1319,6 @@ class RequestModel extends RequestBaseModel {
     });
   }
   /**
-   * Handler for `request-project-list` event to query for list of requests in
-   * a project.
-   * @param {CustomEvent} e
-   */
-  _listProjectRequestsHandler(e) {
-    if (!e.cancelable) {
-      return;
-    }
-    e.preventDefault();
-    e.stopPropagation();
-
-    if (!e.detail.id) {
-      e.detail.result = new Promise.reject(new Error('Project id not set.'));
-      return;
-    }
-    e.detail.result = this.readProjectRequests(e.detail.id, e.detail.opts);
-  }
-  /**
-   * Reads list of requests associated with a project
-   * @param {String} id Project id
-   * @param {Object} opts Additional options. Currently only `restorePayload`
-   * is supported
-   * @return {Promise}
-   */
-  readProjectRequests(id, opts) {
-    return this.readProject(id)
-    .then((project) => {
-      if (project.requests) {
-        return this.readBulk('saved', project.requests, opts);
-      }
-      return this.readProjectRequestsLegacy(id, opts);
-    });
-  }
-  /**
-   * Reads requests data related to the project from a legacy system.
-   * @param {String} id Project id
-   * @return {Promise}
-   */
-  readProjectRequestsLegacy(id) {
-    const db = this.getDatabase('saved');
-    return db.allDocs()
-    .then((response) => {
-      return response.rows.filter((item) => item.id.indexOf(id) !== -1);
-    })
-    .then((response) => Promise.all(response.map((item) => db.get(item.id))));
-  }
-  /**
-   * Sorts requests list by `projectOrder` property
-   *
-   * @param {Object} a
-   * @param {Object} b
-   * @return {Number}
-   */
-  sortRequestProjectOrder(a, b) {
-    if (a.projectOrder > b.projectOrder) {
-      return 1;
-    }
-    if (a.projectOrder < b.projectOrder) {
-      return -1;
-    }
-    if (a.name > b.name) {
-      return 1;
-    }
-    if (a.name < b.name) {
-      return -1;
-    }
-    return 0;
-  }
-  /**
    * Fired when the request should be expored to Google Drive.
    * This element doesn't support this operation but this way it queries for
    * an element that can export data to Google Drive.
@@ -1497,3 +1379,4 @@ class RequestModel extends RequestBaseModel {
 }
 window.customElements.define(RequestModel.is, RequestModel);
 </script>
+</dom-module>
