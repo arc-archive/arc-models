@@ -311,7 +311,7 @@ class RequestModel extends RequestBaseModel {
     if (!request._id) {
       request._id = this.uuid.generate();
     }
-    PayloadProcessor.payloadToString(request)
+    return PayloadProcessor.payloadToString(request)
     .then((result) => {
       request = result;
       return this._saveGoogleDrive(request, opts);
