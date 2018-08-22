@@ -149,7 +149,7 @@ class RequestIndexer extends RequestDb {
       const store = tx.objectStore('urls');
       const results = [];
       tx.onerror = () => {
-        console.log('Transaction error');
+        console.warn('Transaction error');
         resolve(results);
       };
 
@@ -432,7 +432,7 @@ class RequestIndexer extends RequestDb {
       const store = tx.objectStore('urls');
       const results = {};
       tx.onerror = () => {
-        console.log('Transaction error');
+        console.warn('Transaction error');
         resolve(results);
       };
       tx.oncomplete = () => {
@@ -486,7 +486,7 @@ class RequestIndexer extends RequestDb {
       const store = tx.objectStore('urls');
       const results = {};
       tx.onerror = () => {
-        console.log('Transaction error');
+        console.warn('Transaction error');
         resolve(results);
       };
 
