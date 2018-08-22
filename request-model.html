@@ -970,7 +970,7 @@ class RequestModel extends RequestBaseModel {
     if (this._indexWorker) {
       return this._indexWorker;
     }
-    const worker = new Worker(this.resolveUrl('../arc-models/workers/request-indexer.js'));
+    const worker = new Worker(this.resolveUrl('workers/request-indexer.js'));
     worker.addEventListener('message', this._onIndexWorkerData);
     worker.addEventListener('error', this._onIndexWorkerError);
     this._indexWorker = worker;
