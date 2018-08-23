@@ -29,18 +29,24 @@ class HostRulesModel extends ArcBaseModel {
     this._updatedHandler = this._updatedHandler.bind(this);
     this._deletedHandler = this._deletedHandler.bind(this);
     this._listHandler = this._listHandler.bind(this);
+    this._clearHandler = this._clearHandler.bind(this);
+    this._insertHandler = this._insertHandler.bind(this);
   }
 
   _attachListeners(node) {
+    node.addEventListener('host-rules-insert', this._insertHandler);
     node.addEventListener('host-rules-changed', this._updatedHandler);
     node.addEventListener('host-rules-deleted', this._deletedHandler);
     node.addEventListener('host-rules-list', this._listHandler);
+    node.addEventListener('host-rules-clear', this._clearHandler);
   }
 
   _detachListeners(node) {
+    node.removeEventListener('host-rules-insert', this._insertHandler);
     node.removeEventListener('host-rules-changed', this._updatedHandler);
     node.removeEventListener('host-rules-deleted', this._deletedHandler);
     node.removeEventListener('host-rules-list', this._listHandler);
+    node.removeEventListener('host-rules-clear', this._clearHandler);
   }
   // A handler to host rules database
   get db() {
@@ -67,6 +73,41 @@ class HostRulesModel extends ArcBaseModel {
       return rule;
     });
   }
+  /**
+   * Updates / saves the host rule object in the datastore.
+   * This function fires `host-rules-changed` event.
+   *
+   * @param {Array<Object>} rules List of rules to save / update
+   * @return {Promise} Resolved promise to the result of Pouch DB operation
+   */
+  updateBulk(rules) {
+    rules.forEach((item) => {
+      item.updated = Date.now();
+    });
+    return this.db.bulkDocs(rules)
+    .then((response) => {
+      for (let i = 0, len = response.length; i < len; i++) {
+        const r = response[i];
+        if (r.error) {
+          this._handleException(r, true);
+          continue;
+        }
+        const rule = rules[i];
+        const oldRev = rule._rev;
+        rule._rev = r.rev;
+        if (!rule._id) {
+          rule._id = r.id;
+        }
+        const detail = {
+          rule,
+          oldRev: oldRev
+        };
+        this._fireUpdated('host-rules-changed', detail);
+      }
+      return response;
+    });
+  }
+
   /**
    * Removed an object from the datastore.
    * This function fires `host-rules-deleted` event.
@@ -114,6 +155,26 @@ class HostRulesModel extends ArcBaseModel {
       }
       return data;
     });
+  }
+  /**
+   * Handler for `host-rules-insert` custom event. Creates rules in bulk.
+   * It sets `result` property on event detail object with a result of calling
+   * `updateBulk()` function.
+   *
+   * @param {CustomEvent} e
+   */
+  _insertHandler(e) {
+    if (!e.cancelable) {
+      return;
+    }
+    e.preventDefault();
+    e.stopPropagation();
+    const rules = e.detail.rules;
+    if (!rules) {
+      e.detail.result = Promise.reject(new Error('The "rules" property is missing'));
+      return;
+    }
+    e.detail.result = this.updateBulk(rules);
   }
 
   _updatedHandler(e) {
@@ -174,6 +235,18 @@ class HostRulesModel extends ArcBaseModel {
     e.stopPropagation();
     e.detail.result = this.list()
     .catch((e) => this._handleException(e));
+  }
+
+  _clearHandler(e) {
+    if (!e.cancelable || e.composedPath()[0] === this) {
+      return;
+    }
+    e.preventDefault();
+    e.stopPropagation();
+    e.detail.result = this.db.destroy()
+    .then(() => {
+      this._fireUpdated('host-rules-clear');
+    });
   }
 }
 window.customElements.define(HostRulesModel.is, HostRulesModel);

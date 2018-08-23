@@ -19,9 +19,8 @@
     </test-fixture>
 
     <script>
-    /* global DatabaseHelper, fixture, assert, sinon */
+    /* global DatabaseHelper */
     suite('Static methods', function() {
-
       suite('update()', function() {
         teardown(function() {
           return DatabaseHelper.clearHostRules();
@@ -235,6 +234,46 @@
           .then((result) => {
             assert.typeOf(result, 'array');
             assert.lengthOf(result, 1);
+          });
+        });
+      });
+
+      suite('updateBulk()', function() {
+        teardown(function() {
+          return DatabaseHelper.clearHostRules();
+        });
+
+        let element;
+        let data;
+        setup(function() {
+          element = fixture('basic');
+          data = [{
+            from: 'https://from',
+            to: 'http://to',
+            enabled: true,
+            comment: 'test'
+          }, {
+            from: 'https://from',
+            to: 'http://to',
+            enabled: true,
+            comment: 'test'
+          }];
+        });
+
+        test('Inserts data to the store', function() {
+          return element.updateBulk(data)
+          .then(() => element.list())
+          .then((result) => {
+            assert.lengthOf(result, 2);
+          });
+        });
+
+        test('Results with insert resut data', function() {
+          return element.updateBulk(data)
+          .then((response) => {
+            assert.typeOf(response, 'array');
+            assert.lengthOf(response, 2);
+            assert.isTrue(response[0].ok);
           });
         });
       });
