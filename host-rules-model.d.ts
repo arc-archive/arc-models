@@ -14,6 +14,18 @@ declare namespace LogicElements {
 
   /**
    * Model for host rules.
+   *
+   * Available events:
+   *
+   * - `host-rules-insert` Bulk add hosts
+   * - `host-rules-changed` Change / add record
+   * - `host-rules-deleted` Remove record
+   * - `host-rules-list` Lists all rules
+   * - `host-rules-clear` Clears hosts datastore
+   *
+   * Each event must be cancelable or it will be ignored.
+   * The insert, change and delete events dispatches non cancelable update/delete
+   * events. Application should listen for this events to update it's state.
    */
   class HostRulesModel extends Polymer.Element {
 
@@ -34,6 +46,15 @@ declare namespace LogicElements {
     update(rule: object|null): Promise<any>|null;
 
     /**
+     * Updates / saves the host rule object in the datastore.
+     * This function fires `host-rules-changed` event.
+     *
+     * @param rules List of rules to save / update
+     * @returns Resolved promise to the result of Pouch DB operation
+     */
+    updateBulk(rules: Array<object|null>|null): Promise<any>|null;
+
+    /**
      * Removed an object from the datastore.
      * This function fires `host-rules-deleted` event.
      *
@@ -49,9 +70,17 @@ declare namespace LogicElements {
      * @returns Promise resolved to list of the host rules
      */
     list(): Promise<any>|null;
+
+    /**
+     * Handler for `host-rules-insert` custom event. Creates rules in bulk.
+     * It sets `result` property on event detail object with a result of calling
+     * `updateBulk()` function.
+     */
+    _insertHandler(e: CustomEvent|null): void;
     _updatedHandler(e: any): void;
     _deletedHandler(e: any): void;
     _listHandler(e: any): void;
+    _clearHandler(e: any): void;
   }
 }
 

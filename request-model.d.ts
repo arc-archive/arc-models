@@ -10,6 +10,7 @@
 
 /// <reference path="request-base-model.d.ts" />
 /// <reference path="../app-pouchdb-quick-search/pouchdb-quick-search.d.ts" />
+/// <reference path="../arc-electron-payload-processor/payload-processor.d.ts" />
 
 declare namespace LogicElements {
 
@@ -162,9 +163,11 @@ declare namespace LogicElements {
      * @param id The ID of the datastore entry.
      * @param rev Specific revision to read. Defaults to
      * latest revision.
+     * @param opts Additional options. Currently only `restorePayload`
+     * is supported
      * @returns Promise resolved to a project object.
      */
-    read(type: String|null, id: String|null, rev: String|null): Promise<any>|null;
+    read(type: String|null, id: String|null, rev: String|null, opts: object|null): Promise<any>|null;
 
     /**
      * A handler for `save-request-data` custom event. It's special event to
@@ -203,6 +206,16 @@ declare namespace LogicElements {
      * @param projects List of request projects.
      */
     _syncProjects(requestId: String|null, projects: Array<String|null>|null): Promise<any>|null;
+
+    /**
+     * The same as `read()` but for a list of requests.
+     *
+     * @param type Requests type to restore.
+     * @param keys Request ids
+     * @param opts Additional options. Currently only `restorePayload`
+     * is supported
+     */
+    readBulk(type: String|null, keys: Array<String|null>|null, opts: object|null): Promise<any>|null;
 
     /**
      * Updates / saves the request object in the datastore.
@@ -328,50 +341,6 @@ declare namespace LogicElements {
     _saveGoogleDrive(data: object|null, opts: object|null): Promise<any>|null;
 
     /**
-     * Prepares payload data to be stored in the datastore.
-     * FormData are translated to a `multipart` entry property.
-     * Payload is cleared from the request object.
-     *
-     * @param data The request object.
-     * @returns Promise resolved to a request object.
-     */
-    _preparePayload(data: object|null): Promise<any>|null;
-
-    /**
-     * Computes `multipart` list value to replace FormData with array that can
-     * be stored in the datastore.
-     *
-     * @param payload FormData object
-     * @returns Promise resolved to a form part representation.
-     */
-    _createMultipartEntry(payload: FormData|null): Promise<any>|null;
-
-    /**
-     * Recuresively iterates over form data and appends result of creating the
-     * part object to the `result` array.
-     *
-     * Each part entry contains `name` as a form part name, value as a string
-     * representation of the value and `isFile` to determine is the value is
-     * acttually a string or a file data.
-     *
-     * @param iterator FormData iterator
-     * @param textParts From `_arcMeta` property. List of blobs
-     * that should be treated as text parts.
-     * @param result An array where the results are appended to.
-     * It creates new result object when it's not passed.
-     * @returns A promise resolved to the `result` array.
-     */
-    _computeFormDataEntry(iterator: Iterator|null, textParts: Array<String|null>|null, result: Array<object|null>|null): Promise<any>|null;
-
-    /**
-     * Converts blob data to base64 string.
-     *
-     * @param blob File or blob object to be translated to string
-     * @returns Promise resolved to a base64 string data from the file.
-     */
-    _blobToString(blob: Blob|null): Promise<any>|null;
-
-    /**
      * Updates or creates request search index used when querying for request
      * data.
      *
@@ -480,6 +449,33 @@ declare namespace LogicElements {
      * @param type Data type - saved or history.
      */
     indexData(type: String|null): Promise<any>|null;
+
+    /**
+     * Handler for `request-project-list` event to query for list of requests in
+     * a project.
+     */
+    _listProjectRequestsHandler(e: CustomEvent|null): void;
+
+    /**
+     * Reads list of requests associated with a project
+     *
+     * @param id Project id
+     * @param opts Additional options. Currently only `restorePayload`
+     * is supported
+     */
+    readProjectRequests(id: String|null, opts: object|null): Promise<any>|null;
+
+    /**
+     * Reads requests data related to the project from a legacy system.
+     *
+     * @param id Project id
+     */
+    readProjectRequestsLegacy(id: String|null): Promise<any>|null;
+
+    /**
+     * Sorts requests list by `projectOrder` property
+     */
+    sortRequestProjectOrder(a: object|null, b: object|null): Number|null;
   }
 }
 

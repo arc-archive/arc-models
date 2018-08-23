@@ -16,6 +16,18 @@ the License.
 /**
  * Model for host rules.
  *
+ * Available events:
+ *
+ * - `host-rules-insert` Bulk add hosts
+ * - `host-rules-changed` Change / add record
+ * - `host-rules-deleted` Remove record
+ * - `host-rules-list` Lists all rules
+ * - `host-rules-clear` Clears hosts datastore
+ *
+ * Each event must be cancelable or it will be ignored.
+ * The insert, change and delete events dispatches non cancelable update/delete
+ * events. Application should listen for this events to update it's state.
+ *
  * @polymer
  * @customElement
  * @memberof LogicElements

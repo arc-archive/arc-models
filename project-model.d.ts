@@ -150,19 +150,17 @@ declare namespace LogicElements {
     _detachListeners(node: HTMLElement|null): void;
 
     /**
-     * Reads an entry from the datastore.
-     *
-     * @param id The ID of the datastore entry.
-     * @param rev Specific revision to read. Defaults to latest
-     * revision.
-     * @returns Promise resolved to a datastore object.
-     */
-    readProject(id: String|null, rev: String|null): Promise<any>|null;
-
-    /**
      * Handler for project read event request.
      */
     _handleRead(e: CustomEvent|null): void;
+
+    /**
+     * Updates more than one project in a bulk request.
+     *
+     * @param projects List of requests to update.
+     * @returns List of PouchDB responses to each insert
+     */
+    updateBulk(projects: Array<object|null>|null): any[]|null;
 
     /**
      * Lists all project objects.

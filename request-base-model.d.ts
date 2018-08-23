@@ -27,6 +27,16 @@ declare class RequestBaseModel {
   getDatabase(type: String|null): PouchDB|null;
 
   /**
+   * Reads an entry from the datastore.
+   *
+   * @param id The ID of the datastore entry.
+   * @param rev Specific revision to read. Defaults to latest
+   * revision.
+   * @returns Promise resolved to a datastore object.
+   */
+  readProject(id: String|null, rev: String|null): Promise<any>|null;
+
+  /**
    * Updates / saves a project object in the datastore.
    * This function fires `project-object-changed` event.
    *
