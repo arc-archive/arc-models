@@ -19,7 +19,7 @@
     </test-fixture>
 
     <script>
-    /* global DatabaseHelper, fixture, assert */
+    /* global DatabaseHelper */
     suite('Events API for host rules', function() {
       // See https://gist.github.com/haroldtreen/5f1055eee5fcf01da3e0e15b8ec86bf6
       function isError(e) {
@@ -33,11 +33,9 @@
         teardown(function() {
           return DatabaseHelper.clearHostRules();
         });
-
-        let element;
         let dataObj;
         setup(function() {
-          element = fixture('basic');
+          fixture('basic');
           dataObj = {
             _id: 'test-id-1',
             from: 'https://from',
