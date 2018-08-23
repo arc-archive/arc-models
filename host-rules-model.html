@@ -22,7 +22,7 @@ the License.
  */
 class HostRulesModel extends ArcBaseModel {
   /* global ArcBaseModel */
-  static get is() { return 'host-rules-model'; }
+  static get is() {return 'host-rules-model';}
 
   constructor() {
     super();
@@ -85,7 +85,7 @@ class HostRulesModel extends ArcBaseModel {
     }
     return promise
     .then(() => this.db.remove(id, rev))
-    .then(response => {
+    .then((response) => {
       const detail = {
         id: id,
         rev: response.rev,
@@ -107,10 +107,10 @@ class HostRulesModel extends ArcBaseModel {
       // jscs:enable
     };
     return this.db.allDocs(queryOptions)
-    .then(response => {
+    .then((response) => {
       let data = [];
       if (response && response.rows.length > 0) {
-        data = response.rows.map(item => item.doc);
+        data = response.rows.map((item) => item.doc);
       }
       return data;
     });
@@ -122,7 +122,7 @@ class HostRulesModel extends ArcBaseModel {
     }
     e.preventDefault();
     e.stopPropagation();
-    var rule = e.detail.rule;
+    const rule = e.detail.rule;
     if (!rule || !rule._id) {
       e.detail.result = Promise.reject(new Error('The "rule" property is missing'));
       return;
