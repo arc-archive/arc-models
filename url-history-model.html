@@ -96,16 +96,14 @@ the License.
       this._handleQuery = this._handleQuery.bind(this);
     }
 
-    connectedCallback() {
-      super.connectedCallback();
-      window.addEventListener('url-history-store', this._handleStore);
-      window.addEventListener('url-history-query', this._handleQuery);
+    _attachListeners(node) {
+      node.addEventListener('url-history-store', this._handleStore);
+      node.addEventListener('url-history-query', this._handleQuery);
     }
 
-    disconnectedCallback() {
-      super.disconnectedCallback();
-      window.removeEventListener('url-history-store', this._handleStore);
-      window.removeEventListener('url-history-query', this._handleQuery);
+    _detachListeners(node) {
+      node.removeEventListener('url-history-store', this._handleStore);
+      node.removeEventListener('url-history-query', this._handleQuery);
     }
     /**
      * Handles `url-history-store` custom event and stores an URL in the
