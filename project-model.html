@@ -335,6 +335,17 @@ class ProjectModel extends RequestBaseModel {
     e.detail.result = this.listProjects(e.detail.keys);
   }
   /**
+   * Deletes current database.
+   * @return {Promise}
+   */
+  deleteModel() {
+    try {
+      return this.db.destroy();
+    } catch (e) {
+      return Promise.reject(e);
+    }
+  }
+  /**
    * Fired when the project entity has been saved / updated in the datastore.
    *
    * @event project-object-changed
