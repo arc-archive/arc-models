@@ -1,0 +1,195 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, minimum-scale=1.0, initial-scale=1.0, user-scalable=yes">
+    <script src="../../../webcomponentsjs/webcomponents-loader.js"></script>
+    <script src="../../../web-component-tester/browser.js"></script>
+    <script src="../../../iron-test-helpers/test-helpers.js"></script>
+    <script src="data-helper.js"></script>
+    <link rel="import" href="../../../arc-data-generator/arc-data-generator.html">
+    <link rel="import" href="../../../app-pouchdb/pouchdb.html">
+    <link rel="import" href="../../variables-model.html">
+  </head>
+  <body>
+
+    <test-fixture id="basic">
+      <template>
+        <variables-model></variables-model>
+      </template>
+    </test-fixture>
+
+    <script>
+    /* global DataHelper, DataGenerator */
+    suite('environment event tests', function() {
+      suite('environment-deleted event', function() {
+        let databaseRecordId;
+        let databaseRecordRev;
+        let element;
+        suiteTeardown(function() {
+          return DataGenerator.destroyVariablesData();
+        });
+
+        setup(function() {
+          element = fixture('basic');
+          return DataHelper.addEnv('test')
+          .then((result) => {
+            databaseRecordId = result.id;
+            databaseRecordRev = result.rev;
+          })
+          .then(() => {
+            const vars = [{
+              variable: 'test',
+              value: 'some variable',
+              environment: 'test'
+            }, {
+              variable: 'test-2',
+              value: 'some variable-2',
+              environment: 'test'
+            }];
+            return DataHelper.addVars(vars);
+          });
+        });
+
+        test('Cancels the event', function() {
+          const e = new CustomEvent('environment-deleted', {
+            bubbles: true,
+            cancelable: true,
+            detail: {
+              id: databaseRecordId
+            }
+          });
+          document.body.dispatchEvent(e);
+          assert.isTrue(e.defaultPrevented);
+          return e.detail.result.then(() => {});
+        });
+
+        test('Event promise has result data', function() {
+          const e = new CustomEvent('environment-deleted', {
+            bubbles: true,
+            cancelable: true,
+            detail: {
+              id: databaseRecordId
+            }
+          });
+          document.body.dispatchEvent(e);
+          return e.detail.result
+          .then((result) => {
+            assert.equal(result.id, databaseRecordId, 'Has env ID');
+            assert.notEqual(result.rev, databaseRecordRev, 'Has new rev');
+          });
+        });
+
+        test('Dispatches environment-deleted', function(done) {
+          const e = new CustomEvent('environment-deleted', {
+            bubbles: true,
+            cancelable: true,
+            detail: {
+              id: databaseRecordId
+            }
+          });
+          document.body.dispatchEvent(e);
+          element.addEventListener('environment-deleted', function(e) {
+            assert.isFalse(e.cancelable);
+            done();
+          });
+        });
+      });
+
+      suite('environment-list event', function() {
+        suiteTeardown(function() {
+          return DataGenerator.destroyVariablesData();
+        });
+        setup(function() {
+          fixture('basic');
+        });
+
+        test('Cancels the event', function() {
+          const e = new CustomEvent('environment-list', {
+            bubbles: true,
+            cancelable: true,
+            detail: {}
+          });
+          document.body.dispatchEvent(e);
+          assert.isTrue(e.defaultPrevented);
+          return e.detail.result.then(() => {});
+        });
+
+        test('Event promise has result data', function() {
+          const e = new CustomEvent('environment-list', {
+            bubbles: true,
+            cancelable: true,
+            detail: {}
+          });
+          document.body.dispatchEvent(e);
+          return e.detail.result
+          .then((result) => {
+            assert.typeOf(result, 'array');
+          });
+        });
+      });
+
+      suite('environment-updated event', function() {
+        suiteTeardown(function() {
+          return DataGenerator.destroyVariablesData();
+        });
+
+        let element;
+        let env;
+        setup(function() {
+          element = fixture('basic');
+          env = {
+            name: 'test'
+          };
+        });
+
+        test('Cancels the event', function() {
+          const e = new CustomEvent('environment-updated', {
+            bubbles: true,
+            cancelable: true,
+            detail: {
+              value: env
+            }
+          });
+          document.body.dispatchEvent(e);
+          assert.isTrue(e.defaultPrevented);
+          return e.detail.result.then(() => {});
+        });
+
+        test('Event promise has result data', function() {
+          const e = new CustomEvent('environment-updated', {
+            bubbles: true,
+            cancelable: true,
+            detail: {
+              value: env
+            }
+          });
+          document.body.dispatchEvent(e);
+          return e.detail.result
+          .then((result) => {
+            assert.typeOf(result._id, 'string');
+            assert.typeOf(result._rev, 'string');
+          });
+        });
+
+        test('Dispatches environment-updated', function(done) {
+          const e = new CustomEvent('environment-updated', {
+            bubbles: true,
+            cancelable: true,
+            detail: {
+              value: env
+            }
+          });
+          document.body.dispatchEvent(e);
+          element.addEventListener('environment-updated', function f(e) {
+            element.removeEventListener('environment-updated', f);
+            assert.isFalse(e.cancelable);
+            done();
+          });
+        });
+      });
+    });
+    </script>
+
+  </body>
+</html>
