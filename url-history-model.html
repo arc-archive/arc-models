@@ -77,31 +77,21 @@ the License.
   class UrlHistoryModel extends ArcBaseModel {
     /* global ArcBaseModel */
     static get is() {return 'url-history-model';}
-    /**
-     * Note, the element does not include PouchDB to the document!
-     * @return {PouchDB} A PouchDB instance.
-     */
-    get _db() {
-      /* global PouchDB */
-      return new PouchDB('url-history', {
-        // jscs:disable
-        revs_limit: 100
-        // jscs:enable
-      });
-    }
 
     constructor() {
-      super();
+      super('url-history', 10);
       this._handleStore = this._handleStore.bind(this);
       this._handleQuery = this._handleQuery.bind(this);
     }
 
     _attachListeners(node) {
+      super._attachListeners(node);
       node.addEventListener('url-history-store', this._handleStore);
       node.addEventListener('url-history-query', this._handleQuery);
     }
 
     _detachListeners(node) {
+      super._detachListeners(node);
       node.removeEventListener('url-history-store', this._handleStore);
       node.removeEventListener('url-history-query', this._handleQuery);
     }
@@ -138,7 +128,7 @@ the License.
      * object (`ok`, `id` and `rev` keys)
      */
     store(url) {
-      const db = this._db;
+      const db = this.db;
       const lower = url.toLowerCase();
       return db.get(lower)
       .catch((e) => {
@@ -199,7 +189,7 @@ the License.
      * @return {Promise} Resolved promise to a list of history items.
      */
     query(q) {
-      const db = this._db;
+      const db = this.db;
       q = q.toLowerCase();
       return db.allDocs()
       .then((response) => {

@@ -185,6 +185,7 @@ class RequestModel extends RequestBaseModel {
     node.addEventListener('request-objects-undeleted', this._handleUndelete);
     node.addEventListener('request-query', this._handleQuery);
     node.addEventListener('request-project-list', this._listProjectRequestsHandler);
+    node.addEventListener('destroy-model', this._deleteModelHandler);
   }
   /**
    * Removes event listeners.
@@ -201,6 +202,7 @@ class RequestModel extends RequestBaseModel {
     node.removeEventListener('request-objects-undeleted', this._handleUndelete);
     node.removeEventListener('request-query', this._handleQuery);
     node.removeEventListener('request-project-list', this._listProjectRequestsHandler);
+    node.removeEventListener('destroy-model', this._deleteModelHandler);
     this._unregisterWorker();
   }
   /**
@@ -962,6 +964,23 @@ class RequestModel extends RequestBaseModel {
       });
     }, 250);
   }
+
+  _clearIndexedData() {
+    if (this.noIndexing) {
+      return;
+    }
+    if (this.__indexClearDebounce) {
+      return;
+    }
+    this.__indexClearDebounce = true;
+    setTimeout(() => {
+      const worker = this._getIndexWorker();
+      this.__indexClearDebounce = false;
+      worker.postMessage({
+        task: 'clear-index'
+      });
+    }, 250);
+  }
   /**
    * Creates if nescesary and returns indexing web worker.
    * @return {Worker} An indexing web worker instance.
@@ -999,11 +1018,18 @@ class RequestModel extends RequestBaseModel {
     switch (data.task) {
       case 'task-finished':
         this.dispatchEvent(new CustomEvent('request-indexing-finished', {
-          composed: true
+          composed: true,
+          bubbles: true
         }));
         break;
       case 'query-finished':
         this._urlQueryHandler(data.id, data.results);
+        break;
+      case 'clear-index':
+        this.dispatchEvent(new CustomEvent('request-index-cleared', {
+          composed: true,
+          bubbles: true
+        }));
         break;
       case 'task-error':
         this.dispatchEvent(new CustomEvent('request-indexing-error', {
@@ -1318,6 +1344,35 @@ class RequestModel extends RequestBaseModel {
       return -1;
     }
     return 0;
+  }
+  /**
+   * Handler for `destroy-model` custom event.
+   * Deletes saved or history data when scheduled for deletion.
+   * @param {CustomEvent} e
+   */
+  _deleteModelHandler(e) {
+    const models = e.detail.models;
+    if (!models || !models.length) {
+      return;
+    }
+    const p = [];
+    if (models.indexOf('saved-requests') !== -1) {
+      p[p.length] = this.deleteModel('saved');
+      try {
+        this._clearIndexedData();
+      } catch (e) {
+        console.error(e);
+      }
+    }
+    if (models.indexOf('history-requests') !== -1) {
+      p[p.length] = this.deleteModel('history');
+    }
+    if (p.length) {
+      if (!e.detail.result) {
+        e.detail.result = [];
+      }
+      e.detail.result = e.detail.result.concat(p);
+    }
   }
   /**
    * Fired when the request should be expored to Google Drive.

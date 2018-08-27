@@ -40,10 +40,10 @@ the License.
  */
 class WebsocketUrlHistoryModel extends ArcBaseModel {
   /* global ArcBaseModel */
-  static get is() { return 'websocket-url-history-model'; }
+  static get is() {return 'websocket-url-history-model';}
 
   constructor() {
-    super();
+    super('websocket-url-history', 10);
     this._handleChange = this._handleChange.bind(this);
     this._handleRead = this._handleRead.bind(this);
     this._handleQuery = this._handleQuery.bind(this);
@@ -51,6 +51,7 @@ class WebsocketUrlHistoryModel extends ArcBaseModel {
   }
 
   _attachListeners(node) {
+    super._attachListeners(node);
     node.addEventListener('websocket-url-history-changed', this._handleChange);
     node.addEventListener('websocket-url-history-read', this._handleRead);
     node.addEventListener('websocket-url-history-query', this._handleQuery);
@@ -58,19 +59,11 @@ class WebsocketUrlHistoryModel extends ArcBaseModel {
   }
 
   _detachListeners(node) {
+    super._detachListeners(node);
     node.removeEventListener('websocket-url-history-changed', this._handleChange);
     node.removeEventListener('websocket-url-history-read', this._handleRead);
     node.removeEventListener('websocket-url-history-query', this._handleQuery);
     node.removeEventListener('websocket-url-history-list', this._handleQueryHistory);
-  }
-
-  get db() {
-    /* global PouchDB */
-    return new PouchDB('websocket-url-history', {
-      // jscs:disable
-      revs_limit: 100
-      // jscs:enable
-    });
   }
   // Handles the read object event
   _handleRead(e) {

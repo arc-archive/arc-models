@@ -57,6 +57,19 @@ class RequestBaseModel extends ArcBaseModel {
     }
   }
   /**
+   * Deletes database data by tye.
+   * @param {String} type Either `saved-requests` or `history-requests`
+   * @return {Promise}
+   */
+  deleteModel(type) {
+    try {
+      const db = this.getDatabase(type);
+      return db.destroy();
+    } catch (e) {
+      return Promise.reject(e);
+    }
+  }
+  /**
    * Reads an entry from the datastore.
    *
    * @param {String} id The ID of the datastore entry.

@@ -22,7 +22,7 @@ the License.
  */
 class AuthDataModel extends ArcBaseModel {
   /* global ArcBaseModel */
-  static get is() { return 'auth-data-model'; }
+  static get is() {return 'auth-data-model';}
 
   static get properties() {
     return {
@@ -34,24 +34,21 @@ class AuthDataModel extends ArcBaseModel {
   }
 
   constructor() {
-    super();
+    super('auth-data', 10);
     this._queryHandler = this._queryHandler.bind(this);
     this._updateHandler = this._updateHandler.bind(this);
   }
 
   _attachListeners(node) {
+    super._attachListeners(node);
     node.addEventListener('auth-data-query', this._queryHandler);
     node.addEventListener('auth-data-changed', this._updateHandler);
   }
 
   _detachListeners(node) {
+    super._detachListeners(node);
     node.removeEventListener('auth-data-query', this._queryHandler);
     node.removeEventListener('auth-data-changed', this._updateHandler);
-  }
-  // A handler to host rules database
-  get db() {
-    /* global PouchDB */
-    return new PouchDB('auth-data');
   }
 
   _queryHandler(e) {

@@ -157,7 +157,7 @@ class ProjectModel extends RequestBaseModel {
    * @constructor
    */
   constructor() {
-    super();
+    super('legacy-projects');
     this._handleRead = this._handleRead.bind(this);
     this._handleObjectSave = this._handleObjectSave.bind(this);
     this._handleObjectDelete = this._handleObjectDelete.bind(this);
@@ -167,6 +167,7 @@ class ProjectModel extends RequestBaseModel {
    * @param {HTMLElement} node
    */
   _attachListeners(node) {
+    super._attachListeners(node);
     node.addEventListener('project-read', this._handleRead);
     node.addEventListener('project-object-changed', this._handleObjectSave);
     node.addEventListener('project-object-deleted', this._handleObjectDelete);
@@ -176,6 +177,7 @@ class ProjectModel extends RequestBaseModel {
    * @param {HTMLElement} node
    */
   _detachListeners(node) {
+    super._detachListeners(node);
     node.removeEventListener('project-read', this._handleRead);
     node.removeEventListener('project-object-changed', this._handleObjectSave);
     node.removeEventListener('project-object-deleted',

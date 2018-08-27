@@ -34,6 +34,9 @@ class RequestIndexer extends RequestDb {
       case 'delete-index':
         this._deleteIndexedData(data.ids);
         break;
+      case 'clear-index':
+        this._clearIndexedData();
+        break;
       case 'query-data':
         const opts = {
           type: data.type,
@@ -567,6 +570,35 @@ class RequestIndexer extends RequestDb {
           upperNeedle.substr(llp + 1);
       }
     }
+  }
+  /**
+   * Removes all indexed data.
+   *
+   * @return {Promise}
+   */
+  _clearIndexedData() {
+    return this.openSearchStore()
+    .then((db) => {
+      return new Promise((resolve, reject) => {
+        const tx = db.transaction('urls', 'readwrite');
+        const store = tx.objectStore('urls');
+        const results = [];
+        tx.onerror = () => {
+          reject(results);
+        };
+        tx.oncomplete = () => {
+          resolve(results);
+        };
+        store.clear();
+      });
+    })
+    .then(() => {
+      this.notifyEnd('clear-index');
+    })
+    .catch((cause) => {
+      console.error(cause);
+      this.notifyError(cause);
+    });
   }
 }
 const indexer = new RequestIndexer();

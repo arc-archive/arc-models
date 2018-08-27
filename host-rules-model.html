@@ -37,7 +37,7 @@ class HostRulesModel extends ArcBaseModel {
   static get is() {return 'host-rules-model';}
 
   constructor() {
-    super();
+    super('host-rules', 10);
     this._updatedHandler = this._updatedHandler.bind(this);
     this._deletedHandler = this._deletedHandler.bind(this);
     this._listHandler = this._listHandler.bind(this);
@@ -46,6 +46,7 @@ class HostRulesModel extends ArcBaseModel {
   }
 
   _attachListeners(node) {
+    super._attachListeners(node);
     node.addEventListener('host-rules-insert', this._insertHandler);
     node.addEventListener('host-rules-changed', this._updatedHandler);
     node.addEventListener('host-rules-deleted', this._deletedHandler);
@@ -54,16 +55,12 @@ class HostRulesModel extends ArcBaseModel {
   }
 
   _detachListeners(node) {
+    super._detachListeners(node);
     node.removeEventListener('host-rules-insert', this._insertHandler);
     node.removeEventListener('host-rules-changed', this._updatedHandler);
     node.removeEventListener('host-rules-deleted', this._deletedHandler);
     node.removeEventListener('host-rules-list', this._listHandler);
     node.removeEventListener('host-rules-clear', this._clearHandler);
-  }
-  // A handler to host rules database
-  get db() {
-    /* global PouchDB */
-    return new PouchDB('host-rules');
   }
   /**
    * Updates / saves the host rule object in the datastore.
