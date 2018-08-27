@@ -10,7 +10,9 @@
 
 /// <reference path="project-model.d.ts" />
 /// <reference path="request-model.d.ts" />
+/// <reference path="url-history-model.d.ts" />
 /// <reference path="websocket-url-history-model.d.ts" />
 /// <reference path="rest-api-model.d.ts" />
 /// <reference path="host-rules-model.d.ts" />
+/// <reference path="variables-model.d.ts" />
 

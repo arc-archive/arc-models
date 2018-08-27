@@ -18,11 +18,6 @@ declare namespace LogicElements {
   class AuthDataModel extends Polymer.Element {
 
     /**
-     *  A handler to host rules database
-     */
-    readonly db: any;
-
-    /**
      * Cashed list of authorization data for current session.
      */
     _cache: object|null|undefined;

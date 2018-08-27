@@ -28,11 +28,6 @@ declare namespace LogicElements {
    * events. Application should listen for this events to update it's state.
    */
   class HostRulesModel extends Polymer.Element {
-
-    /**
-     *  A handler to host rules database
-     */
-    readonly db: any;
     _attachListeners(node: any): void;
     _detachListeners(node: any): void;
 

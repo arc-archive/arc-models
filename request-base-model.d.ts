@@ -19,6 +19,13 @@ declare class RequestBaseModel {
   readonly projectDb: PouchDB|null;
 
   /**
+   * Deletes database data by tye.
+   *
+   * @param type Either `saved-requests` or `history-requests`
+   */
+  deleteModel(type: String|null): Promise<any>|null;
+
+  /**
    * Returns a reference to a PouchDB database instance for given type.
    *
    * @param type Either `saved-requests` or `history-requests`

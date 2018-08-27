@@ -16,8 +16,15 @@
  * A base class for all models.
  */
 declare class ArcBaseModel {
+
+  /**
+   * Note, the element does not include PouchDB to the document!
+   */
+  readonly db: PouchDB|null;
   readonly uuid: any;
   disconnectedCallback(): void;
+  _attachListeners(node: any): void;
+  _detachListeners(node: any): void;
 
   /**
    * Reads an entry from the datastore.
@@ -53,4 +60,17 @@ declare class ArcBaseModel {
    * This allow to do the logic without stopping program.
    */
   _handleException(e: Error|object|null, noThrow: Boolean|null): void;
+
+  /**
+   * Deletes current database.
+   */
+  deleteModel(): Promise<any>|null;
+
+  /**
+   * Handler for `destroy-model` custom event.
+   * Deletes current data when scheduled for deletion.
+   */
+  _deleteModelHandler(e: CustomEvent|null): void;
+  _eventCancelled(e: any): any;
+  _cancelEvent(e: any): void;
 }

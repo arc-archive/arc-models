@@ -221,6 +221,11 @@ declare class RequestIndexer {
    * @param lowerNeedle [description]
    */
   _nextCasing(key: String|null, lowerKey: String|null, upperNeedle: String|null, lowerNeedle: String|null): String|null|undefined;
+
+  /**
+   * Removes all indexed data.
+   */
+  _clearIndexedData(): Promise<any>|null;
 }
 
 /**
@@ -434,6 +439,11 @@ declare class RequestIndexer {
    * @param lowerNeedle [description]
    */
   _nextCasing(key: String|null, lowerKey: String|null, upperNeedle: String|null, lowerNeedle: String|null): String|null|undefined;
+
+  /**
+   * Removes all indexed data.
+   */
+  _clearIndexedData(): Promise<any>|null;
 }
 
 /**
@@ -647,4 +657,9 @@ declare class RequestIndexer {
    * @param lowerNeedle [description]
    */
   _nextCasing(key: String|null, lowerKey: String|null, upperNeedle: String|null, lowerNeedle: String|null): String|null|undefined;
+
+  /**
+   * Removes all indexed data.
+   */
+  _clearIndexedData(): Promise<any>|null;
 }

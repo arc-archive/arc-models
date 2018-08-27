@@ -170,6 +170,12 @@ declare namespace LogicElements {
     read(type: String|null, id: String|null, rev: String|null, opts: object|null): Promise<any>|null;
 
     /**
+     * Handler for `destroy-model` custom event.
+     * Deletes saved or history data when scheduled for deletion.
+     */
+    _deleteModelHandler(e: CustomEvent|null): void;
+
+    /**
      * A handler for `save-request-data` custom event. It's special event to
      * save / update request data dispatched by the request editor.
      */
@@ -356,6 +362,7 @@ declare namespace LogicElements {
      * @param id Request IDs to delete.
      */
     _deleteIndex(id: String|null): void;
+    _clearIndexedData(): void;
 
     /**
      * Creates if nescesary and returns indexing web worker.

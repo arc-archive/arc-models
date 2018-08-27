@@ -54,6 +54,29 @@
           "inheritedFrom": "ArcBehaviors.EventsTargetBehavior"
         },
         {
+          "name": "db",
+          "type": "PouchDB",
+          "description": "Note, the element does not include PouchDB to the document!",
+          "privacy": "public",
+          "sourceRange": {
+            "file": "base-model.html",
+            "start": {
+              "line": 38,
+              "column": 2
+            },
+            "end": {
+              "line": 53,
+              "column": 3
+            }
+          },
+          "metadata": {
+            "polymer": {
+              "readOnly": true
+            }
+          },
+          "inheritedFrom": "ArcBaseModel"
+        },
+        {
           "name": "uuid",
           "type": "?",
           "description": "",
@@ -61,11 +84,11 @@
           "sourceRange": {
             "file": "base-model.html",
             "start": {
-              "line": 23,
+              "line": 55,
               "column": 2
             },
             "end": {
-              "line": 29,
+              "line": 61,
               "column": 3
             }
           },
@@ -176,11 +199,11 @@
           "sourceRange": {
             "file": "base-model.html",
             "start": {
-              "line": 31,
+              "line": 63,
               "column": 2
             },
             "end": {
-              "line": 36,
+              "line": 68,
               "column": 3
             }
           },
@@ -229,7 +252,7 @@
               "column": 2
             },
             "end": {
-              "line": 173,
+              "line": 174,
               "column": 3
             }
           },
@@ -250,11 +273,11 @@
           "privacy": "protected",
           "sourceRange": {
             "start": {
-              "line": 177,
+              "line": 178,
               "column": 2
             },
             "end": {
-              "line": 183,
+              "line": 185,
               "column": 3
             }
           },
@@ -276,11 +299,11 @@
           "sourceRange": {
             "file": "base-model.html",
             "start": {
-              "line": 45,
+              "line": 85,
               "column": 2
             },
             "end": {
-              "line": 51,
+              "line": 91,
               "column": 3
             }
           },
@@ -310,11 +333,11 @@
           "sourceRange": {
             "file": "base-model.html",
             "start": {
-              "line": 58,
+              "line": 98,
               "column": 2
             },
             "end": {
-              "line": 65,
+              "line": 105,
               "column": 3
             }
           },
@@ -339,11 +362,11 @@
           "sourceRange": {
             "file": "base-model.html",
             "start": {
-              "line": 73,
+              "line": 113,
               "column": 2
             },
             "end": {
-              "line": 82,
+              "line": 122,
               "column": 3
             }
           },
@@ -373,11 +396,11 @@
           "sourceRange": {
             "file": "base-model.html",
             "start": {
-              "line": 90,
+              "line": 129,
               "column": 2
             },
             "end": {
-              "line": 110,
+              "line": 149,
               "column": 3
             }
           },
@@ -392,6 +415,110 @@
               "name": "noThrow",
               "type": "?Boolean",
               "description": "If set the function will not throw error.\nThis allow to do the logic without stopping program."
+            }
+          ],
+          "return": {
+            "type": "void"
+          },
+          "inheritedFrom": "ArcBaseModel"
+        },
+        {
+          "name": "deleteModel",
+          "description": "Deletes database data by tye.",
+          "privacy": "public",
+          "sourceRange": {
+            "file": "request-base-model.html",
+            "start": {
+              "line": 63,
+              "column": 2
+            },
+            "end": {
+              "line": 70,
+              "column": 3
+            }
+          },
+          "metadata": {},
+          "params": [
+            {
+              "name": "type",
+              "type": "String",
+              "description": "Either `saved-requests` or `history-requests`"
+            }
+          ],
+          "return": {
+            "type": "Promise"
+          },
+          "inheritedFrom": "RequestBaseModel"
+        },
+        {
+          "name": "_deleteModelHandler",
+          "description": "Handler for `destroy-model` custom event.\nDeletes current data when scheduled for deletion.",
+          "privacy": "protected",
+          "sourceRange": {
+            "file": "base-model.html",
+            "start": {
+              "line": 167,
+              "column": 2
+            },
+            "end": {
+              "line": 178,
+              "column": 3
+            }
+          },
+          "metadata": {},
+          "params": [
+            {
+              "name": "e",
+              "type": "CustomEvent"
+            }
+          ],
+          "return": {
+            "type": "void"
+          },
+          "inheritedFrom": "ArcBaseModel"
+        },
+        {
+          "name": "_eventCancelled",
+          "description": "",
+          "privacy": "protected",
+          "sourceRange": {
+            "file": "base-model.html",
+            "start": {
+              "line": 180,
+              "column": 2
+            },
+            "end": {
+              "line": 188,
+              "column": 3
+            }
+          },
+          "metadata": {},
+          "params": [
+            {
+              "name": "e"
+            }
+          ],
+          "inheritedFrom": "ArcBaseModel"
+        },
+        {
+          "name": "_cancelEvent",
+          "description": "",
+          "privacy": "protected",
+          "sourceRange": {
+            "file": "base-model.html",
+            "start": {
+              "line": 190,
+              "column": 2
+            },
+            "end": {
+              "line": 193,
+              "column": 3
+            }
+          },
+          "metadata": {},
+          "params": [
+            {
+              "name": "e"
             }
           ],
           "return": {
@@ -435,11 +562,11 @@
           "sourceRange": {
             "file": "request-base-model.html",
             "start": {
-              "line": 66,
+              "line": 79,
               "column": 2
             },
             "end": {
-              "line": 72,
+              "line": 85,
               "column": 3
             }
           },
@@ -469,11 +596,11 @@
           "sourceRange": {
             "file": "request-base-model.html",
             "start": {
-              "line": 80,
+              "line": 93,
               "column": 2
             },
             "end": {
-              "line": 92,
+              "line": 105,
               "column": 3
             }
           },
@@ -498,11 +625,11 @@
           "sourceRange": {
             "file": "request-base-model.html",
             "start": {
-              "line": 102,
+              "line": 115,
               "column": 2
             },
             "end": {
-              "line": 121,
+              "line": 134,
               "column": 3
             }
           },
@@ -531,11 +658,11 @@
           "privacy": "protected",
           "sourceRange": {
             "start": {
-              "line": 189,
+              "line": 191,
               "column": 2
             },
             "end": {
-              "line": 203,
+              "line": 205,
               "column": 3
             }
           },
@@ -556,11 +683,11 @@
           "privacy": "public",
           "sourceRange": {
             "start": {
-              "line": 209,
+              "line": 211,
               "column": 2
             },
             "end": {
-              "line": 241,
+              "line": 243,
               "column": 3
             }
           },
@@ -583,11 +710,11 @@
           "privacy": "public",
           "sourceRange": {
             "start": {
-              "line": 249,
+              "line": 251,
               "column": 2
             },
             "end": {
-              "line": 260,
+              "line": 262,
               "column": 3
             }
           },
@@ -610,11 +737,11 @@
           "privacy": "protected",
           "sourceRange": {
             "start": {
-              "line": 265,
+              "line": 267,
               "column": 2
             },
             "end": {
-              "line": 298,
+              "line": 300,
               "column": 3
             }
           },
@@ -635,11 +762,11 @@
           "privacy": "protected",
           "sourceRange": {
             "start": {
-              "line": 303,
+              "line": 305,
               "column": 2
             },
             "end": {
-              "line": 317,
+              "line": 319,
               "column": 3
             }
           },
@@ -660,11 +787,11 @@
           "privacy": "protected",
           "sourceRange": {
             "start": {
-              "line": 322,
+              "line": 324,
               "column": 2
             },
             "end": {
-              "line": 333,
+              "line": 335,
               "column": 3
             }
           },
@@ -689,7 +816,7 @@
           "column": 0
         },
         "end": {
-          "line": 349,
+          "line": 351,
           "column": 1
         }
       },
@@ -771,6 +898,29 @@
           "inheritedFrom": "ArcBehaviors.EventsTargetBehavior"
         },
         {
+          "name": "db",
+          "type": "PouchDB",
+          "description": "Note, the element does not include PouchDB to the document!",
+          "privacy": "public",
+          "sourceRange": {
+            "file": "base-model.html",
+            "start": {
+              "line": 38,
+              "column": 2
+            },
+            "end": {
+              "line": 53,
+              "column": 3
+            }
+          },
+          "metadata": {
+            "polymer": {
+              "readOnly": true
+            }
+          },
+          "inheritedFrom": "ArcBaseModel"
+        },
+        {
           "name": "uuid",
           "type": "?",
           "description": "",
@@ -778,11 +928,11 @@
           "sourceRange": {
             "file": "base-model.html",
             "start": {
-              "line": 23,
+              "line": 55,
               "column": 2
             },
             "end": {
-              "line": 29,
+              "line": 61,
               "column": 3
             }
           },
@@ -869,11 +1019,11 @@
           "privacy": "public",
           "sourceRange": {
             "start": {
-              "line": 1177,
+              "line": 1203,
               "column": 2
             },
             "end": {
-              "line": 1179,
+              "line": 1205,
               "column": 3
             }
           },
@@ -890,11 +1040,11 @@
           "privacy": "public",
           "sourceRange": {
             "start": {
-              "line": 1184,
+              "line": 1210,
               "column": 2
             },
             "end": {
-              "line": 1186,
+              "line": 1212,
               "column": 3
             }
           },
@@ -1000,11 +1150,11 @@
           "sourceRange": {
             "file": "base-model.html",
             "start": {
-              "line": 31,
+              "line": 63,
               "column": 2
             },
             "end": {
-              "line": 36,
+              "line": 68,
               "column": 3
             }
           },
@@ -1053,7 +1203,7 @@
               "column": 2
             },
             "end": {
-              "line": 187,
+              "line": 188,
               "column": 3
             }
           },
@@ -1074,11 +1224,11 @@
           "privacy": "protected",
           "sourceRange": {
             "start": {
-              "line": 192,
+              "line": 193,
               "column": 2
             },
             "end": {
-              "line": 204,
+              "line": 206,
               "column": 3
             }
           },
@@ -1099,11 +1249,11 @@
           "privacy": "public",
           "sourceRange": {
             "start": {
-              "line": 398,
+              "line": 400,
               "column": 2
             },
             "end": {
-              "line": 411,
+              "line": 413,
               "column": 3
             }
           },
@@ -1142,11 +1292,11 @@
           "sourceRange": {
             "file": "base-model.html",
             "start": {
-              "line": 58,
+              "line": 98,
               "column": 2
             },
             "end": {
-              "line": 65,
+              "line": 105,
               "column": 3
             }
           },
@@ -1171,11 +1321,11 @@
           "sourceRange": {
             "file": "base-model.html",
             "start": {
-              "line": 73,
+              "line": 113,
               "column": 2
             },
             "end": {
-              "line": 82,
+              "line": 122,
               "column": 3
             }
           },
@@ -1205,11 +1355,11 @@
           "sourceRange": {
             "file": "base-model.html",
             "start": {
-              "line": 90,
+              "line": 129,
               "column": 2
             },
             "end": {
-              "line": 110,
+              "line": 149,
               "column": 3
             }
           },
@@ -1224,6 +1374,108 @@
               "name": "noThrow",
               "type": "?Boolean",
               "description": "If set the function will not throw error.\nThis allow to do the logic without stopping program."
+            }
+          ],
+          "return": {
+            "type": "void"
+          },
+          "inheritedFrom": "ArcBaseModel"
+        },
+        {
+          "name": "deleteModel",
+          "description": "Deletes database data by tye.",
+          "privacy": "public",
+          "sourceRange": {
+            "file": "request-base-model.html",
+            "start": {
+              "line": 63,
+              "column": 2
+            },
+            "end": {
+              "line": 70,
+              "column": 3
+            }
+          },
+          "metadata": {},
+          "params": [
+            {
+              "name": "type",
+              "type": "String",
+              "description": "Either `saved-requests` or `history-requests`"
+            }
+          ],
+          "return": {
+            "type": "Promise"
+          },
+          "inheritedFrom": "RequestBaseModel"
+        },
+        {
+          "name": "_deleteModelHandler",
+          "description": "Handler for `destroy-model` custom event.\nDeletes saved or history data when scheduled for deletion.",
+          "privacy": "protected",
+          "sourceRange": {
+            "start": {
+              "line": 1352,
+              "column": 2
+            },
+            "end": {
+              "line": 1375,
+              "column": 3
+            }
+          },
+          "metadata": {},
+          "params": [
+            {
+              "name": "e",
+              "type": "CustomEvent"
+            }
+          ],
+          "return": {
+            "type": "void"
+          }
+        },
+        {
+          "name": "_eventCancelled",
+          "description": "",
+          "privacy": "protected",
+          "sourceRange": {
+            "file": "base-model.html",
+            "start": {
+              "line": 180,
+              "column": 2
+            },
+            "end": {
+              "line": 188,
+              "column": 3
+            }
+          },
+          "metadata": {},
+          "params": [
+            {
+              "name": "e"
+            }
+          ],
+          "inheritedFrom": "ArcBaseModel"
+        },
+        {
+          "name": "_cancelEvent",
+          "description": "",
+          "privacy": "protected",
+          "sourceRange": {
+            "file": "base-model.html",
+            "start": {
+              "line": 190,
+              "column": 2
+            },
+            "end": {
+              "line": 193,
+              "column": 3
+            }
+          },
+          "metadata": {},
+          "params": [
+            {
+              "name": "e"
             }
           ],
           "return": {
@@ -1267,11 +1519,11 @@
           "sourceRange": {
             "file": "request-base-model.html",
             "start": {
-              "line": 66,
+              "line": 79,
               "column": 2
             },
             "end": {
-              "line": 72,
+              "line": 85,
               "column": 3
             }
           },
@@ -1301,11 +1553,11 @@
           "sourceRange": {
             "file": "request-base-model.html",
             "start": {
-              "line": 80,
+              "line": 93,
               "column": 2
             },
             "end": {
-              "line": 92,
+              "line": 105,
               "column": 3
             }
           },
@@ -1330,11 +1582,11 @@
           "sourceRange": {
             "file": "request-base-model.html",
             "start": {
-              "line": 102,
+              "line": 115,
               "column": 2
             },
             "end": {
-              "line": 121,
+              "line": 134,
               "column": 3
             }
           },
@@ -1363,11 +1615,11 @@
           "privacy": "protected",
           "sourceRange": {
             "start": {
-              "line": 211,
+              "line": 213,
               "column": 2
             },
             "end": {
-              "line": 246,
+              "line": 248,
               "column": 3
             }
           },
@@ -1388,11 +1640,11 @@
           "privacy": "protected",
           "sourceRange": {
             "start": {
-              "line": 255,
+              "line": 257,
               "column": 2
             },
             "end": {
-              "line": 287,
+              "line": 289,
               "column": 3
             }
           },
@@ -1420,11 +1672,11 @@
           "privacy": "public",
           "sourceRange": {
             "start": {
-              "line": 299,
+              "line": 301,
               "column": 2
             },
             "end": {
-              "line": 324,
+              "line": 326,
               "column": 3
             }
           },
@@ -1452,11 +1704,11 @@
           "privacy": "protected",
           "sourceRange": {
             "start": {
-              "line": 333,
+              "line": 335,
               "column": 2
             },
             "end": {
-              "line": 386,
+              "line": 388,
               "column": 3
             }
           },
@@ -1483,11 +1735,11 @@
           "privacy": "public",
           "sourceRange": {
             "start": {
-              "line": 420,
+              "line": 422,
               "column": 2
             },
             "end": {
-              "line": 440,
+              "line": 442,
               "column": 3
             }
           },
@@ -1519,11 +1771,11 @@
           "privacy": "public",
           "sourceRange": {
             "start": {
-              "line": 452,
+              "line": 454,
               "column": 2
             },
             "end": {
-              "line": 477,
+              "line": 479,
               "column": 3
             }
           },
@@ -1551,11 +1803,11 @@
           "privacy": "public",
           "sourceRange": {
             "start": {
-              "line": 484,
+              "line": 486,
               "column": 2
             },
             "end": {
-              "line": 510,
+              "line": 512,
               "column": 3
             }
           },
@@ -1583,11 +1835,11 @@
           "privacy": "public",
           "sourceRange": {
             "start": {
-              "line": 522,
+              "line": 524,
               "column": 2
             },
             "end": {
-              "line": 544,
+              "line": 546,
               "column": 3
             }
           },
@@ -1620,11 +1872,11 @@
           "privacy": "public",
           "sourceRange": {
             "start": {
-              "line": 556,
+              "line": 558,
               "column": 2
             },
             "end": {
-              "line": 587,
+              "line": 589,
               "column": 3
             }
           },
@@ -1652,11 +1904,11 @@
           "privacy": "protected",
           "sourceRange": {
             "start": {
-              "line": 594,
+              "line": 596,
               "column": 2
             },
             "end": {
-              "line": 619,
+              "line": 621,
               "column": 3
             }
           },
@@ -1684,11 +1936,11 @@
           "privacy": "protected",
           "sourceRange": {
             "start": {
-              "line": 629,
+              "line": 631,
               "column": 2
             },
             "end": {
-              "line": 645,
+              "line": 647,
               "column": 3
             }
           },
@@ -1716,11 +1968,11 @@
           "privacy": "protected",
           "sourceRange": {
             "start": {
-              "line": 650,
+              "line": 652,
               "column": 2
             },
             "end": {
-              "line": 676,
+              "line": 678,
               "column": 3
             }
           },
@@ -1741,11 +1993,11 @@
           "privacy": "protected",
           "sourceRange": {
             "start": {
-              "line": 682,
+              "line": 684,
               "column": 2
             },
             "end": {
-              "line": 724,
+              "line": 726,
               "column": 3
             }
           },
@@ -1766,11 +2018,11 @@
           "privacy": "protected",
           "sourceRange": {
             "start": {
-              "line": 730,
+              "line": 732,
               "column": 2
             },
             "end": {
-              "line": 754,
+              "line": 756,
               "column": 3
             }
           },
@@ -1791,11 +2043,11 @@
           "privacy": "protected",
           "sourceRange": {
             "start": {
-              "line": 759,
+              "line": 761,
               "column": 2
             },
             "end": {
-              "line": 802,
+              "line": 804,
               "column": 3
             }
           },
@@ -1816,11 +2068,11 @@
           "privacy": "protected",
           "sourceRange": {
             "start": {
-              "line": 807,
+              "line": 809,
               "column": 2
             },
             "end": {
-              "line": 827,
+              "line": 829,
               "column": 3
             }
           },
@@ -1841,11 +2093,11 @@
           "privacy": "protected",
           "sourceRange": {
             "start": {
-              "line": 833,
+              "line": 835,
               "column": 2
             },
             "end": {
-              "line": 842,
+              "line": 844,
               "column": 3
             }
           },
@@ -1868,11 +2120,11 @@
           "privacy": "protected",
           "sourceRange": {
             "start": {
-              "line": 849,
+              "line": 851,
               "column": 2
             },
             "end": {
-              "line": 852,
+              "line": 854,
               "column": 3
             }
           },
@@ -1900,11 +2152,11 @@
           "privacy": "protected",
           "sourceRange": {
             "start": {
-              "line": 864,
+              "line": 866,
               "column": 2
             },
             "end": {
-              "line": 893,
+              "line": 895,
               "column": 3
             }
           },
@@ -1932,11 +2184,11 @@
           "privacy": "protected",
           "sourceRange": {
             "start": {
-              "line": 902,
+              "line": 904,
               "column": 2
             },
             "end": {
-              "line": 936,
+              "line": 938,
               "column": 3
             }
           },
@@ -1958,11 +2210,11 @@
           "privacy": "protected",
           "sourceRange": {
             "start": {
-              "line": 941,
+              "line": 943,
               "column": 2
             },
             "end": {
-              "line": 963,
+              "line": 965,
               "column": 3
             }
           },
@@ -1979,16 +2231,36 @@
           }
         },
         {
+          "name": "_clearIndexedData",
+          "description": "",
+          "privacy": "protected",
+          "sourceRange": {
+            "start": {
+              "line": 967,
+              "column": 2
+            },
+            "end": {
+              "line": 982,
+              "column": 3
+            }
+          },
+          "metadata": {},
+          "params": [],
+          "return": {
+            "type": "void"
+          }
+        },
+        {
           "name": "_getIndexWorker",
           "description": "Creates if nescesary and returns indexing web worker.",
           "privacy": "protected",
           "sourceRange": {
             "start": {
-              "line": 968,
+              "line": 987,
               "column": 2
             },
             "end": {
-              "line": 977,
+              "line": 996,
               "column": 3
             }
           },
@@ -2005,11 +2277,11 @@
           "privacy": "protected",
           "sourceRange": {
             "start": {
-              "line": 982,
+              "line": 1001,
               "column": 2
             },
             "end": {
-              "line": 990,
+              "line": 1009,
               "column": 3
             }
           },
@@ -2025,11 +2297,11 @@
           "privacy": "protected",
           "sourceRange": {
             "start": {
-              "line": 996,
+              "line": 1015,
               "column": 2
             },
             "end": {
-              "line": 1022,
+              "line": 1048,
               "column": 3
             }
           },
@@ -2051,11 +2323,11 @@
           "privacy": "protected",
           "sourceRange": {
             "start": {
-              "line": 1028,
+              "line": 1054,
               "column": 2
             },
             "end": {
-              "line": 1036,
+              "line": 1062,
               "column": 3
             }
           },
@@ -2077,11 +2349,11 @@
           "privacy": "protected",
           "sourceRange": {
             "start": {
-              "line": 1044,
+              "line": 1070,
               "column": 2
             },
             "end": {
-              "line": 1062,
+              "line": 1088,
               "column": 3
             }
           },
@@ -2102,11 +2374,11 @@
           "privacy": "public",
           "sourceRange": {
             "start": {
-              "line": 1073,
+              "line": 1099,
               "column": 2
             },
             "end": {
-              "line": 1089,
+              "line": 1115,
               "column": 3
             }
           },
@@ -2139,11 +2411,11 @@
           "privacy": "protected",
           "sourceRange": {
             "start": {
-              "line": 1098,
+              "line": 1124,
               "column": 2
             },
             "end": {
-              "line": 1148,
+              "line": 1174,
               "column": 3
             }
           },
@@ -2170,11 +2442,11 @@
           "privacy": "public",
           "sourceRange": {
             "start": {
-              "line": 1160,
+              "line": 1186,
               "column": 2
             },
             "end": {
-              "line": 1172,
+              "line": 1198,
               "column": 3
             }
           },
@@ -2207,11 +2479,11 @@
           "privacy": "public",
           "sourceRange": {
             "start": {
-              "line": 1194,
+              "line": 1220,
               "column": 2
             },
             "end": {
-              "line": 1196,
+              "line": 1222,
               "column": 3
             }
           },
@@ -2239,11 +2511,11 @@
           "privacy": "public",
           "sourceRange": {
             "start": {
-              "line": 1204,
+              "line": 1230,
               "column": 2
             },
             "end": {
-              "line": 1206,
+              "line": 1232,
               "column": 3
             }
           },
@@ -2271,11 +2543,11 @@
           "privacy": "protected",
           "sourceRange": {
             "start": {
-              "line": 1208,
+              "line": 1234,
               "column": 2
             },
             "end": {
-              "line": 1234,
+              "line": 1260,
               "column": 3
             }
           },
@@ -2301,11 +2573,11 @@
           "privacy": "public",
           "sourceRange": {
             "start": {
-              "line": 1241,
+              "line": 1267,
               "column": 2
             },
             "end": {
-              "line": 1247,
+              "line": 1273,
               "column": 3
             }
           },
@@ -2327,11 +2599,11 @@
           "privacy": "protected",
           "sourceRange": {
             "start": {
-              "line": 1253,
+              "line": 1279,
               "column": 2
             },
             "end": {
-              "line": 1265,
+              "line": 1291,
               "column": 3
             }
           },
@@ -2352,11 +2624,11 @@
           "privacy": "public",
           "sourceRange": {
             "start": {
-              "line": 1273,
+              "line": 1299,
               "column": 2
             },
             "end": {
-              "line": 1281,
+              "line": 1307,
               "column": 3
             }
           },
@@ -2383,11 +2655,11 @@
           "privacy": "public",
           "sourceRange": {
             "start": {
-              "line": 1287,
+              "line": 1313,
               "column": 2
             },
             "end": {
-              "line": 1298,
+              "line": 1324,
               "column": 3
             }
           },
@@ -2409,11 +2681,11 @@
           "privacy": "public",
           "sourceRange": {
             "start": {
-              "line": 1306,
+              "line": 1332,
               "column": 2
             },
             "end": {
-              "line": 1320,
+              "line": 1346,
               "column": 3
             }
           },
@@ -2442,7 +2714,7 @@
           "column": 0
         },
         "end": {
-          "line": 1379,
+          "line": 1434,
           "column": 1
         }
       },
@@ -2513,6 +2785,613 @@
       "tagname": "request-model"
     },
     {
+      "description": "An element that saves Request URL in the history and serves list\nof saved URLs.\n\nThe `url-history-query` event expects the `q` property set on the `detail`\nobject. It is passed to the `query()` function and result of calling this\nfunction is set on detail's `result` property.\n\n### Example\n\n```javascript\n\nconst e = new CustomEvent('url-history-query', {\n detail: {\n   q: 'http://mulesoft.com/path/'\n },\n cancelable: true,\n bubbles: true,\n composed: true // if fired in shaddow DOM\n});\ndocument.body.dispatchEvent(e);\n\ne.detail.result.then((urls) => console.log(urls));\n```\n\nThe `url-history-store` requires the `value` property to be set on\nthe `detail` object and it is passed to the `store()` function.\n\n### Example\n\n```javascript\nconst e = new CustomEvent('url-history-store', {\n detail: {\n   value: 'http://mulesoft.com/path/'\n },\n cancelable: true,\n bubbles: true,\n composed: true\n});\ndocument.dispatchEvent(e);\n```\n\nBoth events are cancelled and propagation of the event is stopped.\nTherefore the event should be dispatched with `caneclable` flag set to true.\n\nThe element listens for events on the `window` object so it can be placed\nanywhere in the DOM.\n\n### Example\n\n```html\n<body>\n <url-history-saver></url-history-saver>\n</body>\n```",
+      "summary": "",
+      "path": "url-history-model.html",
+      "properties": [
+        {
+          "name": "eventsTarget",
+          "type": "Object | null | undefined",
+          "description": "Events handlers target. By default the element listens on\n`window` object. If set, all events listeners will be attached to this\nobject instead of `window`.",
+          "privacy": "public",
+          "sourceRange": {
+            "file": "../events-target-behavior/events-target-behavior.html",
+            "start": {
+              "line": 73,
+              "column": 8
+            },
+            "end": {
+              "line": 76,
+              "column": 9
+            }
+          },
+          "metadata": {
+            "polymer": {
+              "observer": "\"_eventsTargetChanged\"",
+              "attributeType": "Object"
+            }
+          },
+          "inheritedFrom": "ArcBehaviors.EventsTargetBehavior"
+        },
+        {
+          "name": "_oldEventsTarget",
+          "type": "Object | null | undefined",
+          "description": "An event target used to attach listeners.",
+          "privacy": "protected",
+          "sourceRange": {
+            "file": "../events-target-behavior/events-target-behavior.html",
+            "start": {
+              "line": 78,
+              "column": 8
+            },
+            "end": {
+              "line": 78,
+              "column": 32
+            }
+          },
+          "metadata": {
+            "polymer": {
+              "attributeType": "Object"
+            }
+          },
+          "inheritedFrom": "ArcBehaviors.EventsTargetBehavior"
+        },
+        {
+          "name": "db",
+          "type": "PouchDB",
+          "description": "Note, the element does not include PouchDB to the document!",
+          "privacy": "public",
+          "sourceRange": {
+            "file": "base-model.html",
+            "start": {
+              "line": 38,
+              "column": 2
+            },
+            "end": {
+              "line": 53,
+              "column": 3
+            }
+          },
+          "metadata": {
+            "polymer": {
+              "readOnly": true
+            }
+          },
+          "inheritedFrom": "ArcBaseModel"
+        },
+        {
+          "name": "uuid",
+          "type": "?",
+          "description": "",
+          "privacy": "public",
+          "sourceRange": {
+            "file": "base-model.html",
+            "start": {
+              "line": 55,
+              "column": 2
+            },
+            "end": {
+              "line": 61,
+              "column": 3
+            }
+          },
+          "metadata": {
+            "polymer": {
+              "readOnly": true
+            }
+          },
+          "inheritedFrom": "ArcBaseModel"
+        }
+      ],
+      "methods": [
+        {
+          "name": "connectedCallback",
+          "description": "",
+          "privacy": "public",
+          "sourceRange": {
+            "file": "../events-target-behavior/events-target-behavior.html",
+            "start": {
+              "line": 81,
+              "column": 4
+            },
+            "end": {
+              "line": 84,
+              "column": 6
+            }
+          },
+          "metadata": {},
+          "params": [],
+          "return": {
+            "type": "void"
+          },
+          "inheritedFrom": "ArcBehaviors.EventsTargetBehavior"
+        },
+        {
+          "name": "disconnectedCallback",
+          "description": "",
+          "privacy": "public",
+          "sourceRange": {
+            "file": "base-model.html",
+            "start": {
+              "line": 63,
+              "column": 2
+            },
+            "end": {
+              "line": 68,
+              "column": 3
+            }
+          },
+          "metadata": {},
+          "params": [],
+          "return": {
+            "type": "void"
+          },
+          "inheritedFrom": "ArcBaseModel"
+        },
+        {
+          "name": "_eventsTargetChanged",
+          "description": "Removes old handlers (if any) and attaches listeners on new event\nevent target.",
+          "privacy": "protected",
+          "sourceRange": {
+            "file": "../events-target-behavior/events-target-behavior.html",
+            "start": {
+              "line": 99,
+              "column": 4
+            },
+            "end": {
+              "line": 105,
+              "column": 5
+            }
+          },
+          "metadata": {},
+          "params": [
+            {
+              "name": "eventsTarget",
+              "type": "?Node",
+              "description": "Event target to set handlers on. If not set it\nwill set handlers on the `window` object."
+            }
+          ],
+          "return": {
+            "type": "void"
+          },
+          "inheritedFrom": "ArcBehaviors.EventsTargetBehavior"
+        },
+        {
+          "name": "_attachListeners",
+          "description": "",
+          "privacy": "protected",
+          "sourceRange": {
+            "start": {
+              "line": 86,
+              "column": 4
+            },
+            "end": {
+              "line": 90,
+              "column": 5
+            }
+          },
+          "metadata": {},
+          "params": [
+            {
+              "name": "node"
+            }
+          ],
+          "return": {
+            "type": "void"
+          }
+        },
+        {
+          "name": "_detachListeners",
+          "description": "",
+          "privacy": "protected",
+          "sourceRange": {
+            "start": {
+              "line": 92,
+              "column": 4
+            },
+            "end": {
+              "line": 96,
+              "column": 5
+            }
+          },
+          "metadata": {},
+          "params": [
+            {
+              "name": "node"
+            }
+          ],
+          "return": {
+            "type": "void"
+          }
+        },
+        {
+          "name": "read",
+          "description": "Reads an entry from the datastore.",
+          "privacy": "public",
+          "sourceRange": {
+            "file": "base-model.html",
+            "start": {
+              "line": 85,
+              "column": 2
+            },
+            "end": {
+              "line": 91,
+              "column": 3
+            }
+          },
+          "metadata": {},
+          "params": [
+            {
+              "name": "id",
+              "type": "String",
+              "description": "The ID of the datastore entry."
+            },
+            {
+              "name": "rev",
+              "type": "?String",
+              "description": "Specific revision to read. Defaults to latest revision."
+            }
+          ],
+          "return": {
+            "type": "Promise",
+            "desc": "Promise resolved to a datastore object."
+          },
+          "inheritedFrom": "ArcBaseModel"
+        },
+        {
+          "name": "_computeMidnight",
+          "description": "Computes past mindnight for given timestamp.",
+          "privacy": "protected",
+          "sourceRange": {
+            "file": "base-model.html",
+            "start": {
+              "line": 98,
+              "column": 2
+            },
+            "end": {
+              "line": 105,
+              "column": 3
+            }
+          },
+          "metadata": {},
+          "params": [
+            {
+              "name": "time",
+              "type": "Number",
+              "description": "Timestamp"
+            }
+          ],
+          "return": {
+            "type": "Number",
+            "desc": "Time reduced to midnight."
+          },
+          "inheritedFrom": "ArcBaseModel"
+        },
+        {
+          "name": "_fireUpdated",
+          "description": "Dispatches non-cancelable change event.",
+          "privacy": "protected",
+          "sourceRange": {
+            "file": "base-model.html",
+            "start": {
+              "line": 113,
+              "column": 2
+            },
+            "end": {
+              "line": 122,
+              "column": 3
+            }
+          },
+          "metadata": {},
+          "params": [
+            {
+              "name": "type",
+              "type": "String",
+              "description": "Event type"
+            },
+            {
+              "name": "detail",
+              "type": "Object",
+              "description": "A detail object to dispatch."
+            }
+          ],
+          "return": {
+            "type": "CustomEvent",
+            "desc": "Created and dispatched event."
+          },
+          "inheritedFrom": "ArcBaseModel"
+        },
+        {
+          "name": "_handleException",
+          "description": "Handles any exception in the model in a unified way.",
+          "privacy": "protected",
+          "sourceRange": {
+            "file": "base-model.html",
+            "start": {
+              "line": 129,
+              "column": 2
+            },
+            "end": {
+              "line": 149,
+              "column": 3
+            }
+          },
+          "metadata": {},
+          "params": [
+            {
+              "name": "e",
+              "type": "(Error | Object)",
+              "description": "An error object"
+            },
+            {
+              "name": "noThrow",
+              "type": "?Boolean",
+              "description": "If set the function will not throw error.\nThis allow to do the logic without stopping program."
+            }
+          ],
+          "return": {
+            "type": "void"
+          },
+          "inheritedFrom": "ArcBaseModel"
+        },
+        {
+          "name": "deleteModel",
+          "description": "Deletes current database.",
+          "privacy": "public",
+          "sourceRange": {
+            "file": "base-model.html",
+            "start": {
+              "line": 154,
+              "column": 2
+            },
+            "end": {
+              "line": 160,
+              "column": 3
+            }
+          },
+          "metadata": {},
+          "params": [],
+          "return": {
+            "type": "Promise"
+          },
+          "inheritedFrom": "ArcBaseModel"
+        },
+        {
+          "name": "_deleteModelHandler",
+          "description": "Handler for `destroy-model` custom event.\nDeletes current data when scheduled for deletion.",
+          "privacy": "protected",
+          "sourceRange": {
+            "file": "base-model.html",
+            "start": {
+              "line": 167,
+              "column": 2
+            },
+            "end": {
+              "line": 178,
+              "column": 3
+            }
+          },
+          "metadata": {},
+          "params": [
+            {
+              "name": "e",
+              "type": "CustomEvent"
+            }
+          ],
+          "return": {
+            "type": "void"
+          },
+          "inheritedFrom": "ArcBaseModel"
+        },
+        {
+          "name": "_eventCancelled",
+          "description": "",
+          "privacy": "protected",
+          "sourceRange": {
+            "file": "base-model.html",
+            "start": {
+              "line": 180,
+              "column": 2
+            },
+            "end": {
+              "line": 188,
+              "column": 3
+            }
+          },
+          "metadata": {},
+          "params": [
+            {
+              "name": "e"
+            }
+          ],
+          "inheritedFrom": "ArcBaseModel"
+        },
+        {
+          "name": "_cancelEvent",
+          "description": "",
+          "privacy": "protected",
+          "sourceRange": {
+            "file": "base-model.html",
+            "start": {
+              "line": 190,
+              "column": 2
+            },
+            "end": {
+              "line": 193,
+              "column": 3
+            }
+          },
+          "metadata": {},
+          "params": [
+            {
+              "name": "e"
+            }
+          ],
+          "return": {
+            "type": "void"
+          },
+          "inheritedFrom": "ArcBaseModel"
+        },
+        {
+          "name": "_handleStore",
+          "description": "Handles `url-history-store` custom event and stores an URL in the\ndatastore.\nThe event is canceled and propagation is topped upon handling. The\nevent should be fired with `cancelable` flag set to `true`.\n\nIt calls `store()` function with the `value` property of the `detail`\nobject as an attribute.\n\nIt creates a new `result` property on the `detail` object which is a\nresult of calling `store()` function.",
+          "privacy": "protected",
+          "sourceRange": {
+            "start": {
+              "line": 111,
+              "column": 4
+            },
+            "end": {
+              "line": 120,
+              "column": 5
+            }
+          },
+          "metadata": {},
+          "params": [
+            {
+              "name": "e",
+              "type": "CustomEvent"
+            }
+          ],
+          "return": {
+            "type": "void"
+          }
+        },
+        {
+          "name": "store",
+          "description": "It creates new entry if the URL wasn't already in the data store or\nupdates a `time` and `cnt` property of existing item.",
+          "privacy": "public",
+          "sourceRange": {
+            "start": {
+              "line": 129,
+              "column": 4
+            },
+            "end": {
+              "line": 154,
+              "column": 5
+            }
+          },
+          "metadata": {},
+          "params": [
+            {
+              "name": "url",
+              "type": "String",
+              "description": "A URL to store in the history store."
+            }
+          ],
+          "return": {
+            "type": "Promise",
+            "desc": "Resolved promise to the insert response of PouchDB\nobject (`ok`, `id` and `rev` keys)"
+          }
+        },
+        {
+          "name": "_handleQuery",
+          "description": "Handles the `url-history-query` custom event.\nIt cancels the event and prohibiits bubbling. Therefore the event should be\nfired as a `cancelable`. It adds the `result` property to the `detail`\nobject which carries a Promise that will resolve to a list of PouchDB\ndocumentnts. It is the same as result as for calling `query()` functiuon.\n\nThe event must contain a `q` property with the query string that is passed\nto the `query()` function.",
+          "privacy": "protected",
+          "sourceRange": {
+            "start": {
+              "line": 167,
+              "column": 4
+            },
+            "end": {
+              "line": 177,
+              "column": 5
+            }
+          },
+          "metadata": {},
+          "params": [
+            {
+              "name": "e",
+              "type": "CustomEvent"
+            }
+          ],
+          "return": {
+            "type": "void"
+          }
+        },
+        {
+          "name": "query",
+          "description": "Gets a list of maching URLs from the datastore.\nList elements are carrying the `url` property with the full\nURL and `cnt` property with number of times this URL has been updated in\nthe data store. `cnt` is used to sort the results.\n\nAdditional properties are regular PouchDB properties like `_id` and `_rev`.",
+          "privacy": "public",
+          "sourceRange": {
+            "start": {
+              "line": 190,
+              "column": 4
+            },
+            "end": {
+              "line": 217,
+              "column": 5
+            }
+          },
+          "metadata": {},
+          "params": [
+            {
+              "name": "q",
+              "type": "String",
+              "description": "A string to search for. It result with entries that url\ncontains (not start with!) a `q`."
+            }
+          ],
+          "return": {
+            "type": "Promise",
+            "desc": "Resolved promise to a list of history items."
+          }
+        },
+        {
+          "name": "_sortFunction",
+          "description": "A function used to sort query list items. It relays on two properties that\nare set by query function on array entries: `_time` which is a timestamp of\nthe entry and `cnt` which is number of times the URL has been used.",
+          "privacy": "protected",
+          "sourceRange": {
+            "start": {
+              "line": 227,
+              "column": 4
+            },
+            "end": {
+              "line": 245,
+              "column": 5
+            }
+          },
+          "metadata": {},
+          "params": [
+            {
+              "name": "a",
+              "type": "Object"
+            },
+            {
+              "name": "b",
+              "type": "Object"
+            }
+          ],
+          "return": {
+            "type": "Number"
+          }
+        }
+      ],
+      "staticMethods": [],
+      "demos": [],
+      "metadata": {},
+      "sourceRange": {
+        "start": {
+          "line": 76,
+          "column": 2
+        },
+        "end": {
+          "line": 246,
+          "column": 3
+        }
+      },
+      "privacy": "public",
+      "superclass": "ArcBaseModel",
+      "name": "LogicElements.UrlHistoryModel",
+      "attributes": [],
+      "events": [],
+      "styling": {
+        "cssVariables": [],
+        "selectors": []
+      },
+      "slots": [],
+      "tagname": "url-history-model"
+    },
+    {
       "description": "Events based access to websockets URL history datastore.\n\nNote: **All events must be cancelable.** When the event is cancelled by an instance\nof the element it won't be handled again by other instance that possibly exists\nin the DOM.\n\nCancellable event is a request to models for change. Non-cancellable event\nis a notification for views to update their values.\nFor example `request-object-changed` event notifies model to update object in\nthe datastore if the event is cancelable and to update views if it's not\ncancellable.\n\nEach handled event contains the `result` property on the `detail` object. It\ncontains a `Promise` object with a result of the operation. Also, for update / delete\nevents the same non-cancelable event is fired.\n\nEvents handled by this element are cancelled and propagation of the event is\nstopped.",
       "summary": "",
       "path": "websocket-url-history-model.html",
@@ -2565,18 +3444,18 @@
           "inheritedFrom": "ArcBehaviors.EventsTargetBehavior"
         },
         {
-          "name": "uuid",
-          "type": "?",
-          "description": "",
+          "name": "db",
+          "type": "PouchDB",
+          "description": "Note, the element does not include PouchDB to the document!",
           "privacy": "public",
           "sourceRange": {
             "file": "base-model.html",
             "start": {
-              "line": 23,
+              "line": 38,
               "column": 2
             },
             "end": {
-              "line": 29,
+              "line": 53,
               "column": 3
             }
           },
@@ -2588,17 +3467,18 @@
           "inheritedFrom": "ArcBaseModel"
         },
         {
-          "name": "db",
+          "name": "uuid",
           "type": "?",
           "description": "",
           "privacy": "public",
           "sourceRange": {
+            "file": "base-model.html",
             "start": {
-              "line": 66,
+              "line": 55,
               "column": 2
             },
             "end": {
-              "line": 73,
+              "line": 61,
               "column": 3
             }
           },
@@ -2606,7 +3486,8 @@
             "polymer": {
               "readOnly": true
             }
-          }
+          },
+          "inheritedFrom": "ArcBaseModel"
         }
       ],
       "methods": [
@@ -2639,11 +3520,11 @@
           "sourceRange": {
             "file": "base-model.html",
             "start": {
-              "line": 31,
+              "line": 63,
               "column": 2
             },
             "end": {
-              "line": 36,
+              "line": 68,
               "column": 3
             }
           },
@@ -2692,7 +3573,7 @@
               "column": 2
             },
             "end": {
-              "line": 57,
+              "line": 58,
               "column": 3
             }
           },
@@ -2712,11 +3593,11 @@
           "privacy": "protected",
           "sourceRange": {
             "start": {
-              "line": 59,
+              "line": 60,
               "column": 2
             },
             "end": {
-              "line": 64,
+              "line": 66,
               "column": 3
             }
           },
@@ -2737,11 +3618,11 @@
           "sourceRange": {
             "file": "base-model.html",
             "start": {
-              "line": 45,
+              "line": 85,
               "column": 2
             },
             "end": {
-              "line": 51,
+              "line": 91,
               "column": 3
             }
           },
@@ -2771,11 +3652,11 @@
           "sourceRange": {
             "file": "base-model.html",
             "start": {
-              "line": 58,
+              "line": 98,
               "column": 2
             },
             "end": {
-              "line": 65,
+              "line": 105,
               "column": 3
             }
           },
@@ -2800,11 +3681,11 @@
           "sourceRange": {
             "file": "base-model.html",
             "start": {
-              "line": 73,
+              "line": 113,
               "column": 2
             },
             "end": {
-              "line": 82,
+              "line": 122,
               "column": 3
             }
           },
@@ -2834,11 +3715,11 @@
           "sourceRange": {
             "file": "base-model.html",
             "start": {
-              "line": 90,
+              "line": 129,
               "column": 2
             },
             "end": {
-              "line": 110,
+              "line": 149,
               "column": 3
             }
           },
@@ -2861,16 +3742,114 @@
           "inheritedFrom": "ArcBaseModel"
         },
         {
+          "name": "deleteModel",
+          "description": "Deletes current database.",
+          "privacy": "public",
+          "sourceRange": {
+            "file": "base-model.html",
+            "start": {
+              "line": 154,
+              "column": 2
+            },
+            "end": {
+              "line": 160,
+              "column": 3
+            }
+          },
+          "metadata": {},
+          "params": [],
+          "return": {
+            "type": "Promise"
+          },
+          "inheritedFrom": "ArcBaseModel"
+        },
+        {
+          "name": "_deleteModelHandler",
+          "description": "Handler for `destroy-model` custom event.\nDeletes current data when scheduled for deletion.",
+          "privacy": "protected",
+          "sourceRange": {
+            "file": "base-model.html",
+            "start": {
+              "line": 167,
+              "column": 2
+            },
+            "end": {
+              "line": 178,
+              "column": 3
+            }
+          },
+          "metadata": {},
+          "params": [
+            {
+              "name": "e",
+              "type": "CustomEvent"
+            }
+          ],
+          "return": {
+            "type": "void"
+          },
+          "inheritedFrom": "ArcBaseModel"
+        },
+        {
+          "name": "_eventCancelled",
+          "description": "",
+          "privacy": "protected",
+          "sourceRange": {
+            "file": "base-model.html",
+            "start": {
+              "line": 180,
+              "column": 2
+            },
+            "end": {
+              "line": 188,
+              "column": 3
+            }
+          },
+          "metadata": {},
+          "params": [
+            {
+              "name": "e"
+            }
+          ],
+          "inheritedFrom": "ArcBaseModel"
+        },
+        {
+          "name": "_cancelEvent",
+          "description": "",
+          "privacy": "protected",
+          "sourceRange": {
+            "file": "base-model.html",
+            "start": {
+              "line": 190,
+              "column": 2
+            },
+            "end": {
+              "line": 193,
+              "column": 3
+            }
+          },
+          "metadata": {},
+          "params": [
+            {
+              "name": "e"
+            }
+          ],
+          "return": {
+            "type": "void"
+          },
+          "inheritedFrom": "ArcBaseModel"
+        },
+        {
           "name": "_handleRead",
           "description": "Handles the read object event",
           "privacy": "protected",
           "sourceRange": {
             "start": {
-              "line": 75,
+              "line": 68,
               "column": 2
             },
             "end": {
-              "line": 94,
+              "line": 87,
               "column": 3
             }
           },
@@ -2890,11 +3869,11 @@
           "privacy": "protected",
           "sourceRange": {
             "start": {
-              "line": 96,
+              "line": 89,
               "column": 2
             },
             "end": {
-              "line": 114,
+              "line": 107,
               "column": 3
             }
           },
@@ -2914,11 +3893,11 @@
           "privacy": "public",
           "sourceRange": {
             "start": {
-              "line": 123,
+              "line": 116,
               "column": 2
             },
             "end": {
-              "line": 134,
+              "line": 127,
               "column": 3
             }
           },
@@ -2941,11 +3920,11 @@
           "privacy": "protected",
           "sourceRange": {
             "start": {
-              "line": 136,
+              "line": 129,
               "column": 2
             },
             "end": {
-              "line": 145,
+              "line": 138,
               "column": 3
             }
           },
@@ -2965,11 +3944,11 @@
           "privacy": "protected",
           "sourceRange": {
             "start": {
-              "line": 147,
+              "line": 140,
               "column": 2
             },
             "end": {
-              "line": 160,
+              "line": 153,
               "column": 3
             }
           },
@@ -2989,11 +3968,11 @@
           "privacy": "public",
           "sourceRange": {
             "start": {
-              "line": 167,
+              "line": 160,
               "column": 2
             },
             "end": {
-              "line": 184,
+              "line": 177,
               "column": 3
             }
           },
@@ -3016,11 +3995,11 @@
           "privacy": "protected",
           "sourceRange": {
             "start": {
-              "line": 186,
+              "line": 179,
               "column": 2
             },
             "end": {
-              "line": 204,
+              "line": 197,
               "column": 3
             }
           },
@@ -3040,11 +4019,11 @@
           "privacy": "protected",
           "sourceRange": {
             "start": {
-              "line": 210,
+              "line": 203,
               "column": 2
             },
             "end": {
-              "line": 213,
+              "line": 206,
               "column": 3
             }
           },
@@ -3071,7 +4050,7 @@
           "column": 0
         },
         "end": {
-          "line": 214,
+          "line": 207,
           "column": 1
         }
       },
@@ -3140,6 +4119,29 @@
           "inheritedFrom": "ArcBehaviors.EventsTargetBehavior"
         },
         {
+          "name": "db",
+          "type": "PouchDB",
+          "description": "Note, the element does not include PouchDB to the document!",
+          "privacy": "public",
+          "sourceRange": {
+            "file": "base-model.html",
+            "start": {
+              "line": 38,
+              "column": 2
+            },
+            "end": {
+              "line": 53,
+              "column": 3
+            }
+          },
+          "metadata": {
+            "polymer": {
+              "readOnly": true
+            }
+          },
+          "inheritedFrom": "ArcBaseModel"
+        },
+        {
           "name": "uuid",
           "type": "?",
           "description": "",
@@ -3147,11 +4149,11 @@
           "sourceRange": {
             "file": "base-model.html",
             "start": {
-              "line": 23,
+              "line": 55,
               "column": 2
             },
             "end": {
-              "line": 29,
+              "line": 61,
               "column": 3
             }
           },
@@ -3278,11 +4280,11 @@
           "sourceRange": {
             "file": "base-model.html",
             "start": {
-              "line": 31,
+              "line": 63,
               "column": 2
             },
             "end": {
-              "line": 36,
+              "line": 68,
               "column": 3
             }
           },
@@ -3376,11 +4378,11 @@
           "sourceRange": {
             "file": "base-model.html",
             "start": {
-              "line": 45,
+              "line": 85,
               "column": 2
             },
             "end": {
-              "line": 51,
+              "line": 91,
               "column": 3
             }
           },
@@ -3410,11 +4412,11 @@
           "sourceRange": {
             "file": "base-model.html",
             "start": {
-              "line": 58,
+              "line": 98,
               "column": 2
             },
             "end": {
-              "line": 65,
+              "line": 105,
               "column": 3
             }
           },
@@ -3439,11 +4441,11 @@
           "sourceRange": {
             "file": "base-model.html",
             "start": {
-              "line": 73,
+              "line": 113,
               "column": 2
             },
             "end": {
-              "line": 82,
+              "line": 122,
               "column": 3
             }
           },
@@ -3473,11 +4475,11 @@
           "sourceRange": {
             "file": "base-model.html",
             "start": {
-              "line": 90,
+              "line": 129,
               "column": 2
             },
             "end": {
-              "line": 110,
+              "line": 149,
               "column": 3
             }
           },
@@ -3492,6 +4494,104 @@
               "name": "noThrow",
               "type": "?Boolean",
               "description": "If set the function will not throw error.\nThis allow to do the logic without stopping program."
+            }
+          ],
+          "return": {
+            "type": "void"
+          },
+          "inheritedFrom": "ArcBaseModel"
+        },
+        {
+          "name": "deleteModel",
+          "description": "Deletes current database.",
+          "privacy": "public",
+          "sourceRange": {
+            "file": "base-model.html",
+            "start": {
+              "line": 154,
+              "column": 2
+            },
+            "end": {
+              "line": 160,
+              "column": 3
+            }
+          },
+          "metadata": {},
+          "params": [],
+          "return": {
+            "type": "Promise"
+          },
+          "inheritedFrom": "ArcBaseModel"
+        },
+        {
+          "name": "_deleteModelHandler",
+          "description": "Handler for `destroy-model` custom event.\nDeletes current data when scheduled for deletion.",
+          "privacy": "protected",
+          "sourceRange": {
+            "file": "base-model.html",
+            "start": {
+              "line": 167,
+              "column": 2
+            },
+            "end": {
+              "line": 178,
+              "column": 3
+            }
+          },
+          "metadata": {},
+          "params": [
+            {
+              "name": "e",
+              "type": "CustomEvent"
+            }
+          ],
+          "return": {
+            "type": "void"
+          },
+          "inheritedFrom": "ArcBaseModel"
+        },
+        {
+          "name": "_eventCancelled",
+          "description": "",
+          "privacy": "protected",
+          "sourceRange": {
+            "file": "base-model.html",
+            "start": {
+              "line": 180,
+              "column": 2
+            },
+            "end": {
+              "line": 188,
+              "column": 3
+            }
+          },
+          "metadata": {},
+          "params": [
+            {
+              "name": "e"
+            }
+          ],
+          "inheritedFrom": "ArcBaseModel"
+        },
+        {
+          "name": "_cancelEvent",
+          "description": "",
+          "privacy": "protected",
+          "sourceRange": {
+            "file": "base-model.html",
+            "start": {
+              "line": 190,
+              "column": 2
+            },
+            "end": {
+              "line": 193,
+              "column": 3
+            }
+          },
+          "metadata": {},
+          "params": [
+            {
+              "name": "e"
             }
           ],
           "return": {
@@ -4091,18 +5191,18 @@
           "inheritedFrom": "ArcBehaviors.EventsTargetBehavior"
         },
         {
-          "name": "uuid",
-          "type": "?",
-          "description": "",
+          "name": "db",
+          "type": "PouchDB",
+          "description": "Note, the element does not include PouchDB to the document!",
           "privacy": "public",
           "sourceRange": {
             "file": "base-model.html",
             "start": {
-              "line": 23,
+              "line": 38,
               "column": 2
             },
             "end": {
-              "line": 29,
+              "line": 53,
               "column": 3
             }
           },
@@ -4114,17 +5214,18 @@
           "inheritedFrom": "ArcBaseModel"
         },
         {
-          "name": "db",
+          "name": "uuid",
           "type": "?",
-          "description": " A handler to host rules database",
+          "description": "",
           "privacy": "public",
           "sourceRange": {
+            "file": "base-model.html",
             "start": {
-              "line": 63,
+              "line": 55,
               "column": 2
             },
             "end": {
-              "line": 66,
+              "line": 61,
               "column": 3
             }
           },
@@ -4132,7 +5233,8 @@
             "polymer": {
               "readOnly": true
             }
-          }
+          },
+          "inheritedFrom": "ArcBaseModel"
         }
       ],
       "methods": [
@@ -4165,11 +5267,11 @@
           "sourceRange": {
             "file": "base-model.html",
             "start": {
-              "line": 31,
+              "line": 63,
               "column": 2
             },
             "end": {
-              "line": 36,
+              "line": 68,
               "column": 3
             }
           },
@@ -4218,7 +5320,7 @@
               "column": 2
             },
             "end": {
-              "line": 53,
+              "line": 54,
               "column": 3
             }
           },
@@ -4238,11 +5340,11 @@
           "privacy": "protected",
           "sourceRange": {
             "start": {
-              "line": 55,
+              "line": 56,
               "column": 2
             },
             "end": {
-              "line": 61,
+              "line": 63,
               "column": 3
             }
           },
@@ -4263,11 +5365,11 @@
           "sourceRange": {
             "file": "base-model.html",
             "start": {
-              "line": 45,
+              "line": 85,
               "column": 2
             },
             "end": {
-              "line": 51,
+              "line": 91,
               "column": 3
             }
           },
@@ -4297,11 +5399,11 @@
           "sourceRange": {
             "file": "base-model.html",
             "start": {
-              "line": 58,
+              "line": 98,
               "column": 2
             },
             "end": {
-              "line": 65,
+              "line": 105,
               "column": 3
             }
           },
@@ -4326,11 +5428,11 @@
           "sourceRange": {
             "file": "base-model.html",
             "start": {
-              "line": 73,
+              "line": 113,
               "column": 2
             },
             "end": {
-              "line": 82,
+              "line": 122,
               "column": 3
             }
           },
@@ -4360,11 +5462,11 @@
           "sourceRange": {
             "file": "base-model.html",
             "start": {
-              "line": 90,
+              "line": 129,
               "column": 2
             },
             "end": {
-              "line": 110,
+              "line": 149,
               "column": 3
             }
           },
@@ -4387,16 +5489,114 @@
           "inheritedFrom": "ArcBaseModel"
         },
         {
+          "name": "deleteModel",
+          "description": "Deletes current database.",
+          "privacy": "public",
+          "sourceRange": {
+            "file": "base-model.html",
+            "start": {
+              "line": 154,
+              "column": 2
+            },
+            "end": {
+              "line": 160,
+              "column": 3
+            }
+          },
+          "metadata": {},
+          "params": [],
+          "return": {
+            "type": "Promise"
+          },
+          "inheritedFrom": "ArcBaseModel"
+        },
+        {
+          "name": "_deleteModelHandler",
+          "description": "Handler for `destroy-model` custom event.\nDeletes current data when scheduled for deletion.",
+          "privacy": "protected",
+          "sourceRange": {
+            "file": "base-model.html",
+            "start": {
+              "line": 167,
+              "column": 2
+            },
+            "end": {
+              "line": 178,
+              "column": 3
+            }
+          },
+          "metadata": {},
+          "params": [
+            {
+              "name": "e",
+              "type": "CustomEvent"
+            }
+          ],
+          "return": {
+            "type": "void"
+          },
+          "inheritedFrom": "ArcBaseModel"
+        },
+        {
+          "name": "_eventCancelled",
+          "description": "",
+          "privacy": "protected",
+          "sourceRange": {
+            "file": "base-model.html",
+            "start": {
+              "line": 180,
+              "column": 2
+            },
+            "end": {
+              "line": 188,
+              "column": 3
+            }
+          },
+          "metadata": {},
+          "params": [
+            {
+              "name": "e"
+            }
+          ],
+          "inheritedFrom": "ArcBaseModel"
+        },
+        {
+          "name": "_cancelEvent",
+          "description": "",
+          "privacy": "protected",
+          "sourceRange": {
+            "file": "base-model.html",
+            "start": {
+              "line": 190,
+              "column": 2
+            },
+            "end": {
+              "line": 193,
+              "column": 3
+            }
+          },
+          "metadata": {},
+          "params": [
+            {
+              "name": "e"
+            }
+          ],
+          "return": {
+            "type": "void"
+          },
+          "inheritedFrom": "ArcBaseModel"
+        },
+        {
           "name": "update",
           "description": "Updates / saves the host rule object in the datastore.\nThis function fires `host-rules-changed` event.",
           "privacy": "public",
           "sourceRange": {
             "start": {
-              "line": 74,
+              "line": 71,
               "column": 2
             },
             "end": {
-              "line": 86,
+              "line": 83,
               "column": 3
             }
           },
@@ -4419,11 +5619,11 @@
           "privacy": "public",
           "sourceRange": {
             "start": {
-              "line": 94,
+              "line": 91,
               "column": 2
             },
             "end": {
-              "line": 120,
+              "line": 117,
               "column": 3
             }
           },
@@ -4446,11 +5646,11 @@
           "privacy": "public",
           "sourceRange": {
             "start": {
-              "line": 130,
+              "line": 127,
               "column": 2
             },
             "end": {
-              "line": 149,
+              "line": 146,
               "column": 3
             }
           },
@@ -4478,11 +5678,11 @@
           "privacy": "public",
           "sourceRange": {
             "start": {
-              "line": 155,
+              "line": 152,
               "column": 2
             },
             "end": {
-              "line": 169,
+              "line": 166,
               "column": 3
             }
           },
@@ -4499,11 +5699,11 @@
           "privacy": "protected",
           "sourceRange": {
             "start": {
-              "line": 177,
+              "line": 174,
               "column": 2
             },
             "end": {
-              "line": 189,
+              "line": 186,
               "column": 3
             }
           },
@@ -4524,11 +5724,11 @@
           "privacy": "protected",
           "sourceRange": {
             "start": {
-              "line": 191,
+              "line": 188,
               "column": 2
             },
             "end": {
-              "line": 222,
+              "line": 219,
               "column": 3
             }
           },
@@ -4548,11 +5748,11 @@
           "privacy": "protected",
           "sourceRange": {
             "start": {
-              "line": 224,
+              "line": 221,
               "column": 2
             },
             "end": {
-              "line": 239,
+              "line": 236,
               "column": 3
             }
           },
@@ -4572,11 +5772,11 @@
           "privacy": "protected",
           "sourceRange": {
             "start": {
-              "line": 241,
+              "line": 238,
               "column": 2
             },
             "end": {
-              "line": 249,
+              "line": 246,
               "column": 3
             }
           },
@@ -4596,11 +5796,11 @@
           "privacy": "protected",
           "sourceRange": {
             "start": {
-              "line": 251,
+              "line": 248,
               "column": 2
             },
             "end": {
-              "line": 261,
+              "line": 258,
               "column": 3
             }
           },
@@ -4624,7 +5824,7 @@
           "column": 0
         },
         "end": {
-          "line": 262,
+          "line": 259,
           "column": 1
         }
       },
@@ -4639,6 +5839,880 @@
       },
       "slots": [],
       "tagname": "host-rules-model"
+    },
+    {
+      "description": "Model for host rules.\n\nAvailable events:\n\n- `host-rules-insert` Bulk add hosts\n- `host-rules-changed` Change / add record\n- `host-rules-deleted` Remove record\n- `host-rules-list` Lists all rules\n- `host-rules-clear` Clears hosts datastore\n\nEach event must be cancelable or it will be ignored.\nThe insert, change and delete events dispatches non cancelable update/delete\nevents. Application should listen for this events to update it's state.",
+      "summary": "",
+      "path": "variables-model.html",
+      "properties": [
+        {
+          "name": "eventsTarget",
+          "type": "Object | null | undefined",
+          "description": "Events handlers target. By default the element listens on\n`window` object. If set, all events listeners will be attached to this\nobject instead of `window`.",
+          "privacy": "public",
+          "sourceRange": {
+            "file": "../events-target-behavior/events-target-behavior.html",
+            "start": {
+              "line": 73,
+              "column": 8
+            },
+            "end": {
+              "line": 76,
+              "column": 9
+            }
+          },
+          "metadata": {
+            "polymer": {
+              "observer": "\"_eventsTargetChanged\"",
+              "attributeType": "Object"
+            }
+          },
+          "inheritedFrom": "ArcBehaviors.EventsTargetBehavior"
+        },
+        {
+          "name": "_oldEventsTarget",
+          "type": "Object | null | undefined",
+          "description": "An event target used to attach listeners.",
+          "privacy": "protected",
+          "sourceRange": {
+            "file": "../events-target-behavior/events-target-behavior.html",
+            "start": {
+              "line": 78,
+              "column": 8
+            },
+            "end": {
+              "line": 78,
+              "column": 32
+            }
+          },
+          "metadata": {
+            "polymer": {
+              "attributeType": "Object"
+            }
+          },
+          "inheritedFrom": "ArcBehaviors.EventsTargetBehavior"
+        },
+        {
+          "name": "db",
+          "type": "PouchDB",
+          "description": "Note, the element does not include PouchDB to the document!",
+          "privacy": "public",
+          "sourceRange": {
+            "file": "base-model.html",
+            "start": {
+              "line": 38,
+              "column": 2
+            },
+            "end": {
+              "line": 53,
+              "column": 3
+            }
+          },
+          "metadata": {
+            "polymer": {
+              "readOnly": true
+            }
+          },
+          "inheritedFrom": "ArcBaseModel"
+        },
+        {
+          "name": "uuid",
+          "type": "?",
+          "description": "",
+          "privacy": "public",
+          "sourceRange": {
+            "file": "base-model.html",
+            "start": {
+              "line": 55,
+              "column": 2
+            },
+            "end": {
+              "line": 61,
+              "column": 3
+            }
+          },
+          "metadata": {
+            "polymer": {
+              "readOnly": true
+            }
+          },
+          "inheritedFrom": "ArcBaseModel"
+        },
+        {
+          "name": "environmentDb",
+          "type": "Object",
+          "description": "Handler to the environments database.",
+          "privacy": "public",
+          "sourceRange": {
+            "start": {
+              "line": 73,
+              "column": 2
+            },
+            "end": {
+              "line": 76,
+              "column": 3
+            }
+          },
+          "metadata": {
+            "polymer": {
+              "readOnly": true
+            }
+          }
+        },
+        {
+          "name": "variableDb",
+          "type": "Object",
+          "description": "Handler to the variables database.",
+          "privacy": "public",
+          "sourceRange": {
+            "start": {
+              "line": 82,
+              "column": 2
+            },
+            "end": {
+              "line": 84,
+              "column": 3
+            }
+          },
+          "metadata": {
+            "polymer": {
+              "readOnly": true
+            }
+          }
+        }
+      ],
+      "methods": [
+        {
+          "name": "connectedCallback",
+          "description": "",
+          "privacy": "public",
+          "sourceRange": {
+            "file": "../events-target-behavior/events-target-behavior.html",
+            "start": {
+              "line": 81,
+              "column": 4
+            },
+            "end": {
+              "line": 84,
+              "column": 6
+            }
+          },
+          "metadata": {},
+          "params": [],
+          "return": {
+            "type": "void"
+          },
+          "inheritedFrom": "ArcBehaviors.EventsTargetBehavior"
+        },
+        {
+          "name": "disconnectedCallback",
+          "description": "",
+          "privacy": "public",
+          "sourceRange": {
+            "file": "base-model.html",
+            "start": {
+              "line": 63,
+              "column": 2
+            },
+            "end": {
+              "line": 68,
+              "column": 3
+            }
+          },
+          "metadata": {},
+          "params": [],
+          "return": {
+            "type": "void"
+          },
+          "inheritedFrom": "ArcBaseModel"
+        },
+        {
+          "name": "_eventsTargetChanged",
+          "description": "Removes old handlers (if any) and attaches listeners on new event\nevent target.",
+          "privacy": "protected",
+          "sourceRange": {
+            "file": "../events-target-behavior/events-target-behavior.html",
+            "start": {
+              "line": 99,
+              "column": 4
+            },
+            "end": {
+              "line": 105,
+              "column": 5
+            }
+          },
+          "metadata": {},
+          "params": [
+            {
+              "name": "eventsTarget",
+              "type": "?Node",
+              "description": "Event target to set handlers on. If not set it\nwill set handlers on the `window` object."
+            }
+          ],
+          "return": {
+            "type": "void"
+          },
+          "inheritedFrom": "ArcBehaviors.EventsTargetBehavior"
+        },
+        {
+          "name": "_attachListeners",
+          "description": "",
+          "privacy": "protected",
+          "sourceRange": {
+            "start": {
+              "line": 48,
+              "column": 2
+            },
+            "end": {
+              "line": 56,
+              "column": 3
+            }
+          },
+          "metadata": {},
+          "params": [
+            {
+              "name": "node"
+            }
+          ],
+          "return": {
+            "type": "void"
+          }
+        },
+        {
+          "name": "_detachListeners",
+          "description": "",
+          "privacy": "protected",
+          "sourceRange": {
+            "start": {
+              "line": 58,
+              "column": 2
+            },
+            "end": {
+              "line": 66,
+              "column": 3
+            }
+          },
+          "metadata": {},
+          "params": [
+            {
+              "name": "node"
+            }
+          ],
+          "return": {
+            "type": "void"
+          }
+        },
+        {
+          "name": "read",
+          "description": "Reads an entry from the datastore.",
+          "privacy": "public",
+          "sourceRange": {
+            "file": "base-model.html",
+            "start": {
+              "line": 85,
+              "column": 2
+            },
+            "end": {
+              "line": 91,
+              "column": 3
+            }
+          },
+          "metadata": {},
+          "params": [
+            {
+              "name": "id",
+              "type": "String",
+              "description": "The ID of the datastore entry."
+            },
+            {
+              "name": "rev",
+              "type": "?String",
+              "description": "Specific revision to read. Defaults to latest revision."
+            }
+          ],
+          "return": {
+            "type": "Promise",
+            "desc": "Promise resolved to a datastore object."
+          },
+          "inheritedFrom": "ArcBaseModel"
+        },
+        {
+          "name": "_computeMidnight",
+          "description": "Computes past mindnight for given timestamp.",
+          "privacy": "protected",
+          "sourceRange": {
+            "file": "base-model.html",
+            "start": {
+              "line": 98,
+              "column": 2
+            },
+            "end": {
+              "line": 105,
+              "column": 3
+            }
+          },
+          "metadata": {},
+          "params": [
+            {
+              "name": "time",
+              "type": "Number",
+              "description": "Timestamp"
+            }
+          ],
+          "return": {
+            "type": "Number",
+            "desc": "Time reduced to midnight."
+          },
+          "inheritedFrom": "ArcBaseModel"
+        },
+        {
+          "name": "_fireUpdated",
+          "description": "Dispatches non-cancelable change event.",
+          "privacy": "protected",
+          "sourceRange": {
+            "file": "base-model.html",
+            "start": {
+              "line": 113,
+              "column": 2
+            },
+            "end": {
+              "line": 122,
+              "column": 3
+            }
+          },
+          "metadata": {},
+          "params": [
+            {
+              "name": "type",
+              "type": "String",
+              "description": "Event type"
+            },
+            {
+              "name": "detail",
+              "type": "Object",
+              "description": "A detail object to dispatch."
+            }
+          ],
+          "return": {
+            "type": "CustomEvent",
+            "desc": "Created and dispatched event."
+          },
+          "inheritedFrom": "ArcBaseModel"
+        },
+        {
+          "name": "_handleException",
+          "description": "Handles any exception in the model in a unified way.",
+          "privacy": "protected",
+          "sourceRange": {
+            "file": "base-model.html",
+            "start": {
+              "line": 129,
+              "column": 2
+            },
+            "end": {
+              "line": 149,
+              "column": 3
+            }
+          },
+          "metadata": {},
+          "params": [
+            {
+              "name": "e",
+              "type": "(Error | Object)",
+              "description": "An error object"
+            },
+            {
+              "name": "noThrow",
+              "type": "?Boolean",
+              "description": "If set the function will not throw error.\nThis allow to do the logic without stopping program."
+            }
+          ],
+          "return": {
+            "type": "void"
+          },
+          "inheritedFrom": "ArcBaseModel"
+        },
+        {
+          "name": "deleteModel",
+          "description": "Deletes current database.",
+          "privacy": "public",
+          "sourceRange": {
+            "file": "base-model.html",
+            "start": {
+              "line": 154,
+              "column": 2
+            },
+            "end": {
+              "line": 160,
+              "column": 3
+            }
+          },
+          "metadata": {},
+          "params": [],
+          "return": {
+            "type": "Promise"
+          },
+          "inheritedFrom": "ArcBaseModel"
+        },
+        {
+          "name": "_deleteModelHandler",
+          "description": "Handler for `destroy-model` custom event.\nDeletes saved or history data when scheduled for deletion.",
+          "privacy": "protected",
+          "sourceRange": {
+            "start": {
+              "line": 504,
+              "column": 2
+            },
+            "end": {
+              "line": 520,
+              "column": 3
+            }
+          },
+          "metadata": {},
+          "params": [
+            {
+              "name": "e",
+              "type": "CustomEvent"
+            }
+          ],
+          "return": {
+            "type": "void"
+          }
+        },
+        {
+          "name": "_eventCancelled",
+          "description": "",
+          "privacy": "protected",
+          "sourceRange": {
+            "file": "base-model.html",
+            "start": {
+              "line": 180,
+              "column": 2
+            },
+            "end": {
+              "line": 188,
+              "column": 3
+            }
+          },
+          "metadata": {},
+          "params": [
+            {
+              "name": "e"
+            }
+          ],
+          "inheritedFrom": "ArcBaseModel"
+        },
+        {
+          "name": "_cancelEvent",
+          "description": "",
+          "privacy": "protected",
+          "sourceRange": {
+            "file": "base-model.html",
+            "start": {
+              "line": 190,
+              "column": 2
+            },
+            "end": {
+              "line": 193,
+              "column": 3
+            }
+          },
+          "metadata": {},
+          "params": [
+            {
+              "name": "e"
+            }
+          ],
+          "return": {
+            "type": "void"
+          },
+          "inheritedFrom": "ArcBaseModel"
+        },
+        {
+          "name": "_envUpdateHandler",
+          "description": "A handler for the `environment-updated` custom event.\nUpdates the environment in the data store.\n\nThe `environment-updated` custom event should be cancellable or the event\nwon't be handled at all.",
+          "privacy": "protected",
+          "sourceRange": {
+            "start": {
+              "line": 94,
+              "column": 2
+            },
+            "end": {
+              "line": 100,
+              "column": 3
+            }
+          },
+          "metadata": {},
+          "params": [
+            {
+              "name": "e",
+              "type": "CustomEvent"
+            }
+          ],
+          "return": {
+            "type": "void"
+          }
+        },
+        {
+          "name": "updateEnvironment",
+          "description": "Updates environment value.\n\nIf the `value` doesn't contains the `_id` property a new environment is\ncreated. The `_rev` property is always updated to the latest value.",
+          "privacy": "public",
+          "sourceRange": {
+            "start": {
+              "line": 113,
+              "column": 2
+            },
+            "end": {
+              "line": 168,
+              "column": 3
+            }
+          },
+          "metadata": {},
+          "params": [
+            {
+              "name": "data",
+              "type": "Object",
+              "description": "A PouchDB object to be stored. It should contain the\n`_id` property if the object is about to be updated. If the `_id` doesn't\nexists a new object is created."
+            }
+          ],
+          "return": {
+            "type": "Promise"
+          }
+        },
+        {
+          "name": "__updateEnvironmentName",
+          "description": "A special case when the name of the environment changes.\nIt updates any related to this environment variables.\n\nIf this is current environment it also changes its name.",
+          "privacy": "private",
+          "sourceRange": {
+            "start": {
+              "line": 179,
+              "column": 2
+            },
+            "end": {
+              "line": 188,
+              "column": 3
+            }
+          },
+          "metadata": {},
+          "params": [
+            {
+              "name": "oldName",
+              "type": "String",
+              "description": "Name of the environment befoe the change"
+            },
+            {
+              "name": "data",
+              "type": "String",
+              "description": "Updated data store entry"
+            }
+          ],
+          "return": {
+            "type": "Promise"
+          }
+        },
+        {
+          "name": "_envDeleteHandler",
+          "description": "A handler for the `environment-deleted` custom event.\nDeletes a variable in the data store.\n\nThe `environment-deleted` custom event should be cancellable or the event\nwon't be handled at all.\n\nThe delete function fires non cancellable `environment-deleted` custom\nevent so the UI components can use it to update their values.",
+          "privacy": "protected",
+          "sourceRange": {
+            "start": {
+              "line": 201,
+              "column": 2
+            },
+            "end": {
+              "line": 207,
+              "column": 3
+            }
+          },
+          "metadata": {},
+          "params": [
+            {
+              "name": "e",
+              "type": "CustomEvent"
+            }
+          ],
+          "return": {
+            "type": "void"
+          }
+        },
+        {
+          "name": "deleteEnvironment",
+          "description": "Deletes an environment from the data store.\n\nAfter updating the data store this method sends the `environment-deleted`\nevent that can't be cancelled so other managers that are present in the DOM\nwill not update the value again. If you don't need updated `_rev` you don't\nhave to listen for this event.\n\nBecause this function changes the `environments` array the\n`environments-list-changed` event is fired alongside the `environment-deleted`\nevent.",
+          "privacy": "public",
+          "sourceRange": {
+            "start": {
+              "line": 223,
+              "column": 2
+            },
+            "end": {
+              "line": 256,
+              "column": 3
+            }
+          },
+          "metadata": {},
+          "params": [
+            {
+              "name": "id",
+              "type": "Object",
+              "description": "The PouchDB `_id` property of the object to delete."
+            }
+          ],
+          "return": {
+            "type": "Promise"
+          }
+        },
+        {
+          "name": "_deleteEnvironmentVariables",
+          "description": "To be called after the environment has been deleted. It clears variables\nfor the environment.",
+          "privacy": "protected",
+          "sourceRange": {
+            "start": {
+              "line": 264,
+              "column": 2
+            },
+            "end": {
+              "line": 293,
+              "column": 3
+            }
+          },
+          "metadata": {},
+          "params": [
+            {
+              "name": "environment",
+              "type": "String",
+              "description": "The environment name."
+            }
+          ],
+          "return": {
+            "type": "Promise"
+          }
+        },
+        {
+          "name": "_envListHandler",
+          "description": "A handler for the `environment-list` custom event.\nAdds a `value` propety of the event `detail` object with the array of the\nuser defined environments objects. Each item is a PouchDb data store item\n(with `_id` and `_rev`).\n\nThe `value` set on the details object can be undefined if the user haven't\ndefined any environments or if the manager haven't restored the list yet.\nIn the later case the event target element should listen for\n`environments-list-changed` event to update the list of available environments.\n\nThe `environment-current` custom event should be cancellable or the event\nwon't be handled at all.",
+          "privacy": "protected",
+          "sourceRange": {
+            "start": {
+              "line": 310,
+              "column": 2
+            },
+            "end": {
+              "line": 316,
+              "column": 3
+            }
+          },
+          "metadata": {},
+          "params": [
+            {
+              "name": "e",
+              "type": "CustomEvent"
+            }
+          ],
+          "return": {
+            "type": "void"
+          }
+        },
+        {
+          "name": "listEnvironments",
+          "description": "Lists all user defined environments.",
+          "privacy": "public",
+          "sourceRange": {
+            "start": {
+              "line": 322,
+              "column": 2
+            },
+            "end": {
+              "line": 329,
+              "column": 3
+            }
+          },
+          "metadata": {},
+          "params": [],
+          "return": {
+            "type": "Promise",
+            "desc": "Resolved promise with the list of environments."
+          }
+        },
+        {
+          "name": "_varListHandler",
+          "description": "A handler for the `variable-list` custom event.\n\nAdds a `value` propety of the event `detail` object with the array of the\nvariables restored for current environment. Each item is a PouchDb data\nstore item (with `_id` and `_rev`).",
+          "privacy": "protected",
+          "sourceRange": {
+            "start": {
+              "line": 339,
+              "column": 2
+            },
+            "end": {
+              "line": 345,
+              "column": 3
+            }
+          },
+          "metadata": {},
+          "params": [
+            {
+              "name": "e",
+              "type": "CustomEvent"
+            }
+          ],
+          "return": {
+            "type": "void"
+          }
+        },
+        {
+          "name": "listVariables",
+          "description": "Refreshes list of variables for the `environment`.",
+          "privacy": "public",
+          "sourceRange": {
+            "start": {
+              "line": 354,
+              "column": 2
+            },
+            "end": {
+              "line": 370,
+              "column": 3
+            }
+          },
+          "metadata": {},
+          "params": [
+            {
+              "name": "environment",
+              "type": "?String",
+              "description": "Name of the environment to get the variables\nfrom. If not set then `default` fill be used."
+            }
+          ],
+          "return": {
+            "type": "Promise",
+            "desc": "Resolved promise with the list of variables for the\nenvironment."
+          }
+        },
+        {
+          "name": "_varUpdateHandler",
+          "description": "A handler for the `variable-updated` custom event.\nUpdates the variable in the data store.\n\nThe `variable-updated` custom event should be cancellable or the event\nwon't be handled at all.",
+          "privacy": "protected",
+          "sourceRange": {
+            "start": {
+              "line": 380,
+              "column": 2
+            },
+            "end": {
+              "line": 386,
+              "column": 3
+            }
+          },
+          "metadata": {},
+          "params": [
+            {
+              "name": "e",
+              "type": "CustomEvent"
+            }
+          ],
+          "return": {
+            "type": "void"
+          }
+        },
+        {
+          "name": "updateVariable",
+          "description": "Updates a variable value.\n\nIf the `value` doesn't contains the `_id` property a new variable will\nbe created. The `_rev` property will be always updated to the latest value\nso there's no need to set it on the object.\n\nAfter saving the data this method sends the `variable-updated` event that\ncan't be cancelled so other managers that are present in the DOM will not\nupdate the value again.",
+          "privacy": "public",
+          "sourceRange": {
+            "start": {
+              "line": 403,
+              "column": 2
+            },
+            "end": {
+              "line": 441,
+              "column": 3
+            }
+          },
+          "metadata": {},
+          "params": [
+            {
+              "name": "data",
+              "type": "Object",
+              "description": "A PouchDB object to be stored. It should contain the\n`_id` property if the object is about to be updated. If the `_id` doesn't\nexists a new object is created."
+            }
+          ],
+          "return": {
+            "type": "Promise"
+          }
+        },
+        {
+          "name": "_varDeleteHandler",
+          "description": "Deletes a variable from the data store.",
+          "privacy": "protected",
+          "sourceRange": {
+            "start": {
+              "line": 450,
+              "column": 2
+            },
+            "end": {
+              "line": 456,
+              "column": 3
+            }
+          },
+          "metadata": {},
+          "params": [
+            {
+              "name": "e",
+              "type": "Event",
+              "description": "Optional. If it is called from the event handler, this\nis the event object. If initial validation fails then it will set `error`\nproperty on the `detail` object."
+            }
+          ],
+          "return": {
+            "type": "void"
+          }
+        },
+        {
+          "name": "deleteVariable",
+          "description": "Deletes a variable from the data store.\n\nAfter updating the data store this method sends the `variable-deleted`\nevent that can't be cancelled so other managers that are present in the DOM\nwill not update the value again. If you don't need updated `_rev` you don't\nhave to listen for this event.\n\nBecause this function changes the `variables` array the\n`variables-list-changed` event is fired alongside the `variable-deleted`\nevent.",
+          "privacy": "public",
+          "sourceRange": {
+            "start": {
+              "line": 473,
+              "column": 2
+            },
+            "end": {
+              "line": 498,
+              "column": 3
+            }
+          },
+          "metadata": {},
+          "params": [
+            {
+              "name": "id",
+              "type": "Object",
+              "description": "The PouchDB `_id` property of the object to delete."
+            }
+          ],
+          "return": {
+            "type": "Promise"
+          }
+        }
+      ],
+      "staticMethods": [],
+      "demos": [],
+      "metadata": {},
+      "sourceRange": {
+        "start": {
+          "line": 34,
+          "column": 0
+        },
+        "end": {
+          "line": 521,
+          "column": 1
+        }
+      },
+      "privacy": "public",
+      "superclass": "ArcBaseModel",
+      "name": "LogicElements.VariablesModel",
+      "attributes": [],
+      "events": [],
+      "styling": {
+        "cssVariables": [],
+        "selectors": []
+      },
+      "slots": [],
+      "tagname": "variables-model"
     }
   ],
   "classes": [
@@ -4686,17 +6760,34 @@
           "inheritedFrom": "ArcBehaviors.EventsTargetBehavior"
         },
         {
+          "name": "db",
+          "type": "PouchDB",
+          "description": "Note, the element does not include PouchDB to the document!",
+          "privacy": "public",
+          "sourceRange": {
+            "start": {
+              "line": 38,
+              "column": 2
+            },
+            "end": {
+              "line": 53,
+              "column": 3
+            }
+          },
+          "metadata": {}
+        },
+        {
           "name": "uuid",
           "type": "?",
           "description": "",
           "privacy": "public",
           "sourceRange": {
             "start": {
-              "line": 23,
+              "line": 55,
               "column": 2
             },
             "end": {
-              "line": 29,
+              "line": 61,
               "column": 3
             }
           },
@@ -4732,11 +6823,11 @@
           "privacy": "public",
           "sourceRange": {
             "start": {
-              "line": 31,
+              "line": 63,
               "column": 2
             },
             "end": {
-              "line": 36,
+              "line": 68,
               "column": 3
             }
           },
@@ -4776,47 +6867,51 @@
         },
         {
           "name": "_attachListeners",
-          "description": "To be implement by the element to set event listeners on the target",
+          "description": "",
           "privacy": "protected",
           "sourceRange": {
-            "file": "../events-target-behavior/events-target-behavior.html",
             "start": {
-              "line": 107,
-              "column": 4
+              "line": 70,
+              "column": 2
             },
             "end": {
-              "line": 109,
-              "column": 5
+              "line": 72,
+              "column": 3
             }
           },
           "metadata": {},
-          "params": [],
+          "params": [
+            {
+              "name": "node"
+            }
+          ],
           "return": {
             "type": "void"
-          },
-          "inheritedFrom": "ArcBehaviors.EventsTargetBehavior"
+          }
         },
         {
           "name": "_detachListeners",
-          "description": "To be implement by the element to remove event listeners from the target",
+          "description": "",
           "privacy": "protected",
           "sourceRange": {
-            "file": "../events-target-behavior/events-target-behavior.html",
             "start": {
-              "line": 111,
-              "column": 4
+              "line": 74,
+              "column": 2
             },
             "end": {
-              "line": 113,
-              "column": 5
+              "line": 76,
+              "column": 3
             }
           },
           "metadata": {},
-          "params": [],
+          "params": [
+            {
+              "name": "node"
+            }
+          ],
           "return": {
             "type": "void"
-          },
-          "inheritedFrom": "ArcBehaviors.EventsTargetBehavior"
+          }
         },
         {
           "name": "read",
@@ -4824,11 +6919,11 @@
           "privacy": "public",
           "sourceRange": {
             "start": {
-              "line": 45,
+              "line": 85,
               "column": 2
             },
             "end": {
-              "line": 51,
+              "line": 91,
               "column": 3
             }
           },
@@ -4856,11 +6951,11 @@
           "privacy": "protected",
           "sourceRange": {
             "start": {
-              "line": 58,
+              "line": 98,
               "column": 2
             },
             "end": {
-              "line": 65,
+              "line": 105,
               "column": 3
             }
           },
@@ -4883,11 +6978,11 @@
           "privacy": "protected",
           "sourceRange": {
             "start": {
-              "line": 73,
+              "line": 113,
               "column": 2
             },
             "end": {
-              "line": 82,
+              "line": 122,
               "column": 3
             }
           },
@@ -4915,11 +7010,11 @@
           "privacy": "protected",
           "sourceRange": {
             "start": {
-              "line": 90,
+              "line": 129,
               "column": 2
             },
             "end": {
-              "line": 110,
+              "line": 149,
               "column": 3
             }
           },
@@ -4939,6 +7034,96 @@
           "return": {
             "type": "void"
           }
+        },
+        {
+          "name": "deleteModel",
+          "description": "Deletes current database.",
+          "privacy": "public",
+          "sourceRange": {
+            "start": {
+              "line": 154,
+              "column": 2
+            },
+            "end": {
+              "line": 160,
+              "column": 3
+            }
+          },
+          "metadata": {},
+          "params": [],
+          "return": {
+            "type": "Promise"
+          }
+        },
+        {
+          "name": "_deleteModelHandler",
+          "description": "Handler for `destroy-model` custom event.\nDeletes current data when scheduled for deletion.",
+          "privacy": "protected",
+          "sourceRange": {
+            "start": {
+              "line": 167,
+              "column": 2
+            },
+            "end": {
+              "line": 178,
+              "column": 3
+            }
+          },
+          "metadata": {},
+          "params": [
+            {
+              "name": "e",
+              "type": "CustomEvent"
+            }
+          ],
+          "return": {
+            "type": "void"
+          }
+        },
+        {
+          "name": "_eventCancelled",
+          "description": "",
+          "privacy": "protected",
+          "sourceRange": {
+            "start": {
+              "line": 180,
+              "column": 2
+            },
+            "end": {
+              "line": 188,
+              "column": 3
+            }
+          },
+          "metadata": {},
+          "params": [
+            {
+              "name": "e"
+            }
+          ]
+        },
+        {
+          "name": "_cancelEvent",
+          "description": "",
+          "privacy": "protected",
+          "sourceRange": {
+            "start": {
+              "line": 190,
+              "column": 2
+            },
+            "end": {
+              "line": 193,
+              "column": 3
+            }
+          },
+          "metadata": {},
+          "params": [
+            {
+              "name": "e"
+            }
+          ],
+          "return": {
+            "type": "void"
+          }
         }
       ],
       "staticMethods": [],
@@ -4950,7 +7135,7 @@
           "column": 0
         },
         "end": {
-          "line": 111,
+          "line": 194,
           "column": 1
         }
       },
@@ -5001,6 +7186,25 @@
           "inheritedFrom": "ArcBehaviors.EventsTargetBehavior"
         },
         {
+          "name": "db",
+          "type": "PouchDB",
+          "description": "Note, the element does not include PouchDB to the document!",
+          "privacy": "public",
+          "sourceRange": {
+            "file": "base-model.html",
+            "start": {
+              "line": 38,
+              "column": 2
+            },
+            "end": {
+              "line": 53,
+              "column": 3
+            }
+          },
+          "metadata": {},
+          "inheritedFrom": "ArcBaseModel"
+        },
+        {
           "name": "uuid",
           "type": "?",
           "description": "",
@@ -5008,11 +7212,11 @@
           "sourceRange": {
             "file": "base-model.html",
             "start": {
-              "line": 23,
+              "line": 55,
               "column": 2
             },
             "end": {
-              "line": 29,
+              "line": 61,
               "column": 3
             }
           },
@@ -5101,11 +7305,11 @@
           "sourceRange": {
             "file": "base-model.html",
             "start": {
-              "line": 31,
+              "line": 63,
               "column": 2
             },
             "end": {
-              "line": 36,
+              "line": 68,
               "column": 3
             }
           },
@@ -5146,47 +7350,55 @@
         },
         {
           "name": "_attachListeners",
-          "description": "To be implement by the element to set event listeners on the target",
+          "description": "",
           "privacy": "protected",
           "sourceRange": {
-            "file": "../events-target-behavior/events-target-behavior.html",
+            "file": "base-model.html",
             "start": {
-              "line": 107,
-              "column": 4
+              "line": 70,
+              "column": 2
             },
             "end": {
-              "line": 109,
-              "column": 5
+              "line": 72,
+              "column": 3
             }
           },
           "metadata": {},
-          "params": [],
+          "params": [
+            {
+              "name": "node"
+            }
+          ],
           "return": {
             "type": "void"
           },
-          "inheritedFrom": "ArcBehaviors.EventsTargetBehavior"
+          "inheritedFrom": "ArcBaseModel"
         },
         {
           "name": "_detachListeners",
-          "description": "To be implement by the element to remove event listeners from the target",
+          "description": "",
           "privacy": "protected",
           "sourceRange": {
-            "file": "../events-target-behavior/events-target-behavior.html",
+            "file": "base-model.html",
             "start": {
-              "line": 111,
-              "column": 4
+              "line": 74,
+              "column": 2
             },
             "end": {
-              "line": 113,
-              "column": 5
+              "line": 76,
+              "column": 3
             }
           },
           "metadata": {},
-          "params": [],
+          "params": [
+            {
+              "name": "node"
+            }
+          ],
           "return": {
             "type": "void"
           },
-          "inheritedFrom": "ArcBehaviors.EventsTargetBehavior"
+          "inheritedFrom": "ArcBaseModel"
         },
         {
           "name": "read",
@@ -5195,11 +7407,11 @@
           "sourceRange": {
             "file": "base-model.html",
             "start": {
-              "line": 45,
+              "line": 85,
               "column": 2
             },
             "end": {
-              "line": 51,
+              "line": 91,
               "column": 3
             }
           },
@@ -5229,11 +7441,11 @@
           "sourceRange": {
             "file": "base-model.html",
             "start": {
-              "line": 58,
+              "line": 98,
               "column": 2
             },
             "end": {
-              "line": 65,
+              "line": 105,
               "column": 3
             }
           },
@@ -5258,11 +7470,11 @@
           "sourceRange": {
             "file": "base-model.html",
             "start": {
-              "line": 73,
+              "line": 113,
               "column": 2
             },
             "end": {
-              "line": 82,
+              "line": 122,
               "column": 3
             }
           },
@@ -5292,11 +7504,11 @@
           "sourceRange": {
             "file": "base-model.html",
             "start": {
-              "line": 90,
+              "line": 129,
               "column": 2
             },
             "end": {
-              "line": 110,
+              "line": 149,
               "column": 3
             }
           },
@@ -5311,6 +7523,108 @@
               "name": "noThrow",
               "type": "?Boolean",
               "description": "If set the function will not throw error.\nThis allow to do the logic without stopping program."
+            }
+          ],
+          "return": {
+            "type": "void"
+          },
+          "inheritedFrom": "ArcBaseModel"
+        },
+        {
+          "name": "deleteModel",
+          "description": "Deletes database data by tye.",
+          "privacy": "public",
+          "sourceRange": {
+            "start": {
+              "line": 63,
+              "column": 2
+            },
+            "end": {
+              "line": 70,
+              "column": 3
+            }
+          },
+          "metadata": {},
+          "params": [
+            {
+              "name": "type",
+              "type": "String",
+              "description": "Either `saved-requests` or `history-requests`"
+            }
+          ],
+          "return": {
+            "type": "Promise"
+          }
+        },
+        {
+          "name": "_deleteModelHandler",
+          "description": "Handler for `destroy-model` custom event.\nDeletes current data when scheduled for deletion.",
+          "privacy": "protected",
+          "sourceRange": {
+            "file": "base-model.html",
+            "start": {
+              "line": 167,
+              "column": 2
+            },
+            "end": {
+              "line": 178,
+              "column": 3
+            }
+          },
+          "metadata": {},
+          "params": [
+            {
+              "name": "e",
+              "type": "CustomEvent"
+            }
+          ],
+          "return": {
+            "type": "void"
+          },
+          "inheritedFrom": "ArcBaseModel"
+        },
+        {
+          "name": "_eventCancelled",
+          "description": "",
+          "privacy": "protected",
+          "sourceRange": {
+            "file": "base-model.html",
+            "start": {
+              "line": 180,
+              "column": 2
+            },
+            "end": {
+              "line": 188,
+              "column": 3
+            }
+          },
+          "metadata": {},
+          "params": [
+            {
+              "name": "e"
+            }
+          ],
+          "inheritedFrom": "ArcBaseModel"
+        },
+        {
+          "name": "_cancelEvent",
+          "description": "",
+          "privacy": "protected",
+          "sourceRange": {
+            "file": "base-model.html",
+            "start": {
+              "line": 190,
+              "column": 2
+            },
+            "end": {
+              "line": 193,
+              "column": 3
+            }
+          },
+          "metadata": {},
+          "params": [
+            {
+              "name": "e"
             }
           ],
           "return": {
@@ -5351,11 +7665,11 @@
           "privacy": "public",
           "sourceRange": {
             "start": {
-              "line": 66,
+              "line": 79,
               "column": 2
             },
             "end": {
-              "line": 72,
+              "line": 85,
               "column": 3
             }
           },
@@ -5383,11 +7697,11 @@
           "privacy": "public",
           "sourceRange": {
             "start": {
-              "line": 80,
+              "line": 93,
               "column": 2
             },
             "end": {
-              "line": 92,
+              "line": 105,
               "column": 3
             }
           },
@@ -5410,11 +7724,11 @@
           "privacy": "public",
           "sourceRange": {
             "start": {
-              "line": 102,
+              "line": 115,
               "column": 2
             },
             "end": {
-              "line": 121,
+              "line": 134,
               "column": 3
             }
           },
@@ -5446,7 +7760,7 @@
           "column": 0
         },
         "end": {
-          "line": 122,
+          "line": 135,
           "column": 1
         }
       },
