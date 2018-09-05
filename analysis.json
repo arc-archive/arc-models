@@ -424,31 +424,23 @@
         },
         {
           "name": "deleteModel",
-          "description": "Deletes database data by tye.",
+          "description": "Deletes current database.",
           "privacy": "public",
           "sourceRange": {
-            "file": "request-base-model.html",
             "start": {
-              "line": 63,
+              "line": 340,
               "column": 2
             },
             "end": {
-              "line": 70,
+              "line": 346,
               "column": 3
             }
           },
           "metadata": {},
-          "params": [
-            {
-              "name": "type",
-              "type": "String",
-              "description": "Either `saved-requests` or `history-requests`"
-            }
-          ],
+          "params": [],
           "return": {
             "type": "Promise"
-          },
-          "inheritedFrom": "RequestBaseModel"
+          }
         },
         {
           "name": "_deleteModelHandler",
@@ -816,7 +808,7 @@
           "column": 0
         },
         "end": {
-          "line": 351,
+          "line": 362,
           "column": 1
         }
       },
@@ -6713,6 +6705,743 @@
       },
       "slots": [],
       "tagname": "variables-model"
+    },
+    {
+      "description": "Model for host rules.",
+      "summary": "",
+      "path": "auth-data-model.html",
+      "properties": [
+        {
+          "name": "eventsTarget",
+          "type": "Object | null | undefined",
+          "description": "Events handlers target. By default the element listens on\n`window` object. If set, all events listeners will be attached to this\nobject instead of `window`.",
+          "privacy": "public",
+          "sourceRange": {
+            "file": "../events-target-behavior/events-target-behavior.html",
+            "start": {
+              "line": 73,
+              "column": 8
+            },
+            "end": {
+              "line": 76,
+              "column": 9
+            }
+          },
+          "metadata": {
+            "polymer": {
+              "observer": "\"_eventsTargetChanged\"",
+              "attributeType": "Object"
+            }
+          },
+          "inheritedFrom": "ArcBehaviors.EventsTargetBehavior"
+        },
+        {
+          "name": "_oldEventsTarget",
+          "type": "Object | null | undefined",
+          "description": "An event target used to attach listeners.",
+          "privacy": "protected",
+          "sourceRange": {
+            "file": "../events-target-behavior/events-target-behavior.html",
+            "start": {
+              "line": 78,
+              "column": 8
+            },
+            "end": {
+              "line": 78,
+              "column": 32
+            }
+          },
+          "metadata": {
+            "polymer": {
+              "attributeType": "Object"
+            }
+          },
+          "inheritedFrom": "ArcBehaviors.EventsTargetBehavior"
+        },
+        {
+          "name": "db",
+          "type": "PouchDB",
+          "description": "Note, the element does not include PouchDB to the document!",
+          "privacy": "public",
+          "sourceRange": {
+            "file": "base-model.html",
+            "start": {
+              "line": 38,
+              "column": 2
+            },
+            "end": {
+              "line": 53,
+              "column": 3
+            }
+          },
+          "metadata": {
+            "polymer": {
+              "readOnly": true
+            }
+          },
+          "inheritedFrom": "ArcBaseModel"
+        },
+        {
+          "name": "uuid",
+          "type": "?",
+          "description": "",
+          "privacy": "public",
+          "sourceRange": {
+            "file": "base-model.html",
+            "start": {
+              "line": 55,
+              "column": 2
+            },
+            "end": {
+              "line": 61,
+              "column": 3
+            }
+          },
+          "metadata": {
+            "polymer": {
+              "readOnly": true
+            }
+          },
+          "inheritedFrom": "ArcBaseModel"
+        },
+        {
+          "name": "_cache",
+          "type": "Object | null | undefined",
+          "description": "Cashed list of authorization data for current session.",
+          "privacy": "protected",
+          "sourceRange": {
+            "start": {
+              "line": 31,
+              "column": 6
+            },
+            "end": {
+              "line": 31,
+              "column": 20
+            }
+          },
+          "metadata": {
+            "polymer": {
+              "attributeType": "Object"
+            }
+          }
+        }
+      ],
+      "methods": [
+        {
+          "name": "connectedCallback",
+          "description": "",
+          "privacy": "public",
+          "sourceRange": {
+            "file": "../events-target-behavior/events-target-behavior.html",
+            "start": {
+              "line": 81,
+              "column": 4
+            },
+            "end": {
+              "line": 84,
+              "column": 6
+            }
+          },
+          "metadata": {},
+          "params": [],
+          "return": {
+            "type": "void"
+          },
+          "inheritedFrom": "ArcBehaviors.EventsTargetBehavior"
+        },
+        {
+          "name": "disconnectedCallback",
+          "description": "",
+          "privacy": "public",
+          "sourceRange": {
+            "file": "base-model.html",
+            "start": {
+              "line": 63,
+              "column": 2
+            },
+            "end": {
+              "line": 68,
+              "column": 3
+            }
+          },
+          "metadata": {},
+          "params": [],
+          "return": {
+            "type": "void"
+          },
+          "inheritedFrom": "ArcBaseModel"
+        },
+        {
+          "name": "_eventsTargetChanged",
+          "description": "Removes old handlers (if any) and attaches listeners on new event\nevent target.",
+          "privacy": "protected",
+          "sourceRange": {
+            "file": "../events-target-behavior/events-target-behavior.html",
+            "start": {
+              "line": 99,
+              "column": 4
+            },
+            "end": {
+              "line": 105,
+              "column": 5
+            }
+          },
+          "metadata": {},
+          "params": [
+            {
+              "name": "eventsTarget",
+              "type": "?Node",
+              "description": "Event target to set handlers on. If not set it\nwill set handlers on the `window` object."
+            }
+          ],
+          "return": {
+            "type": "void"
+          },
+          "inheritedFrom": "ArcBehaviors.EventsTargetBehavior"
+        },
+        {
+          "name": "_attachListeners",
+          "description": "",
+          "privacy": "protected",
+          "sourceRange": {
+            "start": {
+              "line": 41,
+              "column": 2
+            },
+            "end": {
+              "line": 45,
+              "column": 3
+            }
+          },
+          "metadata": {},
+          "params": [
+            {
+              "name": "node"
+            }
+          ],
+          "return": {
+            "type": "void"
+          }
+        },
+        {
+          "name": "_detachListeners",
+          "description": "",
+          "privacy": "protected",
+          "sourceRange": {
+            "start": {
+              "line": 47,
+              "column": 2
+            },
+            "end": {
+              "line": 51,
+              "column": 3
+            }
+          },
+          "metadata": {},
+          "params": [
+            {
+              "name": "node"
+            }
+          ],
+          "return": {
+            "type": "void"
+          }
+        },
+        {
+          "name": "read",
+          "description": "Reads an entry from the datastore.",
+          "privacy": "public",
+          "sourceRange": {
+            "file": "base-model.html",
+            "start": {
+              "line": 85,
+              "column": 2
+            },
+            "end": {
+              "line": 91,
+              "column": 3
+            }
+          },
+          "metadata": {},
+          "params": [
+            {
+              "name": "id",
+              "type": "String",
+              "description": "The ID of the datastore entry."
+            },
+            {
+              "name": "rev",
+              "type": "?String",
+              "description": "Specific revision to read. Defaults to latest revision."
+            }
+          ],
+          "return": {
+            "type": "Promise",
+            "desc": "Promise resolved to a datastore object."
+          },
+          "inheritedFrom": "ArcBaseModel"
+        },
+        {
+          "name": "_computeMidnight",
+          "description": "Computes past mindnight for given timestamp.",
+          "privacy": "protected",
+          "sourceRange": {
+            "file": "base-model.html",
+            "start": {
+              "line": 98,
+              "column": 2
+            },
+            "end": {
+              "line": 105,
+              "column": 3
+            }
+          },
+          "metadata": {},
+          "params": [
+            {
+              "name": "time",
+              "type": "Number",
+              "description": "Timestamp"
+            }
+          ],
+          "return": {
+            "type": "Number",
+            "desc": "Time reduced to midnight."
+          },
+          "inheritedFrom": "ArcBaseModel"
+        },
+        {
+          "name": "_fireUpdated",
+          "description": "Dispatches non-cancelable change event.",
+          "privacy": "protected",
+          "sourceRange": {
+            "file": "base-model.html",
+            "start": {
+              "line": 113,
+              "column": 2
+            },
+            "end": {
+              "line": 122,
+              "column": 3
+            }
+          },
+          "metadata": {},
+          "params": [
+            {
+              "name": "type",
+              "type": "String",
+              "description": "Event type"
+            },
+            {
+              "name": "detail",
+              "type": "Object",
+              "description": "A detail object to dispatch."
+            }
+          ],
+          "return": {
+            "type": "CustomEvent",
+            "desc": "Created and dispatched event."
+          },
+          "inheritedFrom": "ArcBaseModel"
+        },
+        {
+          "name": "_handleException",
+          "description": "Handles any exception in the model in a unified way.",
+          "privacy": "protected",
+          "sourceRange": {
+            "file": "base-model.html",
+            "start": {
+              "line": 129,
+              "column": 2
+            },
+            "end": {
+              "line": 149,
+              "column": 3
+            }
+          },
+          "metadata": {},
+          "params": [
+            {
+              "name": "e",
+              "type": "(Error | Object)",
+              "description": "An error object"
+            },
+            {
+              "name": "noThrow",
+              "type": "?Boolean",
+              "description": "If set the function will not throw error.\nThis allow to do the logic without stopping program."
+            }
+          ],
+          "return": {
+            "type": "void"
+          },
+          "inheritedFrom": "ArcBaseModel"
+        },
+        {
+          "name": "deleteModel",
+          "description": "Deletes current database.",
+          "privacy": "public",
+          "sourceRange": {
+            "file": "base-model.html",
+            "start": {
+              "line": 154,
+              "column": 2
+            },
+            "end": {
+              "line": 160,
+              "column": 3
+            }
+          },
+          "metadata": {},
+          "params": [],
+          "return": {
+            "type": "Promise"
+          },
+          "inheritedFrom": "ArcBaseModel"
+        },
+        {
+          "name": "_deleteModelHandler",
+          "description": "Handler for `destroy-model` custom event.\nDeletes current data when scheduled for deletion.",
+          "privacy": "protected",
+          "sourceRange": {
+            "file": "base-model.html",
+            "start": {
+              "line": 167,
+              "column": 2
+            },
+            "end": {
+              "line": 178,
+              "column": 3
+            }
+          },
+          "metadata": {},
+          "params": [
+            {
+              "name": "e",
+              "type": "CustomEvent"
+            }
+          ],
+          "return": {
+            "type": "void"
+          },
+          "inheritedFrom": "ArcBaseModel"
+        },
+        {
+          "name": "_eventCancelled",
+          "description": "",
+          "privacy": "protected",
+          "sourceRange": {
+            "file": "base-model.html",
+            "start": {
+              "line": 180,
+              "column": 2
+            },
+            "end": {
+              "line": 188,
+              "column": 3
+            }
+          },
+          "metadata": {},
+          "params": [
+            {
+              "name": "e"
+            }
+          ],
+          "inheritedFrom": "ArcBaseModel"
+        },
+        {
+          "name": "_cancelEvent",
+          "description": "",
+          "privacy": "protected",
+          "sourceRange": {
+            "file": "base-model.html",
+            "start": {
+              "line": 190,
+              "column": 2
+            },
+            "end": {
+              "line": 193,
+              "column": 3
+            }
+          },
+          "metadata": {},
+          "params": [
+            {
+              "name": "e"
+            }
+          ],
+          "return": {
+            "type": "void"
+          },
+          "inheritedFrom": "ArcBaseModel"
+        },
+        {
+          "name": "_queryHandler",
+          "description": "",
+          "privacy": "protected",
+          "sourceRange": {
+            "start": {
+              "line": 53,
+              "column": 2
+            },
+            "end": {
+              "line": 61,
+              "column": 3
+            }
+          },
+          "metadata": {},
+          "params": [
+            {
+              "name": "e"
+            }
+          ],
+          "return": {
+            "type": "void"
+          }
+        },
+        {
+          "name": "query",
+          "description": "Restores the database object entry or cached object if any.",
+          "privacy": "public",
+          "sourceRange": {
+            "start": {
+              "line": 69,
+              "column": 2
+            },
+            "end": {
+              "line": 87,
+              "column": 3
+            }
+          },
+          "metadata": {},
+          "params": [
+            {
+              "name": "url",
+              "type": "String",
+              "description": "The URL of the request"
+            },
+            {
+              "name": "authMethod",
+              "type": "String",
+              "description": "The Authorization method to restore data for."
+            }
+          ],
+          "return": {
+            "type": "Promise"
+          }
+        },
+        {
+          "name": "_updateHandler",
+          "description": "",
+          "privacy": "protected",
+          "sourceRange": {
+            "start": {
+              "line": 89,
+              "column": 2
+            },
+            "end": {
+              "line": 97,
+              "column": 3
+            }
+          },
+          "metadata": {},
+          "params": [
+            {
+              "name": "e"
+            }
+          ],
+          "return": {
+            "type": "void"
+          }
+        },
+        {
+          "name": "update",
+          "description": "Creates or updates the auth data in the data store for given method and URl.",
+          "privacy": "public",
+          "sourceRange": {
+            "start": {
+              "line": 106,
+              "column": 2
+            },
+            "end": {
+              "line": 137,
+              "column": 3
+            }
+          },
+          "metadata": {},
+          "params": [
+            {
+              "name": "url",
+              "type": "String",
+              "description": "The URL of the request"
+            },
+            {
+              "name": "authMethod",
+              "type": "String",
+              "description": "The Authorization method to restore data for."
+            },
+            {
+              "name": "authData",
+              "type": "Object",
+              "description": "The data to store."
+            }
+          ],
+          "return": {
+            "type": "Promise"
+          }
+        },
+        {
+          "name": "_normalizeUrl",
+          "description": "Removes query parameters and the fragment part from the URL",
+          "privacy": "protected",
+          "sourceRange": {
+            "start": {
+              "line": 144,
+              "column": 2
+            },
+            "end": {
+              "line": 160,
+              "column": 3
+            }
+          },
+          "metadata": {},
+          "params": [
+            {
+              "name": "url",
+              "type": "String",
+              "description": "URL to process"
+            }
+          ],
+          "return": {
+            "type": "String",
+            "desc": "Canonical URL."
+          }
+        },
+        {
+          "name": "_computeKey",
+          "description": "Computes the database key for auth data",
+          "privacy": "protected",
+          "sourceRange": {
+            "start": {
+              "line": 168,
+              "column": 2
+            },
+            "end": {
+              "line": 174,
+              "column": 3
+            }
+          },
+          "metadata": {},
+          "params": [
+            {
+              "name": "method",
+              "type": "String",
+              "description": "The Authorization method to restore data for."
+            },
+            {
+              "name": "url",
+              "type": "?String",
+              "description": "The URL of the request"
+            }
+          ],
+          "return": {
+            "type": "String",
+            "desc": "Datastore key for auth data"
+          }
+        },
+        {
+          "name": "_findCachedAuthData",
+          "description": "Finds an auth data for given `url`.",
+          "privacy": "protected",
+          "sourceRange": {
+            "start": {
+              "line": 182,
+              "column": 2
+            },
+            "end": {
+              "line": 188,
+              "column": 3
+            }
+          },
+          "metadata": {},
+          "params": [
+            {
+              "name": "type",
+              "type": "String",
+              "description": "Authorization type."
+            },
+            {
+              "name": "url",
+              "type": "String",
+              "description": "The URL of the request."
+            }
+          ],
+          "return": {
+            "type": "(Object | undefined)",
+            "desc": "Auth data if exists in the cache."
+          }
+        },
+        {
+          "name": "_cacheAuthData",
+          "description": "Sends authorization data to the cache.",
+          "privacy": "protected",
+          "sourceRange": {
+            "start": {
+              "line": 196,
+              "column": 2
+            },
+            "end": {
+              "line": 204,
+              "column": 3
+            }
+          },
+          "metadata": {},
+          "params": [
+            {
+              "name": "type",
+              "type": "String",
+              "description": "Authorization type."
+            },
+            {
+              "name": "url",
+              "type": "String",
+              "description": "current request URL"
+            },
+            {
+              "name": "data",
+              "type": "Object",
+              "description": "Authorization data to store."
+            }
+          ],
+          "return": {
+            "type": "void"
+          }
+        }
+      ],
+      "staticMethods": [],
+      "demos": [],
+      "metadata": {},
+      "sourceRange": {
+        "start": {
+          "line": 22,
+          "column": 0
+        },
+        "end": {
+          "line": 205,
+          "column": 1
+        }
+      },
+      "privacy": "public",
+      "superclass": "ArcBaseModel",
+      "name": "LogicElements.AuthDataModel",
+      "attributes": [],
+      "events": [],
+      "styling": {
+        "cssVariables": [],
+        "selectors": []
+      },
+      "slots": [],
+      "tagname": "auth-data-model"
     }
   ],
   "classes": [

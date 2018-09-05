@@ -15,4 +15,5 @@
 /// <reference path="rest-api-model.d.ts" />
 /// <reference path="host-rules-model.d.ts" />
 /// <reference path="variables-model.d.ts" />
+/// <reference path="auth-data-model.d.ts" />
 

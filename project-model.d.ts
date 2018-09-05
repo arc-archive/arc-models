@@ -150,6 +150,11 @@ declare namespace LogicElements {
     _detachListeners(node: HTMLElement|null): void;
 
     /**
+     * Deletes current database.
+     */
+    deleteModel(): Promise<any>|null;
+
+    /**
      * Handler for project read event request.
      */
     _handleRead(e: CustomEvent|null): void;
