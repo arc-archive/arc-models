@@ -96,7 +96,7 @@
         });
       });
 
-      suite('environment-list event', function() {
+      suite('environment-list-variables event', function() {
         suiteTeardown(function() {
           return DataGenerator.destroyVariablesData();
         });
@@ -105,7 +105,7 @@
         });
 
         test('Cancels the event', function() {
-          const e = new CustomEvent('environment-list', {
+          const e = new CustomEvent('environment-list-variables', {
             bubbles: true,
             cancelable: true,
             detail: {}
@@ -116,7 +116,7 @@
         });
 
         test('Event promise has result data', function() {
-          const e = new CustomEvent('environment-list', {
+          const e = new CustomEvent('environment-list-variables', {
             bubbles: true,
             cancelable: true,
             detail: {}

@@ -14,15 +14,18 @@ the License.
 <link rel="import" href="base-model.html">
 <script>
 /**
- * Model for host rules.
+ * Model for variables
  *
  * Available events:
  *
- * - `host-rules-insert` Bulk add hosts
- * - `host-rules-changed` Change / add record
- * - `host-rules-deleted` Remove record
- * - `host-rules-list` Lists all rules
- * - `host-rules-clear` Clears hosts datastore
+ * - `environment-read` Read environment object
+ * - `environment-updated` Change / add record
+ * - `environment-deleted` Remove record
+ * - `environment-list-variables` List variables for an environment
+ * - `environment-list` List variables
+ * - `variable-updated` - Add / update variable
+ * - `variable-deleted` - Delete variable
+ * - `destroy-model` - Delete model action
  *
  * Each event must be cancelable or it will be ignored.
  * The insert, change and delete events dispatches non cancelable update/delete
@@ -38,6 +41,7 @@ class VariablesModel extends ArcBaseModel {
 
   constructor() {
     super();
+    this._envReadHandler = this._envReadHandler.bind(this);
     this._envUpdateHandler = this._envUpdateHandler.bind(this);
     this._envDeleteHandler = this._envDeleteHandler.bind(this);
     this._envListHandler = this._envListHandler.bind(this);
@@ -47,20 +51,22 @@ class VariablesModel extends ArcBaseModel {
   }
 
   _attachListeners(node) {
+    node.addEventListener('environment-read', this._envReadHandler);
     node.addEventListener('environment-updated', this._envUpdateHandler);
     node.addEventListener('environment-deleted', this._envDeleteHandler);
+    node.addEventListener('environment-list-variables', this._varListHandler);
     node.addEventListener('environment-list', this._envListHandler);
-    node.addEventListener('variable-list', this._varListHandler);
     node.addEventListener('variable-updated', this._varUpdateHandler);
     node.addEventListener('variable-deleted', this._varDeleteHandler);
     node.addEventListener('destroy-model', this._deleteModelHandler);
   }
 
   _detachListeners(node) {
+    node.removeEventListener('environment-read', this._envReadHandler);
     node.removeEventListener('environment-updated', this._envUpdateHandler);
     node.removeEventListener('environment-deleted', this._envDeleteHandler);
+    node.removeEventListener('environment-list-variables', this._varListHandler);
     node.removeEventListener('environment-list', this._envListHandler);
-    node.removeEventListener('variable-list', this._varListHandler);
     node.removeEventListener('variable-updated', this._varUpdateHandler);
     node.removeEventListener('variable-deleted', this._varDeleteHandler);
     node.removeEventListener('destroy-model', this._deleteModelHandler);
@@ -82,6 +88,25 @@ class VariablesModel extends ArcBaseModel {
    */
   get variableDb() {
     return new PouchDB('variables');
+  }
+  /**
+   * Handler for `environment-read` custom event.
+   * Reads environment onject info by it's name.
+   * @param {CustomEvent} e
+   */
+  _envReadHandler(e) {
+    if (this._eventCancelled(e)) {
+      return;
+    }
+    this._cancelEvent(e);
+    const {environment} = e.detail;
+    e.detail.result = this.listEnvironments()
+    .then((list) => {
+      if (!list) {
+        return;
+      }
+      return list.find((item) => item.name === environment);
+    });
   }
   /**
    * A handler for the `environment-updated` custom event.
@@ -153,13 +178,18 @@ class VariablesModel extends ArcBaseModel {
       }
       data._id = result.id;
       data._rev = result.rev;
+      if (oldName) {
+        return this.__updateEnvironmentName(oldName, data)
+        .then(() => {
+          this._fireUpdated('environment-updated', {
+            value: Object.assign({}, data)
+          });
+          return data;
+        });
+      }
       this._fireUpdated('environment-updated', {
         value: Object.assign({}, data)
       });
-      if (oldName) {
-        return this.__updateEnvironmentName(oldName, data)
-        .then(() => data);
-      }
       return data;
     })
     .catch((cause) => {
@@ -293,7 +323,7 @@ class VariablesModel extends ArcBaseModel {
     });
   }
   /**
-   * A handler for the `environment-list` custom event.
+   * A handler for the `environment-list-variables` custom event.
    * Adds a `value` propety of the event `detail` object with the array of the
    * user defined environments objects. Each item is a PouchDb data store item
    * (with `_id` and `_rev`).
@@ -484,7 +514,7 @@ class VariablesModel extends ArcBaseModel {
         this._handleException(result);
       }
       const detail = {
-        value: result.id,
+        id: result.id,
         rev: result.rev
       };
       this._fireUpdated('variable-deleted', detail);
