@@ -20,77 +20,8 @@
     </test-fixture>
 
     <script>
-    /* global DataGenerator, DataHelper */
+    /* global DataGenerator */
     suite('variable event tests', function() {
-      suite('variable-list', () => {
-        suiteTeardown(function() {
-          return DataGenerator.destroyVariablesData();
-        });
-
-        suiteSetup(() => {
-          return DataHelper.addVars([{
-            name: 'test',
-            variable: 'var-value',
-            enabled: true,
-            environment: 'default'
-          }, {
-            name: 'other',
-            variable: 'var-value',
-            enabled: true,
-            environment: 'other'
-          }]);
-        });
-
-        setup(function() {
-          fixture('basic');
-        });
-
-        test('Cancels the event', function() {
-          const e = new CustomEvent('variable-list', {
-            bubbles: true,
-            cancelable: true,
-            detail: {
-              environment: 'default'
-            }
-          });
-          document.body.dispatchEvent(e);
-          assert.isTrue(e.defaultPrevented);
-          return e.detail.result.then(() => {});
-        });
-
-        test('Event promise has result data', function() {
-          const e = new CustomEvent('variable-list', {
-            bubbles: true,
-            cancelable: true,
-            detail: {
-              environment: 'default'
-            }
-          });
-          document.body.dispatchEvent(e);
-          return e.detail.result
-          .then((result) => {
-            assert.typeOf(result, 'array');
-            assert.lengthOf(result, 1);
-          });
-        });
-
-        test('Returns empty data', function() {
-          const e = new CustomEvent('variable-list', {
-            bubbles: true,
-            cancelable: true,
-            detail: {
-              environment: 'not-existing'
-            }
-          });
-          document.body.dispatchEvent(e);
-          return e.detail.result
-          .then((result) => {
-            assert.typeOf(result, 'array');
-            assert.lengthOf(result, 0);
-          });
-        });
-      });
-
       suite('variable-updated', function() {
         suiteTeardown(function() {
           return DataGenerator.destroyVariablesData();

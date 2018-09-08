@@ -108,7 +108,9 @@
           const e = new CustomEvent('environment-list-variables', {
             bubbles: true,
             cancelable: true,
-            detail: {}
+            detail: {
+              environment: 'test'
+            }
           });
           document.body.dispatchEvent(e);
           assert.isTrue(e.defaultPrevented);
@@ -119,7 +121,9 @@
           const e = new CustomEvent('environment-list-variables', {
             bubbles: true,
             cancelable: true,
-            detail: {}
+            detail: {
+              environment: 'test'
+            }
           });
           document.body.dispatchEvent(e);
           return e.detail.result
