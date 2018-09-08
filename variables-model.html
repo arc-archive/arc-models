@@ -450,7 +450,6 @@ class VariablesModel extends ArcBaseModel {
       })
       .catch((error) => {
         if (error.status === 404) {
-          delete data._id;
           return data;
         }
         this._handleException(error);
