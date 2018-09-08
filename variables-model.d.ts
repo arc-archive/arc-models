@@ -13,15 +13,18 @@
 declare namespace LogicElements {
 
   /**
-   * Model for host rules.
+   * Model for variables
    *
    * Available events:
    *
-   * - `host-rules-insert` Bulk add hosts
-   * - `host-rules-changed` Change / add record
-   * - `host-rules-deleted` Remove record
-   * - `host-rules-list` Lists all rules
-   * - `host-rules-clear` Clears hosts datastore
+   * - `environment-read` Read environment object
+   * - `environment-updated` Change / add record
+   * - `environment-deleted` Remove record
+   * - `environment-list-variables` List variables for an environment
+   * - `environment-list` List variables
+   * - `variable-updated` - Add / update variable
+   * - `variable-deleted` - Delete variable
+   * - `destroy-model` - Delete model action
    *
    * Each event must be cancelable or it will be ignored.
    * The insert, change and delete events dispatches non cancelable update/delete
@@ -46,6 +49,12 @@ declare namespace LogicElements {
      * Deletes saved or history data when scheduled for deletion.
      */
     _deleteModelHandler(e: CustomEvent|null): void;
+
+    /**
+     * Handler for `environment-read` custom event.
+     * Reads environment onject info by it's name.
+     */
+    _envReadHandler(e: CustomEvent|null): void;
 
     /**
      * A handler for the `environment-updated` custom event.
