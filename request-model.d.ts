@@ -192,6 +192,14 @@ declare namespace LogicElements {
     _createProjects(names: Array<String|null>|null, requestId: String|null): Promise<Array<String|null>|null>;
 
     /**
+     * Handler for `save-history` object. It computes payload to savable state
+     * and saves history object.
+     * Note, the ID is is a combination of today's midningt timestamp, url and
+     * method. If such ID already exists the object is updated.
+     */
+    _saveHistoryHandler(e: CustomEvent|null): void;
+
+    /**
      * Saves a request into a data store.
      * It handles payload to string conversion, handles types, and syncs request
      * with projects. Use `update()` method only if you are storing already

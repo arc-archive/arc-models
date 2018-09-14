@@ -166,6 +166,7 @@ class RequestModel extends RequestBaseModel {
     this._handleObjectsDelete = this._handleObjectsDelete.bind(this);
     this._handleUndelete = this._handleUndelete.bind(this);
     this._saveRequestHandler = this._saveRequestHandler.bind(this);
+    this._saveHistoryHandler = this._saveHistoryHandler.bind(this);
     this._onIndexWorkerData = this._onIndexWorkerData.bind(this);
     this._onIndexWorkerError = this._onIndexWorkerError.bind(this);
     this._handleQuery = this._handleQuery.bind(this);
@@ -178,6 +179,7 @@ class RequestModel extends RequestBaseModel {
    */
   _attachListeners(node) {
     node.addEventListener('save-request', this._saveRequestHandler);
+    node.addEventListener('save-history', this._saveHistoryHandler);
     node.addEventListener('request-object-read', this._handleRead);
     node.addEventListener('request-object-changed', this._handleObjectSave);
     node.addEventListener('request-object-deleted', this._handleObjectDelete);
@@ -193,6 +195,7 @@ class RequestModel extends RequestBaseModel {
    */
   _detachListeners(node) {
     node.removeEventListener('save-request', this._saveRequestHandler);
+    node.removeEventListener('save-history', this._saveHistoryHandler);
     node.removeEventListener('request-object-read', this._handleRead);
     node.removeEventListener('request-object-changed', this._handleObjectSave);
     node.removeEventListener('request-object-deleted',
@@ -286,6 +289,45 @@ class RequestModel extends RequestBaseModel {
         result[result.length] = r.id;
       }
       return result;
+    });
+  }
+  /**
+   * Handler for `save-history` object. It computes payload to savable state
+   * and saves history object.
+   * Note, the ID is is a combination of today's midningt timestamp, url and
+   * method. If such ID already exists the object is updated.
+   *
+   * @param {CustomEvent} e
+   */
+  _saveHistoryHandler(e) {
+    if (e.defaultPrevented) {
+      return;
+    }
+    e.preventDefault();
+    e.stopPropagation();
+    const request = e.detail.request;
+    if (!request._id) {
+      const d = new Date();
+      d.setHours(0, 0, 0, 0);
+      let id = d.getTime();
+      id += '/' + encodeURIComponent(request.url);
+      id += '/' + request.method;
+      request._id = id;
+    }
+    request.type = 'history';
+    const db = this.getDatabase(request.type);
+    e.detail.result = db.get(request._id)
+    .catch((e) => {
+      if (e.status === 404) {
+        return;
+      }
+      this._handleException(e);
+    })
+    .then((dbRequest) => {
+      if (dbRequest) {
+        request._rev = dbRequest._rev;
+      }
+      return this.saveRequest(request);
     });
   }
   /**
@@ -471,6 +513,7 @@ class RequestModel extends RequestBaseModel {
       const detail = {
         request: request,
         oldRev: oldRev,
+        // oldId will be removed
         oldId: request._id,
         type: type
       };
