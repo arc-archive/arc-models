@@ -10,18 +10,20 @@
     <script src="../workers/request-db.js"></script>
     <link rel="import" href="../../app-pouchdb/pouchdb.html">
     <link rel="import" href="../arc-models.html">
+    <link rel="import" href="../url-indexer.html">
   </head>
   <body>
 
     <test-fixture id="basic">
       <template>
-        <request-model no-indexing></request-model>
+        <request-model></request-model>
       </template>
     </test-fixture>
 
     <test-fixture id="Indexing">
       <template>
         <request-model></request-model>
+        <url-indexer></url-indexer>
       </template>
     </test-fixture>
 
@@ -382,7 +384,8 @@
         let element;
         let dataList;
         setup(function(done) {
-          element = fixture('Indexing');
+          const nodes = fixture('Indexing');
+          element = nodes[0];
           dataList = [{
             name: 'test-1',
             url: 'http://domain.com/abc',
@@ -400,7 +403,7 @@
               assert.isUndefined(r.error);
             });
           });
-          element.addEventListener('request-indexing-finished', function f() {
+          nodes[1].addEventListener('request-indexing-finished', function f() {
             element.removeEventListener('request-indexing-finished', f);
             done();
           });
@@ -428,7 +431,7 @@
 
         test('Event detail contains "result" as promise', function() {
           const e = fire('test');
-          assert.typeOf(e.detail.result, 'promise');
+          assert.typeOf(e.detail.result.then, 'function');
           return e.detail.result;
         });
 

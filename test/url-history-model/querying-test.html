@@ -73,6 +73,7 @@
             ]);
           });
         });
+
         test('Should not result with data', function() {
           const e = UrlHistoryHelper.fire('url-history-query', {
             q: 'ranodm'
@@ -83,6 +84,7 @@
             assert.lengthOf(result, 0, 'Result is empty');
           });
         });
+
         test('Should result with single URL that equals URL', function() {
           const e = UrlHistoryHelper.fire('url-history-query', {
             q: baseUrl
@@ -92,6 +94,7 @@
             assert.lengthOf(result, 1);
           });
         });
+
         test('Should result with matching URLs', function() {
           const e = UrlHistoryHelper.fire('url-history-query', {
             q: similarUrl
@@ -101,6 +104,7 @@
             assert.lengthOf(result, 2);
           });
         });
+
         test('Should result with not valid URL', function() {
           const e = UrlHistoryHelper.fire('url-history-query', {
             q: 'https'
@@ -110,9 +114,10 @@
             assert.lengthOf(result, 3);
           });
         });
+
         test('Event is cancelled', function() {
           const e = UrlHistoryHelper.fire('url-history-query', {
-            value: baseUrl
+            q: baseUrl
           });
           assert.isTrue(e.defaultPrevented);
         });

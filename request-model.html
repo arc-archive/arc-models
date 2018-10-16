@@ -167,8 +167,6 @@ class RequestModel extends RequestBaseModel {
     this._handleUndelete = this._handleUndelete.bind(this);
     this._saveRequestHandler = this._saveRequestHandler.bind(this);
     this._saveHistoryHandler = this._saveHistoryHandler.bind(this);
-    this._onIndexWorkerData = this._onIndexWorkerData.bind(this);
-    this._onIndexWorkerError = this._onIndexWorkerError.bind(this);
     this._handleQuery = this._handleQuery.bind(this);
     this._listProjectRequestsHandler = this._listProjectRequestsHandler.bind(this);
     /* global PayloadProcessor */
@@ -206,7 +204,6 @@ class RequestModel extends RequestBaseModel {
     node.removeEventListener('request-query', this._handleQuery);
     node.removeEventListener('request-project-list', this._listProjectRequestsHandler);
     node.removeEventListener('destroy-model', this._deleteModelHandler);
-    this._unregisterWorker();
   }
   /**
    * A handler for `save-request-data` custom event. It's special event to
@@ -726,11 +723,7 @@ class RequestModel extends RequestBaseModel {
    * @param {CustomEvent} e
    */
   _handleObjectSave(e) {
-    if (e.composedPath()[0] === this) {
-      this._indexRequest(e.detail.request);
-      return;
-    }
-    if (!e.cancelable) {
+    if (e.composedPath()[0] === this || !e.cancelable) {
       return;
     }
     e.preventDefault();
@@ -775,7 +768,6 @@ class RequestModel extends RequestBaseModel {
    */
   _handleObjectDelete(e) {
     if (e.composedPath()[0] === this) {
-      this._deleteIndex(e.detail.id);
       return;
     }
     if (!e.cancelable) {
@@ -938,173 +930,6 @@ class RequestModel extends RequestBaseModel {
     });
   }
   /**
-   * Updates or creates request search index used when querying for request
-   * data.
-   *
-   * This operation is async and in a web worker (separate thred).
-   *
-   * @param {Object} request A request to index.
-   */
-  _indexRequest(request) {
-    if (this.noIndexing) {
-      return;
-    }
-    if (!this.__indexRequestQueue) {
-      this.__indexRequestQueue = [];
-    }
-    this.__indexRequestQueue.push(request);
-    if (this.__indexRequestDebounce) {
-      return;
-    }
-    this.__indexRequestDebounce = true;
-    setTimeout(() => {
-      const worker = this._getIndexWorker();
-      const requests = this.__indexRequestQueue;
-      this.__indexRequestQueue = [];
-      this.__indexRequestDebounce = false;
-      worker.postMessage({
-        task: 'index-requests',
-        requests: requests.map((item) => {
-          let type = item.type;
-          if (type === 'saved-requests') {
-            type = 'saved';
-          } else if (type === 'history-requests') {
-            type = 'history';
-          }
-          return {
-            id: item._id,
-            url: item.url,
-            type: type
-          };
-        })
-      });
-    }, 250);
-  }
-  /**
-   * Removed URL index data when the request is deleted.
-   * @param {String} id Request IDs to delete.
-   */
-  _deleteIndex(id) {
-    if (this.noIndexing) {
-      return;
-    }
-    if (!this.__indexDeleteQueue) {
-      this.__indexDeleteQueue = [];
-    }
-    this.__indexDeleteQueue.push(id);
-    if (this.__indexDeleteDebounce) {
-      return;
-    }
-    this.__indexDeleteDebounce = true;
-    setTimeout(() => {
-      const worker = this._getIndexWorker();
-      const ids = this.__indexDeleteQueue;
-      this.__indexDeleteQueue = [];
-      this.__indexDeleteDebounce = false;
-      worker.postMessage({
-        task: 'delete-index',
-        ids
-      });
-    }, 250);
-  }
-
-  _clearIndexedData() {
-    if (this.noIndexing) {
-      return;
-    }
-    if (this.__indexClearDebounce) {
-      return;
-    }
-    this.__indexClearDebounce = true;
-    setTimeout(() => {
-      const worker = this._getIndexWorker();
-      this.__indexClearDebounce = false;
-      worker.postMessage({
-        task: 'clear-index'
-      });
-    }, 250);
-  }
-  /**
-   * Creates if nescesary and returns indexing web worker.
-   * @return {Worker} An indexing web worker instance.
-   */
-  _getIndexWorker() {
-    if (this._indexWorker) {
-      return this._indexWorker;
-    }
-    const worker = new Worker(this.resolveUrl('workers/request-indexer.js'));
-    worker.addEventListener('message', this._onIndexWorkerData);
-    worker.addEventListener('error', this._onIndexWorkerError);
-    this._indexWorker = worker;
-    return worker;
-  }
-
-  /**
-   * Terminates the worker (if exists) and removes event listeners
-   */
-  _unregisterWorker() {
-    if (!this._indexWorker) {
-      return;
-    }
-    this._indexWorker.removeEventListener('message', this._onIndexWorkerData);
-    this._indexWorker.removeEventListener('error', this._onIndexWorkerError);
-    this._indexWorker.terminate();
-    delete this._indexWorker;
-  }
-  /**
-   * A handler for data returned from the request indexing worker.
-   *
-   * @param {Event} e Worker event
-   */
-  _onIndexWorkerData(e) {
-    const data = e.data;
-    switch (data.task) {
-      case 'task-finished':
-        this.dispatchEvent(new CustomEvent('request-indexing-finished', {
-          composed: true,
-          bubbles: true
-        }));
-        break;
-      case 'query-finished':
-        this._urlQueryHandler(data.id, data.results);
-        break;
-      case 'clear-index':
-        this.dispatchEvent(new CustomEvent('request-index-cleared', {
-          composed: true,
-          bubbles: true
-        }));
-        break;
-      case 'task-error':
-        this.dispatchEvent(new CustomEvent('request-indexing-error', {
-          composed: true,
-          detail: {
-            message: data.message
-          }
-        }));
-        this._handleException(new Error(data.message), true);
-        if (data.id) {
-          const callbacks = this._workerPromises[data.id];
-          delete this._workerPromises[data.id];
-          callbacks.reject(new Error(data.message));
-        }
-        break;
-    }
-  }
-  /**
-   * A handler for error returned from the request indexing worker.
-   *
-   * @param {Event} e Worker event
-   */
-  _onIndexWorkerError(e) {
-    console.error(e);
-    this.dispatchEvent(new CustomEvent('request-indexing-error', {
-      composed: true,
-      detail: {
-        message: e.message || 'Indexing worker error'
-      }
-    }));
-  }
-  /**
    * A handler for the `request-query` custom event. Queries the datastore for
    * request data.
    * The event must have `q` property set on the detail object.
@@ -1123,13 +948,29 @@ class RequestModel extends RequestBaseModel {
         new Error('The "q" property is missing.'));
       return;
     }
-    e.detail.result = this.queryUrlData(e.detail.q, e.detail.type, e.detail.detailed)
+    e.detail.result = this.query(e.detail.q, e.detail.type, e.detail.detailed);
+  }
+  /**
+   * Queries both URL and PouchDb data.
+   *
+   * It calls, in order, `queryUrlData()` and `queryPouchDb()` functions.
+   *
+   * @param {String} q User query
+   * @param {?String} type Optional, type of the requests to search for.
+   * By default it returns all data.
+   * @param {?Boolean} detailed If set it uses slower algorithm but performs full
+   * search on the index. When false it only uses filer like query + '*'.
+   * @return {Promise<Array<Object>>} Promise resolved to the list of requests.
+   */
+  query(q, type, detailed) {
+    return this.queryUrlData(q, type, detailed)
     .then((urlSearechResults) => {
       const ignore = urlSearechResults.map((item) => item._id);
-      return this.query(e.detail.q, e.detail.type, ignore)
+      return this.queryPouchDb(q, type, ignore)
       .then((result) => urlSearechResults.concat(result));
     });
   }
+
   /**
    * Performs a query on the URL index data.
    *
@@ -1141,65 +982,55 @@ class RequestModel extends RequestBaseModel {
    * @return {Promise<Array<Object>>} Promise resolved to the list of requests.
    */
   queryUrlData(q, type, detailed) {
-    return new Promise((resolve, reject) => {
-      const reqId = ++this._workerRequestId;
-      this._workerPromises[reqId] = {
-        resolve,
-        reject
-      };
-      const worker = this._getIndexWorker();
-      worker.postMessage({
-        task: 'query-data',
-        id: reqId,
-        type,
+    const e = new CustomEvent('url-index-query', {
+      composed: true,
+      cancelable: true,
+      bubbles: true,
+      detail: {
         q,
+        type,
         detailed
-      });
-    });
-  }
-  /**
-   * Handler for URL index results search.
-   *
-   * @param {String} id The ID sent to the web worker to identify callback
-   * function.
-   * @param {Object} results Map of request id - request type.
-   * @return {Promise}
-   */
-  _urlQueryHandler(id, results) {
-    const callbacks = this._workerPromises[id];
-    delete this._workerPromises[id];
-    const keys = Object.keys(results);
-    if (!keys.length) {
-      callbacks.resolve(keys);
-      return;
-    }
-    const savedKeys = [];
-    const historyKeys = [];
-    for (let i = 0, len = keys.length; i < len; i++) {
-      if (results[keys[i]] === 'history') {
-        historyKeys[historyKeys.length] = keys[i];
-      } else {
-        savedKeys[savedKeys.length] = keys[i];
       }
+    });
+    this.dispatchEvent(e);
+    if (!e.defaultPrevented) {
+      console.error('URL index model not found.');
+      return Promise.resolve([]);
     }
-    const p = [];
-    if (savedKeys.length) {
-      p[p.length] = this.savedDb.allDocs({
-        keys: savedKeys,
-        // jscs:disable
-        include_docs: true
-        // jscs:enable
-      });
-    }
-    if (historyKeys.length) {
-      p[p.length] = this.historyDb.allDocs({
-        keys: historyKeys,
-        // jscs:disable
-        include_docs: true
-        // jscs:enable
-      });
-    }
-    return Promise.all(p)
+    return e.detail.result
+    .then((results) => {
+      const keys = Object.keys(results);
+      if (!keys.length) {
+        return keys;
+      }
+      const savedKeys = [];
+      const historyKeys = [];
+      for (let i = 0, len = keys.length; i < len; i++) {
+        if (results[keys[i]] === 'history' || results[keys[i]] === 'history-requests') {
+          historyKeys[historyKeys.length] = keys[i];
+        } else if (results[keys[i]] === 'saved' || results[keys[i]] === 'saved-requests') {
+          savedKeys[savedKeys.length] = keys[i];
+        }
+      }
+      const p = [];
+      if (savedKeys.length) {
+        p[p.length] = this.savedDb.allDocs({
+          keys: savedKeys,
+          // jscs:disable
+          include_docs: true
+          // jscs:enable
+        });
+      }
+      if (historyKeys.length) {
+        p[p.length] = this.historyDb.allDocs({
+          keys: historyKeys,
+          // jscs:disable
+          include_docs: true
+          // jscs:enable
+        });
+      }
+      return Promise.all(p);
+    })
     .then((results) => {
       const data = [];
       for (let i = 0, iLen = results.length; i < iLen; i++) {
@@ -1211,15 +1042,13 @@ class RequestModel extends RequestBaseModel {
           data[data.length] = response.rows[j].doc;
         }
       }
-      callbacks.resolve(data);
-      // This is for tests
       return data;
     });
   }
   /**
-   * Performs a query on the request data store.
+   * Performs a query on the request and/or history data store.
    * It uses PouchDB `query` function on built indexes.
-   * Note, it does not query URL data.
+   * Note, it does not query for URL data.
    *
    * @param {String} q User query
    * @param {?String} type Optional, type of the requests to search for.
@@ -1227,7 +1056,7 @@ class RequestModel extends RequestBaseModel {
    * @param {?Array<String>} ignore List of IDs to ignore.
    * @return {Promise<Array<Object>>} Promise resolved to the list of requests.
    */
-  query(q, type, ignore) {
+  queryPouchDb(q, type, ignore) {
     if (!q) {
       return Promise.reject('The "q" parameter is required.');
     }
@@ -1274,7 +1103,14 @@ class RequestModel extends RequestBaseModel {
   querySaved(q, ignore) {
     return this._queryStore(q, ignore, this.savedDb, this.savedIndexes);
   }
-
+  /**
+   * See `query()` function for description.
+   * @param {String} q User query
+   * @param {?Array<String>} ignore List of IDs to ignore.
+   * @param {Object} db A handler to the data store.
+   * @param {Array<String>} indexes List of fields to query
+   * @return {Promise<Array<Object>>} A promise resolved to list of PouchDB docs.
+   */
   _queryStore(q, ignore, db, indexes) {
     if (!q) {
       return Promise.reject('The "q" parameter is required.');
@@ -1303,7 +1139,8 @@ class RequestModel extends RequestBaseModel {
     });
   }
   /**
-   * Performs data index using PouchDB api.
+   * Performs data inding using PouchDB api.
+   * This is not the same as URL indexing using `url-indexer`.
    *
    * @param {String} type Data type - saved or history.
    * @return {Promise}
@@ -1401,11 +1238,6 @@ class RequestModel extends RequestBaseModel {
     const p = [];
     if (models.indexOf('saved-requests') !== -1) {
       p[p.length] = this.deleteModel('saved');
-      try {
-        this._clearIndexedData();
-      } catch (e) {
-        console.error(e);
-      }
     }
     if (models.indexOf('history-requests') !== -1) {
       p[p.length] = this.deleteModel('history');
