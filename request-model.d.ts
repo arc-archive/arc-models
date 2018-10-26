@@ -355,55 +355,25 @@ declare namespace LogicElements {
     _saveGoogleDrive(data: object|null, opts: object|null): Promise<any>|null;
 
     /**
-     * Updates or creates request search index used when querying for request
-     * data.
-     *
-     * This operation is async and in a web worker (separate thred).
-     *
-     * @param request A request to index.
-     */
-    _indexRequest(request: object|null): void;
-
-    /**
-     * Removed URL index data when the request is deleted.
-     *
-     * @param id Request IDs to delete.
-     */
-    _deleteIndex(id: String|null): void;
-    _clearIndexedData(): void;
-
-    /**
-     * Creates if nescesary and returns indexing web worker.
-     *
-     * @returns An indexing web worker instance.
-     */
-    _getIndexWorker(): Worker|null;
-
-    /**
-     * Terminates the worker (if exists) and removes event listeners
-     */
-    _unregisterWorker(): void;
-
-    /**
-     * A handler for data returned from the request indexing worker.
-     *
-     * @param e Worker event
-     */
-    _onIndexWorkerData(e: Event|null): void;
-
-    /**
-     * A handler for error returned from the request indexing worker.
-     *
-     * @param e Worker event
-     */
-    _onIndexWorkerError(e: Event|null): void;
-
-    /**
      * A handler for the `request-query` custom event. Queries the datastore for
      * request data.
      * The event must have `q` property set on the detail object.
      */
     _handleQuery(e: CustomEvent|null): void;
+
+    /**
+     * Queries both URL and PouchDb data.
+     *
+     * It calls, in order, `queryUrlData()` and `queryPouchDb()` functions.
+     *
+     * @param q User query
+     * @param type Optional, type of the requests to search for.
+     * By default it returns all data.
+     * @param detailed If set it uses slower algorithm but performs full
+     * search on the index. When false it only uses filer like query + '*'.
+     * @returns Promise resolved to the list of requests.
+     */
+    query(q: String|null, type: String|null, detailed: Boolean|null): Promise<Array<object|null>|null>;
 
     /**
      * Performs a query on the URL index data.
@@ -418,18 +388,9 @@ declare namespace LogicElements {
     queryUrlData(q: String|null, type: String|null, detailed: Boolean|null): Promise<Array<object|null>|null>;
 
     /**
-     * Handler for URL index results search.
-     *
-     * @param id The ID sent to the web worker to identify callback
-     * function.
-     * @param results Map of request id - request type.
-     */
-    _urlQueryHandler(id: String|null, results: object|null): Promise<any>|null;
-
-    /**
-     * Performs a query on the request data store.
+     * Performs a query on the request and/or history data store.
      * It uses PouchDB `query` function on built indexes.
-     * Note, it does not query URL data.
+     * Note, it does not query for URL data.
      *
      * @param q User query
      * @param type Optional, type of the requests to search for.
@@ -437,7 +398,7 @@ declare namespace LogicElements {
      * @param ignore List of IDs to ignore.
      * @returns Promise resolved to the list of requests.
      */
-    query(q: String|null, type: String|null, ignore: Array<String|null>|null): Promise<Array<object|null>|null>;
+    queryPouchDb(q: String|null, type: String|null, ignore: Array<String|null>|null): Promise<Array<object|null>|null>;
 
     /**
      * Queries history store using PouchDB quick search plugin (full text search).
@@ -456,10 +417,21 @@ declare namespace LogicElements {
      * @returns Promise resolved to the list of requests.
      */
     querySaved(q: String|null, ignore: Array<String|null>|null): Promise<Array<object|null>|null>;
-    _queryStore(q: any, ignore: any, db: any, indexes: any): any;
 
     /**
-     * Performs data index using PouchDB api.
+     * See `query()` function for description.
+     *
+     * @param q User query
+     * @param ignore List of IDs to ignore.
+     * @param db A handler to the data store.
+     * @param indexes List of fields to query
+     * @returns A promise resolved to list of PouchDB docs.
+     */
+    _queryStore(q: String|null, ignore: Array<String|null>|null, db: object|null, indexes: Array<String|null>|null): Promise<Array<object|null>|null>;
+
+    /**
+     * Performs data inding using PouchDB api.
+     * This is not the same as URL indexing using `url-indexer`.
      *
      * @param type Data type - saved or history.
      */

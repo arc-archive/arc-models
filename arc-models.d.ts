@@ -16,4 +16,5 @@
 /// <reference path="host-rules-model.d.ts" />
 /// <reference path="variables-model.d.ts" />
 /// <reference path="auth-data-model.d.ts" />
+/// <reference path="url-indexer.d.ts" />
 

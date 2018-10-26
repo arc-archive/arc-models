@@ -172,7 +172,7 @@ class RestApiModel extends ArcBaseModel {
    * Creates / updates API index object.
    * The `_id` property must be already set on the object.
    *
-   * This function fires `rest-api-index-changed` custom event on success.
+   * This function fires `api-index-changed` custom event on success.
    *
    * @param {Object} doc PouchDB document.
    * @return {Promise} Resolved promise to a document with updated `_rev`
@@ -242,7 +242,7 @@ class RestApiModel extends ArcBaseModel {
         throw result;
       }
       const detail = {
-        id: id
+        id
       };
       this._fireUpdated('api-deleted', detail);
     });
@@ -434,7 +434,7 @@ class RestApiModel extends ArcBaseModel {
     });
   }
   /**
-   * A handler for the `rest-api-data-updated` custom event.
+   * Handler for the `api-data-changed` custom event.
    *
    * @param {CustomEvent} e
    */
@@ -554,7 +554,7 @@ class RestApiModel extends ArcBaseModel {
    * It sets a `result` property on event `detail` object which contains a return
    * value from calling `updateIndex()` function.
    *
-   * @event rest-api-index-changed
+   * @event api-index-changed
    * @param {Object} doc PouchDB document representing index data.
    */
 
@@ -566,7 +566,7 @@ class RestApiModel extends ArcBaseModel {
    * It sets a `result` property on event `detail` object which contains a return
    * value from calling `updateData()` function.
    *
-   * @event rest-api-data-updated
+   * @event api-data-changed
    * @param {Object} doc PouchDB document representing API data.
    */
 
@@ -578,7 +578,7 @@ class RestApiModel extends ArcBaseModel {
    * It sets a `result` property on event `detail` object which contains a return
    * value from calling `remove()` function.
    *
-   * @event rest-api-deleted
+   * @event api-deleted
    * @param {String} id Datastore ID of deleted item.
    */
 }
