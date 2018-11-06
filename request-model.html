@@ -1236,10 +1236,10 @@ class RequestModel extends RequestBaseModel {
       return;
     }
     const p = [];
-    if (models.indexOf('saved-requests') !== -1) {
+    if (models.indexOf('saved-requests') !== -1 || models.indexOf('saved') !== -1) {
       p[p.length] = this.deleteModel('saved');
     }
-    if (models.indexOf('history-requests') !== -1) {
+    if (models.indexOf('history-requests') !== -1 || models.indexOf('history') !== -1) {
       p[p.length] = this.deleteModel('history');
     }
     if (p.length) {
