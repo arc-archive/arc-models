@@ -469,7 +469,10 @@ class UrlIndexer extends Polymer.Element {
       request.onsuccess = function(e) {
         const cursor = e.target.result;
         if (cursor) {
-          results[results.length] = cursor.value;
+          const record = cursor.value;
+          if (record) {
+            results[results.length] = record;
+          }
           cursor.continue();
         }
       };
@@ -737,6 +740,10 @@ class UrlIndexer extends Polymer.Element {
           return;
         }
         const record = cursor.value;
+        if (!record) {
+          cursor.continue();
+          return;
+        }
         if (type && record.type !== type) {
           cursor.continue();
           return;
@@ -789,6 +796,10 @@ class UrlIndexer extends Polymer.Element {
           return;
         }
         const record = cursor.value;
+        if (!record) {
+          cursor.continue();
+          return;
+        }
         if (type && record.type !== type) {
           cursor.continue();
           return;
