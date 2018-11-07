@@ -168,6 +168,7 @@ class RequestModel extends RequestBaseModel {
     this._saveRequestHandler = this._saveRequestHandler.bind(this);
     this._saveHistoryHandler = this._saveHistoryHandler.bind(this);
     this._handleQuery = this._handleQuery.bind(this);
+    this._handleList = this._handleList.bind(this);
     this._listProjectRequestsHandler = this._listProjectRequestsHandler.bind(this);
     /* global PayloadProcessor */
   }
@@ -184,6 +185,7 @@ class RequestModel extends RequestBaseModel {
     node.addEventListener('request-objects-deleted', this._handleObjectsDelete);
     node.addEventListener('request-objects-undeleted', this._handleUndelete);
     node.addEventListener('request-query', this._handleQuery);
+    node.addEventListener('request-list', this._handleList);
     node.addEventListener('request-project-list', this._listProjectRequestsHandler);
     node.addEventListener('destroy-model', this._deleteModelHandler);
   }
@@ -202,6 +204,7 @@ class RequestModel extends RequestBaseModel {
       this._handleObjectsDelete);
     node.removeEventListener('request-objects-undeleted', this._handleUndelete);
     node.removeEventListener('request-query', this._handleQuery);
+    node.removeEventListener('request-list', this._handleList);
     node.removeEventListener('request-project-list', this._listProjectRequestsHandler);
     node.removeEventListener('destroy-model', this._deleteModelHandler);
   }
@@ -928,6 +931,55 @@ class RequestModel extends RequestBaseModel {
       }
       return data;
     });
+  }
+  /**
+   * Handler for `request-list` custom event.
+   * The `result` property will contain a result of calling `list()` function.
+   *
+   * The event has to be cancelable and not already cancelled in order to handle
+   * it.
+   *
+   * Required properties on `detail` object:
+   * - `type` {String} Datastore type
+   * - `queryOptions` {Object} PouchDB query options.
+   *
+   * @param {CustomEvent} e
+   */
+  _handleList(e) {
+    if (!e.cancelable || e.defaultPrevented) {
+      return;
+    }
+    e.preventDefault();
+    e.stopPropagation();
+    const {type, queryOptions} = e.detail;
+    if (!type) {
+      e.detail.result = Promise.reject(new Error(
+        'The "type" parameter is required.'
+      ));
+      return;
+    }
+    if (!queryOptions) {
+      e.detail.result = Promise.reject(new Error(
+        'The "queryOptions" parameter is required.'
+      ));
+      return;
+    }
+    e.detail.result = this.list(type, queryOptions)
+    .catch((e) => this._handleException(e));
+  }
+  /**
+   * Performs a query for the request data.
+   *
+   * This is not the same as searching for a request. This only lists
+   * data from the datastore for given query options.
+   *
+   * @param {String} type Datastore type
+   * @param {Object} queryOptions PouchDB query options.
+   * @return {Promise} List of PouchDB documents for the query.
+   */
+  list(type, queryOptions) {
+    const db = this.getDatabase(type);
+    return db.allDocs(queryOptions);
   }
   /**
    * A handler for the `request-query` custom event. Queries the datastore for

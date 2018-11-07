@@ -1,7 +1,5 @@
 const DatabaseHelper = {};
 let LAST_TIME = Date.now();
-const stringPool =
-  'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
 DatabaseHelper.payloadMethods = ['POST', 'PUT', 'DELETE', 'OPTIONS'];
 DatabaseHelper.nonPayloadMethods = ['GET', 'HEAD'];
 DatabaseHelper.contentTypes = [

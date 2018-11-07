@@ -1,0 +1,103 @@
+<!doctype html>
+<html>
+
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, minimum-scale=1.0, initial-scale=1.0, user-scalable=yes">
+  <script src="../../../webcomponentsjs/webcomponents-loader.js"></script>
+  <script src="../../../web-component-tester/browser.js"></script>
+  <script src="../../../chance/chance.js"></script>
+  <script src="../../demo/database-helper.js"></script>
+  <link rel="import" href="../../../app-pouchdb/pouchdb.html">
+  <link rel="import" href="../../arc-models.html">
+</head>
+
+<body>
+  <test-fixture id="Basic">
+    <template>
+      <request-model no-indexing></request-model>
+    </template>
+  </test-fixture>
+  <script>
+  /* global DatabaseHelper */
+  function databaseCleanup() {
+    return DatabaseHelper.clearHistory();
+  }
+
+  function fire(request) {
+    const e = new CustomEvent('save-history', {
+      bubbles: true,
+      cancelable: true,
+      detail: {
+        request
+      }
+    });
+    document.body.dispatchEvent(e);
+    return e;
+  }
+
+  function generateId(request) {
+    const d = new Date();
+    d.setHours(0, 0, 0, 0);
+    let id = d.getTime();
+    id += '/' + encodeURIComponent(request.url);
+    id += '/' + request.method;
+    return id;
+  }
+
+  suite('saving history data', function() {
+    let request;
+    let element;
+    setup(() => {
+      request = {
+        url: 'test-url',
+        method: 'test-method',
+        headers: 'test-headers',
+        payload: ''
+      };
+      element = fixture('Basic');
+    });
+
+    test('Generates history ID', () => {
+      element.saveRequest = function(request) {
+        return Promise.resolve(request);
+      };
+      const id = generateId(request);
+      const e = fire(request);
+      return e.detail.result
+      .then((request) => {
+        assert.equal(request._id, id);
+      });
+    });
+
+    test('Sets history type', () => {
+      element.saveRequest = function(request) {
+        return Promise.resolve(request);
+      };
+      const e = fire(request);
+      return e.detail.result
+      .then((request) => {
+        assert.equal(request.type, 'history');
+      });
+    });
+
+    test('Inserts object to the data store', () => {
+      const e = fire(request);
+      return e.detail.result
+      .then((request) => {
+        assert.typeOf(request._rev, 'string');
+      });
+    });
+
+    test('Updates existing item', () => {
+      const e = fire(request);
+      return e.detail.result
+      .then((request) => {
+        assert.equal(request._rev.indexOf('2-'), 0);
+      });
+    });
+  });
+  </script>
+</body>
+
+</html>
