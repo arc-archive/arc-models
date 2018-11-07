@@ -387,7 +387,7 @@ DatabaseHelper.clearWebsocketUrlHostory = function() {
   return DatabaseHelper.clearDatabases('websocket-url-history');
 };
 DatabaseHelper.clearRestAPi = function() {
-  return DatabaseHelper.clearDatabases('rest-api-index', 'rest-api-data');
+  return DatabaseHelper.clearDatabases('api-index', 'api-data');
 };
 DatabaseHelper.clearHostRules = function() {
   return DatabaseHelper.clearDatabases('host-rules');

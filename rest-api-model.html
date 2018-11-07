@@ -147,6 +147,7 @@ class RestApiModel extends ArcBaseModel {
    */
   updateData(indexId, version, data) {
     const id = indexId + '|' + version;
+    let object;
     return this.readData(id)
     .catch((reason) => {
       if (reason.status === 404) {
@@ -160,12 +161,16 @@ class RestApiModel extends ArcBaseModel {
     })
     .then((result) => {
       result.data = data;
+      object = result;
       return this.dataDb.put(result);
     })
     .then((result) => {
       if (!result.ok) {
         this._handleException(result);
+        return;
       }
+      object._rev = result.rev;
+      return object;
     });
   }
   /**
@@ -190,7 +195,7 @@ class RestApiModel extends ArcBaseModel {
       };
       detail.apiInfo._rev = result.rev;
       this._fireUpdated('api-index-changed', detail);
-      return detail.doc;
+      return detail.apiInfo;
     });
   }
   /**
@@ -215,7 +220,7 @@ class RestApiModel extends ArcBaseModel {
           };
           detail.apiInfo._rev = result[i].rev;
           this._fireUpdated('api-index-changed', detail);
-          toReturn.push(detail.doc);
+          toReturn.push(detail.apiInfo);
         } else {
           console.warn('Update error', result[i]);
           toReturn.push(docs[i]);
@@ -278,7 +283,12 @@ class RestApiModel extends ArcBaseModel {
       .then(() => this._removeVersion(id + '|' + version));
     });
   }
-
+  /**
+   * Removes versions of API data in bulk operation.
+   * @param {String} indexId Index object ID
+   * @param {Array<String>} versions List of versions to remove.
+   * @return {Promise}
+   */
   removeVersions(indexId, versions) {
     if (!indexId || !(versions instanceof Array)) {
       return Promise.resolve();
