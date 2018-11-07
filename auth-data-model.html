@@ -116,7 +116,7 @@ class AuthDataModel extends ArcBaseModel {
           _id: key
         };
       } else {
-        console.error(error.message);
+        console.warn(error.message);
         throw error;
       }
     })

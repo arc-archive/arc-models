@@ -143,7 +143,7 @@ class ArcBaseModel extends ArcBehaviors.EventsTargetBehavior(Polymer.Element) {
         fatal: true
       }
     }));
-    console.error(this.constructor.name, e);
+    console.warn(this.constructor.name, e);
     if (!noThrow) {
       throw e;
     }

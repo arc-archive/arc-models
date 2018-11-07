@@ -874,7 +874,7 @@ class RequestModel extends RequestBaseModel {
   _filterExistingItems(result) {
     result = result.rows.filter((item) => {
       if (item.error) {
-        console.error(item);
+        console.warn(item);
         return false;
       }
       return true;
@@ -1046,7 +1046,7 @@ class RequestModel extends RequestBaseModel {
     });
     this.dispatchEvent(e);
     if (!e.defaultPrevented) {
-      console.error('URL index model not found.');
+      console.warn('URL index model not found.');
       return Promise.resolve([]);
     }
     return e.detail.result

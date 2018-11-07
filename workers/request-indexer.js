@@ -66,7 +66,7 @@ class RequestIndexer extends RequestDb {
    * @param {Error} cause
    */
   notifyError(cause) {
-    console.error(cause);
+    console.warn(cause);
     if (self.mocha) {
       return;
     }
@@ -101,7 +101,7 @@ class RequestIndexer extends RequestDb {
         }
       })
       .catch((cause) => {
-        console.error(cause);
+        console.warn(cause);
         this.notifyError(cause);
       })
       .then(() => this._indexRequests(requests));
@@ -596,7 +596,7 @@ class RequestIndexer extends RequestDb {
       this.notifyEnd('clear-index');
     })
     .catch((cause) => {
-      console.error(cause);
+      console.warn(cause);
       this.notifyError(cause);
     });
   }

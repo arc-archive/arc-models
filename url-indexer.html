@@ -230,7 +230,7 @@ class UrlIndexer extends Polymer.Element {
       this.__indexRequestQueue = undefined;
       if (data && data.length) {
         this.index(data)
-        .catch((cause) => console.error(cause));
+        .catch((cause) => console.warn(cause));
       }
     }, 25);
   }
@@ -270,7 +270,7 @@ class UrlIndexer extends Polymer.Element {
       this.__deleteRequestQueue = undefined;
       if (data && data.length) {
         this.deleteIndexedData(data)
-        .catch((cause) => console.error(cause));
+        .catch((cause) => console.warn(cause));
       }
     }, 25);
   }
@@ -283,7 +283,7 @@ class UrlIndexer extends Polymer.Element {
     if (models.indexOf('saved-requests') !== -1) {
       this._clearIndexedData()
       .then(() => console.info('URL index cleared'))
-      .catch((cause) => console.error(cause));
+      .catch((cause) => console.warn(cause));
     }
   }
 
@@ -357,7 +357,7 @@ class UrlIndexer extends Polymer.Element {
         }
       })
       .catch((cause) => {
-        console.error(cause);
+        console.warn(cause);
       })
       .then(() => this.index(requests));
     });
