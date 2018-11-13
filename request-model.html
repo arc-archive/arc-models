@@ -162,6 +162,7 @@ class RequestModel extends RequestBaseModel {
     super();
     this._handleRead = this._handleRead.bind(this);
     this._handleObjectSave = this._handleObjectSave.bind(this);
+    this._handleObjectsSave = this._handleObjectsSave.bind(this);
     this._handleObjectDelete = this._handleObjectDelete.bind(this);
     this._handleObjectsDelete = this._handleObjectsDelete.bind(this);
     this._handleUndelete = this._handleUndelete.bind(this);
@@ -181,6 +182,7 @@ class RequestModel extends RequestBaseModel {
     node.addEventListener('save-history', this._saveHistoryHandler);
     node.addEventListener('request-object-read', this._handleRead);
     node.addEventListener('request-object-changed', this._handleObjectSave);
+    node.addEventListener('request-objects-changed', this._handleObjectsSave);
     node.addEventListener('request-object-deleted', this._handleObjectDelete);
     node.addEventListener('request-objects-deleted', this._handleObjectsDelete);
     node.addEventListener('request-objects-undeleted', this._handleUndelete);
@@ -198,6 +200,7 @@ class RequestModel extends RequestBaseModel {
     node.removeEventListener('save-history', this._saveHistoryHandler);
     node.removeEventListener('request-object-read', this._handleRead);
     node.removeEventListener('request-object-changed', this._handleObjectSave);
+    node.removeEventListener('request-objects-changed', this._handleObjectsSave);
     node.removeEventListener('request-object-deleted',
       this._handleObjectDelete);
     node.removeEventListener('request-objects-deleted',
@@ -763,6 +766,30 @@ class RequestModel extends RequestBaseModel {
       return this.update(e.detail.type, result);
     })
     .catch((e) => this._handleException(e));
+  }
+  /**
+   * Handler for `request-objects-changed` event. Updates requests in bulk operation.
+   * @param {CustomEvent} e
+   */
+  _handleObjectsSave(e) {
+    if (e.composedPath()[0] === this || !e.cancelable) {
+      return;
+    }
+    e.preventDefault();
+    e.stopPropagation();
+
+    const {requests, type} = e.detail;
+    if (!requests) {
+      e.detail.result = Promise.reject(
+        new Error('The "requests" property is missing.'));
+      return;
+    }
+    if (!type) {
+      e.detail.result = Promise.reject(
+        new Error('The "type" property is missing.'));
+      return;
+    }
+    e.detail.result = this.updateBulk(type, requests);
   }
   /**
    * Deletes the object from the datastore.
