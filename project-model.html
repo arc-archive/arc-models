@@ -304,6 +304,9 @@ class ProjectModel extends RequestBaseModel {
       }
       const oldRev = project._rev;
       project._rev = r.rev;
+      if (!project._id) {
+        project._id = r.id;
+      }
       const detail = {
         project,
         oldRev: oldRev
