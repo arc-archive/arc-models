@@ -471,9 +471,10 @@
 
       suite('request-list', () => {
         suiteSetup(() => {
-          return DatabaseHelper.insertHistoryRequestData({
+          return DatabaseHelper.clearHistory()
+          .then(() => DatabaseHelper.insertHistoryRequestData({
             requestsSize: 150
-          });
+          }));
         });
 
         suiteTeardown(function() {
