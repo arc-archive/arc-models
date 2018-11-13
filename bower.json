@@ -51,6 +51,7 @@
     "node_modules",
     "bower_components",
     "test",
-    "tasks"
+    "tasks",
+    "coverage"
   ]
 }
