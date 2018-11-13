@@ -146,6 +146,31 @@ the License.
  * }
  * ```
  *
+ * #### `project-update-bulk` event
+ *
+ * Used to create / update projects in bulk
+ *
+ * It expects `projects` property to be set on the detail object.
+ * Each item must be an object at least containing the name. Otherwise the
+ * object is ignored.
+ *
+ * ##### Example
+ *
+ * ```javascript
+ * var event = new CustomEvent('project-update-bulk', {
+ *    detail: {
+ *      projects: [{name: 'my project'}]
+ *    },
+ *    bubbles: true,
+ *    composed: true,
+ *    cancelable: true
+ * });
+ * document.body.dispatchEvent(event);
+ * if (event.defaultPrevented) {
+ *    event.detail.result.then(list => console.log(list));
+ * }
+ * ```
+ *
  * @polymer
  * @customElement
  * @memberof LogicElements
@@ -162,6 +187,7 @@ class ProjectModel extends RequestBaseModel {
     this._handleObjectSave = this._handleObjectSave.bind(this);
     this._handleObjectDelete = this._handleObjectDelete.bind(this);
     this._queryHandler = this._queryHandler.bind(this);
+    this._createBulkHandler = this._createBulkHandler.bind(this);
   }
   /**
    * @param {HTMLElement} node
@@ -172,6 +198,7 @@ class ProjectModel extends RequestBaseModel {
     node.addEventListener('project-object-changed', this._handleObjectSave);
     node.addEventListener('project-object-deleted', this._handleObjectDelete);
     node.addEventListener('project-model-query', this._queryHandler);
+    node.addEventListener('project-update-bulk', this._createBulkHandler);
   }
   /**
    * @param {HTMLElement} node
@@ -183,6 +210,7 @@ class ProjectModel extends RequestBaseModel {
     node.removeEventListener('project-object-deleted',
       this._handleObjectDelete);
     node.removeEventListener('project-model-query', this._queryHandler);
+    node.removeEventListener('project-update-bulk', this._createBulkHandler);
   }
 
   /**
@@ -205,42 +233,85 @@ class ProjectModel extends RequestBaseModel {
     .catch((e) => this._handleException(e));
   }
   /**
-   * Updates more than one project in a bulk request.
-   * @param {Array<Object>} projects List of requests to update.
-   * @return {Array} List of PouchDB responses to each insert
+   * Handler for `project-update-bulk` custom event.
+   * @param {CustomEvent} e
    */
-  updateBulk(projects) {
-    projects.forEach((item) => {
+  _createBulkHandler(e) {
+    if (!e.cancelable || e.composedPath()[0] === this) {
+      return;
+    }
+    e.preventDefault();
+    e.stopPropagation();
+    const {projects} = e.detail;
+    if (!projects || !projects.length) {
+      e.detail.result = Promise.reject(new Error('The "projects" property is required'));
+      return;
+    }
+    e.detail.result = this.updateBulk(projects);
+  }
+  /**
+   * Normalizes projects list to common model.
+   * It updates `updated` property to current time.
+   * If an item is not an object then it is removed.
+   *
+   * @param {Array<Object>} projects List of projects.
+   * @return {Array<Object>}
+   */
+  _normalizeProjects(projects) {
+    for (let i = projects.length - 1; i >= 0; i--) {
+      let item = projects[i];
+      if (!item || typeof item !== 'object') {
+        projects.splice(i, 1);
+        continue;
+      }
+      item = Object.assign({}, {
+        order: 0,
+        requests: []
+      }, item);
       item.updated = Date.now();
       if (!item.created) {
         item.created = item.updated;
       }
-      if (!item.order) {
-        item.order = 0;
-      }
-    });
+      projects[i] = item;
+    }
+    return projects;
+  }
+  /**
+   * Updates more than one project in a bulk request.
+   * @param {Array<Object>} projects List of requests to update.
+   * @return {Promise}
+   */
+  updateBulk(projects) {
+    this._normalizeProjects(projects);
     return this.projectDb.bulkDocs(projects)
-    .then((response) => {
-      const result = [];
-      for (let i = 0, len = response.length; i < len; i++) {
-        const r = response[i];
-        const project = projects[i];
-        if (r.error) {
-          this._handleException(r, true);
-          result.push(Object.assign({error: true}, project));
-          continue;
-        }
-        const oldRev = project._rev;
-        project._rev = r.rev;
-        const detail = {
-          project,
-          oldRev: oldRev
-        };
-        this._fireUpdated('project-object-changed', detail);
-        result.push(project);
+    .then((response) => this._processUpdateBulkResponse(projects, response));
+  }
+  /**
+   * Processes datastore response after calling `updateBulk()` function.
+   * @param {Array<Object>} projects List of requests to update.
+   * @param {Array<Object>} response PouchDB response
+   * @return {Array<Object>} List of projects with updated `_id` and `_rew`
+   */
+  _processUpdateBulkResponse(projects, response) {
+    const result = [];
+    for (let i = 0, len = response.length; i < len; i++) {
+      const r = response[i];
+      const project = projects[i];
+      if (r.error) {
+        this._handleException(r, true);
+        result.push(Object.assign({error: true}, project));
+        continue;
       }
-      return result;
-    });
+      const oldRev = project._rev;
+      project._rev = r.rev;
+      const detail = {
+        project,
+        oldRev: oldRev
+      };
+      this._fireUpdated('project-object-changed', detail);
+      result.push(project);
+    }
+    return result;
   }
   /**
    * Lists all project objects.
