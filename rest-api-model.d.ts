@@ -113,7 +113,14 @@ declare namespace LogicElements {
      * @param version Version to remove.
      */
     removeVersion(id: String|null, version: String|null): Promise<any>|null;
-    removeVersions(indexId: any, versions: any): any;
+
+    /**
+     * Removes versions of API data in bulk operation.
+     *
+     * @param indexId Index object ID
+     * @param versions List of versions to remove.
+     */
+    removeVersions(indexId: String|null, versions: Array<String|null>|null): Promise<any>|null;
     _removeVersions(ids: any): any;
     _removeVersion(id: any): any;
 

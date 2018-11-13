@@ -355,6 +355,31 @@ declare namespace LogicElements {
     _saveGoogleDrive(data: object|null, opts: object|null): Promise<any>|null;
 
     /**
+     * Handler for `request-list` custom event.
+     * The `result` property will contain a result of calling `list()` function.
+     *
+     * The event has to be cancelable and not already cancelled in order to handle
+     * it.
+     *
+     * Required properties on `detail` object:
+     * - `type` {String} Datastore type
+     * - `queryOptions` {Object} PouchDB query options.
+     */
+    _handleList(e: CustomEvent|null): void;
+
+    /**
+     * Performs a query for the request data.
+     *
+     * This is not the same as searching for a request. This only lists
+     * data from the datastore for given query options.
+     *
+     * @param type Datastore type
+     * @param queryOptions PouchDB query options.
+     * @returns List of PouchDB documents for the query.
+     */
+    list(type: String|null, queryOptions: object|null): Promise<any>|null;
+
+    /**
      * A handler for the `request-query` custom event. Queries the datastore for
      * request data.
      * The event must have `q` property set on the detail object.

@@ -144,6 +144,31 @@ declare namespace LogicElements {
    *    event.detail.result.then(list => console.log(list));
    * }
    * ```
+   *
+   * #### `project-update-bulk` event
+   *
+   * Used to create / update projects in bulk
+   *
+   * It expects `projects` property to be set on the detail object.
+   * Each item must be an object at least containing the name. Otherwise the
+   * object is ignored.
+   *
+   * ##### Example
+   *
+   * ```javascript
+   * var event = new CustomEvent('project-update-bulk', {
+   *    detail: {
+   *      projects: [{name: 'my project'}]
+   *    },
+   *    bubbles: true,
+   *    composed: true,
+   *    cancelable: true
+   * });
+   * document.body.dispatchEvent(event);
+   * if (event.defaultPrevented) {
+   *    event.detail.result.then(list => console.log(list));
+   * }
+   * ```
    */
   class ProjectModel extends RequestBaseModel {
     _attachListeners(node: HTMLElement|null): void;
@@ -160,12 +185,34 @@ declare namespace LogicElements {
     _handleRead(e: CustomEvent|null): void;
 
     /**
+     * Handler for `project-update-bulk` custom event.
+     */
+    _createBulkHandler(e: CustomEvent|null): void;
+
+    /**
+     * Normalizes projects list to common model.
+     * It updates `updated` property to current time.
+     * If an item is not an object then it is removed.
+     *
+     * @param projects List of projects.
+     */
+    _normalizeProjects(projects: Array<object|null>|null): Array<object|null>|null;
+
+    /**
      * Updates more than one project in a bulk request.
      *
      * @param projects List of requests to update.
-     * @returns List of PouchDB responses to each insert
      */
-    updateBulk(projects: Array<object|null>|null): any[]|null;
+    updateBulk(projects: Array<object|null>|null): Promise<any>|null;
+
+    /**
+     * Processes datastore response after calling `updateBulk()` function.
+     *
+     * @param projects List of requests to update.
+     * @param response PouchDB response
+     * @returns List of projects with updated `_id` and `_rew`
+     */
+    _processUpdateBulkResponse(projects: Array<object|null>|null, response: Array<object|null>|null): Array<object|null>|null;
 
     /**
      * Lists all project objects.
