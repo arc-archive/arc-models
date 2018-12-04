@@ -540,13 +540,23 @@ class VariablesModel extends ArcBaseModel {
       return;
     }
     const p = [
-      this.variableDb.destroy(),
-      this.environmentDb.destroy(),
+      this._delVariablesModel(),
+      this._delEnvironmentsModel(),
     ];
     if (!e.detail.result) {
       e.detail.result = [];
     }
     e.detail.result = e.detail.result.concat(p);
+  }
+
+  _delVariablesModel() {
+    return this.variableDb.destroy()
+    .then(() => this._notifyModelDestroyed('variables'));
+  }
+
+  _delEnvironmentsModel() {
+    return this.environmentDb.destroy()
+    .then(() => this._notifyModelDestroyed('variables-environments'));
   }
 }
 window.customElements.define(VariablesModel.is, VariablesModel);

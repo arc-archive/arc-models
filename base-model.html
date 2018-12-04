@@ -155,22 +155,23 @@ class ArcBaseModel extends ArcBehaviors.EventsTargetBehavior(Polymer.Element) {
   deleteModel() {
     try {
       return this.db.destroy()
-      .then(() => {
-        const e = new CustomEvent('datastore-destroyed', {
-          bubbles: true,
-          composed: true,
-          cancelable: true,
-          detail: {
-            datastore: [this.name]
-          }
-        });
-        this.dispatchEvent(e);
-      });
+      .then(() => this._notifyModelDestroyed(this.name));
     } catch (e) {
       return Promise.reject(e);
     }
   }
 
+  _notifyModelDestroyed(type) {
+    const e = new CustomEvent('datastore-destroyed', {
+      bubbles: true,
+      composed: true,
+      detail: {
+        datastore: type
+      }
+    });
+    this.dispatchEvent(e);
+    return e;
+  }
   /**
    * Handler for `destroy-model` custom event.
    * Deletes current data when scheduled for deletion.

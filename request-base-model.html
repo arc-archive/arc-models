@@ -65,17 +65,7 @@ class RequestBaseModel extends ArcBaseModel {
     try {
       const db = this.getDatabase(type);
       return db.destroy()
-      .then(() => {
-        const e = new CustomEvent('datastore-destroyed', {
-          bubbles: true,
-          composed: true,
-          cancelable: true,
-          detail: {
-            datastore: [type]
-          }
-        });
-        this.dispatchEvent(e);
-      });
+      .then(() => this._notifyModelDestroyed(type));
     } catch (e) {
       return Promise.reject(e);
     }
