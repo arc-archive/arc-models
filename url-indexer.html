@@ -890,6 +890,65 @@ class UrlIndexer extends Polymer.Element {
       });
     });
   }
+
+  reindex(type) {
+    if (type === 'history') {
+      return this.reindexHistory();
+    } else if (type === 'saved') {
+      return this.reindexSaved();
+    } else {
+      return Promise.reject(new Error('Unknown type.'));
+    }
+  }
+
+  reindexSaved() {
+    /* global PouchDB */
+    const pdb = new PouchDB('saved-requests');
+    return pdb.allDocs({
+      // jscs:disable
+      include_docs: true
+      // jscs:enable
+    })
+    .then((response) => {
+      const rows = response.rows;
+      if (!rows.length) {
+        return;
+      }
+      const data = rows.map((item) => {
+        const doc = item.doc;
+        return {
+          id: doc._id,
+          url: doc.url,
+          type: 'saved'
+        };
+      });
+      return this.index(data);
+    });
+  }
+
+  reindexHistory() {
+    const pdb = new PouchDB('history-requests');
+    return pdb.allDocs({
+      // jscs:disable
+      include_docs: true
+      // jscs:enable
+    })
+    .then((response) => {
+      const rows = response.rows;
+      if (!rows.length) {
+        return;
+      }
+      const data = rows.map((item) => {
+        const doc = item.doc;
+        return {
+          id: doc._id,
+          url: doc.url,
+          type: 'history'
+        };
+      });
+      return this.index(data);
+    });
+  }
 }
 window.customElements.define(UrlIndexer.is, UrlIndexer);
 </script>
