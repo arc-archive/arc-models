@@ -1,0 +1,329 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, minimum-scale=1, initial-scale=1, user-scalable=yes">
+  <title>Request index demo</title>
+  <script src="../../webcomponentsjs/webcomponents-loader.js"></script>
+  <link rel="import" href="../../shadycss/apply-shim.html">
+  <link rel="import" href="../../polymer/lib/elements/custom-style.html">
+  <link rel="import" href="../../polymer/lib/elements/dom-bind.html">
+  <link rel="import" href="../../iron-demo-helpers/demo-pages-shared-styles.html">
+  <link rel="import" href="../../paper-input/paper-input.html">
+  <link rel="import" href="../../paper-button/paper-button.html">
+  <link rel="import" href="../../app-pouchdb/pouchdb.html">
+  <link rel="import" href="../../paper-dropdown-menu/paper-dropdown-menu.html">
+  <link rel="import" href="../../paper-listbox/paper-listbox.html">
+  <link rel="import" href="../../paper-item/paper-item.html">
+  <link rel="import" href="../../neon-animation/web-animations.html">
+  <link rel="import" href="../../paper-toast/paper-toast.html">
+  <link rel="import" href="../../arc-data-generator/arc-data-generator.html">
+  <link rel="import" href="../../paper-styles/shadow.html">
+  <link rel="import" href="../url-indexer.html">
+  <custom-style>
+    <style include="demo-pages-shared-styles">
+    :root {
+      --arc-font-body1: {
+        @apply --paper-font-body1;
+      }
+    }
+
+    h1 {
+      @apply --paper-font-headline;
+    }
+
+    h2 {
+      @apply --paper-font-title;
+    }
+
+    h3 {
+      @apply --paper-font-subhead;
+    }
+
+    output {
+      white-space: pre-wrap;
+      @apply --paper-font-code1;
+      font-size: 16px;
+    }
+
+    .form-row {
+      @apply --layout-horizontal;
+      @apply --layout-end;
+    }
+
+    .form-row > * {
+      margin-right: 12px;
+    }
+
+    .type-label {
+      display: inline-block;
+      background-color: #c5c5c5;
+      padding: 2px 4px;
+      border-radius: 3px;
+    }
+
+    li {
+      margin: 8px 0;
+    }
+
+    .card {
+      @apply --shadow-elevation-3dp;
+      margin-top: 12px;
+      margin-bottom: 12px;
+      background-color: #fff;
+      padding: 12px;
+    }
+
+    .result-list {
+      max-height: 300px;
+      overflow: auto;
+    }
+
+    .request-url {
+      text-overflow: ellipsis;
+      overflow: hidden;
+      white-space: pre-wrap;
+      color: #888888;
+    }
+    </style>
+  </custom-style>
+</head>
+<body>
+  <header>
+    <h1>URL indexer model<h1>
+  </header>
+  <dom-bind id="demo">
+    <template>
+      <url-indexer id="indexer"></url-indexer>
+      <div class="vertical-section-container centered options card">
+        <h2>Options</h2>
+
+        <div class="form-row">
+          <p>Generate</p>
+          <paper-input label="Size" value="{{genSize}}" type="number" step="1"></paper-input>
+          <paper-dropdown-menu label="Type">
+            <paper-listbox slot="dropdown-content" selected="{{genType}}">
+              <paper-item>Saved</paper-item>
+              <paper-item>History</paper-item>
+            </paper-listbox>
+          </paper-dropdown-menu>
+          <p>requests</p>
+          <paper-button on-click="genData">Go</paper-button>
+        </div>
+
+        <div class="form-row">
+          <p>Index</p>
+          <paper-dropdown-menu label="Type">
+            <paper-listbox slot="dropdown-content" selected="{{indexType}}">
+              <paper-item>Saved</paper-item>
+              <paper-item>History</paper-item>
+            </paper-listbox>
+          </paper-dropdown-menu>
+          <p>data</p>
+          <paper-button on-click="indexData">Go</paper-button>
+        </div>
+
+        <div class="form-row">
+          <p>Clear</p>
+          <paper-dropdown-menu label="Type">
+            <paper-listbox slot="dropdown-content" selected="{{clearType}}">
+              <paper-item>Saved</paper-item>
+              <paper-item>History</paper-item>
+            </paper-listbox>
+          </paper-dropdown-menu>
+          <p>index</p>
+          <paper-button on-click="clearData">Go</paper-button>
+        </div>
+
+        <div class="form-row">
+          <p>Clear whole index</p>
+          <paper-button on-click="deleteData">Go</paper-button>
+        </div>
+      </div>
+
+      <div class="vertical-section-container centered card" role="main">
+        <h2>Search data store</h2>
+        <paper-input label="Search term" id="q" name="q" value="{{q}}"></paper-input>
+        <paper-button on-click="search">Search</paper-button>
+      </div>
+
+      <template is="dom-if" if="[[generated]]">
+        <div class="centered card result-list">
+          <h3>Existing data</h3>
+          <ul>
+          <template is="dom-repeat" items="[[generated]]">
+            <li>
+              <template is="dom-if" if="[[item.isSaved]]">
+                <span class="type-label">Saved</span>
+                <span class="request-name">[[item.name]]</span>
+              </template>
+              <template is="dom-if" if="[[item.isHistory]]">
+                <span class="type-label">History</span>
+              </template>
+              <span class="request-url">[[item.url]]</span>
+            </li>
+          </template>
+          </ul>
+        </div>
+      </template>
+
+      <template is="dom-if" if="[[queryResult]]">
+        <div class="centered card result-list">
+          <h3>Query result</h3>
+          <ul>
+          <template is="dom-repeat" items="[[queryResult]]">
+            <li>
+              <template is="dom-if" if="[[item.isSaved]]">
+                <span class="type-label">Saved</span>
+              </template>
+              <template is="dom-if" if="[[item.isHistory]]">
+                <span class="type-label">History</span>
+              </template>
+              <span class="request-url">[[item.id]]</span>
+            </li>
+          </template>
+          </ul>
+        </div>
+      </template>
+
+      <paper-toast text="Data is being generated" id="creating" duration="0"></paper-toast>
+      <paper-toast text="Request data ready" id="requestDataReady"></paper-toast>
+      <paper-toast text="Reindexing request data" id="reindexing" duration="0"></paper-toast>
+      <paper-toast text="Request data index complete" id="reindexReady"></paper-toast>
+      <paper-toast text="Index for type cleared" id="typeClearReady"></paper-toast>
+    </template>
+  </dom-bind>
+  <script>
+  (function(scope) {
+    /* global DataGenerator */
+    scope.q = 'api';
+    scope.genSize = 250;
+    scope.genType = 0;
+    scope.indexType = 0;
+    scope.clearType = 0;
+
+    scope.load = function() {
+      scope.refreshData();
+    };
+
+    scope.genData = function() {
+      if (scope.genType === 0) {
+        scope.genSavedData();
+      } else if (scope.genType === 1) {
+        scope.genHistoryData();
+      }
+    };
+
+    scope.genSavedData = function() {
+      document.getElementById('creating').opened = true;
+      DataGenerator.insertSavedRequestData({
+        requestsSize: scope.genSize
+      })
+      .then(() => {
+        document.getElementById('creating').opened = false;
+        document.getElementById('requestDataReady').opened = true;
+        scope.refreshData('saved');
+      });
+    };
+
+    scope.genHistoryData = function() {
+      document.getElementById('creating').opened = true;
+      DataGenerator.insertHistoryRequestData({
+        requestsSize: scope.genSize
+      })
+      .then(() => {
+        document.getElementById('creating').opened = false;
+        document.getElementById('requestDataReady').opened = true;
+        scope.refreshData('history');
+      });
+    };
+
+    scope.refreshData = function(type) {
+      let p;
+      if (type === 'saved') {
+        p = DataGenerator.getDatastoreRequestData();
+      } else if (type === 'history') {
+        p = DataGenerator.getDatastoreHistoryData();
+      } else {
+        p = DataGenerator.getDatastoreRequestData()
+        .then((data) => {
+          return DataGenerator.getDatastoreHistoryData()
+          .then((other) => {
+            return other.concat(data);
+          });
+        });
+      }
+      p.then((data) => {
+        data = data.map((item) => {
+          return {
+            name: item.name,
+            url: item.url,
+            isSaved: item.type === 'saved',
+            isHistory: item.type !== 'saved'
+          };
+        });
+        scope.generated = scope.generated ? scope.generated.concat(data) : data;
+      });
+    };
+
+    scope.indexData = function() {
+      let t;
+      if (scope.indexType === 0) {
+        t = 'saved';
+      } else if (scope.indexType === 1) {
+        t = 'history';
+      } else {
+        throw new Error('Unknown type');
+      }
+
+      scope._indexData(t);
+    };
+
+    scope._indexData = function(type) {
+      document.getElementById('reindexing').opened = true;
+      const indexer = document.getElementById('indexer');
+      indexer.reindex(type)
+      .then(() => {
+        document.getElementById('reindexReady').opened = true;
+      });
+    };
+
+    scope.clearData = function() {
+      let t;
+      if (scope.clearType === 0) {
+        t = 'saved';
+      } else if (scope.clearType === 1) {
+        t = 'history';
+      } else {
+        throw new Error('Unknown type');
+      }
+      const indexer = document.getElementById('indexer');
+      indexer.deleteIndexedType(() => {
+        document.getElementById('typeClearReady').opened = true;
+      });
+    };
+
+    scope.search = function() {
+      const query = document.getElementById('q').value;
+      const indexer = document.getElementById('indexer');
+      scope.queryResult = false;
+      return indexer.query(query, {detailed: true})
+      .then((result) => {
+        const data = Object.keys(result).map((key) => {
+          const type = result[key];
+          return {
+            isHistory: type === 'history',
+            isSaved: type === 'saved',
+            id: key
+          };
+        });
+        scope.queryResult = data;
+      });
+    };
+
+    window.addEventListener('WebComponentsReady', scope.load);
+  })(document.getElementById('demo'));
+  </script>
+</body>
+</html>
