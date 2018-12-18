@@ -350,7 +350,11 @@ class UrlIndexer extends Polymer.Element {
         dbIndexes = indexed;
         return this._prepareRequestIndexData(request, indexed);
       })
-      .then((indexes) => this._storeIndexes(db, indexes))
+      .then((indexes) => {
+        if (indexes.length) {
+          return this._storeIndexes(db, indexes);
+        }
+      })
       .then(() => {
         if (dbIndexes.length) {
           return this._removeRedundantIndexes(db, dbIndexes);
