@@ -11,19 +11,33 @@
       /* global WCT */
       // Load and run all tests (.html, .js):
       WCT.loadSuites([
-        'projects-test.html',
-        'event-based-projects-test.html',
-        'requests-test.html',
-        'save-request-test.html',
-        'request-indexer-test.html',
-        'request-indexer-search-test.html',
-        'event-based-requests-test.html',
         'event-based-websocket-test.html',
-        'rest-api-test.html',
         'host-rules-test.html',
         'event-based-host-rules-test.html',
         'auth-data-model-test.html',
-        'request-index-test.html'
+
+        'project-model/projects-test.html',
+        'project-model/event-based-projects-test.html',
+
+        'url-history-model/storing-test.html',
+        'url-history-model/storing-event-test.html',
+        'url-history-model/querying-test.html',
+
+        'variables-model/public-api-test.html',
+        'variables-model/environment-event-test.html',
+        'variables-model/variable-event-test.html',
+
+        'request-model/requests-test.html',
+        'request-model/save-request-test.html',
+        'request-model/save-history-request-test.html',
+        'request-model/event-based-requests-test.html',
+
+        'url-indexer/url-indexer-basic-test.html',
+        'url-indexer/url-indexer-indexing-test.html',
+        'url-indexer/url-indexer-delete-test.html',
+        'url-indexer/url-indexer-query-test.html',
+
+        'rest-api/rest-api-test.html'
       ]);
     </script>
   </body>

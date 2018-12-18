@@ -12,213 +12,121 @@ the License.
 -->
 <link rel="import" href="request-base-model.html">
 <link rel="import" href="../app-pouchdb-quick-search/pouchdb-quick-search.html">
-
+<link rel="import" href="../arc-electron-payload-processor/payload-processor.html">
+<dom-module id="request-model">
 <script>
 /**
- * Events based access to saved request datastore.
+ * Event based access to saved and history request datastore.
  *
- * Note: **All events must be cancelable.** When the event is cancelled
- * by an instance of the element it won't be handled again by other instance
- * that possibly exists in the DOM.
+ * This model creates and updates updates request objects and updates
+ * URL index associated with the request.
+ * It also supports querying for request data, deleting request data and
+ * undeleting it.
  *
- * Cancellable event is a request to models for change. Non-cancellable event
- * is a notification for views to update their values. For example
- * `request-object-changed` event notifies model to update object in
- * the datastore if the event is cancelable and to update views if it's not
- * cancellable.
+ * ## Events API
  *
- * Each handled event contains the `result` property on the `detail` object. It
- * contains a `Promise` object with a result of the operation. Also,
- * for update / delete events the same non-cancelable event is fired.
+ * All events must be marked as cancelable or will be ignore by the model.
+ * In ARC ecosystem models dispatch the same event after the object is updated
+ * (deleted, created, updated) but the event is not cancelable.
+ * Components should only react on non cancelable model events as it means
+ * that the change has been commited to the datastore.
  *
- * Events handled by this element are cancelled and propagation of the event is
- * stopped.
+ * Each handled event is canceled so it's safe to put more than one model in
+ * the DOM. Event's detail object will get `result` property with the promise
+ * resolved when operation commits.
  *
- * Supported operations:
+ * **save-request**
+ * This event should be used when dealing with unprocessed request data.
+ * Request object may contain Blob or FormData as a payload which would be lost
+ * if trying to store it in the data store. This flow handles payload
+ * transformation.
  *
- * -   Read request object (`request-object-read`)
- * -   Update name only (`request-name-changed`)
- * -   Update request object (`request-object-changed`)
- * -   Delete object (`request-object-deleted`)
- * -   Deletes list of request objects (`request-objects-deleted`)
- *
- * ## Request object types
- *
- * There are two request object types: `saved-requests` and `history-requests`.
- * Each event must contain a `type` property to determine which database
- * to query for an object.
- *
- * ### Events description
- *
- * #### `request-object-read` event
- *
- * Reads a request object from the datastore.
- *
- * ##### Properties
- *
- * -   `id` (String, required) ID of the datastore entry
- * -   `rev` (String, optional) Specific revision to retrieve from the
- * datastore. Latest by default.
- * -   `type` {String, required} Request object type. Either `saved-requests`
- * or `history-requests`
- *
- * ##### Example
+ * Detail's parameteres:
+ * - request - Required, ArcRequest object
+ * - projects - Optional, Array of strings, List of project names to create
+ * with this request and associate with the request object.
+ * - options - Optional, map of additional options. Currently only `isDrive` is
+ * supported. When set `export-google-drive` is dispatched. If the event is not
+ * handled by the application the save flow fails.
  *
  * ```javascript
- * var event = new CustomEvent('request-object-read', {
- *    detail: { id: 'some-id', type: 'saved-requests' },
- *    bubbles: true,
- *    composed: true,
- *    cancelable: true
- * });
- * if (event.defaultPrevented) {
- *    event.detail.result.then(request => console.log(request));
- * }
- * ```
- *
- * #### `request-name-changed` Event
- *
- * Changes name of a request. Promise result has updated `name` and
- * `_rev` properties.
- * This operation deletes old object because it changes the `name` of
- * the request that is used to build the datastore key.
- *
- * ##### Properties
- * -   `id` (String, required if `project` is not set) ID of the datastore entry
- * -   `request` (Object, required if `id` is not set) The database entity
- * -   `name` (String, required) New name of the project. It doesn't matter
- * if `project` property already has new name.
- * -   `type` {String, required} Request object type. Either `saved-requests`
- * or `history-requests`
- *
- * ##### Example
- *
- * ```javascript
- * var event = new CustomEvent('request-name-changed', {
- *    detail: { id: 'some-id', name: 'new name', type: 'history-requests' },
- *    bubbles: true,
- *    composed: true,
- *    cancelable: true
- * });
- * if (event.defaultPrevented) {
- *    event.detail.result.then(request => console.log(request));
- * }
- * ```
- *
- * #### `request-object-changed` event
- *
- * Updates / saves new object in the datastore.
- *
- * ##### Properties
- *
- * -   `request` (Object, required) An object to store
- * -   `type` {String, required} Request object type. Either `saved-requests`
- * or `history-requests`
- *
- * ##### Example
- **
- * ```javascript
- * var event = new CustomEvent('request-object-changed', {
- *    detail: { request: {...}, type: 'saved-requests' },
- *    bubbles: true,
- *    composed: true,
- *    cancelable: true
- * });
- * if (event.defaultPrevented) {
- *    event.detail.result.then(request => console.log(request));
- * }
- * ```
- *
- * #### `request-object-deleted` event
- *
- * Deletes the object from the datastore. This operation fires
- * `request-object-deleted` custom event. Promise returns object's new
- * `_rev` value.
- *
- * ##### Properties
- * -   `id` (String, required) ID of the datastore entry
- * -   `rev` (String, optional) The `_rev` property of the PouchDB datastore
- * object. If not set it will use latest revision.
- * -   `type` {String, required} Request object type. Either `saved-requests` or
- * `history-requests`
- *
- * ##### Example
- *
- * ```javascript
- * var event = new CustomEvent('request-object-deleted', {
- *    detail: { id: 'some-id', type: 'saved-requests' },
- *    bubbles: true,
- *    composed: true,
- *    cancelable: true
- * });
- * if (event.defaultPrevented) {
- *    event.detail.result.then(newRev => console.log(newRev));
- * }
- * ```
- *
- * #### `request-objects-deleted` event
- *
- * Removes list of requests in batch operation. Promise results to the map
- * where keys are request ids and values are new revision hash.
- *
- * ##### Properties
- *
- * -   `items` (Array, required) List of IDs to delete
- * -   `type` {String, required} Request object type. Either `saved-requests`
- * or `history-requests`
- *
- * ##### Example
- *
- * ```javascript
- * var event = new CustomEvent('request-objects-deleted', {
- *    detail: {
- *      items: ['some-id', 'other-id'],
- *      type: 'saved-requests'
- *    },
- *    bubbles: true,
- *    composed: true,
- *    cancelable: true
- *  });
- *  if (event.defaultPrevented) {
- *    event.detail.result.then(deleted => console.log(deleted));
+ * const e = new CustomEvent('save-request', {
+ *  bubbles: true,
+ *  composed: true,
+ *  cancelable: true,
+ *  detail: {
+ *    request: {...}
+ *    projects: ['Test project'],
+ *    options: {
+ *      isDrive: true
+ *    }
  *  }
- *  ```<link rel="import" href="../polymer/polymer.html">
- *  <link rel="import" href="../app-pouchdb/pouchdb.html">
- *
- * #### `request-objects-undeleted` event
- *
- * Restores previously deleted requests from the history.
- * It searches in the revision history of each object to find a revision before
- * passed `_rev` and restores this object as a new one in the revision tree.
- *
- * This operation fires `request-object-deleted` custom event. Promise returns
- * request objects with updated `_rev` value.
- *
- * ##### Properties
- *
- * -   `items` (Array, required) List of requests to restore. It required `_id`
- * and `_rev` properties to be set on each object. The `_rev` property must be
- * a revision updated after the deletion of the object.
- * -   `type` {String, required} Request object type. Either `saved-requests`
- * or `history-requests`
- *
- * ##### Example
- *
- * ```javascript
- * var event = new CustomEvent('request-objects-deleted', {
- *    detail: {
- *      items: [{_id: 'some-id', '_rev': '2-xyz']},
- *      type: 'saved-requests'
- *    },
- *    bubbles: true,<link rel="import" href="../polymer/polymer.html">
- * <link rel="import" href="../app-pouchdb/pouchdb.html">
- *    composed: true,
- *    cancelable: true
- * });
- * if (event.defaultPrevented) {
- *    event.detail.result.then(restored => console.log(restored));
- * }
+ * };
+ * this.dispatchEvent(e);
  * ```
+ *
+ * **request-object-read**
+ *
+ * Reads the request from the data store.
+ *
+ * Detail's parameteres:
+ *
+ * - `id` - Required, String. Request ID
+ * - `type` - Required, String. Either `history` or `saved`
+ * - `rev` - Optional, String. Specific revision to read
+ *
+ * **request-object-changed**
+ *
+ * Should be only used if the payload is not `Blob` or `FormData` and
+ * all request properties are set. By default `save-request` event should be
+ * used.
+ *
+ * Detail's parameteres: ArcRequest object.
+ * https://github.com/advanced-rest-client/api-components-api/blob/master/docs/
+ * arc-models.md#arcrequest
+ *
+ * **request-object-deleted**
+ *
+ * Deletes the object from the data store.
+ *
+ * Detail's parameteres:
+ *
+ * - `id` - Required, String. Request ID
+ * - `type` - Required, String. Either `history` or `saved`
+ *
+ * **request-objects-deleted**
+ *
+ * Deletes number of requests in bulk.
+ *
+ * Detail's parameteres:
+ *
+ * - `type` - Required, String. Either `history` or `saved`
+ * - `items` - Required, Array<String>. List of request IDs to delete.
+ *
+ * **request-objects-undeleted**
+ *
+ * Used to restore deleted request data.
+ *
+ * Detail's parameteres:
+ *
+ * - `type` - Required, String. Either `history` or `saved`
+ * - `items` - Required, Array<Object>. List of requests to restore.
+ * Each object must contain `_rev` and `_id`.
+ *
+ * The `result` property contains result of calling `revertRemove()` function.
+ *
+ * **request-query**
+ *
+ * Queries for request data. This flow searches for URL data in a separate index
+ * and then performs full text search on the request data store.
+ *
+ * Detail's parameteres:
+ *
+ * - `q` - Required, String. User query.
+ * - `type` - Optional, String. Either `history` or `saved`. By default it
+ * searches in both data stores.
+ * - `detailed` - Optional, Boolean. If set it uses slower algorithm but performs full
+ * search on the index. When false it only uses filer like query + '*'.
  *
  * @polymer
  * @customElement
@@ -227,7 +135,9 @@ the License.
  */
 class RequestModel extends RequestBaseModel {
   /* global RequestBaseModel */
-  static get is() {return 'request-model';}
+  static get is() {
+    return 'request-model';
+  }
 
   static get properties() {
     return {
@@ -253,15 +163,17 @@ class RequestModel extends RequestBaseModel {
   constructor() {
     super();
     this._handleRead = this._handleRead.bind(this);
-    this._handleNameChange = this._handleNameChange.bind(this);
     this._handleObjectSave = this._handleObjectSave.bind(this);
+    this._handleObjectsSave = this._handleObjectsSave.bind(this);
     this._handleObjectDelete = this._handleObjectDelete.bind(this);
     this._handleObjectsDelete = this._handleObjectsDelete.bind(this);
-    this._handleObjectsUndelete = this._handleObjectsUndelete.bind(this);
+    this._handleUndelete = this._handleUndelete.bind(this);
     this._saveRequestHandler = this._saveRequestHandler.bind(this);
-    this._onIndexWorkerData = this._onIndexWorkerData.bind(this);
-    this._onIndexWorkerError = this._onIndexWorkerError.bind(this);
+    this._saveHistoryHandler = this._saveHistoryHandler.bind(this);
     this._handleQuery = this._handleQuery.bind(this);
+    this._handleList = this._handleList.bind(this);
+    this._listProjectRequestsHandler = this._listProjectRequestsHandler.bind(this);
+    /* global PayloadProcessor */
   }
   /**
    * Adds event listeners.
@@ -269,14 +181,17 @@ class RequestModel extends RequestBaseModel {
    */
   _attachListeners(node) {
     node.addEventListener('save-request', this._saveRequestHandler);
+    node.addEventListener('save-history', this._saveHistoryHandler);
     node.addEventListener('request-object-read', this._handleRead);
-    node.addEventListener('request-name-changed', this._handleNameChange);
     node.addEventListener('request-object-changed', this._handleObjectSave);
+    node.addEventListener('request-objects-changed', this._handleObjectsSave);
     node.addEventListener('request-object-deleted', this._handleObjectDelete);
     node.addEventListener('request-objects-deleted', this._handleObjectsDelete);
-    node.addEventListener('request-objects-undeleted',
-      this._handleObjectsUndelete);
+    node.addEventListener('request-objects-undeleted', this._handleUndelete);
     node.addEventListener('request-query', this._handleQuery);
+    node.addEventListener('request-list', this._handleList);
+    node.addEventListener('request-project-list', this._listProjectRequestsHandler);
+    node.addEventListener('destroy-model', this._deleteModelHandler);
   }
   /**
    * Removes event listeners.
@@ -284,17 +199,19 @@ class RequestModel extends RequestBaseModel {
    */
   _detachListeners(node) {
     node.removeEventListener('save-request', this._saveRequestHandler);
+    node.removeEventListener('save-history', this._saveHistoryHandler);
     node.removeEventListener('request-object-read', this._handleRead);
-    node.removeEventListener('request-name-changed', this._handleNameChange);
     node.removeEventListener('request-object-changed', this._handleObjectSave);
+    node.removeEventListener('request-objects-changed', this._handleObjectsSave);
     node.removeEventListener('request-object-deleted',
       this._handleObjectDelete);
     node.removeEventListener('request-objects-deleted',
       this._handleObjectsDelete);
-    node.removeEventListener('request-objects-undeleted',
-      this._handleObjectsUndelete);
+    node.removeEventListener('request-objects-undeleted', this._handleUndelete);
     node.removeEventListener('request-query', this._handleQuery);
-    this._unregisterWorker();
+    node.removeEventListener('request-list', this._handleList);
+    node.removeEventListener('request-project-list', this._listProjectRequestsHandler);
+    node.removeEventListener('destroy-model', this._deleteModelHandler);
   }
   /**
    * A handler for `save-request-data` custom event. It's special event to
@@ -380,6 +297,45 @@ class RequestModel extends RequestBaseModel {
     });
   }
   /**
+   * Handler for `save-history` object. It computes payload to savable state
+   * and saves history object.
+   * Note, the ID is is a combination of today's midningt timestamp, url and
+   * method. If such ID already exists the object is updated.
+   *
+   * @param {CustomEvent} e
+   */
+  _saveHistoryHandler(e) {
+    if (e.defaultPrevented) {
+      return;
+    }
+    e.preventDefault();
+    e.stopPropagation();
+    const request = e.detail.request;
+    if (!request._id) {
+      const d = new Date();
+      d.setHours(0, 0, 0, 0);
+      let id = d.getTime();
+      id += '/' + encodeURIComponent(request.url);
+      id += '/' + request.method;
+      request._id = id;
+    }
+    request.type = 'history';
+    const db = this.getDatabase(request.type);
+    e.detail.result = db.get(request._id)
+    .catch((e) => {
+      if (e.status === 404) {
+        return;
+      }
+      this._handleException(e);
+    })
+    .then((dbRequest) => {
+      if (dbRequest) {
+        request._rev = dbRequest._rev;
+      }
+      return this.saveRequest(request);
+    });
+  }
+  /**
    * Saves a request into a data store.
    * It handles payload to string conversion, handles types, and syncs request
    * with projects. Use `update()` method only if you are storing already
@@ -404,7 +360,7 @@ class RequestModel extends RequestBaseModel {
     if (!request._id) {
       request._id = this.uuid.generate();
     }
-    return this._preparePayload(request)
+    return PayloadProcessor.payloadToString(request)
     .then((result) => {
       request = result;
       return this._saveGoogleDrive(request, opts);
@@ -485,15 +441,52 @@ class RequestModel extends RequestBaseModel {
    * @param {String} id The ID of the datastore entry.
    * @param {?String} rev Specific revision to read. Defaults to
    * latest revision.
+   * @param {?Object} opts Additional options. Currently only `restorePayload`
+   * is supported
    * @return {Promise} Promise resolved to a project object.
    */
-  read(type, id, rev) {
-    const opts = {};
+  read(type, id, rev, opts) {
+    const conf = {};
     if (rev) {
-      opts.rev = rev;
+      conf.rev = rev;
     }
     const db = this.getDatabase(type);
-    return db.get(id, opts);
+    return db.get(id, conf)
+    .then((request) => {
+      if (opts && opts.restorePayload) {
+        request = PayloadProcessor.restorePayload(request);
+      }
+      return request;
+    });
+  }
+  /**
+   * The same as `read()` but for a list of requests.
+   * @param {String} type Requests type to restore.
+   * @param {Array<String>} keys Request ids
+   * @param {?Object} opts Additional options. Currently only `restorePayload`
+   * is supported
+   * @return {Promise}
+   */
+  readBulk(type, keys, opts) {
+    const db = this.getDatabase(type);
+    return db.allDocs({
+      include_docs: true,
+      keys
+    })
+    .then((response) => {
+      const requests = [];
+      response.rows.forEach((item) => {
+        const request = item.doc;
+        if (!request) {
+          return;
+        }
+        if (opts && opts.restorePayload) {
+          PayloadProcessor.restorePayload(request);
+        }
+        requests[requests.length] = request;
+      });
+      return requests;
+    });
   }
   /**
    * Updates / saves the request object in the datastore.
@@ -513,12 +506,19 @@ class RequestModel extends RequestBaseModel {
       request._id = this.uuid.generate();
     }
     request.updated = Date.now();
-    return db.put(request)
+    const copy = Object.assign({}, request);
+    Object.keys(copy).forEach((key) => {
+      if (key[0] === '_' && key !== '_id' && key !== '_rev') {
+        delete copy[key];
+      }
+    });
+    return db.put(copy)
     .then((result) => {
       request._rev = result.rev;
       const detail = {
         request: request,
         oldRev: oldRev,
+        // oldId will be removed
         oldId: request._id,
         type: type
       };
@@ -545,6 +545,9 @@ class RequestModel extends RequestBaseModel {
         const request = requests[i];
         const oldRev = request._rev;
         request._rev = r.rev;
+        if (!request._id) {
+          request._id = r.id;
+        }
         const detail = {
           request,
           oldRev: oldRev,
@@ -702,61 +705,24 @@ class RequestModel extends RequestBaseModel {
     e.preventDefault();
     e.stopPropagation();
 
-    if (!e.detail.id) {
+    const {type, id, opts} = e.detail;
+    if (!id) {
       e.detail.result = Promise.reject(
         new Error('Request "id" property is missing.'));
       return;
     }
-    if (!e.detail.type) {
+    if (!type) {
       e.detail.result = Promise.reject(
         new Error('Request "type" property is missing.'));
       return;
     }
-    e.detail.result = this.read(e.detail.type, e.detail.id, e.detail.rev)
-    .catch((e) => this._handleException(e));
-  }
-
-  /**
-   * Updates name of a request.
-   *
-   * @deprecated This function will be removed. Use `update()` instead.
-   * @param {CustomEvent} e
-   */
-  _handleNameChange(e) {
-    if (!e.cancelable || e.composedPath()[0] === this) {
-      return;
-    }
-    e.preventDefault();
-    e.stopPropagation();
-
-    if (!e.detail.name) {
-      e.detail.result = Promise.reject(
-        new Error('The "name" property is missing'));
-      return;
-    }
-    const missingMsg = 'Either "request" object or request "id" must be set.';
-    if (!e.detail.request && !e.detail.id) {
-      e.detail.result = Promise.reject(new Error(missingMsg));
-      return;
-    }
-    const request = e.detail.request;
-    let promise;
-    if (request && request._id && request._rev) {
-      promise = Promise.resolve(request);
+    let p;
+    if (id instanceof Array) {
+      p = this.readBulk(type, id, opts);
     } else {
-      if (!e.detail.id) {
-        e.detail.result = Promise.reject(new Error(missingMsg));
-        return;
-      }
-      promise = this.read('saved', e.detail.id);
+      p = this.read(type, id, e.detail.rev, opts);
     }
-
-    e.detail.result = promise
-    .then((obj) => {
-      obj = Object.assign({}, obj);
-      obj.name = e.detail.name;
-      return this.update('saved', obj);
-    })
+    e.detail.result = p
     .catch((e) => this._handleException(e));
   }
   /**
@@ -765,11 +731,7 @@ class RequestModel extends RequestBaseModel {
    * @param {CustomEvent} e
    */
   _handleObjectSave(e) {
-    if (!e.cancelable) {
-      return;
-    }
-    if (e.composedPath()[0] === this) {
-      this._indexRequest(e.detail.request);
+    if (e.composedPath()[0] === this || !e.cancelable) {
       return;
     }
     e.preventDefault();
@@ -808,16 +770,39 @@ class RequestModel extends RequestBaseModel {
     .catch((e) => this._handleException(e));
   }
   /**
+   * Handler for `request-objects-changed` event. Updates requests in bulk operation.
+   * @param {CustomEvent} e
+   */
+  _handleObjectsSave(e) {
+    if (e.composedPath()[0] === this || !e.cancelable) {
+      return;
+    }
+    e.preventDefault();
+    e.stopPropagation();
+
+    const {requests, type} = e.detail;
+    if (!requests) {
+      e.detail.result = Promise.reject(
+        new Error('The "requests" property is missing.'));
+      return;
+    }
+    if (!type) {
+      e.detail.result = Promise.reject(
+        new Error('The "type" property is missing.'));
+      return;
+    }
+    e.detail.result = this.updateBulk(type, requests);
+  }
+  /**
    * Deletes the object from the datastore.
    *
    * @param {CustomEvent} e
    */
   _handleObjectDelete(e) {
-    if (!e.cancelable) {
+    if (e.composedPath()[0] === this) {
       return;
     }
-    if (e.composedPath()[0] === this) {
-      this._deleteIndex(e.detail.id);
+    if (!e.cancelable) {
       return;
     }
     e.preventDefault();
@@ -889,7 +874,7 @@ class RequestModel extends RequestBaseModel {
    * handlers `request-objects-undeleted` event to restore deleted items
    * @param {CustomEvent} e
    */
-  _handleObjectsUndelete(e) {
+  _handleUndelete(e) {
     if (!e.cancelable || e.composedPath()[0] === this) {
       return;
     }
@@ -918,7 +903,7 @@ class RequestModel extends RequestBaseModel {
   _filterExistingItems(result) {
     result = result.rows.filter((item) => {
       if (item.error) {
-        console.error(item);
+        console.warn(item);
         return false;
       }
       return true;
@@ -935,7 +920,6 @@ class RequestModel extends RequestBaseModel {
     const result = docs.find((item) => item._id === id);
     return result ? result._rev : undefined;
   }
-
   /**
    * Saves the request on Google Drive.
    * It sends `drive-request-save` event to call a component responsible
@@ -978,270 +962,53 @@ class RequestModel extends RequestBaseModel {
     });
   }
   /**
-   * Prepares payload data to be stored in the datastore.
-   * FormData are translated to a `multipart` entry property.
-   * Payload is cleared from the request object.
+   * Handler for `request-list` custom event.
+   * The `result` property will contain a result of calling `list()` function.
    *
-   * @param {Object} data The request object.
-   * @return {Promise} Promise resolved to a request object.
+   * The event has to be cancelable and not already cancelled in order to handle
+   * it.
+   *
+   * Required properties on `detail` object:
+   * - `type` {String} Datastore type
+   * - `queryOptions` {Object} PouchDB query options.
+   *
+   * @param {CustomEvent} e
    */
-  _preparePayload(data) {
-    if (!data.payload) {
-      return Promise.resolve(data);
-    }
-    if (data.payload instanceof FormData) {
-      data = Object.assign({}, data);
-      if (!data.payload.entries) {
-        data.payload = undefined;
-        return Promise.resolve(data);
-      }
-      return this._createMultipartEntry(data.payload)
-      .then((entry) => {
-        data.payload = undefined;
-        data.multipart = entry;
-        return data;
-      });
-    } else if (data.payload instanceof Blob) {
-      data = Object.assign({}, data);
-      return this._blobToString(data.payload)
-      .then((str) => {
-        data.payload = undefined;
-        data.blob = str;
-        return data;
-      });
-    }
-    return Promise.resolve(data);
-  }
-  /**
-   * Computes `multipart` list value to replace FormData with array that can
-   * be stored in the datastore.
-   *
-   * @param {FormData} payload FormData object
-   * @return {Promise} Promise resolved to a form part representation.
-   */
-  _createMultipartEntry(payload) {
-    const iterator = payload.entries();
-    let textParts;
-    if (payload._arcMeta && payload._arcMeta.textParts) {
-      textParts = payload._arcMeta.textParts;
-    }
-    return this._computeFormDataEntry(iterator, textParts);
-  }
-  /**
-   * Recuresively iterates over form data and appends result of creating the
-   * part object to the `result` array.
-   *
-   * Each part entry contains `name` as a form part name, value as a string
-   * representation of the value and `isFile` to determine is the value is
-   * acttually a string or a file data.
-   *
-   * @param {Iterator} iterator FormData iterator
-   * @param {?Array<String>} textParts From `_arcMeta` property. List of blobs
-   * that should be treated as text parts.
-   * @param {?Array<Object>} result An array where the results are appended to.
-   * It creates new result object when it's not passed.
-   * @return {Promise} A promise resolved to the `result` array.
-   */
-  _computeFormDataEntry(iterator, textParts, result) {
-    result = result || [];
-    const item = iterator.next();
-    if (item.done) {
-      return Promise.resolve(result);
-    }
-    let entry = item.value;
-    let name = entry[0];
-    let value = entry[1];
-    let promise;
-    let isBlob = false;
-    let isTextBlob = false;
-    if (value instanceof Blob) {
-      promise = this._blobToString(value);
-      if (textParts && textParts.indexOf(name) !== -1) {
-        isBlob = false;
-        isTextBlob = true;
-      } else {
-        isBlob = true;
-      }
-    } else {
-      promise = Promise.resolve(value);
-    }
-    return promise
-    .then((str) => {
-      const _part = {
-        name: name,
-        value: str,
-        isFile: isBlob
-      };
-      if (isTextBlob) {
-        _part.isTextBlob = isTextBlob;
-      }
-      return _part;
-    })
-    .then((part) => {
-      result.push(part);
-      return this._computeFormDataEntry(iterator, textParts, result);
-    });
-  }
-  /**
-   * Converts blob data to base64 string.
-   *
-   * @param {Blob} blob File or blob object to be translated to string
-   * @return {Promise} Promise resolved to a base64 string data from the file.
-   */
-  _blobToString(blob) {
-    return new Promise((resolve, reject) => {
-      const reader = new FileReader();
-      reader.onloadend = function(e) {
-        resolve(e.target.result);
-      };
-      reader.onerror = function() {
-        reject(new Error('Unable to convert blob to string.'));
-      };
-      reader.readAsDataURL(blob);
-    });
-  }
-  /**
-   * Updates or creates request search index used when querying for request
-   * data.
-   *
-   * This operation is async and in a web worker (separate thred).
-   *
-   * @param {Object} request A request to index.
-   */
-  _indexRequest(request) {
-    if (this.noIndexing) {
+  _handleList(e) {
+    if (!e.cancelable || e.defaultPrevented) {
       return;
     }
-    if (!this.__indexRequestQueue) {
-      this.__indexRequestQueue = [];
-    }
-    this.__indexRequestQueue.push(request);
-    if (this.__indexRequestDebounce) {
+    e.preventDefault();
+    e.stopPropagation();
+    const {type, queryOptions} = e.detail;
+    if (!type) {
+      e.detail.result = Promise.reject(new Error(
+        'The "type" parameter is required.'
+      ));
       return;
     }
-    this.__indexRequestDebounce = true;
-    setTimeout(() => {
-      const worker = this._getIndexWorker();
-      const requests = this.__indexRequestQueue;
-      this.__indexRequestQueue = [];
-      this.__indexRequestDebounce = false;
-      worker.postMessage({
-        task: 'index-requests',
-        requests: requests.map((item) => {
-          let type = item.type;
-          if (type === 'saved-requests') {
-            type = 'saved';
-          } else if (type === 'history-requests') {
-            type = 'history';
-          }
-          return {
-            id: item._id,
-            url: item.url,
-            type: type
-          };
-        })
-      });
-    }, 250);
-  }
-  /**
-   * Removed URL index data when the request is deleted.
-   * @param {String} id Request IDs to delete.
-   */
-  _deleteIndex(id) {
-    if (this.noIndexing) {
+    if (!queryOptions) {
+      e.detail.result = Promise.reject(new Error(
+        'The "queryOptions" parameter is required.'
+      ));
       return;
     }
-    if (!this.__indexDeleteQueue) {
-      this.__indexDeleteQueue = [];
-    }
-    this.__indexDeleteQueue.push(id);
-    if (this.__indexDeleteDebounce) {
-      return;
-    }
-    this.__indexDeleteDebounce = true;
-    setTimeout(() => {
-      const worker = this._getIndexWorker();
-      const ids = this.__indexDeleteQueue;
-      this.__indexDeleteQueue = [];
-      this.__indexDeleteDebounce = false;
-      worker.postMessage({
-        task: 'delete-index',
-        ids
-      });
-    }, 250);
+    e.detail.result = this.list(type, queryOptions)
+    .catch((e) => this._handleException(e));
   }
   /**
-   * Creates if nescesary and returns indexing web worker.
-   * @return {Worker} An indexing web worker instance.
-   */
-  _getIndexWorker() {
-    if (this._indexWorker) {
-      return this._indexWorker;
-    }
-    const worker = new Worker(this.resolveUrl('workers/request-indexer.js'));
-    worker.addEventListener('message', this._onIndexWorkerData);
-    worker.addEventListener('error', this._onIndexWorkerError);
-    this._indexWorker = worker;
-    return worker;
-  }
-
-  /**
-   * Terminates the worker (if exists) and removes event listeners
-   */
-  _unregisterWorker() {
-    if (!this._indexWorker) {
-      return;
-    }
-    this._indexWorker.removeEventListener('message', this._onIndexWorkerData);
-    this._indexWorker.removeEventListener('error', this._onIndexWorkerError);
-    this._indexWorker.terminate();
-    delete this._indexWorker;
-  }
-  /**
-   * A handler for data returned from the request indexing worker.
+   * Performs a query for the request data.
    *
-   * @param {Event} e Worker event
-   */
-  _onIndexWorkerData(e) {
-    const data = e.data;
-    switch (data.task) {
-      case 'task-finished':
-        this.dispatchEvent(new CustomEvent('request-indexing-finished', {
-          composed: true
-        }));
-        break;
-      case 'query-finished':
-        this._urlQueryHandler(data.id, data.results);
-        break;
-      case 'task-error':
-        this.dispatchEvent(new CustomEvent('request-indexing-error', {
-          composed: true,
-          detail: {
-            message: data.message
-          }
-        }));
-        this._handleException(new Error(data.message), true);
-        if (data.id) {
-          const callbacks = this._workerPromises[data.id];
-          delete this._workerPromises[data.id];
-          callbacks.reject(new Error(data.message));
-        }
-        break;
-    }
-  }
-  /**
-   * A handler for error returned from the request indexing worker.
+   * This is not the same as searching for a request. This only lists
+   * data from the datastore for given query options.
    *
-   * @param {Event} e Worker event
+   * @param {String} type Datastore type
+   * @param {Object} queryOptions PouchDB query options.
+   * @return {Promise} List of PouchDB documents for the query.
    */
-  _onIndexWorkerError(e) {
-    console.error(e);
-    this.dispatchEvent(new CustomEvent('request-indexing-error', {
-      composed: true,
-      detail: {
-        message: e.message || 'Indexing worker error'
-      }
-    }));
+  list(type, queryOptions) {
+    const db = this.getDatabase(type);
+    return db.allDocs(queryOptions);
   }
   /**
    * A handler for the `request-query` custom event. Queries the datastore for
@@ -1262,13 +1029,29 @@ class RequestModel extends RequestBaseModel {
         new Error('The "q" property is missing.'));
       return;
     }
-    e.detail.result = this.queryUrlData(e.detail.q, e.detail.type, e.detail.detailed)
+    e.detail.result = this.query(e.detail.q, e.detail.type, e.detail.detailed);
+  }
+  /**
+   * Queries both URL and PouchDb data.
+   *
+   * It calls, in order, `queryUrlData()` and `queryPouchDb()` functions.
+   *
+   * @param {String} q User query
+   * @param {?String} type Optional, type of the requests to search for.
+   * By default it returns all data.
+   * @param {?Boolean} detailed If set it uses slower algorithm but performs full
+   * search on the index. When false it only uses filer like query + '*'.
+   * @return {Promise<Array<Object>>} Promise resolved to the list of requests.
+   */
+  query(q, type, detailed) {
+    return this.queryUrlData(q, type, detailed)
     .then((urlSearechResults) => {
       const ignore = urlSearechResults.map((item) => item._id);
-      return this.query(e.detail.q, e.detail.type, ignore)
+      return this.queryPouchDb(q, type, ignore)
       .then((result) => urlSearechResults.concat(result));
     });
   }
+
   /**
    * Performs a query on the URL index data.
    *
@@ -1280,65 +1063,55 @@ class RequestModel extends RequestBaseModel {
    * @return {Promise<Array<Object>>} Promise resolved to the list of requests.
    */
   queryUrlData(q, type, detailed) {
-    return new Promise((resolve, reject) => {
-      const reqId = ++this._workerRequestId;
-      this._workerPromises[reqId] = {
-        resolve,
-        reject
-      };
-      const worker = this._getIndexWorker();
-      worker.postMessage({
-        task: 'query-data',
-        id: reqId,
-        type,
+    const e = new CustomEvent('url-index-query', {
+      composed: true,
+      cancelable: true,
+      bubbles: true,
+      detail: {
         q,
+        type,
         detailed
-      });
-    });
-  }
-  /**
-   * Handler for URL index results search.
-   *
-   * @param {String} id The ID sent to the web worker to identify callback
-   * function.
-   * @param {Object} results Map of request id - request type.
-   * @return {Promise}
-   */
-  _urlQueryHandler(id, results) {
-    const callbacks = this._workerPromises[id];
-    delete this._workerPromises[id];
-    const keys = Object.keys(results);
-    if (!keys.length) {
-      callbacks.resolve(results);
-      return;
-    }
-    const savedKeys = [];
-    const historyKeys = [];
-    for (let i = 0, len = keys.length; i < len; i++) {
-      if (results[keys[i]] === 'history') {
-        historyKeys[historyKeys.length] = keys[i];
-      } else {
-        savedKeys[savedKeys.length] = keys[i];
       }
+    });
+    this.dispatchEvent(e);
+    if (!e.defaultPrevented) {
+      console.warn('URL index model not found.');
+      return Promise.resolve([]);
     }
-    const p = [];
-    if (savedKeys.length) {
-      p[p.length] = this.savedDb.allDocs({
-        keys: savedKeys,
-        // jscs:disable
-        include_docs: true
-        // jscs:enable
-      });
-    }
-    if (historyKeys.length) {
-      p[p.length] = this.historyDb.allDocs({
-        keys: historyKeys,
-        // jscs:disable
-        include_docs: true
-        // jscs:enable
-      });
-    }
-    return Promise.all(p)
+    return e.detail.result
+    .then((results) => {
+      const keys = Object.keys(results);
+      if (!keys.length) {
+        return keys;
+      }
+      const savedKeys = [];
+      const historyKeys = [];
+      for (let i = 0, len = keys.length; i < len; i++) {
+        if (results[keys[i]] === 'history' || results[keys[i]] === 'history-requests') {
+          historyKeys[historyKeys.length] = keys[i];
+        } else if (results[keys[i]] === 'saved' || results[keys[i]] === 'saved-requests') {
+          savedKeys[savedKeys.length] = keys[i];
+        }
+      }
+      const p = [];
+      if (savedKeys.length) {
+        p[p.length] = this.savedDb.allDocs({
+          keys: savedKeys,
+          // jscs:disable
+          include_docs: true
+          // jscs:enable
+        });
+      }
+      if (historyKeys.length) {
+        p[p.length] = this.historyDb.allDocs({
+          keys: historyKeys,
+          // jscs:disable
+          include_docs: true
+          // jscs:enable
+        });
+      }
+      return Promise.all(p);
+    })
     .then((results) => {
       const data = [];
       for (let i = 0, iLen = results.length; i < iLen; i++) {
@@ -1350,15 +1123,13 @@ class RequestModel extends RequestBaseModel {
           data[data.length] = response.rows[j].doc;
         }
       }
-      callbacks.resolve(data);
-      // This is for tests
       return data;
     });
   }
   /**
-   * Performs a query on the request data store.
+   * Performs a query on the request and/or history data store.
    * It uses PouchDB `query` function on built indexes.
-   * Note, it does not query URL data.
+   * Note, it does not query for URL data.
    *
    * @param {String} q User query
    * @param {?String} type Optional, type of the requests to search for.
@@ -1366,7 +1137,7 @@ class RequestModel extends RequestBaseModel {
    * @param {?Array<String>} ignore List of IDs to ignore.
    * @return {Promise<Array<Object>>} Promise resolved to the list of requests.
    */
-  query(q, type, ignore) {
+  queryPouchDb(q, type, ignore) {
     if (!q) {
       return Promise.reject('The "q" parameter is required.');
     }
@@ -1413,7 +1184,14 @@ class RequestModel extends RequestBaseModel {
   querySaved(q, ignore) {
     return this._queryStore(q, ignore, this.savedDb, this.savedIndexes);
   }
-
+  /**
+   * See `query()` function for description.
+   * @param {String} q User query
+   * @param {?Array<String>} ignore List of IDs to ignore.
+   * @param {Object} db A handler to the data store.
+   * @param {Array<String>} indexes List of fields to query
+   * @return {Promise<Array<Object>>} A promise resolved to list of PouchDB docs.
+   */
   _queryStore(q, ignore, db, indexes) {
     if (!q) {
       return Promise.reject('The "q" parameter is required.');
@@ -1434,15 +1212,16 @@ class RequestModel extends RequestBaseModel {
       const rows = data.rows || [];
       const result = [];
       for (let i = rows.length - 1; i >= 0; i--) {
-        if (!(ignore && ignore.indexOf(data[i].id) !== -1)) {
-          result[result.length] = data[i].doc;
+        if (!(ignore && ignore.indexOf(rows[i].id) !== -1)) {
+          result[result.length] = rows[i].doc;
         }
       }
       return result;
     });
   }
   /**
-   * Performs data index using PouchDB api.
+   * Performs data inding using PouchDB api.
+   * This is not the same as URL indexing using `url-indexer`.
    *
    * @param {String} type Data type - saved or history.
    * @return {Promise}
@@ -1453,6 +1232,103 @@ class RequestModel extends RequestBaseModel {
       fields: ['title', 'text'],
       build: true
     });
+  }
+  /**
+   * Handler for `request-project-list` event to query for list of requests in
+   * a project.
+   * @param {CustomEvent} e
+   */
+  _listProjectRequestsHandler(e) {
+    if (!e.cancelable) {
+      return;
+    }
+    e.preventDefault();
+    e.stopPropagation();
+
+    if (!e.detail.id) {
+      e.detail.result = new Promise.reject(new Error('Project id not set.'));
+      return;
+    }
+    e.detail.result = this.readProjectRequests(e.detail.id, e.detail.opts);
+  }
+  /**
+   * Reads list of requests associated with a project
+   * @param {String} id Project id
+   * @param {Object} opts Additional options. Currently only `restorePayload`
+   * is supported
+   * @return {Promise}
+   */
+  readProjectRequests(id, opts) {
+    return this.readProject(id)
+    .then((project) => {
+      if (project.requests) {
+        return this.readBulk('saved', project.requests, opts);
+      }
+      return this.readProjectRequestsLegacy(id, opts);
+    });
+  }
+  /**
+   * Reads requests data related to the project from a legacy system.
+   * @param {String} id Project id
+   * @return {Promise}
+   */
+  readProjectRequestsLegacy(id) {
+    const db = this.getDatabase('saved');
+    return db.allDocs()
+    .then((response) => {
+      return response.rows.filter((item) => item.id.indexOf(id) !== -1);
+    })
+    .then((response) => Promise.all(response.map((item) => db.get(item.id))))
+    .then((requests) => {
+      requests.sort(this.sortRequestProjectOrder);
+      return requests;
+    });
+  }
+  /**
+   * Sorts requests list by `projectOrder` property
+   *
+   * @param {Object} a
+   * @param {Object} b
+   * @return {Number}
+   */
+  sortRequestProjectOrder(a, b) {
+    if (a.projectOrder > b.projectOrder) {
+      return 1;
+    }
+    if (a.projectOrder < b.projectOrder) {
+      return -1;
+    }
+    if (a.name > b.name) {
+      return 1;
+    }
+    if (a.name < b.name) {
+      return -1;
+    }
+    return 0;
+  }
+  /**
+   * Handler for `destroy-model` custom event.
+   * Deletes saved or history data when scheduled for deletion.
+   * @param {CustomEvent} e
+   */
+  _deleteModelHandler(e) {
+    const models = e.detail.models;
+    if (!models || !models.length) {
+      return;
+    }
+    const p = [];
+    if (models.indexOf('saved-requests') !== -1 || models.indexOf('saved') !== -1) {
+      p[p.length] = this.deleteModel('saved');
+    }
+    if (models.indexOf('history-requests') !== -1 || models.indexOf('history') !== -1) {
+      p[p.length] = this.deleteModel('history');
+    }
+    if (p.length) {
+      if (!e.detail.result) {
+        e.detail.result = [];
+      }
+      e.detail.result = e.detail.result.concat(p);
+    }
   }
   /**
    * Fired when the request should be expored to Google Drive.
@@ -1515,3 +1391,4 @@ class RequestModel extends RequestBaseModel {
 }
 window.customElements.define(RequestModel.is, RequestModel);
 </script>
+</dom-module>

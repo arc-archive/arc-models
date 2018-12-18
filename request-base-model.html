@@ -57,6 +57,35 @@ class RequestBaseModel extends ArcBaseModel {
     }
   }
   /**
+   * Deletes database data by tye.
+   * @param {String} type Either `saved-requests` or `history-requests`
+   * @return {Promise}
+   */
+  deleteModel(type) {
+    try {
+      const db = this.getDatabase(type);
+      return db.destroy()
+      .then(() => this._notifyModelDestroyed(type));
+    } catch (e) {
+      return Promise.reject(e);
+    }
+  }
+  /**
+   * Reads an entry from the datastore.
+   *
+   * @param {String} id The ID of the datastore entry.
+   * @param {?String} rev Specific revision to read. Defaults to latest
+   * revision.
+   * @return {Promise} Promise resolved to a datastore object.
+   */
+  readProject(id, rev) {
+    const opts = {};
+    if (rev) {
+      opts.rev = rev;
+    }
+    return this.projectDb.get(id, opts);
+  }
+  /**
    * Updates / saves a project object in the datastore.
    * This function fires `project-object-changed` event.
    *

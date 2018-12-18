@@ -3,25 +3,35 @@
   <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, minimum-scale=1.0, initial-scale=1.0, user-scalable=yes">
-    <script src="../../webcomponentsjs/webcomponents-loader.js"></script>
-    <script src="../../web-component-tester/browser.js"></script>
-    <script src="../../iron-test-helpers/test-helpers.js"></script>
-    <script src="../demo/database-helper.js"></script>
-    <link rel="import" href="../../app-pouchdb/pouchdb.html">
-    <link rel="import" href="../arc-models.html">
+    <script src="../../../webcomponentsjs/webcomponents-loader.js"></script>
+    <script src="../../../web-component-tester/browser.js"></script>
+    <script src="../../../iron-test-helpers/test-helpers.js"></script>
+    <script src="../../demo/database-helper.js"></script>
+    <script src="../../workers/request-db.js"></script>
+    <script src="../../../chance/chance.js"></script>
+    <link rel="import" href="../../../app-pouchdb/pouchdb.html">
+    <link rel="import" href="../../arc-models.html">
+    <link rel="import" href="../../url-indexer.html">
   </head>
   <body>
 
     <test-fixture id="basic">
       <template>
-        <request-model no-indexing></request-model>
+        <request-model></request-model>
+      </template>
+    </test-fixture>
+
+    <test-fixture id="Indexing">
+      <template>
+        <request-model></request-model>
+        <url-indexer></url-indexer>
       </template>
     </test-fixture>
 
     <script>
     /* global DatabaseHelper, fixture, assert */
     suite('Events API for requests', function() {
-      const databaseType = 'saved-requests';
+      const databaseType = 'saved';
       // See https://gist.github.com/haroldtreen/5f1055eee5fcf01da3e0e15b8ec86bf6
       function isError(e) {
         if (typeof e === 'string') {
@@ -35,10 +45,10 @@
           return DatabaseHelper.clearRequests();
         });
 
-        let element;
+        // let element;
         let dataObj;
         setup(function() {
-          element = fixture('basic');
+          fixture('basic');
           dataObj = {
             name: 'test-1',
             url: 'http://domain.com',
@@ -217,95 +227,6 @@
         });
       });
 
-      suite('request-name-changed', function() {
-        teardown(function() {
-          return DatabaseHelper.clearRequests();
-        });
-
-        let element;
-        let dataObj;
-        setup(function() {
-          element = fixture('basic');
-          dataObj = {
-            name: 'test-1',
-            url: 'http://domain.com',
-            method: 'GET',
-          };
-          return element.update(databaseType, dataObj)
-          .then((result) => dataObj = result);
-        });
-
-        function fire(name, id, request) {
-          const e = new CustomEvent('request-name-changed', {
-            detail: {
-              id: id,
-              request: request,
-              name: name,
-              type: databaseType
-            },
-            bubbles: true,
-            composed: true,
-            cancelable: true
-          });
-          document.body.dispatchEvent(e);
-          return e;
-        }
-
-        test('Event is canceled', function() {
-          const e = fire('test-2', dataObj._id);
-          assert.isTrue(e.defaultPrevented);
-          return e.detail.result;
-        });
-
-        test('Event detail contains "result" as promise', function() {
-          const e = fire('test-2', dataObj._id);
-          assert.typeOf(e.detail.result, 'promise');
-          return e.detail.result;
-        });
-
-        test('Updates request object by id only', function() {
-          const e = fire('test-2', dataObj._id);
-          return e.detail.result
-          .then((result) => {
-            assert.equal(result.name, 'test-2', 'Name is updated');
-            assert.notEqual(result._rev, dataObj._rev, 'Rev is regenerated');
-          });
-        });
-
-        test('Updates request object', function() {
-          const e = fire('test-2', undefined, dataObj);
-          return e.detail.result
-          .then((result) => {
-            assert.equal(result.name, 'test-2', 'Name is updated');
-            assert.notEqual(result._rev, dataObj._rev, 'Rev is regenerated');
-          });
-        });
-
-        test('Rejects promise when no ID and no project', function() {
-          const e = fire('test-2');
-          return e.detail.result
-          .then(() => {
-            return Promise.reject('Expected method to reject.');
-          })
-          .catch(isError)
-          .then((err) => {
-            assert.isDefined(err);
-          });
-        });
-
-        test('Rejects promise when no name', function() {
-          const e = fire(undefined, dataObj._id);
-          return e.detail.result
-          .then(() => {
-            return Promise.reject('Expected method to reject.');
-          })
-          .catch(isError)
-          .then((err) => {
-            assert.isDefined(err);
-          });
-        });
-      });
-
       suite('project-object-deleted', function() {
         teardown(function() {
           return DatabaseHelper.clearRequests();
@@ -433,6 +354,225 @@
           })
           .catch((cause) => {
             assert.equal(cause.status, 404);
+          });
+        });
+      });
+
+      function clearAllIndexes(db) {
+        return new Promise((resolve, reject) => {
+          const tx = db.transaction('urls', 'readwrite');
+          const store = tx.objectStore('urls');
+          const results = [];
+          tx.onerror = () => {
+            reject(results);
+          };
+          tx.oncomplete = () => {
+            resolve(results);
+          };
+          store.clear();
+        });
+      }
+
+      suite('request-query', function() {
+        teardown(() => {
+          /* global RequestDb */
+          const indexer = new RequestDb();
+          return indexer.openSearchStore()
+          .then((db) => clearAllIndexes(db))
+          .then(() => DatabaseHelper.clearRequests());
+        });
+
+        let element;
+        let dataList;
+        setup(function(done) {
+          const nodes = fixture('Indexing');
+          element = nodes[0];
+          dataList = [{
+            name: 'test-1',
+            url: 'http://domain.com/abc',
+            method: 'GET',
+            type: 'saved'
+          }, {
+            name: 'test-2',
+            url: 'http://other.domain.com',
+            method: 'POST',
+            type: 'saved'
+          }];
+          element.updateBulk(databaseType, dataList)
+          .then((result) => {
+            result.forEach((r) => {
+              assert.isUndefined(r.error);
+            });
+          });
+          nodes[1].addEventListener('request-indexing-finished', function f() {
+            element.removeEventListener('request-indexing-finished', f);
+            done();
+          });
+        });
+
+        function fire(q) {
+          const e = new CustomEvent('request-query', {
+            detail: {
+              q,
+              type: databaseType
+            },
+            bubbles: true,
+            composed: true,
+            cancelable: true
+          });
+          document.body.dispatchEvent(e);
+          return e;
+        }
+
+        test('Event is canceled', function() {
+          const e = fire('test');
+          assert.isTrue(e.defaultPrevented);
+          return e.detail.result;
+        });
+
+        test('Event detail contains "result" as promise', function() {
+          const e = fire('test');
+          assert.typeOf(e.detail.result.then, 'function');
+          return e.detail.result;
+        });
+
+        test('Reads by name (all)', function() {
+          const e = fire('test');
+          return e.detail.result
+          .then((requests) => {
+            assert.lengthOf(requests, 2);
+          });
+        });
+
+        test('Reads by name (single)', function() {
+          const e = fire('test-1');
+          return e.detail.result
+          .then((requests) => {
+            assert.lengthOf(requests, 1);
+          });
+        });
+
+        test('Reads by partial URL', function() {
+          const e = fire('domain.com');
+          return e.detail.result
+          .then((requests) => {
+            assert.lengthOf(requests, 2);
+          });
+        });
+
+        test('Reads by full URL', function() {
+          const e = fire('http://other.domain.com');
+          return e.detail.result
+          .then((requests) => {
+            assert.lengthOf(requests, 1);
+          });
+        });
+      });
+
+      suite('request-list', () => {
+        suiteSetup(() => {
+          return DatabaseHelper.clearHistory()
+          .then(() => DatabaseHelper.insertHistoryRequestData({
+            requestsSize: 150
+          }));
+        });
+
+        suiteTeardown(function() {
+          return DatabaseHelper.clearHistory();
+        });
+
+        setup(function() {
+          fixture('basic');
+        });
+
+        function fire(type, queryOptions, cancelable) {
+          if (typeof cancelable === 'undefined') {
+            cancelable = true;
+          }
+          const e = new CustomEvent('request-list', {
+            detail: {
+              queryOptions,
+              type
+            },
+            bubbles: true,
+            composed: true,
+            cancelable
+          });
+          document.body.dispatchEvent(e);
+          return e;
+        }
+
+        test('Event is canceled', function() {
+          const e = fire('history', {});
+          assert.isTrue(e.defaultPrevented);
+          return e.detail.result;
+        });
+
+        test('Promise rejects for no type', (done) => {
+          const e = fire(undefined, {});
+          e.detail.result
+          .then(() => {
+            done(new Error('Query is resolved'));
+          })
+          .catch(() => done());
+        });
+
+        test('Promise rejects for no query options', (done) => {
+          const e = fire('history');
+          e.detail.result
+          .then(() => {
+            done(new Error('Query is resolved'));
+          })
+          .catch(() => done());
+        });
+
+        test('Event is ignored when not cancelable', function() {
+          const e = fire('history', {}, false);
+          assert.isUndefined(e.detail.result);
+        });
+
+        test('Returnes all results without limit options', () => {
+          const e = fire('history', {});
+          return e.detail.result
+          .then((result) => {
+            assert.typeOf(result, 'object');
+            assert.typeOf(result.rows, 'array');
+            assert.lengthOf(result.rows, 150);
+          });
+        });
+
+        test('Limits number of results when set', () => {
+          const e = fire('history', {
+            limit: 50
+          });
+          return e.detail.result
+          .then((result) => {
+            assert.typeOf(result, 'object');
+            assert.typeOf(result.rows, 'array');
+            assert.lengthOf(result.rows, 50);
+          });
+        });
+
+        test('Respects pagination', () => {
+          let firstKey;
+          const e = fire('history', {
+            limit: 50
+          });
+          return e.detail.result
+          .then((result) => {
+            firstKey = result.rows[0].key;
+            const e = fire('history', {
+              limit: 50,
+              startkey: result.rows[result.rows.length - 1].key,
+              skip: 1
+            });
+            return e.detail.result;
+          })
+          .then((result) => {
+            assert.typeOf(result, 'object');
+            assert.typeOf(result.rows, 'array');
+            assert.lengthOf(result.rows, 50);
+            assert.notEqual(firstKey, result.rows[0].key);
           });
         });
       });

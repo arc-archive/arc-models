@@ -4,7 +4,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, minimum-scale=1, initial-scale=1, user-scalable=yes">
-  <title>Request query demo</title>
+  <title>Project data demo</title>
   <script src="../../webcomponentsjs/webcomponents-loader.js"></script>
   <link rel="import" href="../../shadycss/apply-shim.html">
   <link rel="import" href="../../polymer/lib/elements/custom-style.html">
@@ -20,7 +20,10 @@
   <link rel="import" href="../../neon-animation/web-animations.html">
   <link rel="import" href="../../app-pouchdb/pouchdb.html">
   <link rel="import" href="../../paper-styles/shadow.html">
+  <link rel="import" href="../../iron-form/iron-form.html">
+  <link rel="import" href="../../arc-data-generator/arc-data-generator.html">
   <link rel="import" href="../request-model.html">
+  <link rel="import" href="../project-model.html">
   <script src="../../chance/chance.js"></script>
   <script src="../workers/request-db.js"></script>
   <custom-style>
@@ -47,11 +50,12 @@
       padding: 12px;
     }
 
-    .search-box {
+    .form-item {
       @apply --layout-horizontal;
+      @apply --layout-center;
     }
 
-    .search-box paper-input {
+    .form-item paper-input {
       @apply --layout-flex;
     }
     </style>
@@ -63,34 +67,24 @@
   </header>
   <dom-bind id="demo">
     <template is="dom-bind">
-      <request-model id="model" on-request-indexing-finished="_indexFinished"></request-model>
+      <request-model id="rModel" on-request-indexing-finished="_indexFinished"></request-model>
+      <project-model id="pModel"></project-model>
       <section class="card centered options">
         <h2>Data options</h2>
         <paper-button on-click="genData">Generate data</paper-button>
         <paper-button on-click="deleteData">Destroy data</paper-button>
-        <paper-button on-click="forceIndex">Force PouchDB index</paper-button>
       </section>
 
       <section class="card centered options">
-        <h2>Search options</h2>
-        <paper-dropdown-menu label="Request type">
-          <paper-listbox slot="dropdown-content" selected="{{requestType}}">
-            <paper-item>History and saved</paper-item>
-            <paper-item>History only</paper-item>
-            <paper-item>Saved only</paper-item>
+        <h2>Select project</h2>
+        <paper-dropdown-menu label="Project name">
+          <paper-listbox slot="dropdown-content" selected="{{project}}">
+            <template is="dom-repeat" items="[[projects]]" index-as="index">
+              <paper-item>[[item.name]]</paper-item>
+            </template>
           </paper-listbox>
         </paper-dropdown-menu>
-        <div>
-          <paper-checkbox checked="{{detailedSearch}}">Perform detailed search</paper-checkbox>
-        </div>
-      </section>
-
-      <section class="centered card" role="main">
-        <h2>Search data store</h2>
-        <div class="search-box">
-          <paper-input label="Search term" id="q" name="q" value="{{q}}"></paper-input>
-          <paper-button on-click="search">Search</paper-button>
-        </div>
+        <paper-button on-click="getData">Get requests in project</paper-button>
       </section>
 
       <template is="dom-if" if="[[hasResults]]">
@@ -106,51 +100,42 @@
   </dom-bind>
   <paper-toast text="Data is indexed" id="indexOk"></paper-toast>
   <paper-toast text="Datastore cleared" id="deleteOk"></paper-toast>
-  <paper-toast text="Datastore indexed" id="indexedOk"></paper-toast>
   <script>
   (function(scope) {
-    /* global chance, RequestDb */
-    scope.q = 'api';
+    /* global RequestDb */
+    scope.keys = [{'id': ''}];
     scope.requestType = 0;
     scope.hasResults = false;
+
+    scope.init = function() {
+      scope.refreshProjects();
+    };
+
+    scope.addKey = function() {
+      scope.push('keys', {'id': ''});
+    };
+
+    scope.removeKey = function(e) {
+      const index = e.model.get('index');
+      scope.splice('keys', index, 1);
+    };
+
     scope.genData = function() {
-      const domains = [
-        'https://domain.com/',
-        'https://api.domain.com/',
-        'https://domain.com/domain/',
-        'https://mulesoft.com/',
-        'https://api.mulesoft.com/',
-        'http://other.com/'
-      ];
-      const history = [];
-      const saved = [];
-      for (let i = 0; i < 1000; i++) {
-        let url = chance.pickone(domains);
-        for (let j = 0; j < chance.integer({min: 0, max: 3}); j++) {
-          url += chance.word() + '/';
-        }
-        url = url.substr(0, url.length - 1);
-        if (chance.bool()) {
-          url += '?a=b&c=d';
-        }
-        const type = chance.bool() ? 'history' : 'saved';
-        const item = {
-          _id: chance.guid({version: 5}),
-          url,
-          type,
-          method: 'GET',
-          headers: 'x-headers: true'
-        };
-        if (type === 'history') {
-          history[history.length] = item;
-        } else {
-          saved[saved.length] = item;
-        }
-      }
+      /* global DataGenerator */
+      const data = DataGenerator.generateSavedRequestData({
+        projectsSize: 25,
+        requestsSize: 500
+      });
       performance.mark('inserts-start');
-      const model = document.getElementById('model');
-      model.updateBulk('history', history);
-      model.updateBulk('saved', saved);
+      const rModel = document.getElementById('rModel');
+      const pModel = document.getElementById('pModel');
+      pModel.updateBulk(data.projects)
+      .then(() => rModel.updateBulk('saved', data.requests))
+      .then(() => {
+        data.requests.forEach((request) => {
+          rModel._indexRequest(request);
+        });
+      });
     };
 
     scope._dumpMeasurements = function() {
@@ -171,6 +156,7 @@
       scope._dumpMeasurements();
       document.getElementById('indexOk').opened = true;
     };
+
     scope.deleteData = function() {
       const indexer = new RequestDb();
       return indexer.openSearchStore()
@@ -188,57 +174,57 @@
           store.clear();
         });
       })
+      .then(() => DataGenerator.destroySavedRequestData())
       .then(() => {
         document.getElementById('deleteOk').opened = true;
       });
     };
 
-    scope.search = function() {
+    scope.refreshProjects = function() {
+      const e = new CustomEvent('project-model-query', {
+        cancelable: true,
+        bubbles: true,
+        detail: {}
+      });
+      performance.mark('projects-query');
+      document.body.dispatchEvent(e);
+      e.detail.result
+      .then((data) => {
+        performance.mark('projects-query-end');
+        performance.measure('projects-query-end', 'projects-query');
+        scope._dumpMeasurements();
+        console.log('Query result', data);
+        scope.projects = data;
+      });
+    };
+
+    scope.getData = function() {
+      scope.hasResults = false;
+      const project = scope.projects[scope.project];
+      if (!project) {
+        return;
+      }
       const detail = {
-        q: scope.q
+        id: project._id
       };
-      switch (scope.requestType) {
-        case 1: detail.type = 'history'; break;
-        case 2: detail.type = 'saved'; break;
-      }
-      if (scope.detailedSearch) {
-        detail.detailed = true;
-      }
-      const e = new CustomEvent('request-query', {
+      const e = new CustomEvent('request-project-list', {
         cancelable: true,
         bubbles: true,
         detail
       });
-      performance.mark('data-search');
+      performance.mark('requests-list');
       document.body.dispatchEvent(e);
       e.detail.result
       .then((data) => {
-        performance.mark('data-search-end');
-        performance.measure('data-search-end', 'data-search');
+        performance.mark('requests-list-end');
+        performance.measure('requests-list-end', 'requests-list');
         scope._dumpMeasurements();
         console.log('Query result', data);
         scope.results = data;
         scope.hasResults = true;
       });
     };
-
-    scope.forceIndex = function() {
-      const model = document.getElementById('model');
-      performance.mark('index-history');
-      model.indexData('history')
-      .then(() => {
-        performance.mark('index-history-end');
-        performance.measure('index-history-end', 'index-history');
-        performance.mark('index-saved');
-        return model.indexData('saved');
-      })
-      .then(() => {
-        performance.mark('index-saved-end');
-        performance.measure('index-saved-end', 'index-saved');
-        scope._dumpMeasurements();
-        document.getElementById('indexedOk').opened = true;
-      });
-    };
+    window.addEventListener('WebComponentsReady', scope.init);
   })(document.getElementById('demo'));
   </script>
 </body>

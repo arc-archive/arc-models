@@ -21,6 +21,38 @@ the License.
  * @appliesMixin ArcBehaviors.EventsTargetBehavior
  */
 class ArcBaseModel extends ArcBehaviors.EventsTargetBehavior(Polymer.Element) {
+  /**
+   * @param {String} dbname Name of the data store
+   * @param {Number} revsLimit Limit number of revisions on the data store.
+   */
+  constructor(dbname, revsLimit) {
+    super();
+    this.name = dbname;
+    this.revsLimit = revsLimit;
+    this._deleteModelHandler = this._deleteModelHandler.bind(this);
+  }
+
+  /**
+   * Note, the element does not include PouchDB to the document!
+   * @return {PouchDB} A PouchDB instance.
+   */
+  get db() {
+    if (!this.name) {
+      throw new Error('Model name not set');
+    }
+    if (typeof PouchDB === 'undefined') {
+      throw new Error('Include PouchDB into the document first');
+    }
+    /* global PouchDB */
+    const opts = {};
+    if (this.revsLimit) {
+      // jscs:disable
+      opts.revs_limit = this.revsLimit;
+      // jscs:enable
+    }
+    return new PouchDB(this.name, opts);
+  }
+
   get uuid() {
     if (this._uuid) {
       return this._uuid;
@@ -34,6 +66,14 @@ class ArcBaseModel extends ArcBehaviors.EventsTargetBehavior(Polymer.Element) {
     if (this._uuid) {
       delete this._uuid;
     }
+  }
+
+  _attachListeners(node) {
+    node.addEventListener('destroy-model', this._deleteModelHandler);
+  }
+
+  _detachListeners(node) {
+    node.removeEventListener('destroy-model', this._deleteModelHandler);
   }
 
   /**
@@ -81,7 +121,6 @@ class ArcBaseModel extends ArcBehaviors.EventsTargetBehavior(Polymer.Element) {
     this.dispatchEvent(e);
     return e;
   }
-
   /**
    * Handles any exception in the model in a unified way.
    * @param {Error|Object} e An error object
@@ -104,10 +143,66 @@ class ArcBaseModel extends ArcBehaviors.EventsTargetBehavior(Polymer.Element) {
         fatal: true
       }
     }));
-    console.error(this.constructor.name, e);
+    console.warn(this.constructor.name, e);
     if (!noThrow) {
       throw e;
     }
+  }
+  /**
+   * Deletes current database.
+   * @return {Promise}
+   */
+  deleteModel() {
+    try {
+      return this.db.destroy()
+      .then(() => this._notifyModelDestroyed(this.name));
+    } catch (e) {
+      return Promise.reject(e);
+    }
+  }
+
+  _notifyModelDestroyed(type) {
+    const e = new CustomEvent('datastore-destroyed', {
+      bubbles: true,
+      composed: true,
+      detail: {
+        datastore: type
+      }
+    });
+    this.dispatchEvent(e);
+    return e;
+  }
+  /**
+   * Handler for `destroy-model` custom event.
+   * Deletes current data when scheduled for deletion.
+   * @param {CustomEvent} e
+   */
+  _deleteModelHandler(e) {
+    const models = e.detail.models;
+    if (!models || !models.length || !this.name) {
+      return;
+    }
+    if (models.indexOf(this.name) !== -1) {
+      if (!e.detail.result) {
+        e.detail.result = [];
+      }
+      e.detail.result.push(this.deleteModel());
+    }
+  }
+
+  _eventCancelled(e) {
+    const status = e.defaultPrevented || !e.cancelable;
+    if (!status) {
+      if (e.composedPath()[0] === this) {
+        return true;
+      }
+    }
+    return status;
+  }
+
+  _cancelEvent(e) {
+    e.preventDefault();
+    e.stopPropagation();
   }
 }
 </script>

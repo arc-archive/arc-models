@@ -19,7 +19,7 @@
     </test-fixture>
 
     <script>
-    /* global DatabaseHelper, fixture, assert */
+    /* global DatabaseHelper */
     suite('Events API for host rules', function() {
       // See https://gist.github.com/haroldtreen/5f1055eee5fcf01da3e0e15b8ec86bf6
       function isError(e) {
@@ -33,11 +33,9 @@
         teardown(function() {
           return DatabaseHelper.clearHostRules();
         });
-
-        let element;
         let dataObj;
         setup(function() {
-          element = fixture('basic');
+          fixture('basic');
           dataObj = {
             _id: 'test-id-1',
             from: 'https://from',
@@ -47,14 +45,17 @@
           };
         });
 
-        function fire(rule) {
+        function fire(rule, cancelable) {
+          if (cancelable !== false) {
+            cancelable = true;
+          }
           const e = new CustomEvent('host-rules-changed', {
             detail: {
               rule: rule
             },
             bubbles: true,
             composed: true,
-            cancelable: true
+            cancelable
           });
           document.body.dispatchEvent(e);
           return e;
@@ -132,6 +133,11 @@
             assert.isDefined(err);
           });
         });
+
+        test('Ignores non cancelable event', function() {
+          const e = fire(dataObj, false);
+          assert.isFalse(e.defaultPrevented);
+        });
       });
 
       suite('host-rules-deleted', function() {
@@ -154,7 +160,10 @@
           .then((result) => dataObj = result);
         });
 
-        function fire(id, rev) {
+        function fire(id, rev, cancelable) {
+          if (cancelable !== false) {
+            cancelable = true;
+          }
           const e = new CustomEvent('host-rules-deleted', {
             detail: {
               id: id,
@@ -162,7 +171,7 @@
             },
             bubbles: true,
             composed: true,
-            cancelable: true
+            cancelable
           });
           document.body.dispatchEvent(e);
           return e;
@@ -201,6 +210,11 @@
             assert.isDefined(err);
           });
         });
+
+        test('Ignores non cancelable event', function() {
+          const e = fire(dataObj._id, dataObj._rev, false);
+          assert.isFalse(e.defaultPrevented);
+        });
       });
 
       suite('host-rules-list', function() {
@@ -223,12 +237,15 @@
           .then((result) => dataObj = result);
         });
 
-        function fire() {
+        function fire(cancelable) {
+          if (cancelable !== false) {
+            cancelable = true;
+          }
           const e = new CustomEvent('host-rules-list', {
             detail: {},
             bubbles: true,
             composed: true,
-            cancelable: true
+            cancelable
           });
           document.body.dispatchEvent(e);
           return e;
@@ -252,6 +269,158 @@
           .then((result) => {
             assert.typeOf(result, 'array');
             assert.lengthOf(result, 1);
+          });
+        });
+
+        test('Ignores non cancelable event', function() {
+          const e = fire(false);
+          assert.isFalse(e.defaultPrevented);
+        });
+      });
+
+      suite('host-rules-clear', function() {
+        teardown(function() {
+          return DatabaseHelper.clearHostRules();
+        });
+
+        let element;
+        let data;
+        setup(function() {
+          element = fixture('basic');
+          data = [{
+            from: 'https://from',
+            to: 'http://to',
+            enabled: true,
+            comment: 'test'
+          }, {
+            from: 'https://from',
+            to: 'http://to',
+            enabled: true,
+            comment: 'test'
+          }];
+          return element.updateBulk(data);
+        });
+
+        function fire(cancelable) {
+          if (cancelable !== false) {
+            cancelable = true;
+          }
+          const e = new CustomEvent('host-rules-clear', {
+            detail: {},
+            bubbles: true,
+            composed: true,
+            cancelable
+          });
+          document.body.dispatchEvent(e);
+          return e;
+        }
+
+        test('Event is canceled', function() {
+          const e = fire();
+          assert.isTrue(e.defaultPrevented);
+          return e.detail.result;
+        });
+
+        test('Event detail contains "result" as promise', function() {
+          const e = fire();
+          assert.typeOf(e.detail.result, 'promise');
+          return e.detail.result;
+        });
+
+        test('Removes all data', function() {
+          const e = fire();
+          return e.detail.result
+          .then(() => element.list())
+          .then((result) => {
+            assert.lengthOf(result, 0);
+          });
+        });
+
+        test('Dispatches "host-rules-clear" event', function(done) {
+          element.addEventListener('host-rules-clear', function(e) {
+            assert.isFalse(e.cancelable);
+            done();
+          });
+          fire();
+        });
+
+        test('Ignores non cancelable event', function() {
+          const e = fire(false);
+          assert.isFalse(e.defaultPrevented);
+        });
+      });
+
+      suite('host-rules-insert', function() {
+        teardown(function() {
+          return DatabaseHelper.clearHostRules();
+        });
+
+        let element;
+        let data;
+        setup(function() {
+          element = fixture('basic');
+          data = [{
+            from: 'https://from',
+            to: 'http://to',
+            enabled: true,
+            comment: 'test'
+          }, {
+            from: 'https://from',
+            to: 'http://to',
+            enabled: true,
+            comment: 'test'
+          }];
+        });
+
+        function fire(rules, cancelable) {
+          if (cancelable !== false) {
+            cancelable = true;
+          }
+          const e = new CustomEvent('host-rules-insert', {
+            detail: {
+              rules
+            },
+            bubbles: true,
+            composed: true,
+            cancelable
+          });
+          document.body.dispatchEvent(e);
+          return e;
+        }
+
+        test('Event is canceled', function() {
+          const e = fire(data);
+          assert.isTrue(e.defaultPrevented);
+          return e.detail.result;
+        });
+
+        test('Event detail contains "result" as promise', function() {
+          const e = fire(data);
+          assert.typeOf(e.detail.result, 'promise');
+          return e.detail.result;
+        });
+
+        test('Ignores non cancelable event', function() {
+          const e = fire(data, false);
+          assert.isFalse(e.defaultPrevented);
+        });
+
+        test('Insserts the data', function() {
+          const e = fire(data);
+          return e.detail.result
+          .then(() => element.list())
+          .then((result) => {
+            assert.lengthOf(result, 2);
+          });
+        });
+
+        test('Promise results with insert resut data', function() {
+          const e = fire(data);
+          return e.detail.result
+          .then((response) => {
+            assert.typeOf(response, 'array');
+            assert.lengthOf(response, 2);
+            assert.isTrue(response[0].ok);
           });
         });
       });

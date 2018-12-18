@@ -4,12 +4,12 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, minimum-scale=1.0, initial-scale=1.0, user-scalable=yes">
-  <script src="../../webcomponentsjs/webcomponents-loader.js"></script>
-  <script src="../../web-component-tester/browser.js"></script>
-  <script src="../../chance/chance.js"></script>
-  <script src="../demo/database-helper.js"></script>
-  <link rel="import" href="../../app-pouchdb/pouchdb.html">
-  <link rel="import" href="../arc-models.html">
+  <script src="../../../webcomponentsjs/webcomponents-loader.js"></script>
+  <script src="../../../web-component-tester/browser.js"></script>
+  <script src="../../../chance/chance.js"></script>
+  <script src="../../demo/database-helper.js"></script>
+  <link rel="import" href="../../../app-pouchdb/pouchdb.html">
+  <link rel="import" href="../../arc-models.html">
 </head>
 
 <body>
@@ -39,101 +39,6 @@
       payload: '',
       name: 'test'
     };
-
-    suite('_blobToString()', function() {
-      const b = new Blob(['***'], {type: 'text/plain'});
-      setup(function() {
-        element = fixture('Basic');
-      });
-
-      test('Returns a promise', function() {
-        const result = element._blobToString(b);
-        assert.typeOf(result.then, 'function');
-        return result;
-      });
-
-      test('Promise results to a string', function() {
-        return element._blobToString(b)
-        .then((result) => assert.typeOf(result, 'string'));
-      });
-
-      test('String is a valid data url', function() {
-        return element._blobToString(b)
-        .then((result) => assert.equal(result, 'data:text/plain;base64,Kioq'));
-      });
-    });
-
-    suite('_createMultipartEntry()', function() {
-      let fd;
-      setup(function() {
-        const b = new Blob(['***'], {type: 'text/plain'});
-        fd = new FormData();
-        fd.append('file', b, 'file-name');
-        fd.append('text', 'abcd');
-        fd.append('text-part', b, 'text-part');
-        fd._arcMeta = {
-          textParts: ['text-part']
-        };
-        element = fixture('Basic');
-      });
-
-      test('Returns a promise', function() {
-        if (!hasFormDataSupport()) {
-          return;
-        }
-        const result = element._createMultipartEntry(fd);
-        assert.typeOf(result.then, 'function');
-        return result;
-      });
-
-      test('Promise results to an array', function() {
-        if (!hasFormDataSupport()) {
-          return;
-        }
-        return element._createMultipartEntry(fd)
-        .then((result) => assert.typeOf(result, 'array'));
-      });
-
-      test('Computes file part', () => {
-        if (!hasFormDataSupport()) {
-          return;
-        }
-        return element._createMultipartEntry(fd)
-        .then((data) => {
-          const part = data[0];
-          assert.isTrue(part.isFile);
-          assert.equal(part.name, 'file');
-          assert.equal(part.value, 'data:text/plain;base64,Kioq');
-        });
-      });
-
-      test('Computes text part', () => {
-        if (!hasFormDataSupport()) {
-          return;
-        }
-        return element._createMultipartEntry(fd)
-        .then((data) => {
-          const part = data[1];
-          assert.isFalse(part.isFile);
-          assert.equal(part.name, 'text');
-          assert.equal(part.value, 'abcd');
-        });
-      });
-
-      test('Sets isTextBlob', () => {
-        if (!hasFormDataSupport()) {
-          return;
-        }
-        return element._createMultipartEntry(fd)
-        .then((data) => {
-          const part = data[2];
-          assert.isFalse(part.isFile);
-          assert.isTrue(part.isTextBlob);
-          assert.equal(part.name, 'text-part');
-          assert.equal(part.value, 'data:text/plain;base64,Kioq');
-        });
-      });
-    });
 
     function db() {
       return new PouchDB('saved-requests');

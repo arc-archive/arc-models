@@ -33,7 +33,6 @@ declare namespace LogicElements {
    * stopped.
    */
   class WebsocketUrlHistoryModel extends Polymer.Element {
-    readonly db: any;
     _attachListeners(node: any): void;
     _detachListeners(node: any): void;
 

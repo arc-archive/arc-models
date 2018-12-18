@@ -1,89 +1,345 @@
-this.importScripts('request-db.js');
-/* global RequestDb, self, IDBKeyRange */
+<!--
+@license
+Copyright 2018 The Advanced REST client authors <arc@mulesoft.com>
+Licensed under the Apache License, Version 2.0 (the "License"); you may not
+use this file except in compliance with the License. You may obtain a copy of
+the License at
+http://www.apache.org/licenses/LICENSE-2.0
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+License for the specific language governing permissions and limitations under
+the License.
+-->
+<link rel="import" href="../polymer/polymer-element.html">
+<link rel="import" href="../uuid-generator/uuid-generator.html">
+<dom-module id="url-indexer">
+<script>
 /**
- * A web worker responsible for indexing request data.
+ * An element responsible for indexing and querying for URL data.
  *
- * Most request properties are indexed using PouchDB search plugin.
- * The problem is with the `url`. The plugin can't search for parts of the words
- * (like the url) and therefore the user would have to search for full URL.
- * This indexer splits request url into parts and indexes them separately.
- * Then the search logic can separately use PouchDB search for searching for
- * and request data and separate logic for querying for url data only.
+ * To index an URL it requires the following properties:
+ * - url - the URL to index
+ * - id - datastore id of referenced object
+ * - type - type of the object - it's data store name. Type is returned
+ * with query results.
+ *
+ * It queries for indexed data by looking into URL structure. When the query
+ * result is ready it returns ordered list of results (by relevance) with
+ * `id` (referenced object), and `type`. The query function do not read the
+ * data from referenced data store.
+ *
+ * The component is used to cooperate with saved/history request data model
+ * and with REST APIs model. However it can index any URL.
+ *
+ * The component automatically handles request update/delete events to index or
+ * remove index of a request object.
+ *
+ * ## Usage
+ *
+ * ### Storing URL data
+ *
+ * ```javascript
+ * const e = new CustomEvent('url-index-update', {
+ *  composed: true,
+ *  bubbles: true,
+ *  cancelable: true,
+ *  detail: {
+ *    data: [{
+ *      id: 'xxx',
+ *      type: 'saved-requests',
+ *      url: 'https://domain.com'
+ *    }]
+ *  }
+ * });
+ * this.dispatchEvent(e);
+ * e.detail.result
+ * .then((result) => {
+ *  console.log(result);
+ * });
+ * ```
+ *
+ * or directly on the component:
+ *
+ * ```javascript
+ * const node = document.querySelector('url-indexer');
+ * node.index([{
+ *  id: 'xxx',
+ *  type: 'saved-requests',
+ *  url: 'https://domain.com'
+ * }])
+ * .then((result) => {});
+ * ```
+ *
+ * ### Querying for data
+ *
+ * ```javascript
+ * const e = new CustomEvent('url-index-query', {
+ *  composed: true,
+ *  bubbles: true,
+ *  cancelable: true,
+ *  detail: {
+ *    q: 'https://...',
+ *    type: 'saved-requests', // optional
+ *    detailed: false // Optional, default to `false`
+ *  }
+ * });
+ * this.dispatchEvent(e);
+ * e.detail.result
+ * .then((result) => {
+ *  console.log(result);
+ * });
+ * ```
+ *
+ * or direct call:
+ *
+ * ```javascript
+ * const node = document.querySelector('url-indexer');
+ * node.query('https://...', {
+ *  type: 'saved-requests', // optional
+ *  detailed: false // Optional, default to `false`
+ * })
+ * .then((result) => {});
+ * ```
+ * See query method for description of parameters.
+ *
+ * @polymer
+ * @customElement
+ * @memberof LogicElements
  */
-class RequestIndexer extends RequestDb {
+class UrlIndexer extends Polymer.Element {
+  static get is() {return 'url-indexer';}
   /**
-   * Listens for message event.
+   * @return {Element} Instance of `uuid-generator`
    */
-  listen() {
-    self.onmessage = this._messageHandler.bind(this);
-  }
-  /**
-   * A function handling a message from the main thread.
-   * @param {Event} e
-   */
-  _messageHandler(e) {
-    const data = e.data;
-    switch (data.task) {
-      case 'index-requests':
-        if (typeof URL === 'undefined') {
-          this.notifyError(new Error('URL object not supported in worker'));
-          return;
-        }
-        this._indexRequests(data.requests);
-        break;
-      case 'delete-index':
-        this._deleteIndexedData(data.ids);
-        break;
-      case 'clear-index':
-        this._clearIndexedData();
-        break;
-      case 'query-data':
-        const opts = {
-          type: data.type,
-          detailed: data.detailed || false
-        };
-        this._queryIndex(data.id, data.q, opts);
-        break;
+  get uuid() {
+    if (this._uuid) {
+      return this._uuid;
     }
+    this._uuid = document.createElement('uuid-generator');
+    return this._uuid;
+  }
+
+  get indexStoreName() {
+    return 'request-index';
+  }
+
+  get indexStoreVersion() {
+    return 1;
   }
   /**
-   * Notifies owner about end of task.
-   * @param {String} task Task name
+   * @constructor
    */
-  notifyEnd(task) {
-    if (self.mocha) {
+  constructor() {
+    super();
+    this._indexUpdateHandler = this._indexUpdateHandler.bind(this);
+    this._indexQueryHandler = this._indexQueryHandler.bind(this);
+    this._requestChangeHandler = this._requestChangeHandler.bind(this);
+    this._requestDeleteHandler = this._requestDeleteHandler.bind(this);
+    this._deleteModelHandler = this._deleteModelHandler.bind(this);
+  }
+
+  connectedCallback() {
+    super.connectedCallback();
+    window.addEventListener('url-index-update', this._indexUpdateHandler);
+    window.addEventListener('url-index-query', this._indexQueryHandler);
+    window.addEventListener('request-object-changed', this._requestChangeHandler);
+    window.addEventListener('request-object-deleted', this._requestDeleteHandler);
+    window.addEventListener('destroy-model', this._deleteModelHandler);
+  }
+
+  disconnectedCallback() {
+    super.disconnectedCallback();
+    if (this._uuid) {
+      delete this._uuid;
+    }
+    window.removeEventListener('url-index-update', this._indexUpdateHandler);
+    window.removeEventListener('url-index-query', this._indexQueryHandler);
+    window.removeEventListener('request-object-changed', this._requestChangeHandler);
+    window.removeEventListener('request-object-deleted', this._requestDeleteHandler);
+    window.removeEventListener('destroy-model', this._deleteModelHandler);
+  }
+
+  _indexUpdateHandler(e) {
+    if (e.defaultPrevented) {
       return;
     }
-    try {
-      self.postMessage({
-        task: 'task-finished',
-        name: task
-      });
-    } catch (_) {}
+    const data = e.detail.data;
+    e.detail.result = this.index(data);
   }
-  /**
-   * Notifies owner about error
-   * @param {Error} cause
-   */
-  notifyError(cause) {
-    console.warn(cause);
-    if (self.mocha) {
+
+  _indexQueryHandler(e) {
+    if (e.defaultPrevented) {
       return;
     }
-    self.postMessage({
-      task: 'task-error',
-      message: cause.message || 'Unknown error'
+    e.preventDefault();
+    const query = e.detail.q;
+    const opts = {};
+    if (e.detail.type) {
+      opts.type = e.detail.type;
+    }
+    if (e.detail.detailed) {
+      opts.detailed = e.detail.detailed;
+    }
+    e.detail.result = this.query(query, opts);
+  }
+
+  _requestChangeHandler(e) {
+    if (e.cancelable) {
+      return;
+    }
+    const r = e.detail.request;
+    let type = r.type;
+    if (type === 'saved-requests') {
+      type = 'saved';
+    } else if (type === 'history-requests') {
+      type = 'history';
+    }
+    this._indexDebounce(r._id, r.url, type);
+  }
+  /**
+   * Calles index function with debouncer.
+   * The debouncer runs the queue after 25 ms. Bulk operations should be called
+   * onece unless there's a lot of data to process.
+   *
+   * @param {String} id Request ID
+   * @param {String} url Request URL
+   * @param {String} type Request type (saved or history)
+   */
+  _indexDebounce(id, url, type) {
+    if (!this.__indexRequestQueue) {
+      this.__indexRequestQueue = [];
+    }
+    const index = this.__indexRequestQueue.findIndex((i) => i.id === id);
+    if (index !== -1) {
+      this.__indexRequestQueue[index].url = url;
+      this.__indexRequestQueue[index].type = type;
+      return;
+    }
+    if (this.__indexDebounce) {
+      clearTimeout(this.__indexDebounce);
+    }
+    this.__indexRequestQueue.push({
+      id,
+      url,
+      type
+    });
+    this.__indexDebounce = setTimeout(() => {
+      this.__indexDebounce = undefined;
+      const data = this.__indexRequestQueue;
+      this.__indexRequestQueue = undefined;
+      if (data && data.length) {
+        this.index(data)
+        .catch((cause) => console.warn(cause));
+      }
+    }, 25);
+  }
+  /**
+   * Handler for `request-object-deleted` custom event.
+   * It expects `id` property to be set on event detail object.
+   * Cancelable events are ignored.
+   * @param {CustomEvent} e
+   */
+  _requestDeleteHandler(e) {
+    if (e.cancelable) {
+      return;
+    }
+    this._deleteIndexDebounce(e.detail.id);
+  }
+  /**
+   * Calles deleteIndexedData function with debouncer.
+   * The debouncer runs the queue after 25 ms. Bulk operations should be called
+   * onece unless there's a lot of data to process.
+   *
+   * @param {String} id Request ID
+   */
+  _deleteIndexDebounce(id) {
+    if (!this.__deleteRequestQueue) {
+      this.__deleteRequestQueue = [];
+    }
+    if (this.__deleteRequestQueue.indexOf(id) !== -1) {
+      return;
+    }
+    if (this.__deleteIndexDebounce) {
+      clearTimeout(this.__deleteIndexDebounce);
+    }
+    this.__deleteRequestQueue.push(id);
+    this.__deleteIndexDebounce = setTimeout(() => {
+      this.__deleteIndexDebounce = undefined;
+      const data = this.__deleteRequestQueue;
+      this.__deleteRequestQueue = undefined;
+      if (data && data.length) {
+        this.deleteIndexedData(data)
+        .catch((cause) => console.warn(cause));
+      }
+    }, 25);
+  }
+
+  _deleteModelHandler(e) {
+    const models = e.detail.models;
+    if (!models || !models.length) {
+      return;
+    }
+    if (models.indexOf('saved-requests') !== -1) {
+      this._clearIndexedData()
+      .then(() => console.info('URL index cleared'))
+      .catch((cause) => console.warn(cause));
+    }
+  }
+
+  //
+  // Indexer implementation
+  //
+
+  /**
+   * Opens search index data store.
+   * @return {Promise}
+   */
+  openSearchStore() {
+    if (this.__db) {
+      return Promise.resolve(this.__db);
+    }
+    return new Promise((resolve, reject) => {
+      const request = window.indexedDB.open(this.indexStoreName, this.indexStoreVersion);
+      request.onsuccess = (e) => {
+        this.__db = e.target.result;
+        resolve(e.target.result);
+      };
+      request.onerror = function() {
+        reject(new Error('Unable to open the store'));
+      };
+      request.onupgradeneeded = this.createSchema;
     });
   }
   /**
+   * Creates a database schema when is newly created.
+   * @param {Event} e Database create request event
+   */
+  createSchema(e) {
+    // DO NOT CALL `this` HERE
+    const db = e.target.result;
+    const store = db.createObjectStore('urls', {keyPath: 'id'});
+    store.createIndex('url', 'url', {unique: false});
+    store.createIndex('requestId', 'requestId', {unique: false});
+    store.createIndex('fullUrl', 'fullUrl', {unique: false});
+    store.createIndex('type', 'type', {unique: false});
+  }
+
+  /**
    * Indexes request data in dedicated index store for requests.
+   *
+   * Each item on the `requests` list must contain:
+   * - `id` - stored object ID (returned by the query)
+   * - `type` - store name or identifier (returned by the query)
+   * - `url` - the URL to index
+   *
    * @param {Array} requests List of requests to index.
    * @return {Promise}
    */
-  _indexRequests(requests) {
+  index(requests) {
     const request = requests.shift();
     if (!request) {
-      this.notifyEnd('index-requests');
+      this._notifyIndexFinished();
       return Promise.resolve();
     }
     return this.openSearchStore()
@@ -102,17 +358,24 @@ class RequestIndexer extends RequestDb {
       })
       .catch((cause) => {
         console.warn(cause);
-        this.notifyError(cause);
       })
-      .then(() => this._indexRequests(requests));
+      .then(() => this.index(requests));
     });
   }
+
+  _notifyIndexFinished() {
+    this.dispatchEvent(new CustomEvent('request-indexing-finished', {
+      bubbles: true,
+      composed: true
+    }));
+  }
+
   /**
    * Removes indexed data for given requests.
    * @param {Array<String>} ids List of request ids to remove.
    * @return {Promise}
    */
-  _deleteIndexedData(ids) {
+  deleteIndexedData(ids) {
     let database;
     return this.openSearchStore()
     .then((db) => {
@@ -134,12 +397,55 @@ class RequestIndexer extends RequestDb {
       if (items.length) {
         return this._removeRedundantIndexes(database, items);
       }
-    })
-    .then(() => {
-      this.notifyEnd('delete-index');
-    })
-    .catch((cause) => this.notifyError(cause));
+    });
   }
+
+  /**
+   * Removes indexed data for given `type`.
+   * @param {String} type `history` or `saved`
+   * @return {Promise}
+   */
+  deleteIndexedType(type) {
+    return this.openSearchStore()
+    .then((db) => {
+      const tx = db.transaction('urls', 'readwrite');
+      return new Promise((resolve, reject) => {
+        tx.oncomplete = () => resolve();
+        tx.onerror = (e) => {
+          console.warn('Unable to clear index by type.', e);
+          reject();
+        };
+        const store = tx.objectStore('urls');
+        const keyRange = window.IDBKeyRange.only(type);
+        const index = store.index('type');
+        const request = index.openCursor(keyRange);
+        request.onsuccess = (e) => {
+          const cursor = e.target.result;
+          if (!cursor) {
+            return;
+          }
+          this._deleteByKey(e.target.result.primaryKey, store);
+        };
+      });
+    });
+  }
+  /**
+   * Removes an item by id.
+   * @param {String} id Entry id
+   * @param {Object} store Data store with the data.
+   * @return {Promise}
+   */
+  _deleteByKey(id, store) {
+    return new Promise((resolve, reject) => {
+      const req = store.delete(id);
+      req.onsuccess = () => resolve();
+      req.onerror = (e) => {
+        console.warn('Index delete error. Code: ' + e.target.errorCode);
+        reject();
+      };
+    });
+  }
+
   /**
    * Retreives existing index data for the request.
    * @param {Object} db Database reference
@@ -148,14 +454,13 @@ class RequestIndexer extends RequestDb {
    */
   _getIndexedData(db, requestId) {
     return new Promise((resolve) => {
-      const tx = db.transaction('urls', 'readonly');
+      const tx = db.transaction('urls', 'readwrite');
       const store = tx.objectStore('urls');
       const results = [];
       tx.onerror = () => {
         console.warn('Transaction error');
         resolve(results);
       };
-
       tx.oncomplete = () => {
         resolve(results);
       };
@@ -164,7 +469,10 @@ class RequestIndexer extends RequestDb {
       request.onsuccess = function(e) {
         const cursor = e.target.result;
         if (cursor) {
-          results[results.length] = cursor.value;
+          const record = cursor.value;
+          if (record) {
+            results[results.length] = record;
+          }
           cursor.continue();
         }
       };
@@ -178,9 +486,7 @@ class RequestIndexer extends RequestDb {
    */
   _prepareRequestIndexData(request, indexed) {
     const result = [];
-    const id = request.id;
-    const url = request.url;
-    const type = request.type;
+    const {id, url, type} = request;
     let parser;
     try {
       parser = new URL(url);
@@ -218,7 +524,7 @@ class RequestIndexer extends RequestDb {
    * @return {String}
    */
   _generateId(url, type) {
-    return url + '::' + type + '::' + this.uuid();
+    return url + '::' + type + '::' + this.uuid.generate();
   }
   /**
    * Creates an index datastore object if it doesn't exists in the list
@@ -227,7 +533,8 @@ class RequestIndexer extends RequestDb {
    * @param {String} id Request ID
    * @param {String} type Request type
    * @param {Array<Object>} indexed Already indexed data.
-   * @return {Object} Index object to store.
+   * @return {Object|undefined} Index object to store or `undefined` if already
+   * indexed.
    */
   _createIndexIfMissing(url, id, type, indexed) {
     const lowerUrl = url.toLowerCase();
@@ -375,8 +682,8 @@ class RequestIndexer extends RequestDb {
     });
   }
   /**
-   * Queries for indexed data
-   * @param {String} id An ID returned to the calling application
+   * Queries for indexed data.
+   *
    * @param {String} query The query
    * @param {Object} opts Search options:
    * - type (string: saved || history): Request type
@@ -384,7 +691,7 @@ class RequestIndexer extends RequestDb {
    * search on the index. When false it only uses filer like query + '*'.
    * @return {Promise}
    */
-  _queryIndex(id, query, opts) {
+  query(query, opts) {
     opts = opts || {};
     return this.openSearchStore()
     .then((db) => {
@@ -393,26 +700,6 @@ class RequestIndexer extends RequestDb {
       } else {
         return this._searchCasing(db, query, opts.type);
       }
-    })
-    .then((results) => {
-      try {
-        self.postMessage({
-          task: 'query-finished',
-          id,
-          results
-        });
-      } catch (_) {}
-      return results;
-    })
-    .catch((cause) => {
-      try {
-        self.postMessage({
-          task: 'task-error',
-          id,
-          message: cause.message
-        });
-      } catch (_) {}
-      throw cause;
     });
   }
   /**
@@ -444,7 +731,7 @@ class RequestIndexer extends RequestDb {
         //  'search-key-scan-2-start');
         resolve(results);
       };
-      const keyRange = IDBKeyRange.only(1);
+      const keyRange = window.IDBKeyRange.only(1);
       const index = store.index('fullUrl');
       const request = index.openCursor(keyRange);
       request.onsuccess = (e) => {
@@ -453,6 +740,10 @@ class RequestIndexer extends RequestDb {
           return;
         }
         const record = cursor.value;
+        if (!record) {
+          cursor.continue();
+          return;
+        }
         if (type && record.type !== type) {
           cursor.continue();
           return;
@@ -505,6 +796,10 @@ class RequestIndexer extends RequestDb {
           return;
         }
         const record = cursor.value;
+        if (!record) {
+          cursor.continue();
+          return;
+        }
         if (type && record.type !== type) {
           cursor.continue();
           return;
@@ -574,6 +869,8 @@ class RequestIndexer extends RequestDb {
   /**
    * Removes all indexed data.
    *
+   * TODO: This should allow to remove by type
+   *
    * @return {Promise}
    */
   _clearIndexedData() {
@@ -591,15 +888,9 @@ class RequestIndexer extends RequestDb {
         };
         store.clear();
       });
-    })
-    .then(() => {
-      this.notifyEnd('clear-index');
-    })
-    .catch((cause) => {
-      console.warn(cause);
-      this.notifyError(cause);
     });
   }
 }
-const indexer = new RequestIndexer();
-indexer.listen();
+window.customElements.define(UrlIndexer.is, UrlIndexer);
+</script>
+</dom-module>

@@ -8,238 +8,228 @@
  *   request-model.html
  */
 
-/// <reference path="base-model.d.ts" />
+/// <reference path="request-base-model.d.ts" />
+/// <reference path="../app-pouchdb-quick-search/pouchdb-quick-search.d.ts" />
+/// <reference path="../arc-electron-payload-processor/payload-processor.d.ts" />
 
 declare namespace LogicElements {
 
   /**
-   * Events based access to saved request datastore.
+   * Event based access to saved and history request datastore.
    *
-   * Note: **All events must be cancelable.** When the event is cancelled by an instance
-   * of the element it won't be handled again by other instance that possibly exists
-   * in the DOM.
+   * This model creates and updates updates request objects and updates
+   * URL index associated with the request.
+   * It also supports querying for request data, deleting request data and
+   * undeleting it.
    *
-   * Cancellable event is a request to models for change. Non-cancellable event
-   * is a notification for views to update their values. For example
-   * `request-object-changed` event notifies model to update object in
-   * the datastore if the event is cancelable and to update views if it's not
-   * cancellable.
+   * ## Events API
    *
-   * Each handled event contains the `result` property on the `detail` object. It
-   * contains a `Promise` object with a result of the operation. Also, for update / delete
-   * events the same non-cancelable event is fired.
+   * All events must be marked as cancelable or will be ignore by the model.
+   * In ARC ecosystem models dispatch the same event after the object is updated
+   * (deleted, created, updated) but the event is not cancelable.
+   * Components should only react on non cancelable model events as it means
+   * that the change has been commited to the datastore.
    *
-   * Events handled by this element are cancelled and propagation of the event is
-   * stopped.
+   * Each handled event is canceled so it's safe to put more than one model in
+   * the DOM. Event's detail object will get `result` property with the promise
+   * resolved when operation commits.
    *
-   * Supported operations:
+   * **save-request**
+   * This event should be used when dealing with unprocessed request data.
+   * Request object may contain Blob or FormData as a payload which would be lost
+   * if trying to store it in the data store. This flow handles payload
+   * transformation.
    *
-   * -   Read request object (`request-object-read`)
-   * -   Update name only (`request-name-changed`)
-   * -   Update request object (`request-object-changed`)
-   * -   Delete object (`request-object-deleted`)
-   * -   Deletes list of request objects (`request-objects-deleted`)
-   *
-   * ## Request object types
-   *
-   * There are two request object types: `saved-requests` and `history-requests`.
-   * Each event must contain a `type` property to determine which database to query
-   * for an object.
-   *
-   * ### Events description
-   *
-   * #### `request-object-read` event
-   *
-   * Reads a request object from the datastore.
-   *
-   * ##### Properties
-   *
-   * -   `id` (String, required) ID of the datastore entry
-   * -   `rev` (String, optional) Specific revision to retrieve from the
-   * datastore. Latest by default.
-   * -   `type` {String, required} Request object type. Either `saved-requests`
-   * or `history-requests`
-   *
-   * ##### Example
+   * Detail's parameteres:
+   * - request - Required, ArcRequest object
+   * - projects - Optional, Array of strings, List of project names to create
+   * with this request and associate with the request object.
+   * - options - Optional, map of additional options. Currently only `isDrive` is
+   * supported. When set `export-google-drive` is dispatched. If the event is not
+   * handled by the application the save flow fails.
    *
    * ```javascript
-   * var event = new CustomEvent('request-object-read', {
-   *    detail: { id: 'some-id', type: 'saved-requests' },
-   *    bubbles: true,
-   *    composed: true,
-   *    cancelable: true
-   * });
-   * if (event.defaultPrevented) {
-   *    event.detail.result.then(request => console.log(request));
-   * }
-   * ```
-   *
-   * #### `request-name-changed` Event
-   *
-   * Changes name of a request. Promise result has updated `name` and `_rev` properties.
-   * This operation deletes old object because it changes the `name` of the request
-   * that is used to build the datastore key.
-   *
-   * ##### Properties
-   * -   `id` (String, required if `project` is not set) ID of the datastore entry
-   * -   `request` (Object, required if `id` is not set) The database entity
-   * -   `name` (String, required) New name of the project. It doesn't matter
-   * if `project` property already has new name.
-   * -   `type` {String, required} Request object type. Either `saved-requests`
-   * or `history-requests`
-   *
-   * ##### Example
-   *
-   * ```javascript
-   * var event = new CustomEvent('request-name-changed', {
-   *    detail: { id: 'some-id', name: 'new name', type: 'history-requests' },
-   *    bubbles: true,
-   *    composed: true,
-   *    cancelable: true
-   * });
-   * if (event.defaultPrevented) {
-   *    event.detail.result.then(request => console.log(request));
-   * }
-   * ```
-   *
-   * #### `request-object-changed` event
-   *
-   * Updates / saves new object in the datastore.
-   *
-   * ##### Properties
-   *
-   * -   `request` (Object, required) An object to store
-   * -   `type` {String, required} Request object type. Either `saved-requests`
-   * or `history-requests`
-   *
-   * ##### Example
-   * *
-   * ```javascript
-   * var event = new CustomEvent('request-object-changed', {
-   *    detail: { request: {...}, type: 'saved-requests' },
-   *    bubbles: true,
-   *    composed: true,
-   *    cancelable: true
-   * });
-   * if (event.defaultPrevented) {
-   *    event.detail.result.then(request => console.log(request));
-   * }
-   * ```
-   *
-   * #### `request-object-deleted` event
-   *
-   * Deletes the object from the datastore. This operation fires `request-object-deleted`
-   * custom event. Promise returns object's new `_rev` value.
-   *
-   * ##### Properties
-   * -   `id` (String, required) ID of the datastore entry
-   * -   `rev` (String, optional) The `_rev` property of the PouchDB datastore
-   * object. If not set it will use latest revision.
-   * -   `type` {String, required} Request object type. Either `saved-requests` or
-   * `history-requests`
-   *
-   * ##### Example
-   *
-   * ```javascript
-   * var event = new CustomEvent('request-object-deleted', {
-   *    detail: { id: 'some-id', type: 'saved-requests' },
-   *    bubbles: true,
-   *    composed: true,
-   *    cancelable: true
-   * });
-   * if (event.defaultPrevented) {
-   *    event.detail.result.then(newRev => console.log(newRev));
-   * }
-   * ```
-   *
-   * #### `request-objects-deleted` event
-   *
-   * Removes list of requests in batch operation. Promise results to the map where keys
-   * are request ids and values are new revision hash.
-   *
-   * ##### Properties
-   *
-   * -   `items` (Array, required) List of IDs to delete
-   * -   `type` {String, required} Request object type. Either `saved-requests` or `history-requests`
-   *
-   * ##### Example
-   *
-   * ```javascript
-   * var event = new CustomEvent('request-objects-deleted', {
-   *    detail: {
-   *      items: ['some-id', 'other-id'],
-   *      type: 'saved-requests'
-   *    },
-   *    bubbles: true,
-   *    composed: true,
-   *    cancelable: true
-   *  });
-   *  if (event.defaultPrevented) {
-   *    event.detail.result.then(deleted => console.log(deleted));
+   * const e = new CustomEvent('save-request', {
+   *  bubbles: true,
+   *  composed: true,
+   *  cancelable: true,
+   *  detail: {
+   *    request: {...}
+   *    projects: ['Test project'],
+   *    options: {
+   *      isDrive: true
+   *    }
    *  }
-   *  ```<link rel="import" href="../polymer/polymer.html">
-   *  <link rel="import" href="../app-pouchdb/pouchdb.html">
-   *  <link rel="import" href="../events-target-behavior/events-target-behavior.html">
-   *
-   * #### `request-objects-undeleted` event
-   *
-   * Restores previously deleted requests from the history.
-   * It searches in the revision history of each object to find a revision before
-   * passed `_rev` and restores this object as a new one in the revision tree.
-   *
-   * This operation fires `request-object-deleted` custom event. Promise returns
-   * request objects with updated `_rev` value.
-   *
-   * ##### Properties
-   *
-   * -   `items` (Array, required) List of requests to restore. It required `_id`
-   * and `_rev` properties to be set on each object. The `_rev` property must be
-   * a revision updated after the deletion of the object.
-   * -   `type` {String, required} Request object type. Either `saved-requests`
-   * or `history-requests`
-   *
-   * ##### Example
-   *
-   * ```javascript
-   * var event = new CustomEvent('request-objects-deleted', {
-   *    detail: {
-   *      items: [{_id: 'some-id', '_rev': '2-xyz']},
-   *      type: 'saved-requests'
-   *    },
-   *    bubbles: true,<link rel="import" href="../polymer/polymer.html">
-   * <link rel="import" href="../app-pouchdb/pouchdb.html">
-   * <link rel="import" href="../events-target-behavior/events-target-behavior.html">
-   *    composed: true,
-   *    cancelable: true
-   * });
-   * if (event.defaultPrevented) {
-   *    event.detail.result.then(restored => console.log(restored));
-   * }
+   * };
+   * this.dispatchEvent(e);
    * ```
+   *
+   * **request-object-read**
+   *
+   * Reads the request from the data store.
+   *
+   * Detail's parameteres:
+   *
+   * - `id` - Required, String. Request ID
+   * - `type` - Required, String. Either `history` or `saved`
+   * - `rev` - Optional, String. Specific revision to read
+   *
+   * **request-object-changed**
+   *
+   * Should be only used if the payload is not `Blob` or `FormData` and
+   * all request properties are set. By default `save-request` event should be
+   * used.
+   *
+   * Detail's parameteres: ArcRequest object.
+   * https://github.com/advanced-rest-client/api-components-api/blob/master/docs/
+   * arc-models.md#arcrequest
+   *
+   * **request-object-deleted**
+   *
+   * Deletes the object from the data store.
+   *
+   * Detail's parameteres:
+   *
+   * - `id` - Required, String. Request ID
+   * - `type` - Required, String. Either `history` or `saved`
+   *
+   * **request-objects-deleted**
+   *
+   * Deletes number of requests in bulk.
+   *
+   * Detail's parameteres:
+   *
+   * - `type` - Required, String. Either `history` or `saved`
+   * - `items` - Required, Array<String>. List of request IDs to delete.
+   *
+   * **request-objects-undeleted**
+   *
+   * Used to restore deleted request data.
+   *
+   * Detail's parameteres:
+   *
+   * - `type` - Required, String. Either `history` or `saved`
+   * - `items` - Required, Array<Object>. List of requests to restore.
+   * Each object must contain `_rev` and `_id`.
+   *
+   * The `result` property contains result of calling `revertRemove()` function.
+   *
+   * **request-query**
+   *
+   * Queries for request data. This flow searches for URL data in a separate index
+   * and then performs full text search on the request data store.
+   *
+   * Detail's parameteres:
+   *
+   * - `q` - Required, String. User query.
+   * - `type` - Optional, String. Either `history` or `saved`. By default it
+   * searches in both data stores.
+   * - `detailed` - Optional, Boolean. If set it uses slower algorithm but performs full
+   * search on the index. When false it only uses filer like query + '*'.
    */
-  class RequestModel extends Polymer.Element {
-    readonly savedDb: any;
-    readonly historyDb: any;
-    _attachListeners(node: any): void;
-    _detachListeners(node: any): void;
+  class RequestModel extends RequestBaseModel {
 
     /**
-     * Returns a reference to a PouchDB database instance for given type.
-     *
-     * @param type Either `saved-requests` or `history-requests`
-     * @returns PouchDB instance for the datastore.
+     * List of fields to index in the history store.
      */
-    getDatabase(type: String|null): PouchDB|null;
+    readonly historyIndexes: Array<String|null>|null;
+
+    /**
+     * List of fields to index in the saved store.
+     */
+    readonly savedIndexes: Array<String|null>|null;
+
+    /**
+     * When set it skips request indexing.
+     */
+    noIndexing: boolean|null|undefined;
+    _workerRequestId: number|null|undefined;
+    _workerPromises: any[]|null|undefined;
+
+    /**
+     * Adds event listeners.
+     */
+    _attachListeners(node: HTMLElement|null): void;
+
+    /**
+     * Removes event listeners.
+     */
+    _detachListeners(node: HTMLElement|null): void;
 
     /**
      * Reads an entry from the datastore.
      *
      * @param type Request type: `saved-requests` or `history-requests`
      * @param id The ID of the datastore entry.
-     * @param rev Specific revision to read. Defaults to latest revision.
+     * @param rev Specific revision to read. Defaults to
+     * latest revision.
+     * @param opts Additional options. Currently only `restorePayload`
+     * is supported
      * @returns Promise resolved to a project object.
      */
-    read(type: String|null, id: String|null, rev: String|null): Promise<any>|null;
+    read(type: String|null, id: String|null, rev: String|null, opts: object|null): Promise<any>|null;
+
+    /**
+     * Handler for `destroy-model` custom event.
+     * Deletes saved or history data when scheduled for deletion.
+     */
+    _deleteModelHandler(e: CustomEvent|null): void;
+
+    /**
+     * A handler for `save-request-data` custom event. It's special event to
+     * save / update request data dispatched by the request editor.
+     */
+    _saveRequestHandler(e: CustomEvent|null): void;
+
+    /**
+     * Create projects from project names.
+     * It is used when creating a request with a new project.
+     *
+     * @param names Names of projects
+     * @param requestId Request ID to add to the projects.
+     * @returns Promise resolved to list of project IDs
+     */
+    _createProjects(names: Array<String|null>|null, requestId: String|null): Promise<Array<String|null>|null>;
+
+    /**
+     * Handler for `save-history` object. It computes payload to savable state
+     * and saves history object.
+     * Note, the ID is is a combination of today's midningt timestamp, url and
+     * method. If such ID already exists the object is updated.
+     */
+    _saveHistoryHandler(e: CustomEvent|null): void;
+
+    /**
+     * Saves a request into a data store.
+     * It handles payload to string conversion, handles types, and syncs request
+     * with projects. Use `update()` method only if you are storing already
+     * prepared request object to the store.
+     *
+     * @param request ArcRequest object
+     * @param opts Save request object. Currently only `isDrive`
+     * is supported
+     * @returns A promise resilved to updated request object.
+     */
+    saveRequest(request: object|null, opts: object|null): Promise<any>|null;
+
+    /**
+     * Sunchronizes project requests to ensure each project contains this
+     * `requestId` on their list of requests.
+     *
+     * @param requestId Request ID
+     * @param projects List of request projects.
+     */
+    _syncProjects(requestId: String|null, projects: Array<String|null>|null): Promise<any>|null;
+
+    /**
+     * The same as `read()` but for a list of requests.
+     *
+     * @param type Requests type to restore.
+     * @param keys Request ids
+     * @param opts Additional options. Currently only `restorePayload`
+     * is supported
+     */
+    readBulk(type: String|null, keys: Array<String|null>|null, opts: object|null): Promise<any>|null;
 
     /**
      * Updates / saves the request object in the datastore.
@@ -258,9 +248,10 @@ declare namespace LogicElements {
      * Updates more than one request in a bulk.
      *
      * @param type Request type: `saved-requests` or `history-requests`
+     * @param requests List of requests to update.
      * @returns List of PouchDB responses to each insert
      */
-    updateBulk(type: String|null, requests: any): any[]|null;
+    updateBulk(type: String|null, requests: Array<object|null>|null): any[]|null;
 
     /**
      * Removed an object from the datastore.
@@ -268,8 +259,10 @@ declare namespace LogicElements {
      *
      * @param type Request type: `saved-requests` or `history-requests`
      * @param id The ID of the datastore entry.
-     * @param rev Specific revision to read. Defaults to latest revision.
-     * @returns Promise resolved to a new `_rev` property of deleted object.
+     * @param rev Specific revision to read. Defaults to
+     * latest revision.
+     * @returns Promise resolved to a new `_rev` property of deleted
+     * object.
      */
     remove(type: String|null, id: String|null, rev: String|null): Promise<any>|null;
 
@@ -285,7 +278,15 @@ declare namespace LogicElements {
      * updated `_rev` property.
      */
     revertRemove(type: String|null, items: any[]|null): Promise<any>|null;
-    _findNotDeleted(db: any, items: any): any;
+
+    /**
+     * Finds last not deleted revision of a document.
+     *
+     * @param db PouchDB instance
+     * @param items List of documents to process
+     * @returns Last not deleted version of each document.
+     */
+    _findNotDeleted(db: object|null, items: any[]|null): Promise<any[]|null>;
 
     /**
      * Finds a next revision after the `deletedRevision` in the revisions history
@@ -299,44 +300,29 @@ declare namespace LogicElements {
     _findUndeletedRevision(revs: object|null, deletedRevision: object|null): String|null;
 
     /**
-     * Generates the IS for the request depending on it's type and properties.
-     *
-     * @param request The request object to store.
-     * @param isHistory Is true then it generates an ID for a history
-     * item
-     * @returns A database ID
-     */
-    _generateId(request: object|null, isHistory: Boolean|null): String|null;
-
-    /**
      * Handler for request read event request.
      */
-    _handleRead(e: any): void;
-
-    /**
-     * Updates name of a request.
-     */
-    _handleNameChange(e: any): void;
+    _handleRead(e: CustomEvent|null): void;
 
     /**
      * Handles onject save / update
      */
-    _handleObjectSave(e: any): void;
+    _handleObjectSave(e: CustomEvent|null): void;
 
     /**
      * Deletes the object from the datastore.
      */
-    _handleObjectDelete(e: any): void;
+    _handleObjectDelete(e: CustomEvent|null): void;
 
     /**
      * Queries for a list of projects.
      */
-    _handleObjectsDelete(e: any): void;
+    _handleObjectsDelete(e: CustomEvent|null): void;
 
     /**
      * handlers `request-objects-undeleted` event to restore deleted items
      */
-    _handleObjectsUndelete(e: any): void;
+    _handleUndelete(e: CustomEvent|null): void;
 
     /**
      * Filters query results to return only successfuly read data.
@@ -345,7 +331,163 @@ declare namespace LogicElements {
      * @returns List of request that has been read.
      */
     _filterExistingItems(result: object|null): any[]|null;
-    _findOldRef(docs: any, id: any): any;
+
+    /**
+     * Finds a `_rev` for a doc.
+     *
+     * @param docs List of PouchDB documents to search for `_rev`
+     * @param id Document ID
+     * @returns Associated `_rev`
+     */
+    _findOldRef(docs: any[]|null, id: String|null): String|null;
+
+    /**
+     * Saves the request on Google Drive.
+     * It sends `drive-request-save` event to call a component responsible
+     * for saving the request.
+     *
+     * This do nothing if `opts.drive is not set.`
+     *
+     * @param data Data to save
+     * @param opts Save request options. See `saveRequest` for more info.
+     * @returns Resolved promise to updated object.
+     */
+    _saveGoogleDrive(data: object|null, opts: object|null): Promise<any>|null;
+
+    /**
+     * Handler for `request-list` custom event.
+     * The `result` property will contain a result of calling `list()` function.
+     *
+     * The event has to be cancelable and not already cancelled in order to handle
+     * it.
+     *
+     * Required properties on `detail` object:
+     * - `type` {String} Datastore type
+     * - `queryOptions` {Object} PouchDB query options.
+     */
+    _handleList(e: CustomEvent|null): void;
+
+    /**
+     * Performs a query for the request data.
+     *
+     * This is not the same as searching for a request. This only lists
+     * data from the datastore for given query options.
+     *
+     * @param type Datastore type
+     * @param queryOptions PouchDB query options.
+     * @returns List of PouchDB documents for the query.
+     */
+    list(type: String|null, queryOptions: object|null): Promise<any>|null;
+
+    /**
+     * A handler for the `request-query` custom event. Queries the datastore for
+     * request data.
+     * The event must have `q` property set on the detail object.
+     */
+    _handleQuery(e: CustomEvent|null): void;
+
+    /**
+     * Queries both URL and PouchDb data.
+     *
+     * It calls, in order, `queryUrlData()` and `queryPouchDb()` functions.
+     *
+     * @param q User query
+     * @param type Optional, type of the requests to search for.
+     * By default it returns all data.
+     * @param detailed If set it uses slower algorithm but performs full
+     * search on the index. When false it only uses filer like query + '*'.
+     * @returns Promise resolved to the list of requests.
+     */
+    query(q: String|null, type: String|null, detailed: Boolean|null): Promise<Array<object|null>|null>;
+
+    /**
+     * Performs a query on the URL index data.
+     *
+     * @param q User query
+     * @param type Optional, type of the requests to search for.
+     * By default it returns all data.
+     * @param detailed If set it uses slower algorithm but performs full
+     * search on the index. When false it only uses filer like query + '*'.
+     * @returns Promise resolved to the list of requests.
+     */
+    queryUrlData(q: String|null, type: String|null, detailed: Boolean|null): Promise<Array<object|null>|null>;
+
+    /**
+     * Performs a query on the request and/or history data store.
+     * It uses PouchDB `query` function on built indexes.
+     * Note, it does not query for URL data.
+     *
+     * @param q User query
+     * @param type Optional, type of the requests to search for.
+     * By default it returns all data for both history and saved.
+     * @param ignore List of IDs to ignore.
+     * @returns Promise resolved to the list of requests.
+     */
+    queryPouchDb(q: String|null, type: String|null, ignore: Array<String|null>|null): Promise<Array<object|null>|null>;
+
+    /**
+     * Queries history store using PouchDB quick search plugin (full text search).
+     *
+     * @param q User query
+     * @param ignore List of IDs to ignore.
+     * @returns Promise resolved to the list of requests.
+     */
+    queryHistory(q: String|null, ignore: Array<String|null>|null): Promise<Array<object|null>|null>;
+
+    /**
+     * Queries Saved store using PouchDB quick search plugin (full text search).
+     *
+     * @param q User query
+     * @param ignore List of IDs to ignore.
+     * @returns Promise resolved to the list of requests.
+     */
+    querySaved(q: String|null, ignore: Array<String|null>|null): Promise<Array<object|null>|null>;
+
+    /**
+     * See `query()` function for description.
+     *
+     * @param q User query
+     * @param ignore List of IDs to ignore.
+     * @param db A handler to the data store.
+     * @param indexes List of fields to query
+     * @returns A promise resolved to list of PouchDB docs.
+     */
+    _queryStore(q: String|null, ignore: Array<String|null>|null, db: object|null, indexes: Array<String|null>|null): Promise<Array<object|null>|null>;
+
+    /**
+     * Performs data inding using PouchDB api.
+     * This is not the same as URL indexing using `url-indexer`.
+     *
+     * @param type Data type - saved or history.
+     */
+    indexData(type: String|null): Promise<any>|null;
+
+    /**
+     * Handler for `request-project-list` event to query for list of requests in
+     * a project.
+     */
+    _listProjectRequestsHandler(e: CustomEvent|null): void;
+
+    /**
+     * Reads list of requests associated with a project
+     *
+     * @param id Project id
+     * @param opts Additional options. Currently only `restorePayload`
+     * is supported
+     */
+    readProjectRequests(id: String|null, opts: object|null): Promise<any>|null;
+
+    /**
+     * Reads requests data related to the project from a legacy system.
+     *
+     * @param id Project id
+     */
+    readProjectRequestsLegacy(id: String|null): Promise<any>|null;
+
+    /**
+     * Sorts requests list by `projectOrder` property
+     */
+    sortRequestProjectOrder(a: object|null, b: object|null): Number|null;
   }
 }
 

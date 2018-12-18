@@ -4,7 +4,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, minimum-scale=1, initial-scale=1, user-scalable=yes">
-  <title>Request query demo</title>
+  <title>Request read demo</title>
   <script src="../../webcomponentsjs/webcomponents-loader.js"></script>
   <link rel="import" href="../../shadycss/apply-shim.html">
   <link rel="import" href="../../polymer/lib/elements/custom-style.html">
@@ -20,6 +20,7 @@
   <link rel="import" href="../../neon-animation/web-animations.html">
   <link rel="import" href="../../app-pouchdb/pouchdb.html">
   <link rel="import" href="../../paper-styles/shadow.html">
+  <link rel="import" href="../../iron-form/iron-form.html">
   <link rel="import" href="../request-model.html">
   <script src="../../chance/chance.js"></script>
   <script src="../workers/request-db.js"></script>
@@ -47,11 +48,12 @@
       padding: 12px;
     }
 
-    .search-box {
+    .form-item {
       @apply --layout-horizontal;
+      @apply --layout-center;
     }
 
-    .search-box paper-input {
+    .form-item paper-input {
       @apply --layout-flex;
     }
     </style>
@@ -68,28 +70,34 @@
         <h2>Data options</h2>
         <paper-button on-click="genData">Generate data</paper-button>
         <paper-button on-click="deleteData">Destroy data</paper-button>
-        <paper-button on-click="forceIndex">Force PouchDB index</paper-button>
       </section>
-
       <section class="card centered options">
-        <h2>Search options</h2>
+        <h2>Database options</h2>
         <paper-dropdown-menu label="Request type">
           <paper-listbox slot="dropdown-content" selected="{{requestType}}">
-            <paper-item>History and saved</paper-item>
-            <paper-item>History only</paper-item>
-            <paper-item>Saved only</paper-item>
+            <paper-item>History</paper-item>
+            <paper-item>Saved</paper-item>
           </paper-listbox>
         </paper-dropdown-menu>
-        <div>
-          <paper-checkbox checked="{{detailedSearch}}">Perform detailed search</paper-checkbox>
-        </div>
+        <paper-checkbox checked="{{restorePayload}}">Restore payload data with request</paper-checkbox>
       </section>
 
       <section class="centered card" role="main">
-        <h2>Search data store</h2>
+        <h2>Request data</h2>
         <div class="search-box">
-          <paper-input label="Search term" id="q" name="q" value="{{q}}"></paper-input>
-          <paper-button on-click="search">Search</paper-button>
+          <iron-form>
+            <form method="post">
+              <template is="dom-repeat" items="{{keys}}">
+                <div class="form-item">
+                  <paper-input label="Request id" value="{{item.id}}"></paper-input>
+                  <paper-button on-click="removeKey">Remove</paper-button>
+                </div>
+              </template>
+              <paper-button on-click="addKey">Add another</paper-button>
+            </form>
+          </iron-form>
+
+          <paper-button on-click="getData">Get data</paper-button>
         </div>
       </section>
 
@@ -110,9 +118,18 @@
   <script>
   (function(scope) {
     /* global chance, RequestDb */
-    scope.q = 'api';
+    scope.keys = [{'id': ''}];
     scope.requestType = 0;
     scope.hasResults = false;
+    scope.addKey = function() {
+      scope.push('keys', {'id': ''});
+    };
+
+    scope.removeKey = function(e) {
+      const index = e.model.get('index');
+      scope.splice('keys', index, 1);
+    };
+
     scope.genData = function() {
       const domains = [
         'https://domain.com/',
@@ -144,6 +161,7 @@
         if (type === 'history') {
           history[history.length] = item;
         } else {
+          item.name = chance.word();
           saved[saved.length] = item;
         }
       }
@@ -193,18 +211,24 @@
       });
     };
 
-    scope.search = function() {
+    scope.getData = function() {
+      scope.hasResults = false;
+      const keys = scope.keys.map((item) => item.id);
+      if (!keys) {
+        return;
+      }
       const detail = {
-        q: scope.q
+        id: keys.length === 1 ? keys[0] : keys,
+        opts: {}
       };
+      if (scope.restorePayload) {
+        detail.opts.restorePayload = true;
+      }
       switch (scope.requestType) {
-        case 1: detail.type = 'history'; break;
-        case 2: detail.type = 'saved'; break;
+        case 0: detail.type = 'history'; break;
+        case 1: detail.type = 'saved'; break;
       }
-      if (scope.detailedSearch) {
-        detail.detailed = true;
-      }
-      const e = new CustomEvent('request-query', {
+      const e = new CustomEvent('request-object-read', {
         cancelable: true,
         bubbles: true,
         detail
@@ -217,6 +241,9 @@
         performance.measure('data-search-end', 'data-search');
         scope._dumpMeasurements();
         console.log('Query result', data);
+        if (!(data instanceof Array)) {
+          data = [data];
+        }
         scope.results = data;
         scope.hasResults = true;
       });
