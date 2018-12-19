@@ -44,7 +44,9 @@
     "web-animations-js": "web-animations/web-animations-js#^2.3",
     "iron-form": "PolymerElements/iron-form#^2.4.0",
     "arc-data-generator": "advanced-rest-client/arc-data-generator#^1.0.1",
-    "arc-polyfills": "advanced-rest-client/arc-polyfills#^0.1.8"
+    "arc-polyfills": "advanced-rest-client/arc-polyfills#^0.1.8",
+    "iron-list": "PolymerElements/iron-list#^2.0.0",
+    "paper-toggle-button": "PolymerElements/paper-toggle-button#^2.1.1"
   },
   "ignore": [
     "**/.*",
