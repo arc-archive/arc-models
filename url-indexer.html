@@ -145,7 +145,7 @@ class UrlIndexer extends Polymer.Element {
     window.addEventListener('url-index-query', this._indexQueryHandler);
     window.addEventListener('request-object-changed', this._requestChangeHandler);
     window.addEventListener('request-object-deleted', this._requestDeleteHandler);
-    window.addEventListener('destroy-model', this._deleteModelHandler);
+    window.addEventListener('datastore-destroyed', this._deleteModelHandler);
   }
 
   disconnectedCallback() {
@@ -157,7 +157,7 @@ class UrlIndexer extends Polymer.Element {
     window.removeEventListener('url-index-query', this._indexQueryHandler);
     window.removeEventListener('request-object-changed', this._requestChangeHandler);
     window.removeEventListener('request-object-deleted', this._requestDeleteHandler);
-    window.removeEventListener('destroy-model', this._deleteModelHandler);
+    window.removeEventListener('datastore-destroyed', this._deleteModelHandler);
   }
 
   _indexUpdateHandler(e) {
@@ -276,15 +276,23 @@ class UrlIndexer extends Polymer.Element {
   }
 
   _deleteModelHandler(e) {
-    const models = e.detail.models;
-    if (!models || !models.length) {
+    let store = e.detail.datastore;
+    if (typeof store !== Array) {
+      store = [store];
+    }
+    let p;
+    if (store.indexOf('saved-requests') !== -1 || store.indexOf('saved') !== -1) {
+      p = this.deleteIndexedType('saved');
+    } else if (store.indexOf('history-requests') !== -1 || store.indexOf('history') !== -1) {
+      p = this.deleteIndexedType('history');
+    } else if (store.indexOf('all')) {
+      p = this.clearIndexedData();
+    }
+    if (!p) {
       return;
     }
-    if (models.indexOf('saved-requests') !== -1) {
-      this._clearIndexedData()
-      .then(() => console.info('URL index cleared'))
-      .catch((cause) => console.warn(cause));
-    }
+    p.then(() => console.info('URL index cleared'))
+    .catch((cause) => console.warn(cause));
   }
 
   //
@@ -337,34 +345,42 @@ class UrlIndexer extends Polymer.Element {
    * @return {Promise}
    */
   index(requests) {
-    const request = requests.shift();
-    if (!request) {
-      this._notifyIndexFinished();
-      return Promise.resolve();
-    }
+    let toRemove;
+    let db;
     return this.openSearchStore()
-    .then((db) => {
-      let dbIndexes;
-      return this._getIndexedData(db, request.id)
-      .then((indexed) => {
-        dbIndexes = indexed;
-        return this._prepareRequestIndexData(request, indexed);
-      })
-      .then((indexes) => {
-        if (indexes.length) {
-          return this._storeIndexes(db, indexes);
-        }
-      })
-      .then(() => {
-        if (dbIndexes.length) {
-          return this._removeRedundantIndexes(db, dbIndexes);
-        }
-      })
-      .catch((cause) => {
-        console.warn(cause);
-      })
-      .then(() => this.index(requests));
-    });
+    .then((instance) => {
+      db = instance;
+      return this._getIndexedDataAll(db, requests.map((i) => i.id));
+    })
+    .then((result) => {
+      const data = this._processIndexedRequests(requests, result);
+      toRemove = data.remove;
+      if (data.index.length) {
+        return this._storeIndexes(db, data.index);
+      }
+    })
+    .then(() => {
+      if (toRemove.length) {
+        return this._removeRedundantIndexes(db, toRemove);
+      }
+    })
+    .then(() => this._notifyIndexFinished());
+  }
+
+  _processIndexedRequests(requests, map) {
+    const toIndex = [];
+    const toRemove = [];
+    for (let i = 0, len = requests.length; i < len; i++) {
+      const request = requests[i];
+      const indexed = map[request.id] || [];
+      const indexes = this._prepareRequestIndexData(request, indexed);
+      toIndex.splice(toIndex.length, 0, ...indexes);
+      toRemove.splice(toRemove.length, 0, ...indexed);
+    }
+    return {
+      index: toIndex,
+      remove: toRemove
+    };
   }
 
   _notifyIndexFinished() {
@@ -384,20 +400,16 @@ class UrlIndexer extends Polymer.Element {
     return this.openSearchStore()
     .then((db) => {
       database = db;
-      const p = [];
-      for (let i = 0, len = ids.length; i < len; i++) {
-        p.push(this._getIndexedData(db, ids[i]));
-      }
-      return Promise.all(p);
+      return this._getIndexedDataAll(db, ids);
     })
-    .then((results) => {
+    .then((map) => {
       let items = [];
-      for (let i = 0, len = results.length; i < len; i++) {
-        const list = results[i];
+      Object.keys(map).forEach((rid) => {
+        const list = map[rid];
         if (list.length) {
           items = items.concat(list);
         }
-      }
+      });
       if (items.length) {
         return this._removeRedundantIndexes(database, items);
       }
@@ -422,64 +434,88 @@ class UrlIndexer extends Polymer.Element {
         const store = tx.objectStore('urls');
         const keyRange = window.IDBKeyRange.only(type);
         const index = store.index('type');
-        const request = index.openCursor(keyRange);
+        const request = index.openKeyCursor(keyRange);
         request.onsuccess = (e) => {
           const cursor = e.target.result;
           if (!cursor) {
             return;
           }
-          this._deleteByKey(e.target.result.primaryKey, store);
+          store.delete(cursor.primaryKey);
+          cursor.continue();
         };
       });
     });
   }
   /**
-   * Removes an item by id.
-   * @param {String} id Entry id
-   * @param {Object} store Data store with the data.
+   * Removes all indexed data.
+   *
    * @return {Promise}
    */
-  _deleteByKey(id, store) {
-    return new Promise((resolve, reject) => {
-      const req = store.delete(id);
-      req.onsuccess = () => resolve();
-      req.onerror = (e) => {
-        console.warn('Index delete error. Code: ' + e.target.errorCode);
-        reject();
-      };
+  clearIndexedData() {
+    return this.openSearchStore()
+    .then((db) => {
+      return new Promise((resolve, reject) => {
+        const tx = db.transaction('urls', 'readwrite');
+        const store = tx.objectStore('urls');
+        const results = [];
+        tx.onerror = () => {
+          reject(results);
+        };
+        tx.oncomplete = () => {
+          resolve(results);
+        };
+        store.clear();
+      });
     });
   }
-
   /**
-   * Retreives existing index data for the request.
+   * Retreives index data for requests.
    * @param {Object} db Database reference
-   * @param {String} requestId Request ID.
-   * @return {Promise<Array<Object>>}
+   * @param {Array<String>} ids List of request ids
+   * @return {Promise<Object>} A map where keys are request IDs and values are
+   * an array of index data.
+   * ```
+   * {
+   *  "[request-id]": [{
+   *    "id": "...",
+   *    "requestId": [request-id],
+   *    "url": "...",
+   *    "type": "..."
+   *   }]
+   * }
+   * ```
    */
-  _getIndexedData(db, requestId) {
+  _getIndexedDataAll(db, ids) {
     return new Promise((resolve) => {
-      const tx = db.transaction('urls', 'readwrite');
+      const tx = db.transaction('urls', 'readonly');
       const store = tx.objectStore('urls');
-      const results = [];
+      const result = {};
       tx.onerror = () => {
-        console.warn('Transaction error');
-        resolve(results);
+        console.warn('Transaction error: _getIndexedDataAll');
+        resolve(result);
       };
       tx.oncomplete = () => {
-        resolve(results);
+        resolve(result);
       };
-      const index = store.index('requestId');
-      const request = index.openCursor(requestId);
-      request.onsuccess = function(e) {
+      function processResult(id, e) {
         const cursor = e.target.result;
         if (cursor) {
           const record = cursor.value;
           if (record) {
-            results[results.length] = record;
+            if (!(id in result)) {
+              result[id] = [];
+            }
+            result[id][result[id].length] = record;
           }
           cursor.continue();
         }
-      };
+      }
+      const index = store.index('requestId');
+      for (let i = 0, len = ids.length; i < len; i++) {
+        const id = ids[i];
+        const request = index.openCursor(id);
+        request.onsuccess = processResult.bind(this, id);
+      }
     });
   }
   /**
@@ -719,6 +755,7 @@ class UrlIndexer extends Polymer.Element {
    * @return {Promise}
    */
   _searchIndexOf(db, q, type) {
+    console.debug('Performing search using "indexof" algorithm');
     const lowerNeedle = q.toLowerCase();
     return new Promise((resolve) => {
       // performance.mark('search-key-scan-2-start');
@@ -777,6 +814,7 @@ class UrlIndexer extends Polymer.Element {
    * @return {Promise}
    */
   _searchCasing(db, q, type) {
+    console.debug('Performing search using "casing" algorithm');
     const lowerNeedle = q.toLowerCase();
     return new Promise((resolve) => {
       // performance.mark('search-casing-start');
@@ -784,13 +822,13 @@ class UrlIndexer extends Polymer.Element {
       const store = tx.objectStore('urls');
       const results = {};
       tx.onerror = () => {
-        console.warn('Transaction error');
+        console.warn('Query index transaction error');
         resolve(results);
       };
-
       tx.oncomplete = () => {
         // performance.mark('search-casing-end');
-        // performance.measure('search-casing-end', 'search-casing-start');
+        // performance.measure('search-casing-end',
+        //  'search-casing-start');
         resolve(results);
       };
       const request = store.openCursor();
@@ -869,30 +907,6 @@ class UrlIndexer extends Polymer.Element {
           upperNeedle.substr(llp + 1);
       }
     }
-  }
-  /**
-   * Removes all indexed data.
-   *
-   * TODO: This should allow to remove by type
-   *
-   * @return {Promise}
-   */
-  _clearIndexedData() {
-    return this.openSearchStore()
-    .then((db) => {
-      return new Promise((resolve, reject) => {
-        const tx = db.transaction('urls', 'readwrite');
-        const store = tx.objectStore('urls');
-        const results = [];
-        tx.onerror = () => {
-          reject(results);
-        };
-        tx.oncomplete = () => {
-          resolve(results);
-        };
-        store.clear();
-      });
-    });
   }
 
   reindex(type) {
