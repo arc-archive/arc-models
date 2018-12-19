@@ -92,7 +92,7 @@
         });
       });
 
-      suite('_getIndexedData()', function() {
+      suite('_getIndexedDataAll()', function() {
         let element;
         let inserts;
         setup(function() {
@@ -122,10 +122,10 @@
 
         test('Results to empty array when no indexes found', function() {
           return element.openSearchStore()
-          .then((db) => element._getIndexedData(db, 'test'))
+          .then((db) => element._getIndexedDataAll(db, ['test']))
           .then((result) => {
-            assert.typeOf(result, 'array');
-            assert.lengthOf(result, 0);
+            assert.typeOf(result, 'object');
+            assert.lengthOf(Object.keys(result), 0);
           });
         });
 
@@ -136,10 +136,26 @@
             database = db;
             return element._storeIndexes(db, inserts);
           })
-          .then(() => element._getIndexedData(database, 'r1'))
+          .then(() => element._getIndexedDataAll(database, ['r1']))
           .then((result) => {
-            assert.typeOf(result, 'array');
-            assert.lengthOf(result, 2);
+            assert.typeOf(result.r1, 'array');
+            assert.lengthOf(result.r1, 2);
+          });
+        });
+
+        test('Returns multiple requests', function() {
+          let database;
+          return element.openSearchStore()
+          .then((db) => {
+            database = db;
+            return element._storeIndexes(db, inserts);
+          })
+          .then(() => element._getIndexedDataAll(database, ['r1', 'r2']))
+          .then((result) => {
+            assert.typeOf(result.r1, 'array');
+            assert.lengthOf(result.r1, 2);
+            assert.typeOf(result.r2, 'array');
+            assert.lengthOf(result.r2, 1);
           });
         });
       });

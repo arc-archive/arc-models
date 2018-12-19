@@ -57,4 +57,4 @@ DbHelper.readAllIndexes = function() {
       reject(new Error('Unable to open the store'));
     };
   });
-}
+};

@@ -20,7 +20,7 @@
 
     <script>
     /* global DbHelper */
-    suite('Index data delete', function() {
+    suite('deleteIndexedData()', function() {
       const FULL_URL = 'https://domain.com/api?a=b&c=d';
       const REQUEST_ID = 'test-id';
       const REQUEST_ID_2 = 'test-id-2';
@@ -59,7 +59,7 @@
       });
     });
 
-    suite('Delete by type', () => {
+    suite('deleteIndexedType()', () => {
       let element;
       setup(() => {
         element = fixture('Basic');
@@ -80,7 +80,33 @@
         return element.deleteIndexedType('t1')
         .then(() => DbHelper.readAllIndexes())
         .then((data) => {
-          assert.lengthOf(data, 5);
+          assert.lengthOf(data, 3);
+        });
+      });
+    });
+
+    suite('clearIndexedData()', () => {
+      let element;
+      setup(() => {
+        element = fixture('Basic');
+        return element.index([{
+            url: 'https://domain.com/',
+            id: 'r1',
+            type: 't1'
+          }, {
+            url: 'https://domain.com/',
+            id: 'r2',
+            type: 't2'
+          }]);
+      });
+
+      teardown(() => DbHelper.clearData());
+
+      test('Deletes all index data', () => {
+        return element.clearIndexedData()
+        .then(() => DbHelper.readAllIndexes())
+        .then((data) => {
+          assert.lengthOf(data, 0);
         });
       });
     });

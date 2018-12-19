@@ -354,6 +354,17 @@
             assert.equal(item.id.indexOf(item.url.toLowerCase() + '::' + item.type), 0);
           }
         });
+
+        test('Returns empty array for invalid URL', function() {
+          const request = {
+            id: 'test-id',
+            url: 'Path?p1=1&p2=2',
+            type: 'saved'
+          };
+          const result = element._prepareRequestIndexData(request, []);
+          assert.typeOf(result, 'array');
+          assert.lengthOf(result, 0);
+        });
       });
 
       suite('_createIndexIfMissing()', () => {
