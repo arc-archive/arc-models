@@ -7,11 +7,11 @@
     <script src="../../../web-component-tester/browser.js"></script>
     <script src="../../../iron-test-helpers/test-helpers.js"></script>
     <script src="../../demo/database-helper.js"></script>
-    <script src="../../workers/request-db.js"></script>
     <script src="../../../chance/chance.js"></script>
     <link rel="import" href="../../../app-pouchdb/pouchdb.html">
     <link rel="import" href="../../arc-models.html">
     <link rel="import" href="../../url-indexer.html">
+    <script src="../url-indexer/db-helper.js"></script>
   </head>
   <body>
 
@@ -29,7 +29,7 @@
     </test-fixture>
 
     <script>
-    /* global DatabaseHelper, fixture, assert */
+    /* global DatabaseHelper, DbHelper */
     suite('Events API for requests', function() {
       const databaseType = 'saved';
       // See https://gist.github.com/haroldtreen/5f1055eee5fcf01da3e0e15b8ec86bf6
@@ -358,28 +358,10 @@
         });
       });
 
-      function clearAllIndexes(db) {
-        return new Promise((resolve, reject) => {
-          const tx = db.transaction('urls', 'readwrite');
-          const store = tx.objectStore('urls');
-          const results = [];
-          tx.onerror = () => {
-            reject(results);
-          };
-          tx.oncomplete = () => {
-            resolve(results);
-          };
-          store.clear();
-        });
-      }
-
       suite('request-query', function() {
         teardown(() => {
-          /* global RequestDb */
-          const indexer = new RequestDb();
-          return indexer.openSearchStore()
-          .then((db) => clearAllIndexes(db))
-          .then(() => DatabaseHelper.clearRequests());
+          return DatabaseHelper.clearRequests()
+          .then(() => DbHelper.clearData());
         });
 
         let element;
