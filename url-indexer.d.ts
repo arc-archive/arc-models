@@ -162,6 +162,7 @@ declare namespace LogicElements {
      * @param requests List of requests to index.
      */
     index(requests: any[]|null): Promise<any>|null;
+    _processIndexedRequests(requests: any, map: any): any;
     _notifyIndexFinished(): void;
 
     /**
@@ -179,20 +180,29 @@ declare namespace LogicElements {
     deleteIndexedType(type: String|null): Promise<any>|null;
 
     /**
-     * Removes an item by id.
-     *
-     * @param id Entry id
-     * @param store Data store with the data.
+     * Removes all indexed data.
      */
-    _deleteByKey(id: String|null, store: object|null): Promise<any>|null;
+    clearIndexedData(): Promise<any>|null;
 
     /**
-     * Retreives existing index data for the request.
+     * Retreives index data for requests.
      *
      * @param db Database reference
-     * @param requestId Request ID.
+     * @param ids List of request ids
+     * @returns A map where keys are request IDs and values are
+     * an array of index data.
+     * ```
+     * {
+     *  "[request-id]": [{
+     *    "id": "...",
+     *    "requestId": [request-id],
+     *    "url": "...",
+     *    "type": "..."
+     *   }]
+     * }
+     * ```
      */
-    _getIndexedData(db: object|null, requestId: String|null): Promise<Array<object|null>|null>;
+    _getIndexedDataAll(db: object|null, ids: Array<String|null>|null): Promise<object|null>;
 
     /**
      * Prepares a list of objects to put into the indexeddb to index the request.
@@ -349,13 +359,9 @@ declare namespace LogicElements {
      * @param lowerNeedle [description]
      */
     _nextCasing(key: String|null, lowerKey: String|null, upperNeedle: String|null, lowerNeedle: String|null): String|null|undefined;
-
-    /**
-     * Removes all indexed data.
-     *
-     * TODO: This should allow to remove by type
-     */
-    _clearIndexedData(): Promise<any>|null;
+    reindex(type: any): any;
+    reindexSaved(): any;
+    reindexHistory(): any;
   }
 }
 

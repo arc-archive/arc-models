@@ -21,7 +21,12 @@ declare class ArcBaseModel {
    * Note, the element does not include PouchDB to the document!
    */
   readonly db: PouchDB|null;
-  readonly uuid: any;
+
+  /**
+   * Useful to generate uuid string.
+   * Use it as `this.uuid.generate()`.
+   */
+  readonly uuid: Element|null;
   disconnectedCallback(): void;
   _attachListeners(node: any): void;
   _detachListeners(node: any): void;
@@ -62,15 +67,38 @@ declare class ArcBaseModel {
   _handleException(e: Error|object|null, noThrow: Boolean|null): void;
 
   /**
-   * Deletes current database.
+   * Deletes current datastore.
+   * Note that `name` property must be set before calling this function.
    */
   deleteModel(): Promise<any>|null;
+
+  /**
+   * Notifies the application that the model has been removed and data sestroyed.
+   *
+   * @param type Database name.
+   * @returns Dispatched event
+   */
+  _notifyModelDestroyed(type: String|null): CustomEvent|null;
 
   /**
    * Handler for `destroy-model` custom event.
    * Deletes current data when scheduled for deletion.
    */
   _deleteModelHandler(e: CustomEvent|null): void;
-  _eventCancelled(e: any): any;
-  _cancelEvent(e: any): void;
+
+  /**
+   * Checks if event can be processed giving it's cancelation status or if
+   * it was dispatched by current element.
+   *
+   * @param e Event to test
+   * @returns True if event is already cancelled or dispatched by self.
+   */
+  _eventCancelled(e: Event|CustomEvent|null): Boolean|null;
+
+  /**
+   * Helper method to cancel the event and stop it's propagation.
+   *
+   * @param e Event to cancel
+   */
+  _cancelEvent(e: Event|CustomEvent|null): void;
 }

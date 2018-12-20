@@ -54,7 +54,8 @@ class AuthDataModel extends ArcBaseModel {
     .catch((e) => this._handleException(e));
   }
   /**
-   * Restores the database object entry.
+   * Queries for a datastore entry. Similar to `read()` but without using `id`
+   * but rather the URL.
    *
    * @param {String} url The URL of the request
    * @param {String} authMethod The Authorization method to restore data for.
@@ -86,7 +87,8 @@ class AuthDataModel extends ArcBaseModel {
    *
    * @param {String} url The URL of the request
    * @param {String} authMethod The Authorization method to restore data for.
-   * @param {Object} authData The data to store.
+   * @param {Object} authData The authorization data to store. Schema depends on
+   * the `authMethod` property. From model standpoint schema does not matter.
    * @return {Promise}
    */
   update(url, authMethod, authData) {

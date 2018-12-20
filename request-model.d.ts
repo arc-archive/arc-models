@@ -310,6 +310,11 @@ declare namespace LogicElements {
     _handleObjectSave(e: CustomEvent|null): void;
 
     /**
+     * Handler for `request-objects-changed` event. Updates requests in bulk operation.
+     */
+    _handleObjectsSave(e: CustomEvent|null): void;
+
+    /**
      * Deletes the object from the datastore.
      */
     _handleObjectDelete(e: CustomEvent|null): void;

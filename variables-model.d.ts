@@ -205,6 +205,8 @@ declare namespace LogicElements {
      * @param id The PouchDB `_id` property of the object to delete.
      */
     deleteVariable(id: object|null): Promise<any>|null;
+    _delVariablesModel(): any;
+    _delEnvironmentsModel(): any;
   }
 }
 

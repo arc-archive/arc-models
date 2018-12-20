@@ -52,7 +52,12 @@ class ArcBaseModel extends ArcBehaviors.EventsTargetBehavior(Polymer.Element) {
     }
     return new PouchDB(this.name, opts);
   }
-
+  /**
+   * Useful to generate uuid string.
+   * Use it as `this.uuid.generate()`.
+   *
+   * @return {Element} Reference to `uuid-generator` element.
+   */
   get uuid() {
     if (this._uuid) {
       return this._uuid;
@@ -151,7 +156,8 @@ class ArcBaseModel extends ArcBehaviors.EventsTargetBehavior(Polymer.Element) {
     }
   }
   /**
-   * Deletes current database.
+   * Deletes current datastore.
+   * Note that `name` property must be set before calling this function.
    * @return {Promise}
    */
   deleteModel() {

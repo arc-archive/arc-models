@@ -16,17 +16,13 @@ declare namespace LogicElements {
    * Model for host rules.
    */
   class AuthDataModel extends Polymer.Element {
-
-    /**
-     * Cashed list of authorization data for current session.
-     */
-    _cache: object|null|undefined;
     _attachListeners(node: any): void;
     _detachListeners(node: any): void;
     _queryHandler(e: any): void;
 
     /**
-     * Restores the database object entry or cached object if any.
+     * Queries for a datastore entry. Similar to `read()` but without using `id`
+     * but rather the URL.
      *
      * @param url The URL of the request
      * @param authMethod The Authorization method to restore data for.
@@ -39,7 +35,8 @@ declare namespace LogicElements {
      *
      * @param url The URL of the request
      * @param authMethod The Authorization method to restore data for.
-     * @param authData The data to store.
+     * @param authData The authorization data to store. Schema depends on
+     * the `authMethod` property. From model standpoint schema does not matter.
      */
     update(url: String|null, authMethod: String|null, authData: object|null): Promise<any>|null;
 
@@ -59,24 +56,6 @@ declare namespace LogicElements {
      * @returns Datastore key for auth data
      */
     _computeKey(method: String|null, url: String|null): String|null;
-
-    /**
-     * Finds an auth data for given `url`.
-     *
-     * @param type Authorization type.
-     * @param url The URL of the request.
-     * @returns Auth data if exists in the cache.
-     */
-    _findCachedAuthData(type: String|null, url: String|null): object|null|undefined;
-
-    /**
-     * Sends authorization data to the cache.
-     *
-     * @param type Authorization type.
-     * @param url current request URL
-     * @param data Authorization data to store.
-     */
-    _cacheAuthData(type: String|null, url: String|null, data: object|null): void;
   }
 }
 
