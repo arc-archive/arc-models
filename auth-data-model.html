@@ -26,15 +26,6 @@ class AuthDataModel extends ArcBaseModel {
     return 'auth-data-model';
   }
 
-  static get properties() {
-    return {
-      /**
-       * Cashed list of authorization data for current session.
-       */
-      _cache: Object
-    };
-  }
-
   constructor() {
     super('auth-data', 10);
     this._queryHandler = this._queryHandler.bind(this);
@@ -54,7 +45,7 @@ class AuthDataModel extends ArcBaseModel {
   }
 
   _queryHandler(e) {
-    if (!e.cancelable || e.composedPath()[0] === this) {
+    if (this._eventCancelled(e)) {
       return;
     }
     e.preventDefault();
@@ -63,7 +54,7 @@ class AuthDataModel extends ArcBaseModel {
     .catch((e) => this._handleException(e));
   }
   /**
-   * Restores the database object entry or cached object if any.
+   * Restores the database object entry.
    *
    * @param {String} url The URL of the request
    * @param {String} authMethod The Authorization method to restore data for.
@@ -71,16 +62,8 @@ class AuthDataModel extends ArcBaseModel {
    */
   query(url, authMethod) {
     const parsedUrl = this._normalizeUrl(url);
-    const data = this._findCachedAuthData(authMethod, parsedUrl);
-    if (data) {
-      return Promise.resolve(data);
-    }
     const key = this._computeKey(authMethod, parsedUrl);
     return this.db.get(key)
-    .then((authData) => {
-      this._cacheAuthData(authMethod, parsedUrl, authData);
-      return authData;
-    })
     .catch((cause) => {
       if (cause && cause.status === 404) {
         return;
@@ -90,7 +73,7 @@ class AuthDataModel extends ArcBaseModel {
   }
 
   _updateHandler(e) {
-    if (!e.cancelable || e.composedPath()[0] === this) {
+    if (this._eventCancelled(e)) {
       return;
     }
     e.preventDefault();
@@ -118,8 +101,7 @@ class AuthDataModel extends ArcBaseModel {
           _id: key
         };
       } else {
-        console.warn(error.message);
-        throw error;
+        this._handleException(error);
       }
     })
     .then((doc) => {
@@ -174,36 +156,6 @@ class AuthDataModel extends ArcBaseModel {
       path += encodeURIComponent(url);
     }
     return path;
-  }
-  /**
-   * Finds an auth data for given `url`.
-   *
-   * @param {String} type Authorization type.
-   * @param {String} url The URL of the request.
-   * @return {Object|undefined} Auth data if exists in the cache.
-   */
-  _findCachedAuthData(type, url) {
-    const cache = this._cache;
-    if (!cache || !type || !url || !cache[type]) {
-      return;
-    }
-    return cache[type][url];
-  }
-  /**
-   * Sends authorization data to the cache.
-   *
-   * @param {String} type Authorization type.
-   * @param {String} url current request URL
-   * @param {Object} data Authorization data to store.
-   */
-  _cacheAuthData(type, url, data) {
-    if (!this._cache) {
-      this._cache = {};
-    }
-    if (!(type in this._cache)) {
-      this._cache[type] = {};
-    }
-    this._cache[type][url] = data;
   }
 }
 window.customElements.define(AuthDataModel.is, AuthDataModel);

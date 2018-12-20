@@ -11,10 +11,15 @@
       /* global WCT */
       // Load and run all tests (.html, .js):
       WCT.loadSuites([
-        'event-based-websocket-test.html',
+        'base-model/base-model-test.html',
+
+        'auth-data-model/auth-data-model-test.html',
+        'auth-data-model/event-based-tests.html',
+
+        'websocket-model/event-based-tests.html',
+        'websocket-model/websocket-url-history-model-test.html',
         'host-rules-test.html',
         'event-based-host-rules-test.html',
-        'auth-data-model-test.html',
 
         'project-model/projects-test.html',
         'project-model/event-based-projects-test.html',

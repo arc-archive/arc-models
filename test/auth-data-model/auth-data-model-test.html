@@ -3,11 +3,11 @@
   <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, minimum-scale=1.0, initial-scale=1.0, user-scalable=yes">
-    <script src="../../webcomponentsjs/webcomponents-loader.js"></script>
-    <script src="../../web-component-tester/browser.js"></script>
-    <link rel="import" href="../../app-pouchdb/pouchdb.html">
-    <script src="../demo/database-helper.js"></script>
-    <link rel="import" href="../auth-data-model.html">
+    <script src="../../../webcomponentsjs/webcomponents-loader.js"></script>
+    <script src="../../../web-component-tester/browser.js"></script>
+    <link rel="import" href="../../../app-pouchdb/pouchdb.html">
+    <link rel="import" href="../../../arc-data-generator/arc-data-generator.html">
+    <link rel="import" href="../../auth-data-model.html">
   </head>
   <body>
     <test-fixture id="Basic">
@@ -16,7 +16,7 @@
       </template>
     </test-fixture>
     <script>
-    /* global DatabaseHelper */
+    /* global DataGenerator */
     suite('Authorization data model', function() {
       suite('_normalizeUrl()', () => {
         let element;
@@ -47,6 +47,11 @@
           const result = element._normalizeUrl(url);
           assert.equal(result, 'https://domain.com/path');
         });
+
+        test('Returns empty string when no argument', () => {
+          const result = element._normalizeUrl();
+          assert.equal(result, '');
+        });
       });
 
       suite('_computeKey()', () => {
@@ -69,74 +74,9 @@
         });
       });
 
-      suite('_findCachedAuthData()', () => {
-        let element;
-        setup(function() {
-          element = fixture('Basic');
-        });
-
-        test('Returns undefined when no cache', () => {
-          const result = element._findCachedAuthData('basic', 'domain.com');
-          assert.isUndefined(result);
-        });
-
-        test('Returns undefined when no type in cache', () => {
-          element._cache = {
-            ntlm: {
-              'domain.com': 'test'
-            }
-          };
-          const result = element._findCachedAuthData('basic', 'domain.com');
-          assert.isUndefined(result);
-        });
-
-        test('Returns data from cache', () => {
-          element._cache = {
-            basic: {
-              'domain.com': 'test'
-            }
-          };
-          const result = element._findCachedAuthData('basic', 'domain.com');
-          assert.equal(result, 'test');
-        });
-      });
-
-      suite('_cacheAuthData()', () => {
-        let element;
-        setup(function() {
-          element = fixture('Basic');
-        });
-
-        const type = 'basic';
-        const url = 'domain.com';
-        const data = 'test';
-
-        test('Creates _cache object', () => {
-          element._cacheAuthData(type, url, data);
-          assert.typeOf(element._cache, 'object');
-        });
-
-        test('Creates _cache\'s type object', () => {
-          element._cacheAuthData(type, url, data);
-          assert.typeOf(element._cache[type], 'object');
-        });
-
-        test('Creates URL entry', () => {
-          element._cacheAuthData(type, url, data);
-          assert.equal(element._cache[type][url], data);
-        });
-
-        test('Overrides existin URL entry', () => {
-          element._cacheAuthData(type, url, data);
-          assert.equal(element._cache[type][url], data);
-          element._cacheAuthData(type, url, 'other');
-          assert.equal(element._cache[type][url], 'other');
-        });
-      });
-
       suite('update()', function() {
         teardown(function() {
-          return DatabaseHelper.clearAuthData();
+          return DataGenerator.destroyAuthDataData();
         });
 
         let element;
@@ -200,9 +140,11 @@
             domain: 'some'
           });
         });
+
         suiteTeardown(function() {
-          return DatabaseHelper.clearAuthData();
+          return DataGenerator.destroyAuthDataData();
         });
+
         let element;
         setup(() => {
           element = fixture('Basic');
@@ -221,60 +163,6 @@
           return element.query('other', method)
           .then((result) => {
             assert.isUndefined(result);
-          });
-        });
-      });
-
-      suite('auth-data-query evvent handling', function() {
-        const url = 'http://domain.com/auth';
-        const method = 'x-ntlm';
-        suiteSetup(function() {
-          const element = fixture('Basic');
-          return element.update(url, method, {
-            username: 'uname-test',
-            password: 'pwd-test',
-            domain: 'some'
-          });
-        });
-        suiteTeardown(function() {
-          return DatabaseHelper.clearAuthData();
-        });
-        let element;
-        setup(() => {
-          element = fixture('Basic');
-        });
-
-        test('Cancels the event', () => {
-          const e = new CustomEvent('auth-data-query', {
-            bubbles: true,
-            cancelable: true,
-            detail: {
-              url,
-              authMethod: method
-            }
-          });
-          document.body.dispatchEvent(e);
-          return e.detail.result
-          .then(() => {
-            assert.isTrue(e.defaultPrevented);
-          });
-        });
-
-        test('Resutls with auth data', () => {
-          const e = new CustomEvent('auth-data-query', {
-            bubbles: true,
-            cancelable: true,
-            detail: {
-              url,
-              authMethod: method
-            }
-          });
-          document.body.dispatchEvent(e);
-          return e.detail.result
-          .then((result) => {
-            assert.equal(result.username, 'uname-test');
-            assert.equal(result.password, 'pwd-test');
-            assert.equal(result.domain, 'some');
           });
         });
       });

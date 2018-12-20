@@ -3,11 +3,11 @@
   <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, minimum-scale=1.0, initial-scale=1.0, user-scalable=yes">
-    <script src="../../webcomponentsjs/webcomponents-loader.js"></script>
-    <script src="../../web-component-tester/browser.js"></script>
-    <link rel="import" href="../../app-pouchdb/pouchdb.html">
-    <link rel="import" href="../arc-models.html">
-    <script src="../demo/database-helper.js"></script>
+    <script src="../../../webcomponentsjs/webcomponents-loader.js"></script>
+    <script src="../../../web-component-tester/browser.js"></script>
+    <link rel="import" href="../../../app-pouchdb/pouchdb.html">
+    <link rel="import" href="../../websocket-url-history-model.html">
+    <link rel="import" href="../../../arc-data-generator/arc-data-generator.html">
   </head>
   <body>
 
@@ -18,7 +18,7 @@
     </test-fixture>
 
     <script>
-    /* global DatabaseHelper */
+    /* global DataGenerator */
     suite('Events API for websocket url history', function() {
       // See https://gist.github.com/haroldtreen/5f1055eee5fcf01da3e0e15b8ec86bf6
       function isError(e) {
@@ -43,7 +43,7 @@
 
       suite('websocket-url-history-changed', function() {
         teardown(function() {
-          return DatabaseHelper.clearWebsocketUrlHostory();
+          return DataGenerator.destroyWebsocketsData();
         });
 
         let element;
@@ -55,6 +55,43 @@
             cnt: 1,
             time: Date.now()
           };
+        });
+
+        test('Ignores non-cancellable event', () => {
+          const e = {
+            cancelable: false,
+            detail: {
+              item: dataObj
+            }
+          };
+          element._handleChange(e);
+          assert.isUndefined(e.detail.result);
+        });
+
+        test('Ignores cancelled event', () => {
+          const e = {
+            cancelable: true,
+            defaultPrevented: true,
+            detail: {
+              item: dataObj
+            }
+          };
+          element._handleChange(e);
+          assert.isUndefined(e.detail.result);
+        });
+
+        test('Ignores self dispatched events', () => {
+          const e = {
+            cancelable: true,
+            composedPath: function() {
+              return [element];
+            },
+            detail: {
+              item: dataObj
+            }
+          };
+          element._handleChange(e);
+          assert.isUndefined(e.detail.result);
         });
 
         test('Event is canceled', function() {
@@ -110,11 +147,51 @@
             assert.isDefined(err);
           });
         });
+
+        test('Rejects promise when save object has no id', function() {
+          const cp = Object.assign({}, dataObj);
+          cp._id = undefined;
+          const e = fireChanged(cp);
+          return e.detail.result
+          .then(() => {
+            return Promise.reject('Expected method to reject.');
+          })
+          .catch(isError)
+          .then((err) => {
+            assert.isDefined(err);
+          });
+        });
+
+        test('Handles exceptions', () => {
+          const e = {
+            cancelable: true,
+            composedPath: () => [],
+            preventDefault: () => {},
+            stopPropagation: () => {},
+            detail: {
+              item: dataObj
+            }
+          };
+          element.update = () => {
+            return Promise.reject(new Error('test'));
+          };
+          let called = false;
+          element._handleChange(e);
+          return e.detail.result
+          .catch((cause) => {
+            if (cause.message === 'test') {
+              called = true;
+            }
+          })
+          .then(() => {
+            assert.isTrue(called);
+          });
+        });
       });
 
       suite('websocket-url-history-read', function() {
         teardown(function() {
-          return DatabaseHelper.clearWebsocketUrlHostory();
+          return DataGenerator.destroyWebsocketsData();
         });
 
         let element;
@@ -143,6 +220,46 @@
           document.body.dispatchEvent(e);
           return e;
         }
+
+        test('Ignores non-cancellable event', () => {
+          const element = fixture('basic');
+          const e = {
+            cancelable: false,
+            detail: {
+              url: dataObj._id
+            }
+          };
+          element._handleRead(e);
+          assert.isUndefined(e.detail.result);
+        });
+
+        test('Ignores cancelled event', () => {
+          const element = fixture('basic');
+          const e = {
+            cancelable: true,
+            defaultPrevented: true,
+            detail: {
+              url: dataObj._id
+            }
+          };
+          element._handleRead(e);
+          assert.isUndefined(e.detail.result);
+        });
+
+        test('Ignores self dispatched events', () => {
+          const element = fixture('basic');
+          const e = {
+            cancelable: true,
+            composedPath: function() {
+              return [element];
+            },
+            detail: {
+              url: dataObj._id
+            }
+          };
+          element._handleRead(e);
+          assert.isUndefined(e.detail.result);
+        });
 
         test('Event is canceled', function() {
           const e = fire(dataObj._id);
@@ -175,11 +292,36 @@
             assert.isDefined(err);
           });
         });
+
+        test('Returns undefined when no object', function() {
+          const e = fire('test-id-non-existing');
+          return e.detail.result
+          .then((result) => {
+            assert.isUndefined(result);
+          });
+        });
+
+        test('Handles exceptions', () => {
+          element.read = () => {
+            return Promise.reject(new Error('test'));
+          };
+          const e = fire('test-id-non-existing');
+          let called = false;
+          return e.detail.result
+          .catch((cause) => {
+            if (cause.message === 'test') {
+              called = true;
+            }
+          })
+          .then(() => {
+            assert.isTrue(called);
+          });
+        });
       });
 
       suite('websocket-url-history-query', function() {
         teardown(function() {
-          return DatabaseHelper.clearWebsocketUrlHostory();
+          return DataGenerator.destroyWebsocketsData();
         });
 
         let element;
@@ -199,7 +341,7 @@
         function fire(q) {
           const e = new CustomEvent('websocket-url-history-query', {
             detail: {
-              q: q
+              q
             },
             bubbles: true,
             composed: true,
@@ -208,6 +350,43 @@
           document.body.dispatchEvent(e);
           return e;
         }
+
+        test('Ignores non-cancellable event', () => {
+          const e = {
+            cancelable: false,
+            detail: {
+              q: 'test'
+            }
+          };
+          element._handleQuery(e);
+          assert.isUndefined(e.detail.result);
+        });
+
+        test('Ignores cancelled event', () => {
+          const e = {
+            cancelable: true,
+            defaultPrevented: true,
+            detail: {
+              q: 'test'
+            }
+          };
+          element._handleQuery(e);
+          assert.isUndefined(e.detail.result);
+        });
+
+        test('Ignores self dispatched events', () => {
+          const e = {
+            cancelable: true,
+            composedPath: function() {
+              return [element];
+            },
+            detail: {
+              q: 'test'
+            }
+          };
+          element._handleQuery(e);
+          assert.isUndefined(e.detail.result);
+        });
 
         test('Event is canceled', function() {
           const e = fire('http');
@@ -237,11 +416,40 @@
             assert.typeOf(result[0]._time, 'number', '_time is a number');
           });
         });
+
+        test('Rejects when query is not set', function() {
+          const e = fire();
+          let called = false;
+          return e.detail.result
+          .catch(() => {
+            called = true;
+          })
+          .then(() => {
+            assert.isTrue(called);
+          });
+        });
+
+        test('Handles exceptions', () => {
+          element.list = () => {
+            return Promise.reject(new Error('test'));
+          };
+          const e = fire('test-id-non-existing');
+          let called = false;
+          return e.detail.result
+          .catch((cause) => {
+            if (cause.message === 'test') {
+              called = true;
+            }
+          })
+          .then(() => {
+            assert.isTrue(called);
+          });
+        });
       });
 
       suite('websocket-url-history-list', function() {
         teardown(function() {
-          return DatabaseHelper.clearWebsocketUrlHostory();
+          return DataGenerator.destroyWebsocketsData();
         });
 
         let element;
@@ -269,6 +477,37 @@
           return e;
         }
 
+        test('Ignores non-cancellable event', () => {
+          const e = {
+            cancelable: false,
+            detail: {}
+          };
+          element._handleQueryHistory(e);
+          assert.isUndefined(e.detail.result);
+        });
+
+        test('Ignores cancelled event', () => {
+          const e = {
+            cancelable: true,
+            defaultPrevented: true,
+            detail: {}
+          };
+          element._handleQueryHistory(e);
+          assert.isUndefined(e.detail.result);
+        });
+
+        test('Ignores self dispatched events', () => {
+          const e = {
+            cancelable: true,
+            composedPath: function() {
+              return [element];
+            },
+            detail: {}
+          };
+          element._handleQueryHistory(e);
+          assert.isUndefined(e.detail.result);
+        });
+
         test('Event is canceled', function() {
           const e = fire();
           assert.isTrue(e.defaultPrevented);
@@ -295,6 +534,23 @@
           return e.detail.result
           .then((result) => {
             assert.typeOf(result[0]._time, 'number', '_time is a number');
+          });
+        });
+
+        test('Handles exceptions', () => {
+          element.list = () => {
+            return Promise.reject(new Error('test'));
+          };
+          const e = fire();
+          let called = false;
+          return e.detail.result
+          .catch((cause) => {
+            if (cause.message === 'test') {
+              called = true;
+            }
+          })
+          .then(() => {
+            assert.isTrue(called);
           });
         });
       });

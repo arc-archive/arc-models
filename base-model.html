@@ -97,10 +97,12 @@ class ArcBaseModel extends ArcBehaviors.EventsTargetBehavior(Polymer.Element) {
    * @return {Number} Time reduced to midnight.
    */
   _computeMidnight(time) {
-    let day = time ? new Date(time) : Date.now();
-    if (isNaN(day)) {
-      day = Date.now();
+    if (!time || isNaN(time)) {
+      time = Date.now();
+    } else {
+      time = Number(time);
     }
+    const day = new Date(time);
     day.setHours(0, 0, 0, 0);
     return day.getTime();
   }
@@ -160,7 +162,11 @@ class ArcBaseModel extends ArcBehaviors.EventsTargetBehavior(Polymer.Element) {
       return Promise.reject(e);
     }
   }
-
+  /**
+   * Notifies the application that the model has been removed and data sestroyed.
+   * @param {String} type Database name.
+   * @return {CustomEvent} Dispatched event
+   */
   _notifyModelDestroyed(type) {
     const e = new CustomEvent('datastore-destroyed', {
       bubbles: true,
@@ -189,7 +195,12 @@ class ArcBaseModel extends ArcBehaviors.EventsTargetBehavior(Polymer.Element) {
       e.detail.result.push(this.deleteModel());
     }
   }
-
+  /**
+   * Checks if event can be processed giving it's cancelation status or if
+   * it was dispatched by current element.
+   * @param {Event|CustomEvent} e  Event to test
+   * @return {Boolean} True if event is already cancelled or dispatched by self.
+   */
   _eventCancelled(e) {
     const status = e.defaultPrevented || !e.cancelable;
     if (!status) {
@@ -199,7 +210,10 @@ class ArcBaseModel extends ArcBehaviors.EventsTargetBehavior(Polymer.Element) {
     }
     return status;
   }
-
+  /**
+   * Helper method to cancel the event and stop it's propagation.
+   * @param {Event|CustomEvent} e Event to cancel
+   */
   _cancelEvent(e) {
     e.preventDefault();
     e.stopPropagation();

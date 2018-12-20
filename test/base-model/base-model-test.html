@@ -1,0 +1,443 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, minimum-scale=1.0, initial-scale=1.0, user-scalable=yes">
+    <script src="../../../webcomponentsjs/webcomponents-loader.js"></script>
+    <script src="../../../web-component-tester/browser.js"></script>
+    <link rel="import" href="../../../app-pouchdb/pouchdb.html">
+    <link rel="import" href="../../../arc-data-generator/arc-data-generator.html">
+    <link rel="import" href="../../base-model.html">
+  </head>
+  <body>
+    <test-fixture id="Basic">
+      <template>
+        <test-model></test-model>
+      </template>
+    </test-fixture>
+    <script>
+    const STORE_NAME = 'test-data';
+    window.addEventListener('WebComponentsReady', () => {
+      /**
+       * @polymer
+       * @customElement
+       * @memberof LogicElements
+       */
+      class TestModel extends ArcBaseModel {
+        /* global ArcBaseModel */
+        static get is() {
+          return 'test-model';
+        }
+
+        constructor() {
+          super(STORE_NAME, 2);
+        }
+      }
+      window.customElements.define(TestModel.is, TestModel);
+    });
+    suite('Basics', function() {
+      test('Sets store name in contructor', () => {
+        const element = fixture('Basic');
+        assert.equal(element.name, STORE_NAME);
+      });
+
+      test('Sets reviews limit in contructor', () => {
+        const element = fixture('Basic');
+        assert.equal(element.revsLimit, 2);
+      });
+    });
+
+    suite('get db()', function() {
+      test('Throws error when store name is not set', () => {
+        const element = fixture('Basic');
+        element.name = undefined;
+        assert.throws(() => {
+          return element.db;
+        });
+      });
+
+      test('Throws error when PouchDb is not defined', () => {
+        const element = fixture('Basic');
+        const origPdb = window.PouchDB;
+        window.PouchDB = undefined;
+        assert.throws(() => {
+          return element.db;
+        });
+        window.PouchDB = origPdb;
+      });
+
+      test('Returns PouchDB instance', () => {
+        const element = fixture('Basic');
+        const db = element.db;
+        assert.equal(db.constructor.name, 'PouchDB');
+      });
+    });
+
+    suite('get uuid()', function() {
+      test('Returns instamce of uuid-generator', () => {
+        const element = fixture('Basic');
+        const uuid = element.uuid;
+        assert.equal(uuid.nodeName, 'UUID-GENERATOR');
+      });
+
+      test('Caches element instance', () => {
+        const element = fixture('Basic');
+        const uuid = element.uuid;
+        assert.ok(uuid.nodeName);
+        assert.isTrue(element._uuid === uuid);
+      });
+
+      test('Returns the same instance', () => {
+        const element = fixture('Basic');
+        const uuid1 = element.uuid;
+        const uuid2 = element.uuid;
+        assert.isTrue(uuid1 === uuid2);
+      });
+
+      test('Clears cached element when removed from the DOM', () => {
+        const element = fixture('Basic');
+        const uuid = element.uuid;
+        assert.ok(uuid.nodeName);
+        element.parentNode.removeChild(element);
+        assert.isUndefined(element._uuid);
+      });
+    });
+
+    suite('read()', function() {
+      const insert = {
+        _id: 'test-id',
+        value: 'test-value'
+      };
+      const updated = 'test-update';
+      let rev1;
+      let rev2;
+      suiteSetup(() => {
+        const element = fixture('Basic');
+        const db = element.db;
+        return db.put(insert)
+        .then((result) => {
+          rev1 = result.rev;
+          insert._rev = rev1;
+          insert.updated = updated;
+          return db.put(insert);
+        })
+        .then((result) => {
+          rev2 = result.rev;
+          insert._rev = rev2;
+        });
+      });
+
+      suiteTeardown(() => {
+        const element = fixture('Basic');
+        const db = element.db;
+        return db.destroy();
+      });
+
+      test('Reads latest revision', () => {
+        const element = fixture('Basic');
+        return element.read(insert._id)
+        .then((doc) => {
+          assert.equal(doc._rev, rev2);
+        });
+      });
+
+      test('Reads specific revision', () => {
+        const element = fixture('Basic');
+        console.log(rev1, rev2);
+        return element.read(insert._id, rev1)
+        .then((doc) => {
+          assert.equal(doc._rev, rev1);
+        });
+      });
+    });
+
+    suite('_computeMidnight()', () => {
+      let element;
+      setup(() => {
+        element = fixture('Basic');
+      });
+
+      test('Returns a number when no argument', () => {
+        const result = element._computeMidnight(Date.now());
+        assert.typeOf(result, 'number');
+      });
+
+      test('Returns a number for valid argument', () => {
+        const result = element._computeMidnight(Date.now());
+        assert.typeOf(result, 'number');
+      });
+
+      test('Returns a number for invalid argument', () => {
+        const result = element._computeMidnight('invalid');
+        assert.typeOf(result, 'number');
+      });
+    });
+
+    suite('_fireUpdated()', () => {
+      let element;
+      const eventType = 'test-event';
+      const eDetail = 'test-detail';
+
+      setup(() => {
+        element = fixture('Basic');
+      });
+
+      test('Dispatches custom event', () => {
+        const spy = sinon.spy();
+        element.addEventListener(eventType, spy);
+        element._fireUpdated(eventType);
+        assert.isTrue(spy.called);
+      });
+
+      test('Returns dispatched event', () => {
+        const e = element._fireUpdated(eventType, eDetail);
+        assert.equal(e.constructor.name, 'CustomEvent');
+      });
+
+      test('Event contains passed detail', () => {
+        const e = element._fireUpdated(eventType, eDetail);
+        assert.equal(e.detail, eDetail);
+      });
+
+      test('Event is not cancelable', () => {
+        const e = element._fireUpdated(eventType, eDetail);
+        assert.isFalse(e.cancelable);
+      });
+
+      test('Event is composed', () => {
+        const e = element._fireUpdated(eventType, eDetail);
+        assert.isTrue(e.composed);
+      });
+
+      test('Event bubbles', () => {
+        const e = element._fireUpdated(eventType, eDetail);
+        assert.isTrue(e.bubbles);
+      });
+    });
+
+    suite('_handleException()', () => {
+      let element;
+      setup(() => {
+        element = fixture('Basic');
+      });
+
+      test('Throws the error', () => {
+        assert.throws(() => {
+          element._handleException(new Error('test'));
+        });
+      });
+
+      test('Do not throws an error when noThrow is set', () => {
+        element._handleException(new Error('test'), true);
+      });
+
+      test('Dispatches send-analytics event', () => {
+        let ev;
+        element.addEventListener('send-analytics', function f(e) {
+          element.removeEventListener('send-analytics', f);
+          ev = e;
+        });
+        element._handleException(new Error('test'), true);
+        assert.ok(ev);
+        assert.isTrue(ev.bubbles, 'Event bubbles');
+        assert.isTrue(ev.composed, 'Event is composed');
+        assert.isFalse(ev.cancelable, 'Event is not cancelable');
+      });
+
+      test('send-analytics event has exception details', () => {
+        let detail;
+        element.addEventListener('send-analytics', function f(e) {
+          element.removeEventListener('send-analytics', f);
+          detail = e.detail;
+        });
+        element._handleException(new Error('test'), true);
+        assert.ok(detail);
+        assert.equal(detail.type, 'exception', 'Type is set');
+        assert.equal(detail.description, 'test', 'Message is set');
+        assert.isTrue(detail.fatal, 'Is fatal exception');
+      });
+
+      test('Serializes non-error object', () => {
+        let detail;
+        element.addEventListener('send-analytics', function f(e) {
+          element.removeEventListener('send-analytics', f);
+          detail = e.detail;
+        });
+        element._handleException({test: true}, true);
+        assert.equal(detail.description, '{"test":true}', 'Message is set');
+      });
+    });
+
+    suite('_notifyModelDestroyed()', () => {
+      let element;
+      const storeName = 'test-store';
+
+      setup(() => {
+        element = fixture('Basic');
+      });
+
+      test('Dispatches custom event', () => {
+        const spy = sinon.spy();
+        element.addEventListener('datastore-destroyed', spy);
+        element._notifyModelDestroyed(storeName);
+        assert.isTrue(spy.called);
+      });
+
+      test('Returns dispatched event', () => {
+        const e = element._notifyModelDestroyed(storeName);
+        assert.equal(e.constructor.name, 'CustomEvent');
+      });
+
+      test('Contains datastore on the detail object', () => {
+        const e = element._notifyModelDestroyed(storeName);
+        assert.equal(e.detail.datastore, storeName);
+      });
+
+      test('Event is not cancelable', () => {
+        const e = element._notifyModelDestroyed(storeName);
+        assert.isFalse(e.cancelable);
+      });
+
+      test('Event is composed', () => {
+        const e = element._notifyModelDestroyed(storeName);
+        assert.isTrue(e.composed);
+      });
+
+      test('Event bubbles', () => {
+        const e = element._notifyModelDestroyed(storeName);
+        assert.isTrue(e.bubbles);
+      });
+    });
+
+    suite('deleteModel()', () => {
+      let element;
+      setup(() => {
+        element = fixture('Basic');
+      });
+
+      test('Deletes model', () => {
+        return element.deleteModel()
+        .then(() => {});
+      });
+
+      test('Dispatches datastore-destroyed event', () => {
+        let detail;
+        element.addEventListener('datastore-destroyed', function f(e) {
+          element.removeEventListener('datastore-destroyed', f);
+          detail = e.detail;
+        });
+        return element.deleteModel()
+        .then(() => {
+          assert.equal(detail.datastore, element.name);
+        });
+      });
+
+      test('Rejects the promise when datastore error', () => {
+        let called = false;
+        element.name = undefined;
+        return element.deleteModel()
+        .catch(() => {
+          called = true;
+        })
+        .then(() => {
+          if (!called) {
+            throw new Error('Not rejected');
+          }
+        });
+      });
+    });
+
+    suite('_cancelEvent()', () => {
+      let element;
+      setup(() => {
+        element = fixture('Basic');
+      });
+
+      test('Cancels the event', () => {
+        const e = new CustomEvent('test', {
+          cancelable: true
+        });
+        element._cancelEvent(e);
+        assert.isTrue(e.defaultPrevented);
+      });
+    });
+
+    suite('_eventCancelled()', () => {
+      let element;
+      setup(() => {
+        element = fixture('Basic');
+      });
+
+      test('Returns true when event is canceled', () => {
+        const e = new CustomEvent('test', {
+          cancelable: true
+        });
+        element._cancelEvent(e);
+        const result = element._eventCancelled(e);
+        assert.isTrue(result);
+      });
+
+      test('Returns true when event is cancelable', () => {
+        const e = new CustomEvent('test');
+        const result = element._eventCancelled(e);
+        assert.isTrue(result);
+      });
+
+      test('Returns true when event is dispatched on current element', () => {
+        const e = {
+          cancelable: true,
+          composedPath: function() {
+            return [element];
+          }
+        };
+        const result = element._eventCancelled(e);
+        assert.isTrue(result);
+      });
+
+      test('Returns false otherwise', () => {
+        const e = new CustomEvent('test', {
+          cancelable: true
+        });
+        document.body.dispatchEvent(e);
+        const result = element._eventCancelled(e);
+        assert.isFalse(result);
+      });
+    });
+
+    suite('_deleteModelHandler()', () => {
+      function dispatchEvent(name) {
+        const e = new CustomEvent('destroy-model', {
+          bubbles: true,
+          detail: {
+            models: name
+          }
+        });
+
+        document.body.dispatchEvent(e);
+        return e;
+      }
+
+      test('Event is ignored when no name', () => {
+        fixture('Basic');
+        const e = dispatchEvent();
+        assert.isUndefined(e.detail.result);
+      });
+
+      test('Event is ignored when name is different', () => {
+        fixture('Basic');
+        const e = dispatchEvent('TEST');
+        assert.isUndefined(e.detail.result);
+      });
+
+      test('Event is handled when name matches', () => {
+        fixture('Basic');
+        const e = dispatchEvent(STORE_NAME);
+        assert.typeOf(e.detail.result, 'array');
+        assert.lengthOf(e.detail.result, 1);
+        assert.typeOf(e.detail.result[0].then, 'function');
+        return e.detail.result[0];
+      });
+    });
+    </script>
+  </body>
+  </html>
