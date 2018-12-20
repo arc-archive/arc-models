@@ -7,7 +7,7 @@
     <script src="../../../web-component-tester/browser.js"></script>
     <script src="../../../iron-test-helpers/test-helpers.js"></script>
     <link rel="import" href="../../../arc-data-generator/arc-data-generator.html">
-    <link rel="import" href="../../arc-models.html">
+    <link rel="import" href="../../project-model.html">
   </head>
   <body>
     <test-fixture id="basic">
@@ -18,213 +18,35 @@
     <script>
     /* global DataGenerator */
     suite('Static methods', function() {
-      suite('updateProject()', function() {
-        teardown(function() {
-          return DataGenerator.clearLegacyProjects();
-        });
-
-        let element;
-        let dataObj;
-        setup(function() {
-          element = fixture('basic');
-          dataObj = {
-            _id: 'test-id-1',
-            name: 'test-1',
-            order: 1
-          };
-        });
-
-        test('Creates a new object in the datastore', function() {
-          return element.updateProject(dataObj)
-          .then((result) => {
-            assert.typeOf(result._rev, 'string', '_rev is set');
-            assert.equal(result._id, 'test-id-1', '_id is set');
-            assert.equal(result.name, 'test-1', 'Name is set');
-            assert.equal(result.order, 1, 'order is set');
-          });
-        });
-
-        test('Updates created object', function() {
-          let originalRev;
-          return element.updateProject(dataObj)
-          .then((result) => {
-            originalRev = result._rev;
-            result.name = 'test-2';
-            return element.updateProject(result);
-          })
-          .then((result) => {
-            assert.notEqual(result._rev, originalRev, '_rev is regenerated');
-            assert.equal(result._id, 'test-id-1', '_id is the same');
-            assert.equal(result.name, 'test-2', 'Name is set');
-            assert.equal(result.order, 1, 'order is set');
-          });
-        });
-
-        test('Fires project-object-changed custom event', function() {
-          const spy = sinon.spy();
-          element.addEventListener('project-object-changed', spy);
-          return element.updateProject(dataObj)
-          .then(() => {
-            assert.isTrue(spy.calledOnce);
-          });
-        });
-
-        test('The project-object-changed event has new properties ', function() {
-          let eventData;
-          element.addEventListener('project-object-changed', function(e) {
-            eventData = e.detail;
-          });
-          return element.updateProject(dataObj)
-          .then((result) => {
-            assert.isUndefined(eventData.oldRev);
-            assert.isUndefined(result.oldRev);
-            assert.typeOf(eventData.project, 'object');
-          });
-        });
-
-        test('The project-object-changed event has properties of updated object',
-        function() {
-          let eventData;
-          let originalRev;
-          return element.updateProject(dataObj)
-          .then((result) => {
-            element.addEventListener('project-object-changed', function(e) {
-              eventData = e.detail;
-            });
-            originalRev = result._rev;
-            result.name = 'test-2';
-            return element.updateProject(result);
-          })
-          .then(() => {
-            assert.equal(eventData.oldRev, originalRev);
-            assert.typeOf(eventData.project, 'object');
-            assert.notEqual(eventData.project._rev, originalRev);
-          });
-        });
-      });
-
-      suite('read()', function() {
-        teardown(function() {
-          return DataGenerator.clearLegacyProjects();
-        });
-
-        let element;
-        let dataObj;
-        setup(function() {
-          element = fixture('basic');
-          dataObj = {
-            _id: 'test-id-1',
-            name: 'test-1',
-            order: 1
-          };
-          return element.updateProject(dataObj);
-        });
-
-        test('Reads project object by id only', function() {
-          return element.readProject(dataObj._id)
-          .then((result) => {
-            assert.equal(result._id, dataObj._id);
-          });
-        });
-
-        test('Reads a revision', function() {
-          let originalRev;
-          let updatedRev;
-          return element.readProject(dataObj._id)
-          .then((result) => {
-            originalRev = result._rev;
-            result.name = 'test-2';
-            return element.updateProject(result);
-          })
-          .then((result) => {
-            updatedRev = result._rev;
-            return element.readProject(dataObj._id, originalRev);
-          })
-          .then((result) => {
-            assert.equal(result.name, dataObj.name);
-            assert.notEqual(originalRev, updatedRev);
-          });
-        });
-      });
-
-      suite('remove()', function() {
-        teardown(function() {
-          return DataGenerator.clearLegacyProjects();
-        });
-
-        let element;
-        let dataObj;
-        setup(function() {
-          element = fixture('basic');
-          dataObj = {
-            _id: 'test-id-1',
-            name: 'test-1',
-            order: 1
-          };
-          return element.updateProject(dataObj)
-          .then((result) => dataObj = result);
-        });
-
-        test('Removes object from the datastore', function() {
-          return element.removeProject(dataObj._id, dataObj._rev)
-          .then(() => {
-            return element.readProject(dataObj._id);
-          })
-          .then(() => {
-            throw new Error('TEST');
-          })
-          .catch((cause) => {
-            assert.equal(cause.status, 404);
-          });
-        });
-
-        test('Fires project-object-deleted custom event', function() {
-          const spy = sinon.spy();
-          element.addEventListener('project-object-deleted', spy);
-          return element.removeProject(dataObj._id, dataObj._rev)
-          .then(() => {
-            assert.isTrue(spy.calledOnce);
-          });
-        });
-
-        test('project-object-deleted event contains project data', function() {
-          let eventData;
-          element.addEventListener('project-object-deleted', function(e) {
-            eventData = e.detail;
-          });
-          return element.removeProject(dataObj._id, dataObj._rev)
-          .then(() => {
-            assert.equal(eventData.id, dataObj._id);
-            assert.equal(eventData.oldRev, dataObj._rev);
-            assert.typeOf(eventData.rev, 'string');
-            assert.notEqual(eventData.rev, dataObj._rev);
-          });
-        });
-      });
-
       suite('list()', function() {
         teardown(function() {
           return DataGenerator.clearLegacyProjects();
         });
 
         let element;
-        let dataObj;
+        let created;
         setup(function() {
           element = fixture('basic');
-          dataObj = {
-            _id: 'test-id-1',
-            name: 'test-1',
-            order: 1
-          };
-          return element.updateProject(dataObj)
-          .then((result) => dataObj = result);
+          return DataGenerator.insertProjectsData()
+          .then((result) => created = result);
         });
 
         test('Lists saved projects', function() {
           return element.listProjects()
           .then((result) => {
             assert.typeOf(result, 'array');
-            assert.lengthOf(result, 1);
+            assert.lengthOf(result, 5);
+          });
+        });
+
+        test('Lists projects by ID', () => {
+          const ids = [created[0]._id, created[4]._id];
+          return element.listProjects(ids)
+          .then((result) => {
+            assert.typeOf(result, 'array');
+            assert.lengthOf(result, 2);
+            assert.deepEqual(result[0], created[0]);
+            assert.deepEqual(result[1], created[4]);
           });
         });
       });
@@ -350,7 +172,7 @@
         });
       });
 
-      suite.only('_processUpdateBulkResponse()', () => {
+      suite('_processUpdateBulkResponse()', () => {
         let element;
         setup(function() {
           element = fixture('basic');
@@ -389,6 +211,17 @@
           }]);
           const item = result[0];
           assert.isTrue(item.error);
+        });
+
+        test('Sets project ID on nevely created project', () => {
+          const projects = [DataGenerator.createProjectObject()];
+          delete projects[0]._id;
+          const result = element._processUpdateBulkResponse(projects, [{
+            rev: 'new-rev',
+            id: 'new-id'
+          }]);
+          const item = result[0];
+          assert.equal(item._id, 'new-id');
         });
       });
     });

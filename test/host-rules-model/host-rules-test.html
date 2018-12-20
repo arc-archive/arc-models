@@ -3,12 +3,12 @@
   <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, minimum-scale=1.0, initial-scale=1.0, user-scalable=yes">
-    <script src="../../webcomponentsjs/webcomponents-loader.js"></script>
-    <script src="../../web-component-tester/browser.js"></script>
-    <script src="../../iron-test-helpers/test-helpers.js"></script>
-    <script src="../demo/database-helper.js"></script>
-    <link rel="import" href="../../app-pouchdb/pouchdb.html">
-    <link rel="import" href="../arc-models.html">
+    <script src="../../../webcomponentsjs/webcomponents-loader.js"></script>
+    <script src="../../../web-component-tester/browser.js"></script>
+    <script src="../../../iron-test-helpers/test-helpers.js"></script>
+    <link rel="import" href="../../../arc-data-generator/arc-data-generator.html">
+    <link rel="import" href="../../../app-pouchdb/pouchdb.html">
+    <link rel="import" href="../../host-rules-model.html">
   </head>
   <body>
 
@@ -19,11 +19,11 @@
     </test-fixture>
 
     <script>
-    /* global DatabaseHelper */
+    /* global DataGenerator */
     suite('Static methods', function() {
       suite('update()', function() {
         teardown(function() {
-          return DatabaseHelper.clearHostRules();
+          return DataGenerator.destroyHostRulesData();
         });
 
         let element;
@@ -108,7 +108,7 @@
 
       suite('read()', function() {
         teardown(function() {
-          return DatabaseHelper.clearHostRules();
+          return DataGenerator.destroyHostRulesData();
         });
 
         let element;
@@ -154,7 +154,7 @@
 
       suite('remove()', function() {
         teardown(function() {
-          return DatabaseHelper.clearHostRules();
+          return DataGenerator.destroyHostRulesData();
         });
 
         let element;
@@ -211,7 +211,7 @@
 
       suite('list()', function() {
         teardown(function() {
-          return DatabaseHelper.clearHostRules();
+          return DataGenerator.destroyHostRulesData();
         });
 
         let element;
@@ -240,7 +240,7 @@
 
       suite('updateBulk()', function() {
         teardown(function() {
-          return DatabaseHelper.clearHostRules();
+          return DataGenerator.destroyHostRulesData();
         });
 
         let element;

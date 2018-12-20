@@ -6,10 +6,9 @@
   <meta name="viewport" content="width=device-width, minimum-scale=1.0, initial-scale=1.0, user-scalable=yes">
   <script src="../../../webcomponentsjs/webcomponents-loader.js"></script>
   <script src="../../../web-component-tester/browser.js"></script>
-  <script src="../../../chance/chance.js"></script>
-  <script src="../../demo/database-helper.js"></script>
+  <link rel="import" href="../../../arc-data-generator/arc-data-generator.html">
   <link rel="import" href="../../../app-pouchdb/pouchdb.html">
-  <link rel="import" href="../../arc-models.html">
+  <link rel="import" href="../../request-model.html">
 </head>
 
 <body>
@@ -19,9 +18,9 @@
     </template>
   </test-fixture>
   <script>
-  /* global DatabaseHelper */
+  /* global DataGenerator */
   function databaseCleanup() {
-    return DatabaseHelper.clearHistory();
+    return DataGenerator.destroyHistoryData();
   }
 
   function fire(request) {

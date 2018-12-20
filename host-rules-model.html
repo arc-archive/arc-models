@@ -34,7 +34,9 @@ the License.
  */
 class HostRulesModel extends ArcBaseModel {
   /* global ArcBaseModel */
-  static get is() {return 'host-rules-model';}
+  static get is() {
+    return 'host-rules-model';
+  }
 
   constructor() {
     super('host-rules', 10);
@@ -205,8 +207,9 @@ class HostRulesModel extends ArcBaseModel {
         if (e.status === 404) {
           // create new
           return {};
+        } else {
+          this._handleException(e);
         }
-        this._handleException(e);
       });
     } else {
       p = Promise.resolve({});

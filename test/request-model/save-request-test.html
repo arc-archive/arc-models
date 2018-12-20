@@ -6,10 +6,9 @@
   <meta name="viewport" content="width=device-width, minimum-scale=1.0, initial-scale=1.0, user-scalable=yes">
   <script src="../../../webcomponentsjs/webcomponents-loader.js"></script>
   <script src="../../../web-component-tester/browser.js"></script>
-  <script src="../../../chance/chance.js"></script>
-  <script src="../../demo/database-helper.js"></script>
+  <link rel="import" href="../../../arc-data-generator/arc-data-generator.html">
   <link rel="import" href="../../../app-pouchdb/pouchdb.html">
-  <link rel="import" href="../../arc-models.html">
+  <link rel="import" href="../../request-model.html">
 </head>
 
 <body>
@@ -19,7 +18,7 @@
     </template>
   </test-fixture>
   <script>
-  /* global DatabaseHelper, PouchDB */
+  /* global DataGenerator, PouchDB */
   function hasFormDataSupport() {
     const fd = new FormData();
     if (!('entries' in fd)) {
@@ -208,18 +207,18 @@
 
   let clearHistory = false;
   let clearSaved = false;
-  let clearProjects = false;
+  // let clearProjects = false;
   function databaseCleanup() {
     const p = [];
     if (clearHistory) {
-      p.push(DatabaseHelper.clearHistory());
+      p.push(DataGenerator.destroyHistoryData());
     }
     if (clearSaved) {
-      p.push(DatabaseHelper.clearRequests());
+      p.push(DataGenerator.destroySavedRequestData());
     }
-    if (clearProjects) {
-      p.push(DatabaseHelper.clearProjects());
-    }
+    // if (clearProjects) {
+    //   p.push(DataGenerator.clearLegacyProjects());
+    // }
     return Promise.all(p);
   }
   suite('saveRequest()', function() {
@@ -229,7 +228,7 @@
       setup(() => {
         clearHistory = false;
         clearSaved = false;
-        clearProjects = false;
+        // clearProjects = false;
         element = fixture('Basic');
       });
 
@@ -237,7 +236,7 @@
 
       test('Sets history if no name', function() {
         clearHistory = true;
-        const request = DatabaseHelper.generateHistoryObject();
+        const request = DataGenerator.generateHistoryObject();
         delete request.type;
         return element.saveRequest(request)
         .then((request) => {
@@ -247,7 +246,7 @@
 
       test('Sets saved if name', function() {
         clearSaved = true;
-        const request = DatabaseHelper.generateSavedItem();
+        const request = DataGenerator.generateSavedItem();
         delete request.type;
         return element.saveRequest(request)
         .then((request) => {
@@ -257,7 +256,7 @@
 
       test('Keeps type if defined', function() {
         clearSaved = true;
-        const request = DatabaseHelper.generateHistoryObject();
+        const request = DataGenerator.generateHistoryObject();
         request.type = 'saved';
         return element.saveRequest(request)
         .then((request) => {
@@ -267,7 +266,7 @@
 
       test('Renames "drive" to "saved"', function() {
         clearSaved = true;
-        const request = DatabaseHelper.generateHistoryObject();
+        const request = DataGenerator.generateHistoryObject();
         request.type = 'drive';
         return element.saveRequest(request)
         .then((request) => {
@@ -277,7 +276,7 @@
 
       test('Renames "google-drive" to "saved"', function() {
         clearSaved = true;
-        const request = DatabaseHelper.generateHistoryObject();
+        const request = DataGenerator.generateHistoryObject();
         request.type = 'google-drive';
         return element.saveRequest(request)
         .then((request) => {
@@ -291,7 +290,7 @@
       setup(() => {
         clearHistory = false;
         clearSaved = false;
-        clearProjects = false;
+        // clearProjects = false;
         element = fixture('Basic');
       });
 
@@ -299,7 +298,7 @@
 
       test('Generates an ID for the request', () => {
         clearHistory = true;
-        const request = DatabaseHelper.generateHistoryObject();
+        const request = DataGenerator.generateHistoryObject();
         delete request._id;
         return element.saveRequest(request)
         .then((request) => {
@@ -309,7 +308,7 @@
 
       test('Returns the REV proeprty', () => {
         clearHistory = true;
-        const request = DatabaseHelper.generateHistoryObject();
+        const request = DataGenerator.generateHistoryObject();
         return element.saveRequest(request)
         .then((request) => {
           assert.typeOf(request._rev, 'string');
@@ -343,7 +342,7 @@
         handleDriveEvent = false;
         clearHistory = false;
         clearSaved = false;
-        clearProjects = false;
+        // clearProjects = false;
         element = fixture('Basic');
       });
 
@@ -351,7 +350,7 @@
 
       test('Event is not dispatched when no drive info', () => {
         clearSaved = true;
-        const request = DatabaseHelper.generateSavedItem();
+        const request = DataGenerator.generateSavedItem();
         const spy = sinon.spy();
         element.addEventListener('export-google-drive', spy);
         return element.saveRequest(request)
@@ -361,7 +360,7 @@
       });
 
       test('Rejects the promise when event not handled', (done) => {
-        const request = DatabaseHelper.generateSavedItem();
+        const request = DataGenerator.generateSavedItem();
         element.saveRequest(request, {isDrive: true})
         .then(() => {
           clearSaved = true;
@@ -375,7 +374,7 @@
       test('Updates driveId on the model', function() {
         handleDriveEvent = true;
         clearSaved = true;
-        const request = DatabaseHelper.generateSavedItem();
+        const request = DataGenerator.generateSavedItem();
         return element.saveRequest(request, {isDrive: true})
         .then((request) => {
           assert.equal(request.driveId, 'test-drive-id');
@@ -385,7 +384,7 @@
       test('Event contains request copy', () => {
         clearSaved = true;
         handleDriveEvent = true;
-        const request = DatabaseHelper.generateSavedItem();
+        const request = DataGenerator.generateSavedItem();
         let eventData;
         element.addEventListener('export-google-drive', function f(e) {
           element.removeEventListener('export-google-drive', f);
@@ -402,7 +401,7 @@
       test('Event contains contentType', () => {
         clearSaved = true;
         handleDriveEvent = true;
-        const request = DatabaseHelper.generateSavedItem();
+        const request = DataGenerator.generateSavedItem();
         let eventData;
         element.addEventListener('export-google-drive', function f(e) {
           element.removeEventListener('export-google-drive', f);
@@ -417,7 +416,7 @@
       test('Event contains file', () => {
         clearSaved = true;
         handleDriveEvent = true;
-        const request = DatabaseHelper.generateSavedItem();
+        const request = DataGenerator.generateSavedItem();
         request.name = 'test';
         let eventData;
         element.addEventListener('export-google-drive', function f(e) {
@@ -437,8 +436,8 @@
       const requestId = 'test-id';
       setup(() => {
         clearHistory = false;
-        clearSaved = false;
-        clearProjects = true;
+        clearSaved = true;
+        // clearProjects = true;
         element = fixture('Basic');
       });
 
@@ -446,7 +445,7 @@
 
       test('Creates a list of projects from names', function() {
         return element._createProjects(names)
-        .then(() => DatabaseHelper.allProjects())
+        .then(() => DataGenerator.getDatastoreProjectsData())
         .then((list) => {
           assert.lengthOf(list, 3, 'Has 3 items');
           for (let i = 0; i < list.length; i++) {
@@ -457,7 +456,7 @@
 
       test('Adds a request id to the project', function() {
         return element._createProjects(names, requestId)
-        .then(() => DatabaseHelper.allProjects())
+        .then(() => DataGenerator.getDatastoreProjectsData())
         .then((list) => {
           assert.lengthOf(list, 3, 'Has 3 items');
           for (let i = 0; i < list.length; i++) {
@@ -474,7 +473,7 @@
       setup(() => {
         clearHistory = false;
         clearSaved = true;
-        clearProjects = true;
+        // clearProjects = true;
         element = fixture('Basic');
         return element._createProjects(['a', 'b', 'c'], createProjectRequestId)
         .then((data) => {
@@ -485,11 +484,11 @@
       teardown(() => databaseCleanup());
 
       test('Sets request ID on projects', function() {
-        const request = DatabaseHelper.generateSavedItem();
+        const request = DataGenerator.generateSavedItem();
         request._id = 'test-projects';
         request.projects = projects;
         return element.saveRequest(request)
-        .then(() => DatabaseHelper.allProjects())
+        .then(() => DataGenerator.getDatastoreProjectsData())
         .then((list) => {
           for (let i = 0; i < list.length; i++) {
             assert.equal(list[i].requests[0], 'test-projects');
@@ -498,11 +497,11 @@
       });
 
       test('Sets request ID on single project', function() {
-        const request = DatabaseHelper.generateSavedItem();
+        const request = DataGenerator.generateSavedItem();
         request._id = 'test-projects';
         request.projects = [projects[1]];
         return element.saveRequest(request)
-        .then(() => DatabaseHelper.allProjects())
+        .then(() => DataGenerator.getDatastoreProjectsData())
         .then((list) => {
           for (let i = 0; i < list.length; i++) {
             if (list[i]._id === projects[1]) {
@@ -520,11 +519,11 @@
 
       test('Removes request ID prom projects', function() {
         createProjectRequestId = undefined;
-        const request = DatabaseHelper.generateSavedItem();
+        const request = DataGenerator.generateSavedItem();
         request._id = 'test-projects';
         request.projects = [projects[1]];
         return element.saveRequest(request)
-        .then(() => DatabaseHelper.allProjects())
+        .then(() => DataGenerator.getDatastoreProjectsData())
         .then((list) => {
           for (let i = 0; i < list.length; i++) {
             if (list[i]._id === projects[1]) {

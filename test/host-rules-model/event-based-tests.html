@@ -3,12 +3,12 @@
   <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, minimum-scale=1.0, initial-scale=1.0, user-scalable=yes">
-    <script src="../../webcomponentsjs/webcomponents-loader.js"></script>
-    <script src="../../web-component-tester/browser.js"></script>
-    <script src="../../iron-test-helpers/test-helpers.js"></script>
-    <script src="../demo/database-helper.js"></script>
-    <link rel="import" href="../../app-pouchdb/pouchdb.html">
-    <link rel="import" href="../arc-models.html">
+    <script src="../../../webcomponentsjs/webcomponents-loader.js"></script>
+    <script src="../../../web-component-tester/browser.js"></script>
+    <script src="../../../iron-test-helpers/test-helpers.js"></script>
+    <link rel="import" href="../../../arc-data-generator/arc-data-generator.html">
+    <link rel="import" href="../../../app-pouchdb/pouchdb.html">
+    <link rel="import" href="../../host-rules-model.html">
   </head>
   <body>
 
@@ -19,7 +19,7 @@
     </test-fixture>
 
     <script>
-    /* global DatabaseHelper */
+    /* global DataGenerator */
     suite('Events API for host rules', function() {
       // See https://gist.github.com/haroldtreen/5f1055eee5fcf01da3e0e15b8ec86bf6
       function isError(e) {
@@ -31,11 +31,13 @@
 
       suite('host-rules-changed', function() {
         teardown(function() {
-          return DatabaseHelper.clearHostRules();
+          return DataGenerator.destroyHostRulesData();
         });
+
         let dataObj;
+        let element;
         setup(function() {
-          fixture('basic');
+          element = fixture('basic');
           dataObj = {
             _id: 'test-id-1',
             from: 'https://from',
@@ -122,6 +124,7 @@
             assert.equal(result.from, dataObj.from, 'from is set');
           });
         });
+
         test('Rejects promise when save object is not set', function() {
           const e = fire();
           return e.detail.result
@@ -138,11 +141,32 @@
           const e = fire(dataObj, false);
           assert.isFalse(e.defaultPrevented);
         });
+
+        test('Handles exceptions', () => {
+          let called = false;
+          return element.update(dataObj)
+          .then((result) => {
+            dataObj._rev = result.rev;
+            element.update = () => {
+              return Promise.reject(new Error('test'));
+            };
+            const e = fire(dataObj);
+            return e.detail.result;
+          })
+          .catch((cause) => {
+            if (cause.message === 'test') {
+              called = true;
+            }
+          })
+          .then(() => {
+            assert.isTrue(called);
+          });
+        });
       });
 
       suite('host-rules-deleted', function() {
         teardown(function() {
-          return DatabaseHelper.clearHostRules();
+          return DataGenerator.destroyHostRulesData();
         });
 
         let element;
@@ -215,11 +239,25 @@
           const e = fire(dataObj._id, dataObj._rev, false);
           assert.isFalse(e.defaultPrevented);
         });
+
+        test('Handles exceptions', () => {
+          let called = false;
+          const e = fire('other-id');
+          return e.detail.result
+          .catch((cause) => {
+            if (cause.status === 404) {
+              called = true;
+            }
+          })
+          .then(() => {
+            assert.isTrue(called);
+          });
+        });
       });
 
       suite('host-rules-list', function() {
         teardown(function() {
-          return DatabaseHelper.clearHostRules();
+          return DataGenerator.destroyHostRulesData();
         });
 
         let element;
@@ -276,11 +314,28 @@
           const e = fire(false);
           assert.isFalse(e.defaultPrevented);
         });
+
+        test('Handles exceptions', () => {
+          let called = false;
+          element.list = () => {
+            return Promise.reject(new Error('test'));
+          };
+          const e = fire();
+          return e.detail.result
+          .catch((cause) => {
+            if (cause.message === 'test') {
+              called = true;
+            }
+          })
+          .then(() => {
+            assert.isTrue(called);
+          });
+        });
       });
 
       suite('host-rules-clear', function() {
         teardown(function() {
-          return DatabaseHelper.clearHostRules();
+          return DataGenerator.destroyHostRulesData();
         });
 
         let element;
@@ -350,11 +405,7 @@
         });
       });
 
-      suite('host-rules-insert', function() {
-        teardown(function() {
-          return DatabaseHelper.clearHostRules();
-        });
-
+      suite('"host-rules-insert" event', function() {
         let element;
         let data;
         setup(function() {
@@ -370,6 +421,10 @@
             enabled: true,
             comment: 'test'
           }];
+        });
+
+        teardown(function() {
+          return DataGenerator.destroyHostRulesData();
         });
 
         function fire(rules, cancelable) {
@@ -421,6 +476,28 @@
             assert.typeOf(response, 'array');
             assert.lengthOf(response, 2);
             assert.isTrue(response[0].ok);
+          });
+        });
+
+        test('Rejects promise when no items', (done) => {
+          const e = fire();
+          e.detail.result.catch(() => done());
+        });
+
+        test('Handles exceptions', () => {
+          element.updateBulk = () => {
+            return Promise.reject(new Error('test'));
+          };
+          const e = fire(data);
+          let called = false;
+          return e.detail.result
+          .catch((cause) => {
+            if (cause.message === 'test') {
+              called = true;
+            }
+          })
+          .then(() => {
+            assert.isTrue(called);
           });
         });
       });

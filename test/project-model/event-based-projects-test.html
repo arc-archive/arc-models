@@ -6,9 +6,9 @@
     <script src="../../../webcomponentsjs/webcomponents-loader.js"></script>
     <script src="../../../web-component-tester/browser.js"></script>
     <script src="../../../iron-test-helpers/test-helpers.js"></script>
-    <script src="../../demo/database-helper.js"></script>
+    <link rel="import" href="../../../arc-data-generator/arc-data-generator.html">
     <link rel="import" href="../../../app-pouchdb/pouchdb.html">
-    <link rel="import" href="../../arc-models.html">
+    <link rel="import" href="../../project-model.html">
   </head>
   <body>
 
@@ -19,7 +19,7 @@
     </test-fixture>
 
     <script>
-    /* global DatabaseHelper, fixture, assert */
+    /* global DataGenerator, fixture, assert */
     suite('Events API for projects', function() {
       /**
        * See https://gist.github.com/haroldtreen/5f1055eee5fcf01da3e0e15b8ec86bf6
@@ -35,7 +35,7 @@
 
       suite('project-object-changed', function() {
         teardown(function() {
-          return DatabaseHelper.clearProjects();
+          return DataGenerator.clearLegacyProjects();
         });
         let dataObj;
         let element;
@@ -124,6 +124,7 @@
             assert.equal(result.order, 1, 'order is set');
           });
         });
+
         test('Rejects promise when save object is not set', function() {
           const e = fire();
           return e.detail.result
@@ -135,31 +136,48 @@
             assert.isDefined(err);
           });
         });
+
+        test('Handles exceptions', () => {
+          let called = false;
+          element.updateProject = () => {
+            return Promise.reject(new Error('test'));
+          };
+          const e = fire(dataObj);
+          return e.detail.result
+          .catch((cause) => {
+            if (cause.message === 'test') {
+              called = true;
+            }
+          })
+          .then(() => {
+            assert.isTrue(called);
+          });
+        });
       });
 
-      suite('project-read', function() {
+      suite('"project-read" event', function() {
         teardown(function() {
-          return DatabaseHelper.clearProjects();
+          return DataGenerator.clearLegacyProjects();
         });
 
         let element;
-        let dataObj;
+        let created;
         setup(function() {
           element = fixture('basic');
-          dataObj = {
-            _id: 'test-id-1',
-            name: 'test-1',
-            order: 1
-          };
-          return element.updateProject(dataObj);
+          return DataGenerator.insertProjectsData({projectsSize: 1})
+          .then((result) => created = result);
         });
         /**
          * Dispatches `project-read` event
          * @param {String} id
-         * @param {String} rev
+         * @param {?String} rev
+         * @param {?Boolean} cancelable
          * @return {CustomEvent}
          */
-        function fire(id, rev) {
+        function fire(id, rev, cancelable) {
+          if (cancelable === undefined) {
+            cancelable = true;
+          }
           const e = new CustomEvent('project-read', {
             detail: {
               id: id,
@@ -167,36 +185,41 @@
             },
             bubbles: true,
             composed: true,
-            cancelable: true
+            cancelable
           });
           document.body.dispatchEvent(e);
           return e;
         }
 
         test('Event is canceled', function() {
-          const e = fire(dataObj._id);
+          const e = fire(created[0]._id);
           assert.isTrue(e.defaultPrevented);
           return e.detail.result;
         });
 
+        test('Non cancellable event is ignored', function() {
+          const e = fire(created[0]._id, undefined, false);
+          assert.isUndefined(e.detail.result);
+        });
+
         test('Event detail contains "result" as promise', function() {
-          const e = fire(dataObj._id);
+          const e = fire(created[0]._id);
           assert.typeOf(e.detail.result, 'promise');
           return e.detail.result;
         });
 
         test('Reads project object by id only', function() {
-          const e = fire(dataObj._id);
+          const e = fire(created[0]._id);
           return e.detail.result
           .then((result) => {
-            assert.equal(result._id, dataObj._id);
+            assert.equal(result._id, created[0]._id);
           });
         });
 
         test('Reads a revision', function() {
           let originalRev;
           let updatedRev;
-          const e = fire(dataObj._id);
+          const e = fire(created[0]._id);
           return e.detail.result
           .then((result) => {
             originalRev = result._rev;
@@ -205,11 +228,11 @@
           })
           .then((result) => {
             updatedRev = result._rev;
-            const e = fire(dataObj._id, originalRev);
+            const e = fire(created[0]._id, originalRev);
             return e.detail.result;
           })
           .then((result) => {
-            assert.equal(result.name, dataObj.name);
+            assert.equal(result.name, created[0].name);
             assert.notEqual(originalRev, updatedRev);
           });
         });
@@ -225,11 +248,28 @@
             assert.isDefined(err);
           });
         });
+
+        test('Handles exceptions', () => {
+          let called = false;
+          element.readProject = () => {
+            return Promise.reject(new Error('test'));
+          };
+          const e = fire(created[0]._id);
+          return e.detail.result
+          .catch((cause) => {
+            if (cause.message === 'test') {
+              called = true;
+            }
+          })
+          .then(() => {
+            assert.isTrue(called);
+          });
+        });
       });
 
       suite('project-object-deleted', function() {
         teardown(function() {
-          return DatabaseHelper.clearProjects();
+          return DataGenerator.clearLegacyProjects();
         });
 
         let element;
@@ -301,11 +341,28 @@
             assert.isDefined(err);
           });
         });
+
+        test('Handles exceptions', () => {
+          let called = false;
+          element.removeProject = () => {
+            return Promise.reject(new Error('test'));
+          };
+          const e = fire(dataObj._id);
+          return e.detail.result
+          .catch((cause) => {
+            if (cause.message === 'test') {
+              called = true;
+            }
+          })
+          .then(() => {
+            assert.isTrue(called);
+          });
+        });
       });
 
       suite('project-model-query', function() {
         teardown(function() {
-          return DatabaseHelper.clearProjects();
+          return DataGenerator.clearLegacyProjects();
         });
 
         let element;
@@ -320,38 +377,119 @@
           return element.updateProject(dataObj)
           .then((result) => dataObj = result);
         });
-        /**
-         * Dispatches 'project-model-query' event
-         * @return {CustomEvent}
-         */
-        function fire() {
+
+        function fire(detail, cancelable) {
+          if (cancelable === undefined) {
+            cancelable = true;
+          }
           const e = new CustomEvent('project-model-query', {
-            detail: {},
             bubbles: true,
-            composed: true,
-            cancelable: true
+            detail,
+            cancelable
           });
           document.body.dispatchEvent(e);
           return e;
         }
 
+        test('Non cancellable event is ignored', function() {
+          const e = fire({}, false);
+          assert.isUndefined(e.detail.result);
+        });
+
         test('Event is canceled', function() {
-          const e = fire();
+          const e = fire({});
           assert.isTrue(e.defaultPrevented);
           return e.detail.result;
         });
 
         test('Event detail contains "result" as promise', function() {
-          const e = fire();
+          const e = fire({});
           assert.typeOf(e.detail.result, 'promise');
         });
 
         test('Lists saved projects', function() {
-          const e = fire();
+          const e = fire({});
           return e.detail.result
           .then((result) => {
             assert.typeOf(result, 'array');
             assert.lengthOf(result, 1);
+          });
+        });
+
+        test('Throws without "detail" object', () => {
+          assert.throws(() => {
+            element._queryHandler({
+              cancelable: true,
+              composedPath: () => []
+            });
+          });
+        });
+      });
+
+      suite('"project-update-bulk" event', () => {
+        let element;
+        setup(function() {
+          element = fixture('basic');
+        });
+
+        teardown(function() {
+          return DataGenerator.clearLegacyProjects();
+        });
+
+        function fire(projects, cancelable) {
+          if (cancelable === undefined) {
+            cancelable = true;
+          }
+          const e = new CustomEvent('project-update-bulk', {
+            detail: {
+              projects
+            },
+            bubbles: true,
+            cancelable
+          });
+          document.body.dispatchEvent(e);
+          return e;
+        }
+
+        test('Non cancellable event is ignored', function() {
+          const projects = DataGenerator.generateProjects();
+          const e = fire(projects, false);
+          assert.isUndefined(e.detail.result);
+        });
+
+        test('Event is canceled', function() {
+          const projects = DataGenerator.generateProjects();
+          const e = fire(projects);
+          assert.isTrue(e.defaultPrevented);
+          return e.detail.result;
+        });
+
+        test('Rejects when projects is not set', function(done) {
+          const e = fire();
+          e.detail.result
+          .catch(() => {
+            done();
+          });
+        });
+
+        test('Rejects when projects is empty', function(done) {
+          const e = fire([]);
+          e.detail.result
+          .catch(() => {
+            done();
+          });
+        });
+
+        test('Inserts projects into the store', function() {
+          const projects = DataGenerator.generateProjects();
+          const e = fire(projects);
+          return e.detail.result
+          .then((result) => {
+            assert.typeOf(result, 'array');
+            assert.lengthOf(result, projects.length);
+            for (let i = 0; i < result.length; i++) {
+              assert.isUndefined(result[i].error);
+            }
           });
         });
       });

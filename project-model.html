@@ -177,7 +177,9 @@ the License.
  * @extends RequestBaseModel
  */
 class ProjectModel extends RequestBaseModel {
-  static get is() {return 'project-model';}
+  static get is() {
+    return 'project-model';
+  }
   /**
    * @constructor
    */
@@ -218,11 +220,10 @@ class ProjectModel extends RequestBaseModel {
    * @param {CustomEvent} e
    */
   _handleRead(e) {
-    if (!e.cancelable || e.composedPath()[0] === this) {
+    if (this._eventCancelled(e)) {
       return;
     }
-    e.preventDefault();
-    e.stopPropagation();
+    this._cancelEvent(e);
 
     if (!e.detail.id) {
       e.detail.result = Promise.reject(
@@ -237,11 +238,10 @@ class ProjectModel extends RequestBaseModel {
    * @param {CustomEvent} e
    */
   _createBulkHandler(e) {
-    if (!e.cancelable || e.composedPath()[0] === this) {
+    if (this._eventCancelled(e)) {
       return;
     }
-    e.preventDefault();
-    e.stopPropagation();
+    this._cancelEvent(e);
     const {projects} = e.detail;
     if (!projects || !projects.length) {
       e.detail.result = Promise.reject(new Error('The "projects" property is required'));
@@ -320,7 +320,7 @@ class ProjectModel extends RequestBaseModel {
    * Lists all project objects.
    *
    * @param {?Array<String>} ids Optional, list of project IDs to limit the
-   * response to
+   * response to specific projects
    * @return {Promise} A promise resolved to a list of projects.
    */
   listProjects(ids) {
@@ -340,11 +340,10 @@ class ProjectModel extends RequestBaseModel {
    * @param {CustomEvent} e
    */
   _handleObjectSave(e) {
-    if (!e.cancelable || e.composedPath()[0] === this) {
+    if (this._eventCancelled(e)) {
       return;
     }
-    e.preventDefault();
-    e.stopPropagation();
+    this._cancelEvent(e);
 
     const project = e.detail.project;
     if (!project || !project._id) {
@@ -378,11 +377,10 @@ class ProjectModel extends RequestBaseModel {
    * @param {CustomEvent} e
    */
   _handleObjectDelete(e) {
-    if (!e.cancelable || e.composedPath()[0] === this) {
+    if (this._eventCancelled(e)) {
       return;
     }
-    e.preventDefault();
-    e.stopPropagation();
+    this._cancelEvent(e);
 
     const id = e.detail.id;
     if (!id) {
@@ -397,27 +395,15 @@ class ProjectModel extends RequestBaseModel {
    * @param {CustomEvent} e
    */
   _queryHandler(e) {
-    if (!e.cancelable || e.composedPath()[0] === this) {
+    if (this._eventCancelled(e)) {
       return;
     }
+    this._cancelEvent(e);
     if (!e.detail) {
       throw new Error(
         'The `detail` object must be set prior sending the event');
     }
-    e.stopImmediatePropagation();
-    e.preventDefault();
     e.detail.result = this.listProjects(e.detail.keys);
-  }
-  /**
-   * Deletes current database.
-   * @return {Promise}
-   */
-  deleteModel() {
-    try {
-      return this.db.destroy();
-    } catch (e) {
-      return Promise.reject(e);
-    }
   }
   /**
    * Fired when the project entity has been saved / updated in the datastore.

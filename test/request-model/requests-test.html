@@ -7,10 +7,9 @@
   <script src="../../../webcomponentsjs/webcomponents-loader.js"></script>
   <script src="../../../web-component-tester/browser.js"></script>
   <script src="../../../iron-test-helpers/test-helpers.js"></script>
-  <script src="../../../chance/chance.js"></script>
-  <script src="../../demo/database-helper.js"></script>
+  <link rel="import" href="../../../arc-data-generator/arc-data-generator.html">
   <link rel="import" href="../../../app-pouchdb/pouchdb.html">
-  <link rel="import" href="../../arc-models.html">
+  <link rel="import" href="../../request-model.html">
 </head>
 
 <body>
@@ -20,13 +19,13 @@
     </template>
   </test-fixture>
   <script>
-  /* global DatabaseHelper, sinon */
+  /* global DataGenerator, sinon */
   suite('request-model test', function() {
     const databaseType = 'saved-requests';
 
     suite('update()', function() {
       teardown(function() {
-        return DatabaseHelper.clearRequests();
+        return DataGenerator.destroySavedRequestData();
       });
 
       let element;
@@ -111,7 +110,7 @@
 
     suite('updateBulk()', function() {
       teardown(function() {
-        return DatabaseHelper.clearRequests();
+        return DataGenerator.destroySavedRequestData();
       });
 
       let element;
@@ -210,7 +209,7 @@
 
     suite('read()', function() {
       teardown(function() {
-        return DatabaseHelper.clearRequests();
+        return DataGenerator.destroySavedRequestData();
       });
 
       let element;
@@ -255,7 +254,7 @@
 
     suite('remove()', function() {
       teardown(function() {
-        return DatabaseHelper.clearRequests();
+        return DataGenerator.destroySavedRequestData();
       });
 
       let element;
@@ -311,13 +310,13 @@
 
     suite('list()', () => {
       suiteSetup(() => {
-        return DatabaseHelper.insertHistoryRequestData({
+        return DataGenerator.insertHistoryRequestData({
           requestsSize: 150
         });
       });
 
       suiteTeardown(function() {
-        return DatabaseHelper.clearHistory();
+        return DataGenerator.destroyHistoryData();
       });
 
       let element;
