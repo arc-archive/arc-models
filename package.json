@@ -4,7 +4,7 @@
   "license": "Apache-2.0",
   "description": "Event based access to ARC datastores",
   "devDependencies": {
-    "@polymer/gen-typescript-declarations": "^1.5.1"
+    "@polymer/gen-typescript-declarations": "^1.6.0"
   },
   "private": false,
   "main": "arc-models.html",
