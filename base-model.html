@@ -208,13 +208,16 @@ class ArcBaseModel extends ArcBehaviors.EventsTargetBehavior(Polymer.Element) {
    * @return {Boolean} True if event is already cancelled or dispatched by self.
    */
   _eventCancelled(e) {
-    const status = e.defaultPrevented || !e.cancelable;
-    if (!status) {
-      if (e.composedPath()[0] === this) {
-        return true;
-      }
+    if (e.defaultPrevented) {
+      return true;
     }
-    return status;
+    if (!e.cancelable) {
+      return true;
+    }
+    if (e.composedPath()[0] === this) {
+      return true;
+    }
+    return false;
   }
   /**
    * Helper method to cancel the event and stop it's propagation.
