@@ -141,10 +141,6 @@ class RequestModel extends RequestBaseModel {
 
   static get properties() {
     return {
-      /**
-       * When set it skips request indexing.
-       */
-      noIndexing: Boolean,
       _workerRequestId: {
         type: Number,
         value: function() {
@@ -435,6 +431,37 @@ class RequestModel extends RequestBaseModel {
     });
   }
   /**
+   * Normalizes request object to whatever the app is currently using.
+   * @param {Object} request
+   * @return {Object}
+   */
+  normalizeRequest(request) {
+    if (!request) {
+      return;
+    }
+    if (request.legacyProject) {
+      if (!request.projects) {
+        request.projects = [];
+      }
+      request.projects[request.projects.length] = request.legacyProject;
+      delete request.legacyProject;
+    }
+    const skipKeys = ['_id', '_rev'];
+    Object.keys(request).forEach((key) => {
+      if (key[0] === '_' && skipKeys.indexOf(key) === -1) {
+        delete request[key];
+      }
+    });
+    if (!request.updated) {
+      request.updated = Date.now();
+    }
+    if (!request.created) {
+      request.created = Date.now();
+    }
+    return request;
+  }
+
+  /**
    * Reads an entry from the datastore.
    *
    * @param {String} type Request type: `saved-requests` or `history-requests`
@@ -456,7 +483,7 @@ class RequestModel extends RequestBaseModel {
       if (opts && opts.restorePayload) {
         request = PayloadProcessor.restorePayload(request);
       }
-      return request;
+      return this.normalizeRequest(request);
     });
   }
   /**
@@ -506,12 +533,8 @@ class RequestModel extends RequestBaseModel {
       request._id = this.uuid.generate();
     }
     request.updated = Date.now();
-    const copy = Object.assign({}, request);
-    Object.keys(copy).forEach((key) => {
-      if (key[0] === '_' && key !== '_id' && key !== '_rev') {
-        delete copy[key];
-      }
-    });
+    let copy = Object.assign({}, request);
+    copy = this.normalizeRequest(copy);
     return db.put(copy)
     .then((result) => {
       request._rev = result.rev;
@@ -534,6 +557,9 @@ class RequestModel extends RequestBaseModel {
    */
   updateBulk(type, requests) {
     const db = this.getDatabase(type);
+    for (let i = 0; i < requests.length; i++) {
+      requests[i] = this.normalizeRequest(requests[i]);
+    }
     return db.bulkDocs(requests)
     .then((response) => {
       for (let i = 0, len = response.length; i < len; i++) {
@@ -557,6 +583,10 @@ class RequestModel extends RequestBaseModel {
         this._fireUpdated('request-object-changed', detail);
       }
       return response;
+    })
+    .catch((cause) => {
+      console.warn('[request-model] ' + cause.message);
+      throw cause;
     });
   }
   /**
@@ -1008,7 +1038,17 @@ class RequestModel extends RequestBaseModel {
    */
   list(type, queryOptions) {
     const db = this.getDatabase(type);
-    return db.allDocs(queryOptions);
+    return db.allDocs(queryOptions)
+    .then((response) => {
+      if (response.rows) {
+        for (let i = 0, len = response.rows.length; i < len; i++) {
+          if (response.rows[i] && response.rows[i].doc) {
+            response.rows[i].doc = this.normalizeRequest(response.rows[i].doc);
+          }
+        }
+      }
+      return response;
+    });
   }
   /**
    * A handler for the `request-query` custom event. Queries the datastore for
@@ -1139,7 +1179,7 @@ class RequestModel extends RequestBaseModel {
    */
   queryPouchDb(q, type, ignore) {
     if (!q) {
-      return Promise.reject('The "q" parameter is required.');
+      return Promise.reject(new Error('The "q" parameter is required.'));
     }
     if (type === 'history') {
       return this.queryHistory(q, ignore);
@@ -1194,12 +1234,12 @@ class RequestModel extends RequestBaseModel {
    */
   _queryStore(q, ignore, db, indexes) {
     if (!q) {
-      return Promise.reject('The "q" parameter is required.');
+      return Promise.reject(new Error('The "q" argument is required.'));
     }
     if (ignore !== undefined && !(ignore instanceof Array)) {
-      return Promise.reject('The "ignore" parameter must be an array.');
+      return Promise.reject(new TypeError('The "ignore" argument is not an array.'));
     }
-    q = String(q);
+    q = String(q).toLowerCase();
     return db.search({
       query: q,
       fields: indexes,
@@ -1228,8 +1268,9 @@ class RequestModel extends RequestBaseModel {
    */
   indexData(type) {
     const db = type === 'history' ? this.historyDb : this.savedDb;
+    const fields = type === 'history' ? this.historyIndexes : this.savedIndexes;
     return db.search({
-      fields: ['title', 'text'],
+      fields,
       build: true
     });
   }
@@ -1316,19 +1357,31 @@ class RequestModel extends RequestBaseModel {
     if (!models || !models.length) {
       return;
     }
-    const p = [];
-    if (models.indexOf('saved-requests') !== -1 || models.indexOf('saved') !== -1) {
-      p[p.length] = this.deleteModel('saved');
-    }
-    if (models.indexOf('history-requests') !== -1 || models.indexOf('history') !== -1) {
-      p[p.length] = this.deleteModel('history');
-    }
-    if (p.length) {
+    const promises = this.deleteDataModel(models);
+    if (promises.length) {
       if (!e.detail.result) {
         e.detail.result = [];
       }
-      e.detail.result = e.detail.result.concat(p);
+      e.detail.result = e.detail.result.concat(promises);
     }
+  }
+  /**
+   * Deletes all data of selected type.
+   * @param {Array<String>|String} models Database type or list of types.
+   * @return {Array<Promise>} List of promises. Might be empty array.
+   */
+  deleteDataModel(models) {
+    if (!(models instanceof Array)) {
+      models = [models];
+    }
+    const p = [];
+    if (models.indexOf('saved-requests') !== -1 || models.indexOf('saved') !== -1 || models.indexOf('all') !== -1) {
+      p[p.length] = this.deleteModel('saved');
+    }
+    if (models.indexOf('history-requests') !== -1 || models.indexOf('history') !== -1 || models.indexOf('all') !== -1) {
+      p[p.length] = this.deleteModel('history');
+    }
+    return p;
   }
   /**
    * Fired when the request should be expored to Google Drive.

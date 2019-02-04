@@ -47,7 +47,8 @@
     "arc-polyfills": "advanced-rest-client/arc-polyfills#^0.1.8",
     "iron-list": "PolymerElements/iron-list#^2.0.0",
     "paper-toggle-button": "PolymerElements/paper-toggle-button#^2.1.1",
-    "pouchdb": "^7.0.0"
+    "pouchdb": "^7.0.0",
+    "http-method-label": "advanced-rest-client/http-method-label#^2.0.0"
   },
   "ignore": [
     "**/.*",

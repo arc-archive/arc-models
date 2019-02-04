@@ -65,7 +65,7 @@ the License.
  * const node = document.querySelector('url-indexer');
  * node.index([{
  *  id: 'xxx',
- *  type: 'saved-requests',
+ *  type: 'saved',
  *  url: 'https://domain.com'
  * }])
  * .then((result) => {});
@@ -80,7 +80,7 @@ the License.
  *  cancelable: true,
  *  detail: {
  *    q: 'https://...',
- *    type: 'saved-requests', // optional
+ *    type: 'saved', // optional
  *    detailed: false // Optional, default to `false`
  *  }
  * });
@@ -164,7 +164,7 @@ class UrlIndexer extends Polymer.Element {
     if (e.defaultPrevented) {
       return;
     }
-    const data = e.detail.data;
+    const {data} = e.detail;
     e.detail.result = this.index(data);
   }
 
@@ -176,7 +176,7 @@ class UrlIndexer extends Polymer.Element {
     const query = e.detail.q;
     const opts = {};
     if (e.detail.type) {
-      opts.type = e.detail.type;
+      opts.type = this._normalizeType(e.detail.type);
     }
     if (e.detail.detailed) {
       opts.detailed = e.detail.detailed;
@@ -184,17 +184,20 @@ class UrlIndexer extends Polymer.Element {
     e.detail.result = this.query(query, opts);
   }
 
+  _normalizeType(type) {
+    switch (type) {
+      case 'saved-requests': return 'saved';
+      case 'history-requests': return 'history';
+      default: return type;
+    }
+  }
+
   _requestChangeHandler(e) {
     if (e.cancelable) {
       return;
     }
     const r = e.detail.request;
-    let type = r.type;
-    if (type === 'saved-requests') {
-      type = 'saved';
-    } else if (type === 'history-requests') {
-      type = 'history';
-    }
+    const type = this._normalizeType(r.type);
     this._indexDebounce(r._id, r.url, type);
   }
   /**
@@ -526,7 +529,8 @@ class UrlIndexer extends Polymer.Element {
    */
   _prepareRequestIndexData(request, indexed) {
     const result = [];
-    const {id, url, type} = request;
+    const {id, url} = request;
+    const type = this._normalizeType(request.type);
     let parser;
     try {
       parser = new URL(url);
@@ -735,10 +739,11 @@ class UrlIndexer extends Polymer.Element {
     opts = opts || {};
     return this.openSearchStore()
     .then((db) => {
+      const type = this._normalizeType(opts.type);
       if (opts.detailed) {
-        return this._searchIndexOf(db, query, opts.type);
+        return this._searchIndexOf(db, query, type);
       } else {
-        return this._searchCasing(db, query, opts.type);
+        return this._searchCasing(db, query, type);
       }
     });
   }
