@@ -1,0 +1,83 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, minimum-scale=1.0, initial-scale=1.0, user-scalable=yes">
+  <script src="../../../webcomponentsjs/webcomponents-loader.js"></script>
+  <script src="../../../web-component-tester/browser.js"></script>
+  <link rel="import" href="../../url-history-model.html">
+  <link rel="import" href="../../../arc-polyfills/arc-polyfills.html">
+  <link rel="import" href="../../../app-pouchdb/pouchdb.html">
+  <script src="common.js"></script>
+</head>
+
+<body>
+  <test-fixture id="basic">
+    <template>
+      <url-history-model></url-history-model>
+    </template>
+  </test-fixture>
+  <script>
+  /* global UrlHistoryHelper */
+  suite('Storing the data event based', function() {
+    let element;
+    let previousInsert;
+    const baseUrl = 'https://api.mulesoft.com/endpoint/path?query=parameter';
+    const otherUrl = 'https://api.domain.com/endpoint/';
+    setup(function() {
+      element = fixture('basic');
+    });
+    suiteSetup(function(done) {
+      setTimeout(function() {
+        UrlHistoryHelper.deleteDatabase().then(function() {
+          done();
+        });
+      }, 2000);
+    });
+    suiteTeardown(function(done) {
+      setTimeout(function() {
+        done();
+      }, 2000);
+    });
+    test('Stores the URL', function() {
+      const e = UrlHistoryHelper.fire('url-history-store', {
+        value: baseUrl
+      });
+      return e.detail.result
+        .then(function(result) {
+          assert.isTrue(result.ok);
+          previousInsert = result;
+        });
+    });
+    test('Updates existing URL data', function() {
+      const e = UrlHistoryHelper.fire('url-history-store', {
+        value: baseUrl
+      });
+      return e.detail.result
+        .then(function(result) {
+          assert.isTrue(result.ok, 'Operation succeeded');
+          assert.equal(result.id, previousInsert.id, 'Ids matches previous');
+          assert.notEqual(result.rev, previousInsert.rev, 'Rev is different');
+        });
+    });
+    test('Creates another URL data', function() {
+      const e = UrlHistoryHelper.fire('url-history-store', {
+        value: otherUrl
+      });
+      return e.detail.result
+        .then(function(result) {
+          assert.isTrue(result.ok, 'Operation succeeded');
+          assert.notEqual(result.id, previousInsert.id, 'IDs are different');
+        });
+    });
+    test('Event is cancelled', function() {
+      const e = UrlHistoryHelper.fire('url-history-store', {
+        value: baseUrl
+      });
+      assert.isTrue(e.defaultPrevented);
+    });
+  });
+  </script>
+</body>
+
+</html>

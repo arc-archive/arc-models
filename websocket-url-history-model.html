@@ -40,10 +40,10 @@ the License.
  */
 class WebsocketUrlHistoryModel extends ArcBaseModel {
   /* global ArcBaseModel */
-  static get is() { return 'websocket-url-history-model'; }
+  static get is() {return 'websocket-url-history-model';}
 
   constructor() {
-    super();
+    super('websocket-url-history', 10);
     this._handleChange = this._handleChange.bind(this);
     this._handleRead = this._handleRead.bind(this);
     this._handleQuery = this._handleQuery.bind(this);
@@ -51,6 +51,7 @@ class WebsocketUrlHistoryModel extends ArcBaseModel {
   }
 
   _attachListeners(node) {
+    super._attachListeners(node);
     node.addEventListener('websocket-url-history-changed', this._handleChange);
     node.addEventListener('websocket-url-history-read', this._handleRead);
     node.addEventListener('websocket-url-history-query', this._handleQuery);
@@ -58,23 +59,15 @@ class WebsocketUrlHistoryModel extends ArcBaseModel {
   }
 
   _detachListeners(node) {
+    super._detachListeners(node);
     node.removeEventListener('websocket-url-history-changed', this._handleChange);
     node.removeEventListener('websocket-url-history-read', this._handleRead);
     node.removeEventListener('websocket-url-history-query', this._handleQuery);
     node.removeEventListener('websocket-url-history-list', this._handleQueryHistory);
   }
-
-  get db() {
-    /* global PouchDB */
-    return new PouchDB('websocket-url-history', {
-      // jscs:disable
-      revs_limit: 100
-      // jscs:enable
-    });
-  }
   // Handles the read object event
   _handleRead(e) {
-    if (!e.cancelable || e.composedPath()[0] === this) {
+    if (this._eventCancelled(e)) {
       return;
     }
     e.preventDefault();
@@ -85,7 +78,7 @@ class WebsocketUrlHistoryModel extends ArcBaseModel {
       return;
     }
 
-    e.detail.result = this.db.get(e.detail.url)
+    e.detail.result = this.read(e.detail.url)
     .catch((e) => {
       if (e.status === 404) {
         return undefined;
@@ -95,7 +88,7 @@ class WebsocketUrlHistoryModel extends ArcBaseModel {
   }
 
   _handleChange(e) {
-    if (!e.cancelable || e.composedPath()[0] === this) {
+    if (this._eventCancelled(e)) {
       return;
     }
     e.preventDefault();
@@ -110,21 +103,43 @@ class WebsocketUrlHistoryModel extends ArcBaseModel {
       return;
     }
     const obj = Object.assign({}, e.detail.item);
-    e.detail.result = this.db.put(obj)
-    .then((insertResult) => {
-      const oldRev = obj._rev;
-      obj._rev = insertResult.rev;
+    e.detail.result = this.update(obj)
+    .catch((e) => this._handleException(e));
+  }
+
+  /**
+   * Updates / saves the object in the datastore.
+   * This function fires `websocket-url-history-changed` event.
+   *
+   * @param {Object} obj A project to save / update
+   * @return {Promise} Resolved promise to project object with updated `_rev`
+   */
+  update(obj) {
+    const oldRev = obj._rev;
+    return this.db.put(obj)
+    .then((result) => {
+      obj._rev = result.rev;
       this._fireUpdated('websocket-url-history-changed', {
         item: obj,
         oldRev: oldRev
       });
       return obj;
-    })
+    });
+  }
+
+  _handleQueryHistory(e) {
+    if (this._eventCancelled(e)) {
+      return;
+    }
+    e.preventDefault();
+    e.stopPropagation();
+
+    e.detail.result = this.list()
     .catch((e) => this._handleException(e));
   }
 
   _handleQuery(e) {
-    if (!e.cancelable || e.composedPath()[0] === this) {
+    if (this._eventCancelled(e)) {
       return;
     }
     e.preventDefault();
@@ -134,21 +149,32 @@ class WebsocketUrlHistoryModel extends ArcBaseModel {
       e.detail.result = Promise.reject(new Error('Missing "q" property.'));
       return;
     }
-
+    e.detail.result = this.list(q)
+    .catch((e) => this._handleException(e));
+  }
+  /**
+   * Lists websocket history objects.
+   *
+   * @param {?String} query A partial url to match results.
+   * @return {Promise} A promise resolved to a list of PouchDB documents.
+   */
+  list(query) {
     const db = this.db;
-    e.detail.result = db.allDocs()
-    .then((r) => {
-      if (q) {
-        r.rows = r.rows.filter((item) => item.id.indexOf(q) !== -1);
-      }
-      const promises = r.rows.map((item) => db.get(item.id));
+    return db.allDocs()
+    .then((response) => {
+      const promises = [];
+      response.rows.forEach((item) => {
+        if (query && item.id.indexOf(query) === -1) {
+          return;
+        }
+        promises.push(db.get(item.id));
+      });
       return Promise.all(promises);
     })
     .then((result) => {
       result = result.map((item) => this._computeTime(item));
       return result.sort(this._sortFunction);
-    })
-    .catch((e) => this._handleException(e));
+    });
   }
 
   _sortFunction(a, b) {
@@ -157,38 +183,18 @@ class WebsocketUrlHistoryModel extends ArcBaseModel {
     if (aTime > bTime) {
       return 1;
     }
-    if (aTime === bTime) {
-      const aCnt = a.cnt;
-      const bCnt = b.cnt;
-      if (aCnt > bCnt) {
-        return 1;
-      }
-      if (aCnt === bCnt) {
-        return 0;
-      }
+    if (aTime < bTime) {
       return -1;
     }
-    return -1;
-  }
-
-  _handleQueryHistory(e) {
-    if (!e.cancelable || e.composedPath()[0] === this) {
-      return;
+    const aCnt = a.cnt;
+    const bCnt = b.cnt;
+    if (aCnt > bCnt) {
+      return 1;
     }
-    e.preventDefault();
-    e.stopPropagation();
-
-    const db = this.db;
-    e.detail.result = db.allDocs()
-    .then((result) => {
-      const promises = result.rows.map((item) => db.get(item.id));
-      return Promise.all(promises);
-    })
-    .then((result) => {
-      result = result.map(item => this._computeTime(item));
-      return result.sort(this._sortFunction);
-    })
-    .catch((e) => this._handleException(e));
+    if (aCnt < bCnt) {
+      return -1;
+    }
+    return 0;
   }
   /**
    * Computes time for timestamp's day, month and year and time set to 0.
@@ -196,12 +202,7 @@ class WebsocketUrlHistoryModel extends ArcBaseModel {
    * @return {Object} The same database item with `_time` property.
    */
   _computeTime(item) {
-    const day = item.time ? new Date(item.time) : Date.now();
-    day.setHours(0);
-    day.setMinutes(0);
-    day.setSeconds(0);
-    day.setMilliseconds(0);
-    item._time = day.getTime();
+    item._time = this._computeMidnight(item.time);
     return item;
   }
 }

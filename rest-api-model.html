@@ -16,225 +16,12 @@ the License.
 /**
  * Events based access to REST APIs datastore.
  *
- * Note: **All events must be cancelable.** When the event is cancelled by an instance
- * of the element it won't be handled again by other instance that possibly exists
- * in the DOM.
- *
- * `rest-api-index-updated`, `rest-api-data-updated` and `rest-api-deleted` events
- * are cancelable if a view requested to alter the data in the datastore. Only
- * models should handle cancelable events. This element fires an event with the same
- * type but non-cancelable when the operation has been commited to the datastore
- * and view shouls handle non-cancelable event to update their state.
- *
- * ## Index and data object
- *
- * RAML can be a large object therefore iterating over each record when listing
- * or searching for APIs would not be efficient. This model creates separate object in
- * different data stores to keep listing (index) data separately from RAML data.
- * In most cases application should operate on index data. API data should be
- * read directly using record's data store ID which is the same as index id.
- *
- * Index object contains following properties:
- *
- * - `_id` `{String}` - The same ID as API data record ID
- * - `title` `{String}` - API title
- * - `version` `{String}` - API version number / string
- * - `baseUri` `{String}` - API base URI
- * - `order` `{Number}` - Order on the list. By default it's `0`
- * - `description` `{?String}` - API description. Can be undefined.
- *
- * ## Events API
- *
- * ### Create
- *
- * Creates bothe api data and api index objects.
- *
- * To create data fire cancelable `rest-api-create` with the raml data in
- * detail object
- *
- * ```javascript
- * let event = new CustomEvent('rest-api-create', {
- *    detail: {
- *      raml: {...}
- *    },
- *    bubbles: true,
- *    cancelable: true
- * });
- * document.body.dispatchEvent(event);
- * console.log(event.defaultPrevented);
- * // prints "true"
- *
- * event.detail.result(indexDoc => {
- *    console.log(indexDoc);
- *    // prints content of the index object
- * });
- * ```
- *
- * Optional property for create event is `order` which is used to order
- * elements on the list.
- *
- * ### Read
- *
- * Reads API data object form the datastore.
- *
- * To access data fire cancelable `rest-api-read` with the ID in detail object
- *
- * ```javascript
- * let event = new CustomEvent('rest-api-read', {
- *    detail: {
- *      id: "api-datastore-id"
- *    },
- *    bubbles: true,
- *    cancelable: true
- * });
- * document.body.dispatchEvent(event);
- * console.log(event.defaultPrevented);
- * // prints "true"
- *
- * event.detail.result(dataDoc => {
- *    console.log(dataDoc.raml);
- *    // prints API data
- * });
- * ```
- *
- * ### Update index
- *
- * Updates API index object in the datastore.
- *
- * To update index data fire cancelable `rest-api-index-updated` with the
- * PouchDB document in `detail` object
- *
- * ```javascript
- * let event = new CustomEvent('rest-api-index-updated', {
- *    detail: {
- *      doc: {_id: ...}
- *    },
- *    bubbles: true,
- *    cancelable: true
- * });
- * document.body.dispatchEvent(event);
- * console.log(event.defaultPrevented);
- * // prints "true"
- *
- * event.detail.result(doc => {
- *    console.log(doc);
- *    // prints upadated document
- * });
- * ```
- *
- * ### Update API data
- *
- * Updates API data object in the datastore.
- *
- * To update API data fire cancelable `rest-api-data-updated` with the PouchDB
- * document in `detail` object
- *
- * ```javascript
- * let event = new CustomEvent('rest-api-data-updated', {
- *    detail: {
- *      doc: {_id: ...}
- *    },
- *    bubbles: true,
- *    cancelable: true
- * });
- * document.body.dispatchEvent(event);
- * console.log(event.defaultPrevented);
- * // prints "true"
- *
- * event.detail.result(doc => {
- *    console.log(doc);
- *    // prints upadated document
- * });
- * ```
- *
- * ### Delete
- *
- * Deletes API index and API data object from the datastore.
- *
- * To remove API data fire cancelable `rest-api-deleted` with the id of the
- * document in `detail` object
- *
- * ```javascript
- * let event = new CustomEvent('rest-api-deleted', {
- *    detail: {
- *      id: "datastore-id"
- *    },
- *    bubbles: true,
- *    cancelable: true
- * });
- * document.body.dispatchEvent(event);
- * console.log(event.defaultPrevented);
- * // prints "true"
- *
- * event.detail.result(() => {
- *     // Documents has been deleted
- * });
- * ```
- *
- * Note, delete operation marks object as deleted. It doesn't actually remove
- * the data from the datastore. If needed data can be restored as described in
- * PouchDB documentation.
- *
- * ### Update index data in batch
- *
- * The same as create event but allows to update many index objects in one request.
- * This is faster than making series of individual requests.
- *
- * ```javascript
- * let event = new CustomEvent('rest-api-index-updated-batch', {
- *    detail: {
- *      docs: [{_id: ...]}
- *    },
- *    bubbles: true,
- *    cancelable: true
- * });
- * document.body.dispatchEvent(event);
- * console.log(event.defaultPrevented);
- * // prints "true"
- *
- * event.detail.result(updated => {
- *    console.log(updated);
- *    // Array of updated documents
- * });
- * ```
- *
- * ### List index data
- *
- * List a page of index object. Each page contains a 100 of results.
- * It supports pagination using `nextPageToken` property returned with each call to this API.
- *
- * Result object contains `nextPageToken` that should be used to pass to next
- * request to receive next page of results. Index listing data are in `items` property.
- *
- * ```javascript
- *
- * var nextPageToken;
- * function queryPage() {
- *    var detail = {};
- *    if (nextPageToken) {
- *      detail.nextPageToken = nextPageToken;
- *    }
- *    let event = new CustomEvent('rest-api-index-list', {
- *      detail: detail,
- *      bubbles: true,
- *      cancelable: true
- *    });
- *    document.body.dispatchEvent(event);
- *
- *    return event.detail.result
- *    .then(result => {
- *      nextPageToken = result.nextPageToken;
- *      return result.items;
- *    });
- * }
- * ```
- *
  * @polymer
  * @customElement
  * @memberof LogicElements
  */
 class RestApiModel extends ArcBaseModel {
-  static get is() { return 'rest-api-model'; };
+  static get is() {return 'rest-api-model';}
 
   static get properties() {
     return {
@@ -276,46 +63,50 @@ class RestApiModel extends ArcBaseModel {
 
   constructor() {
     super();
-    this._createHandler = this._createHandler.bind(this);
     this._readHandler = this._readHandler.bind(this);
-    this._indexUpdatedHandler = this._indexUpdatedHandler.bind(this);
-    this._dataUpdatedHandler = this._dataUpdatedHandler.bind(this);
+    this._readIndexHandler = this._readIndexHandler.bind(this);
+    this._indexChangeHandler = this._indexChangeHandler.bind(this);
+    this._indexListHandler = this._indexListHandler.bind(this);
+    this._dataUpdateHandler = this._dataUpdateHandler.bind(this);
     this._deletedHandler = this._deletedHandler.bind(this);
     this._indexesUpdatedHandler = this._indexesUpdatedHandler.bind(this);
-    this._indexListHandler = this._indexListHandler.bind(this);
+    this._versionDeletedHandler = this._versionDeletedHandler.bind(this);
   }
 
   _attachListeners(node) {
-    node.addEventListener('rest-api-create', this._createHandler);
-    node.addEventListener('rest-api-read', this._readHandler);
-    node.addEventListener('rest-api-index-updated', this._indexUpdatedHandler);
-    node.addEventListener('rest-api-data-updated', this._dataUpdatedHandler);
-    node.addEventListener('rest-api-deleted', this._deletedHandler);
-    node.addEventListener('rest-api-index-updated-batch', this._indexesUpdatedHandler);
-    node.addEventListener('rest-api-index-list', this._indexListHandler);
+    node.addEventListener('api-index-read', this._readIndexHandler);
+    node.addEventListener('api-index-changed', this._indexChangeHandler);
+    node.addEventListener('api-index-list', this._indexListHandler);
+    node.addEventListener('api-index-changed-batch', this._indexesUpdatedHandler);
+    node.addEventListener('api-data-changed', this._dataUpdateHandler);
+    node.addEventListener('api-deleted', this._deletedHandler);
+    node.addEventListener('api-version-deleted', this._versionDeletedHandler);
+    node.addEventListener('api-data-read', this._readHandler);
   }
 
   _detachListeners(node) {
-    node.removeEventListener('rest-api-create', this._createHandler);
-    node.removeEventListener('rest-api-read', this._readHandler);
-    node.removeEventListener('rest-api-index-updated', this._indexUpdatedHandler);
-    node.removeEventListener('rest-api-data-updated', this._dataUpdatedHandler);
-    node.removeEventListener('rest-api-deleted', this._deletedHandler);
-    node.removeEventListener('rest-api-index-updated-batch', this._indexesUpdatedHandler);
-    node.removeEventListener('rest-api-index-list', this._indexListHandler);
+    node.removeEventListener('api-index-read', this._readIndexHandler);
+    node.removeEventListener('api-index-changed', this._indexChangeHandler);
+    node.removeEventListener('api-data-changed', this._dataUpdateHandler);
+    node.removeEventListener('api-index-changed-batch', this._indexesUpdatedHandler);
+    node.removeEventListener('api-index-list', this._indexListHandler);
+    node.removeEventListener('api-deleted', this._deletedHandler);
+    node.removeEventListener('api-version-deleted', this._versionDeletedHandler);
+    node.removeEventListener('api-data-read', this._readHandler);
   }
   /**
-   * A handler to the datastroe contains listing data
+   * A handler to the datastore. Contains listing data.
    */
   get indexDb() {
-    return new PouchDB('rest-api-index');
+    /* global PouchDB */
+    return new PouchDB('api-index');
   }
   /**
    * A handler to the datastore containing REST API data
-   * (raml definition).
+   * (AMF model).
    */
   get dataDb() {
-    return new PouchDB('rest-api-data');
+    return new PouchDB('api-data');
   }
 
   /**
@@ -348,33 +139,45 @@ class RestApiModel extends ArcBaseModel {
   }
   /**
    * Creates / updates API data object.
-   * The `_id` property must be already set on the object.
    *
-   * This function fires `rest-api-data-updated` custom event on success.
-   *
-   * @param {Object} doc PouchDB document.
+   * @param {String} indexId Id of the index object
+   * @param {String} version Version of the API data
+   * @param {Object} data AMF model to store
    * @return {Promise} Resolved promise to a document with updated `_rev`
    */
-  updateData(doc) {
-    return this.dataDb.put(doc)
-      .then((result) => {
-        if (!result.ok) {
-          throw result;
-        }
-        const detail = {
-          oldRev: doc._rev,
-          doc: doc
+  updateData(indexId, version, data) {
+    const id = indexId + '|' + version;
+    let object;
+    return this.readData(id)
+    .catch((reason) => {
+      if (reason.status === 404) {
+        return {
+          indexId,
+          version,
+          _id: id
         };
-        detail.doc._rev = result.rev;
-        this._fireUpdated('rest-api-data-updated', detail);
-        return detail.doc;
-      });
+      }
+      this._handleException(reason);
+    })
+    .then((result) => {
+      result.data = data;
+      object = result;
+      return this.dataDb.put(result);
+    })
+    .then((result) => {
+      if (!result.ok) {
+        this._handleException(result);
+        return;
+      }
+      object._rev = result.rev;
+      return object;
+    });
   }
   /**
    * Creates / updates API index object.
    * The `_id` property must be already set on the object.
    *
-   * This function fires `rest-api-index-updated` custom event on success.
+   * This function fires `api-index-changed` custom event on success.
    *
    * @param {Object} doc PouchDB document.
    * @return {Promise} Resolved promise to a document with updated `_rev`
@@ -383,15 +186,16 @@ class RestApiModel extends ArcBaseModel {
     return this.indexDb.put(doc)
     .then((result) => {
       if (!result.ok) {
-        throw result;
+        this._handleException(result);
+        return;
       }
       const detail = {
         oldRev: doc._rev,
-        doc: doc
+        apiInfo: doc
       };
-      detail.doc._rev = result.rev;
-      this._fireUpdated('rest-api-index-updated', detail);
-      return detail.doc;
+      detail.apiInfo._rev = result.rev;
+      this._fireUpdated('api-index-changed', detail);
+      return detail.apiInfo;
     });
   }
   /**
@@ -402,7 +206,7 @@ class RestApiModel extends ArcBaseModel {
    */
   updateIndexBatch(docs) {
     const copy = [];
-    docs.forEach(item => {
+    docs.forEach((item) => {
       copy.push(Object.assign({}, item));
     });
     return this.indexDb.bulkDocs(copy)
@@ -412,11 +216,11 @@ class RestApiModel extends ArcBaseModel {
         if (res.ok) {
           const detail = {
             oldRev: docs[i]._rev,
-            doc: docs[i]
+            apiInfo: docs[i]
           };
-          detail.doc._rev = result[i].rev;
-          this._fireUpdated('rest-api-index-updated', detail);
-          toReturn.push(detail.doc);
+          detail.apiInfo._rev = result[i].rev;
+          this._fireUpdated('api-index-changed', detail);
+          toReturn.push(detail.apiInfo);
         } else {
           console.warn('Update error', result[i]);
           toReturn.push(docs[i]);
@@ -426,51 +230,104 @@ class RestApiModel extends ArcBaseModel {
     });
   }
   /**
-   * Removes data from index and raml data datastores.
+   * Removes all AMF and index data from datastores for given index id.
    *
-   * @param {String} id Datastore entry ID to delete. Both data and index objects
-   * shares the same ID.
+   * @param {String} id Index entry ID to delete.
    * @return {Promise} Promise resolved to a new `_rev` property of deleted object.
    */
   remove(id) {
     return this.readIndex(id)
     .then((doc) => {
       doc._deleted = true;
-      return this.indexDb.put(doc);
+      return this.removeVersions(id, doc.versions)
+      .then(() => this.indexDb.put(doc));
     })
     .then((result) => {
       if (!result.ok) {
         throw result;
       }
-      return this.readData(id);
+      const detail = {
+        id
+      };
+      this._fireUpdated('api-deleted', detail);
+    });
+  }
+  /**
+   * Removes information about version from AMD data datastore and from index
+   * data.
+   * @param {String} id Index object ID
+   * @param {String} version Version to remove.
+   * @return {Promise}
+   */
+  removeVersion(id, version) {
+    return this.readIndex(id)
+    .then((doc) => {
+      const vs = doc.versions;
+      if (!(vs instanceof Array)) {
+        return;
+      }
+      const index = vs.indexOf(version);
+      if (index === -1) {
+        return;
+      }
+      vs.splice(index, 1);
+      if (vs.length === 0) {
+        return this.remove(id)
+        .then(() => undefined);
+      }
+      doc.versions = vs;
+      if (doc.latest === version) {
+        doc.latest = vs[vs.length - 1];
+      }
+      return this.updateIndex(doc)
+      .then(() => this._removeVersion(id + '|' + version));
+    });
+  }
+  /**
+   * Removes versions of API data in bulk operation.
+   * @param {String} indexId Index object ID
+   * @param {Array<String>} versions List of versions to remove.
+   * @return {Promise}
+   */
+  removeVersions(indexId, versions) {
+    if (!indexId || !(versions instanceof Array)) {
+      return Promise.resolve();
+    }
+    const ids = versions.map((v) => indexId + '|' + v);
+    return this._removeVersions(ids);
+  }
+
+  _removeVersions(ids) {
+    const id = ids.shift();
+    if (!id) {
+      return Promise.resolve();
+    }
+    return this._removeVersion(id)
+    .then(() => this._removeVersions(ids));
+  }
+
+  _removeVersion(id) {
+    return this.readData(id)
+    .catch((cause) => {
+      if (cause.status === 404) {
+        return;
+      }
+      this._handleException(cause);
     })
     .then((doc) => {
+      if (!doc) {
+        return;
+      }
       doc._deleted = true;
       return this.dataDb.put(doc);
     })
     .then(() => {
+      const parts = id.split('|');
       const detail = {
-        id: id
+        id: parts[0],
+        version: parts[1]
       };
-      this._fireUpdated('rest-api-deleted', detail);
-    });
-  }
-  /**
-   * Creates datastores entries for REST API.
-   * It creates data object and index object used for listings.
-   *
-   * @param {Object} raml A RAML data to insert
-   * @param {Number} order Optional, creates a datastore entry with given order.
-   * @return {Promise} A promise resolved when the datastore objects are created.
-   * Resolved promise contains index object.
-   */
-  create(raml, order) {
-    const doc = this._prepareStoreObject(raml);
-    let indexObj;
-    return this.updateData(doc)
-    .then((doc) => {
-      indexObj = this._prepareIndexObject(doc, order);
-      return this.updateIndex(indexObj);
+      this._fireUpdated('api-version-deleted', detail);
     });
   }
   /**
@@ -501,7 +358,7 @@ class RestApiModel extends ArcBaseModel {
       if (response && response.rows.length > 0) {
         queryOptions.startkey = response.rows[response.rows.length - 1].key;
         queryOptions.skip = 1;
-        data = response.rows.map(item => item.doc);
+        data = response.rows.map((item) => item.doc);
       }
       opts.nextPageToken = opts.nextPageToken || this._makeNextPageToken();
       this._cachedQueryOptions[opts.nextPageToken] = queryOptions;
@@ -525,40 +382,36 @@ class RestApiModel extends ArcBaseModel {
     return text;
   }
   /**
-   * A handler for `rest-api-create` custom event.
-   * It only handles event's that hasn't been cancelled.
+   * A handler for `api-index-changed` custom event.
    *
-   * Required detail property is `raml` with the RAML data to insert.
-   * Optional property is `order` that describes order on the list.
-   *
-   * It sets a `result` property on the event `detail` object that is a
-   * promise returned by `create()` function.
+   * @param {CustomEvent} e
    */
-  _createHandler(e) {
-    if (e.defaultPrevented) {
+  _indexChangeHandler(e) {
+    if (e.defaultPrevented || !e.cancelable) {
       return;
     }
     e.preventDefault();
     e.stopPropagation();
-    if (!e.detail || !e.detail.raml) {
-      e.detail.result = Promise.reject(new Error('The "raml" property is missing.'));
+    if (!e.detail || !e.detail.apiInfo) {
+      e.detail.result = Promise.reject(new Error('The "apiInfo" property is missing.'));
       return;
     }
-    e.detail.result = this.create(e.detail.raml, e.detail.order)
+    e.detail.result = this.updateIndex(e.detail.apiInfo)
     .catch((e) => this._handleException(e));
   }
   /**
-   * Handler for the `rest-api-read` custom event.
-   * It only handles event's that hasn't been cancelled.
+   * Handler for the `api-data-read` custom event.
    *
    * Event `detail` object must contain the `id` property with datastore entry
    * id and may contain a `rev` property to read a specific revision.
    *
    * It sets a `result` property on the event `detail` object that is a
    * promise returned by `readData()` function.
+   *
+   * @param {CustomEvent} e
    */
   _readHandler(e) {
-    if (e.defaultPrevented) {
+    if (e.defaultPrevented || !e.cancelable) {
       return;
     }
     e.preventDefault();
@@ -571,44 +424,50 @@ class RestApiModel extends ArcBaseModel {
     e.detail.result = this.readData(e.detail.id, e.detail.rev)
     .catch((e) => this._handleException(e));
   }
-  /**
-   * A handler for the `rest-api-index-updated` custom event.
-   * It is only handled if the event in cancelable and not cancelled.
-   *
-   * Updates index object in the datastore and sets `result` property on the
-   * event detail object with a result of calling `updateIndex()` function.
-   */
-  _indexUpdatedHandler(e) {
-    if (!e.cancelable || e.composedPath()[0] === this || e.defaultPrevented) {
+
+  _readIndexHandler(e) {
+    if (e.defaultPrevented || !e.cancelable) {
       return;
     }
     e.preventDefault();
     e.stopPropagation();
-    if (!e.detail.doc) {
-      e.detail.result = Promise.reject(new Error('The "doc" property is missing.'));
+    if (!e.detail.baseUri) {
+      e.detail.result = Promise.reject(new Error('The "baseUri" property is missing.'));
       return;
     }
-    e.detail.result = this.updateIndex(e.detail.doc)
-    .catch((e) => this._handleException(e));
+    e.detail.result = this.readIndex(e.detail.baseUri, e.detail.rev)
+    .catch((e) => {
+      if (e.status === 404) {
+        return;
+      }
+      this._handleException(e);
+    });
   }
   /**
-   * A handler for the `rest-api-data-updated` custom event.
-   * It is only handled if the event in cancelable and not cancelled.
+   * Handler for the `api-data-changed` custom event.
    *
-   * Updates RAML data object in the datastore and sets `result` property on the
-   * event detail object with a result of calling `updateData()` function.
+   * @param {CustomEvent} e
    */
-  _dataUpdatedHandler(e) {
-    if (!e.cancelable || e.composedPath()[0] === this || e.defaultPrevented) {
+  _dataUpdateHandler(e) {
+    if (!e.cancelable || e.defaultPrevented) {
       return;
     }
     e.preventDefault();
     e.stopPropagation();
-    if (!e.detail.doc) {
-      e.detail.result = Promise.reject(new Error('The "doc" property is missing.'));
+    const {data, indexId, version} = e.detail;
+    if (!indexId) {
+      e.detail.result = Promise.reject(new Error('The "indexId" property is missing.'));
       return;
     }
-    e.detail.result = this.updateData(e.detail.doc)
+    if (!version) {
+      e.detail.result = Promise.reject(new Error('The "version" property is missing.'));
+      return;
+    }
+    if (!data) {
+      e.detail.result = Promise.reject(new Error('The "data" property is missing.'));
+      return;
+    }
+    e.detail.result = this.updateData(indexId, version, data)
     .catch((e) => this._handleException(e));
   }
   /**
@@ -619,6 +478,8 @@ class RestApiModel extends ArcBaseModel {
    *
    * It sets `result` property on the event detail object with a result of
    * calling `remove()` function.
+   *
+   * @param {CustomEvent} e
    */
   _deletedHandler(e) {
     if (!e.cancelable || e.composedPath()[0] === this || e.defaultPrevented) {
@@ -633,13 +494,34 @@ class RestApiModel extends ArcBaseModel {
     e.detail.result = this.remove(e.detail.id)
     .catch((e) => this._handleException(e));
   }
+
+  _versionDeletedHandler(e) {
+    if (!e.cancelable || e.composedPath()[0] === this || e.defaultPrevented) {
+      return;
+    }
+    e.preventDefault();
+    e.stopPropagation();
+    const {id, version} = e.detail;
+    if (!id) {
+      e.detail.result = Promise.reject(new Error('The "id" property is missing.'));
+      return;
+    }
+    if (!version) {
+      e.detail.result = Promise.reject(new Error('The "version" property is missing.'));
+      return;
+    }
+    e.detail.result = this.removeVersion(id, version)
+    .catch((e) => this._handleException(e));
+  }
   /**
-   * Handler for the `rest-api-index-updated-batch` custom event.
-   * It requires to have `docs` property set to event detail as an array of
+   * Handler for the `api-index-changed-batch` custom event.
+   * It requires to have `items` property set to event detail as an array of
    * PouchDB documents to update.
    *
    * It sets `result` property on the event detail object with a result of
    * calling `updateIndexBatch()` function.
+   *
+   * @param {CustomEvent} e
    */
   _indexesUpdatedHandler(e) {
     if (!e.cancelable || e.composedPath()[0] === this || e.defaultPrevented) {
@@ -647,20 +529,23 @@ class RestApiModel extends ArcBaseModel {
     }
     e.preventDefault();
     e.stopPropagation();
-    if (!e.detail.docs) {
-      e.detail.result = Promise.reject(new Error('The "docs" property is missing.'));
+    const {items} = e.detail;
+    if (!items) {
+      e.detail.result = Promise.reject(new Error('The "items" property is missing.'));
       return;
     }
-    e.detail.result = this.updateIndexBatch(e.detail.docs)
+    if (!(items instanceof Array)) {
+      e.detail.result = Promise.reject(
+        new Error('The "items" property is not an array.'));
+      return;
+    }
+    e.detail.result = this.updateIndexBatch(e.detail.items)
     .catch((e) => this._handleException(e));
   }
   /**
-   * Handler for the `rest-api-index-list` custom event.
+   * Handler for the `api-index-list` custom event.
    *
-   * The `detail` object can contain `nextPageToken` property used for pagination.
-   *
-   * It sets `result` property on the event detail object with a result of
-   * calling `listIndex()` function.
+   * @param {CustomEvent} e
    */
   _indexListHandler(e) {
     if (!e.cancelable || e.composedPath()[0] === this || e.defaultPrevented) {
@@ -672,48 +557,6 @@ class RestApiModel extends ArcBaseModel {
     .catch((e) => this._handleException(e));
   }
   /**
-   * Prepares PouchDB data object to store in the datastore.
-   *
-   * @return {Object} Datastore object
-   */
-  _prepareStoreObject(raml) {
-    const result = {
-      raml: raml,
-      created: Date.now()
-    };
-    const title = raml.title || 'Untitled';
-    const version = raml.version || '0';
-    const baseUri = raml.baseUri || '/';
-    let id = encodeURIComponent(title.toLowerCase());
-    id += '/' + encodeURIComponent(String(version).toLowerCase());
-    id += '/' + encodeURIComponent(baseUri.toLowerCase());
-    result._id = id;
-    return result;
-  }
-  /**
-   * Prepares index data store object for the REST API.
-   *
-   * @param {Object} storeObject A store object with RAML data
-   * @param {?Number} order Optional, creates a datastore entry with given order.
-   * @return {Object} Index store object.
-   */
-  _prepareIndexObject(storeObject, order) {
-    if (order) {
-      order = Number(order);
-      if (order !== order) {
-        order = undefined;
-      }
-    }
-    return {
-      _id: storeObject._id,
-      title: storeObject.raml.title || 'Untitled',
-      version: storeObject.raml.version || 'Unknown version',
-      baseUri: storeObject.raml.baseUri || '/',
-      order: order || 0,
-      description: storeObject.raml.description
-    };
-  }
-  /**
    * Fired when index data has been updated.
    * The event is non cancelable which means that the change is commited to the
    * datastore.
@@ -721,7 +564,7 @@ class RestApiModel extends ArcBaseModel {
    * It sets a `result` property on event `detail` object which contains a return
    * value from calling `updateIndex()` function.
    *
-   * @event rest-api-index-updated
+   * @event api-index-changed
    * @param {Object} doc PouchDB document representing index data.
    */
 
@@ -733,7 +576,7 @@ class RestApiModel extends ArcBaseModel {
    * It sets a `result` property on event `detail` object which contains a return
    * value from calling `updateData()` function.
    *
-   * @event rest-api-data-updated
+   * @event api-data-changed
    * @param {Object} doc PouchDB document representing API data.
    */
 
@@ -745,7 +588,7 @@ class RestApiModel extends ArcBaseModel {
    * It sets a `result` property on event `detail` object which contains a return
    * value from calling `remove()` function.
    *
-   * @event rest-api-deleted
+   * @event api-deleted
    * @param {String} id Datastore ID of deleted item.
    */
 }

@@ -16,51 +16,54 @@ the License.
 /**
  * Model for host rules.
  *
+ * Available events:
+ *
+ * - `host-rules-insert` Bulk add hosts
+ * - `host-rules-changed` Change / add record
+ * - `host-rules-deleted` Remove record
+ * - `host-rules-list` Lists all rules
+ * - `host-rules-clear` Clears hosts datastore
+ *
+ * Each event must be cancelable or it will be ignored.
+ * The insert, change and delete events dispatches non cancelable update/delete
+ * events. Application should listen for this events to update it's state.
+ *
  * @polymer
  * @customElement
  * @memberof LogicElements
  */
 class HostRulesModel extends ArcBaseModel {
-  static get is() { return 'host-rules-model'; };
+  /* global ArcBaseModel */
+  static get is() {
+    return 'host-rules-model';
+  }
 
   constructor() {
-    super();
+    super('host-rules', 10);
     this._updatedHandler = this._updatedHandler.bind(this);
     this._deletedHandler = this._deletedHandler.bind(this);
     this._listHandler = this._listHandler.bind(this);
+    this._clearHandler = this._clearHandler.bind(this);
+    this._insertHandler = this._insertHandler.bind(this);
   }
 
   _attachListeners(node) {
+    super._attachListeners(node);
+    node.addEventListener('host-rules-insert', this._insertHandler);
     node.addEventListener('host-rules-changed', this._updatedHandler);
     node.addEventListener('host-rules-deleted', this._deletedHandler);
     node.addEventListener('host-rules-list', this._listHandler);
+    node.addEventListener('host-rules-clear', this._clearHandler);
   }
 
   _detachListeners(node) {
+    super._detachListeners(node);
+    node.removeEventListener('host-rules-insert', this._insertHandler);
     node.removeEventListener('host-rules-changed', this._updatedHandler);
     node.removeEventListener('host-rules-deleted', this._deletedHandler);
     node.removeEventListener('host-rules-list', this._listHandler);
+    node.removeEventListener('host-rules-clear', this._clearHandler);
   }
-  // A handler to host rules database
-  get db() {
-    return new PouchDB('host-rules');
-  }
-
-  /**
-   * Reads an entry from the datastore.
-   *
-   * @param {String} id The ID of the datastore entry.
-   * @param {?String} rev Specific revision to read. Defaults to latest revision.
-   * @return {Promise} Promise resolved to a project object.
-   */
-  read(id, rev) {
-    const opts = {};
-    if (rev) {
-      opts.rev = rev;
-    }
-    return this.db.get(id, opts);
-  }
-
   /**
    * Updates / saves the host rule object in the datastore.
    * This function fires `host-rules-changed` event.
@@ -82,6 +85,41 @@ class HostRulesModel extends ArcBaseModel {
     });
   }
   /**
+   * Updates / saves the host rule object in the datastore.
+   * This function fires `host-rules-changed` event.
+   *
+   * @param {Array<Object>} rules List of rules to save / update
+   * @return {Promise} Resolved promise to the result of Pouch DB operation
+   */
+  updateBulk(rules) {
+    rules.forEach((item) => {
+      item.updated = Date.now();
+    });
+    return this.db.bulkDocs(rules)
+    .then((response) => {
+      for (let i = 0, len = response.length; i < len; i++) {
+        const r = response[i];
+        if (r.error) {
+          this._handleException(r, true);
+          continue;
+        }
+        const rule = rules[i];
+        const oldRev = rule._rev;
+        rule._rev = r.rev;
+        if (!rule._id) {
+          rule._id = r.id;
+        }
+        const detail = {
+          rule,
+          oldRev: oldRev
+        };
+        this._fireUpdated('host-rules-changed', detail);
+      }
+      return response;
+    });
+  }
+
+  /**
    * Removed an object from the datastore.
    * This function fires `host-rules-deleted` event.
    *
@@ -99,7 +137,7 @@ class HostRulesModel extends ArcBaseModel {
     }
     return promise
     .then(() => this.db.remove(id, rev))
-    .then(response => {
+    .then((response) => {
       const detail = {
         id: id,
         rev: response.rev,
@@ -121,13 +159,33 @@ class HostRulesModel extends ArcBaseModel {
       // jscs:enable
     };
     return this.db.allDocs(queryOptions)
-    .then(response => {
+    .then((response) => {
       let data = [];
       if (response && response.rows.length > 0) {
-        data = response.rows.map(item => item.doc);
+        data = response.rows.map((item) => item.doc);
       }
       return data;
     });
+  }
+  /**
+   * Handler for `host-rules-insert` custom event. Creates rules in bulk.
+   * It sets `result` property on event detail object with a result of calling
+   * `updateBulk()` function.
+   *
+   * @param {CustomEvent} e
+   */
+  _insertHandler(e) {
+    if (!e.cancelable) {
+      return;
+    }
+    e.preventDefault();
+    e.stopPropagation();
+    const rules = e.detail.rules;
+    if (!rules) {
+      e.detail.result = Promise.reject(new Error('The "rules" property is missing'));
+      return;
+    }
+    e.detail.result = this.updateBulk(rules);
   }
 
   _updatedHandler(e) {
@@ -136,7 +194,7 @@ class HostRulesModel extends ArcBaseModel {
     }
     e.preventDefault();
     e.stopPropagation();
-    var rule = e.detail.rule;
+    const rule = e.detail.rule;
     if (!rule || !rule._id) {
       e.detail.result = Promise.reject(new Error('The "rule" property is missing'));
       return;
@@ -149,8 +207,9 @@ class HostRulesModel extends ArcBaseModel {
         if (e.status === 404) {
           // create new
           return {};
+        } else {
+          this._handleException(e);
         }
-        this._handleException(e);
       });
     } else {
       p = Promise.resolve({});
@@ -188,6 +247,18 @@ class HostRulesModel extends ArcBaseModel {
     e.stopPropagation();
     e.detail.result = this.list()
     .catch((e) => this._handleException(e));
+  }
+
+  _clearHandler(e) {
+    if (!e.cancelable || e.composedPath()[0] === this) {
+      return;
+    }
+    e.preventDefault();
+    e.stopPropagation();
+    e.detail.result = this.db.destroy()
+    .then(() => {
+      this._fireUpdated('host-rules-clear');
+    });
   }
 }
 window.customElements.define(HostRulesModel.is, HostRulesModel);

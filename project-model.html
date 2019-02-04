@@ -11,7 +11,7 @@ WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
 License for the specific language governing permissions and limitations under
 the License.
 -->
-<link rel="import" href="base-model.html">
+<link rel="import" href="request-base-model.html">
 <script>
 /**
  * Events based access to projects datastore.
@@ -32,6 +32,10 @@ the License.
  *
  * Events handled by this element are cancelled and propagation of the event is
  * stopped.
+ *
+ * See model description here:
+ * https://github.com/advanced-rest-client/api-components-api/blob/master/docs/
+ * arc-models.md#arcproject
  *
  * Supported operations:
  *
@@ -57,31 +61,6 @@ the License.
  * ```javascript
  * var event = new CustomEvent('project-read', {
  *    detail: { id: 'some-id' },
- *    bubbles: true,
- *    composed: true,
- *    cancelable: true
- * });
- * document.body.dispatchEvent(event);
- * if (event.defaultPrevented) {
- *    event.detail.result.then(project => console.log(project));
- * }
- * ```
- *
- * #### `project-name-changed` event
- *
- * Changes name of a project. Promise result has updated name and `_rev` properties.
- *
- * ##### Properties
- * -   `id` (String, required if `project` is not set) ID of the datastore entry
- * -   `project` (Object, required if `id` is not set) The database entity
- * -   `name` (String, required) New name of the project. It doesn't matter if
- * `project` property already has new name.
- *
- * ##### Example
- *
- * ```javascript
- * var event = new CustomEvent('project-name-changed', {
- *    detail: { id: 'some-id', name: 'new name' },
  *    bubbles: true,
  *    composed: true,
  *    cancelable: true
@@ -146,6 +125,12 @@ the License.
  * Reads the list of all projects. Promise resolves to the list of projects.
  * This event doesn't requeire any properties but **the `details` object must be set**.
  *
+ * ##### Properties
+ *
+ * -   `ids` (Array<String>, optional) If present it only returns data for
+ * ids passed in this array. If the data does not exists in the store anymore
+ * this item is `undefined` in the response.
+ *
  * ##### Example
  *
  * ```javascript
@@ -161,185 +146,212 @@ the License.
  * }
  * ```
  *
+ * #### `project-update-bulk` event
+ *
+ * Used to create / update projects in bulk
+ *
+ * It expects `projects` property to be set on the detail object.
+ * Each item must be an object at least containing the name. Otherwise the
+ * object is ignored.
+ *
+ * ##### Example
+ *
+ * ```javascript
+ * var event = new CustomEvent('project-update-bulk', {
+ *    detail: {
+ *      projects: [{name: 'my project'}]
+ *    },
+ *    bubbles: true,
+ *    composed: true,
+ *    cancelable: true
+ * });
+ * document.body.dispatchEvent(event);
+ * if (event.defaultPrevented) {
+ *    event.detail.result.then(list => console.log(list));
+ * }
+ * ```
+ *
  * @polymer
  * @customElement
  * @memberof LogicElements
+ * @extends RequestBaseModel
  */
-class ProjectModel extends ArcBaseModel {
-  static get is() { return 'project-model'; };
-
+class ProjectModel extends RequestBaseModel {
+  static get is() {
+    return 'project-model';
+  }
+  /**
+   * @constructor
+   */
   constructor() {
-    super();
+    super('legacy-projects');
     this._handleRead = this._handleRead.bind(this);
-    this._handleNameChange = this._handleNameChange.bind(this);
     this._handleObjectSave = this._handleObjectSave.bind(this);
     this._handleObjectDelete = this._handleObjectDelete.bind(this);
     this._queryHandler = this._queryHandler.bind(this);
+    this._createBulkHandler = this._createBulkHandler.bind(this);
   }
-
+  /**
+   * @param {HTMLElement} node
+   */
   _attachListeners(node) {
+    super._attachListeners(node);
     node.addEventListener('project-read', this._handleRead);
-    node.addEventListener('project-name-changed', this._handleNameChange);
     node.addEventListener('project-object-changed', this._handleObjectSave);
     node.addEventListener('project-object-deleted', this._handleObjectDelete);
     node.addEventListener('project-model-query', this._queryHandler);
-  }
-
-  _detachListeners(node) {
-    node.removeEventListener('project-read', this._handleRead);
-    node.removeEventListener('project-name-changed', this._handleNameChange);
-    node.removeEventListener('project-object-changed', this._handleObjectSave);
-    node.removeEventListener('project-object-deleted', this._handleObjectDelete);
-    node.removeEventListener('project-model-query', this._queryHandler);
-  }
-
-  get db() {
-    return new PouchDB('legacy-projects');
+    node.addEventListener('project-update-bulk', this._createBulkHandler);
   }
   /**
+   * @param {HTMLElement} node
+   */
+  _detachListeners(node) {
+    super._detachListeners(node);
+    node.removeEventListener('project-read', this._handleRead);
+    node.removeEventListener('project-object-changed', this._handleObjectSave);
+    node.removeEventListener('project-object-deleted',
+      this._handleObjectDelete);
+    node.removeEventListener('project-model-query', this._queryHandler);
+    node.removeEventListener('project-update-bulk', this._createBulkHandler);
+  }
+
+  /**
    * Handler for project read event request.
+   * @param {CustomEvent} e
    */
   _handleRead(e) {
-    if (!e.cancelable || e.composedPath()[0] === this) {
+    if (this._eventCancelled(e)) {
       return;
     }
-    e.preventDefault();
-    e.stopPropagation();
+    this._cancelEvent(e);
 
     if (!e.detail.id) {
-      e.detail.result = Promise.reject(new Error('Project "id" property must be set.'));
+      e.detail.result = Promise.reject(
+        new Error('Project "id" property must be set.'));
       return;
     }
-    e.detail.result = this.read(e.detail.id, e.detail.rev)
+    e.detail.result = this.readProject(e.detail.id, e.detail.rev)
     .catch((e) => this._handleException(e));
   }
   /**
-   * Reads an entry from the datastore.
-   *
-   * @param {String} id The ID of the datastore entry.
-   * @param {?String} rev Specific revision to read. Defaults to latest revision.
-   * @return {Promise} Promise resolved to a project object.
+   * Handler for `project-update-bulk` custom event.
+   * @param {CustomEvent} e
    */
-  read(id, rev) {
-    const opts = {};
-    if (rev) {
-      opts.rev = rev;
+  _createBulkHandler(e) {
+    if (this._eventCancelled(e)) {
+      return;
     }
-    const db = this.db;
-    return db.get(id, opts);
+    this._cancelEvent(e);
+    const {projects} = e.detail;
+    if (!projects || !projects.length) {
+      e.detail.result = Promise.reject(new Error('The "projects" property is required'));
+      return;
+    }
+    e.detail.result = this.updateBulk(projects);
   }
   /**
-   * Updates / saves the project object in the datastore.
-   * This function fires `project-object-changed` event.
+   * Normalizes projects list to common model.
+   * It updates `updated` property to current time.
+   * If an item is not an object then it is removed.
    *
-   * @param {Object} project A project to save / update
-   * @return {Promise} Resolved promise to project object with updated `_rev`
+   * @param {Array<Object>} projects List of projects.
+   * @return {Array<Object>}
    */
-  update(project) {
-    project.updated = Date.now();
-    const oldRev = project._rev;
-    return this.db.put(project)
-    .then((result) => {
-      project._rev = result.rev;
-      this._fireUpdated('project-object-changed', {
-        project: project,
-        oldRev: oldRev
-      });
-      return project;
-    });
+  _normalizeProjects(projects) {
+    for (let i = projects.length - 1; i >= 0; i--) {
+      let item = projects[i];
+      if (!item || typeof item !== 'object') {
+        projects.splice(i, 1);
+        continue;
+      }
+      item = Object.assign({}, {
+        order: 0,
+        requests: []
+      }, item);
+      item.updated = Date.now();
+      if (!item.created) {
+        item.created = item.updated;
+      }
+      projects[i] = item;
+    }
+    return projects;
   }
   /**
-   * Removed an object from the datastore.
-   * This function fires `project-object-deleted` event.
-   *
-   * @param {String} id The ID of the datastore entry.
-   * @param {?String} rev Specific revision to read. Defaults to latest revision.
-   * @return {Promise} Promise resolved to a new `_rev` property of deleted object.
+   * Updates more than one project in a bulk request.
+   * @param {Array<Object>} projects List of requests to update.
+   * @return {Promise}
    */
-  remove(id, rev) {
-    let promise;
-    if (!rev) {
-      promise = this.read(id)
-      .then((obj) => rev = obj._rev);
-    } else {
-      promise = Promise.resolve();
-    }
-    return promise
-    .then(() => this.db.remove(id, rev))
-    .then((response) => {
+  updateBulk(projects) {
+    this._normalizeProjects(projects);
+    return this.projectDb.bulkDocs(projects)
+    .then((response) => this._processUpdateBulkResponse(projects, response));
+  }
+  /**
+   * Processes datastore response after calling `updateBulk()` function.
+   * @param {Array<Object>} projects List of requests to update.
+   * @param {Array<Object>} response PouchDB response
+   * @return {Array<Object>} List of projects with updated `_id` and `_rew`
+   */
+  _processUpdateBulkResponse(projects, response) {
+    const result = [];
+    for (let i = 0, len = response.length; i < len; i++) {
+      const r = response[i];
+      const project = projects[i];
+      if (r.error) {
+        this._handleException(r, true);
+        result.push(Object.assign({error: true}, project));
+        continue;
+      }
+      const oldRev = project._rev;
+      project._rev = r.rev;
+      if (!project._id) {
+        project._id = r.id;
+      }
       const detail = {
-        id: id,
-        rev: response.rev,
-        oldRev: rev
+        project,
+        oldRev: oldRev
       };
-      this._fireUpdated('project-object-deleted', detail);
-      return response.rev;
-    });
+      this._fireUpdated('project-object-changed', detail);
+      result.push(project);
+    }
+    return result;
   }
   /**
    * Lists all project objects.
+   *
+   * @param {?Array<String>} ids Optional, list of project IDs to limit the
+   * response to specific projects
    * @return {Promise} A promise resolved to a list of projects.
    */
-  list() {
-    return this.db.allDocs({
+  listProjects(ids) {
+    const opts = {
       // jscs:disable
       include_docs: true
       // jscs:enable
-    })
+    };
+    if (ids && ids.length) {
+      opts.keys = ids;
+    }
+    return this.projectDb.allDocs(opts)
     .then((result) => result.rows.map((item) => item.doc));
   }
-
-  // Updates name of a project.
-  _handleNameChange(e) {
-    if (!e.cancelable || e.composedPath()[0] === this) {
-      return;
-    }
-    e.preventDefault();
-    e.stopPropagation();
-
-    if (!e.detail.name) {
-      e.detail.result = Promise.reject(new Error('New name must be set'));
-      return;
-    }
-    const missingDataMsg = 'Either "project" object or project "id" must be set.';
-    if (!e.detail.project && !e.detail.id) {
-      e.detail.result = Promise.reject(new Error(missingDataMsg));
-      return;
-    }
-    const project = e.detail.project;
-    let promise;
-    if (project && project._id && project._rev) {
-      promise = Promise.resolve(project);
-    } else {
-      if (!e.detail.id) {
-        e.detail.result = Promise.reject(new Error(missingDataMsg));
-        return;
-      }
-      promise = this.read(e.detail.id);
-    }
-
-    e.detail.result = promise
-    .then((obj) => {
-      obj = Object.assign({}, obj);
-      obj.name = e.detail.name;
-      return this.update(obj);
-    })
-    .catch((e) => this._handleException(e));
-  }
-  // Handles onject save / update
+  /**
+   * Handles object save / update
+   * @param {CustomEvent} e
+   */
   _handleObjectSave(e) {
-    if (!e.cancelable || e.composedPath()[0] === this) {
+    if (this._eventCancelled(e)) {
       return;
     }
-    e.preventDefault();
-    e.stopPropagation();
+    this._cancelEvent(e);
 
     const project = e.detail.project;
     if (!project || !project._id) {
-      e.detail.result = Promise.reject(new Error('The "project" property is missing'));
+      e.detail.result = Promise.reject(
+        new Error('The "project" property is missing'));
       return;
     }
-    const db = this.db;
+    const db = this.projectDb;
     let p;
     if (!project._rev) {
       p = db.get(project._id)
@@ -356,37 +368,42 @@ class ProjectModel extends ArcBaseModel {
     e.detail.result = p
     .then((result) => {
       result = Object.assign({}, result, project);
-      return this.update(result);
+      return this.updateProject(result);
     })
     .catch((e) => this._handleException(e));
   }
-  // Deletes the object from the datastore.
+  /**
+   * Deletes the object from the datastore.
+   * @param {CustomEvent} e
+   */
   _handleObjectDelete(e) {
-    if (!e.cancelable || e.composedPath()[0] === this) {
+    if (this._eventCancelled(e)) {
       return;
     }
-    e.preventDefault();
-    e.stopPropagation();
+    this._cancelEvent(e);
 
     const id = e.detail.id;
     if (!id) {
       e.detail.result = Promise.reject(new Error('Missing "id" property.'));
       return;
     }
-    e.detail.result = this.remove(id, e.detail.rev)
+    e.detail.result = this.removeProject(id, e.detail.rev)
     .catch((e) => this._handleException(e));
   }
-  // Queries for a list of projects.
+  /**
+   * Queries for a list of projects.
+   * @param {CustomEvent} e
+   */
   _queryHandler(e) {
-    if (!e.cancelable || e.composedPath()[0] === this) {
+    if (this._eventCancelled(e)) {
       return;
     }
+    this._cancelEvent(e);
     if (!e.detail) {
-      throw new Error('The `detail` object must be set prior sending the event');
+      throw new Error(
+        'The `detail` object must be set prior sending the event');
     }
-    e.stopImmediatePropagation();
-    e.preventDefault();
-    e.detail.result = this.list();
+    e.detail.result = this.listProjects(e.detail.keys);
   }
   /**
    * Fired when the project entity has been saved / updated in the datastore.

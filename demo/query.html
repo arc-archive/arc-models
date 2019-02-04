@@ -1,0 +1,244 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, minimum-scale=1, initial-scale=1, user-scalable=yes">
+  <title>Request query demo</title>
+  <script src="../../webcomponentsjs/webcomponents-loader.js"></script>
+  <link rel="import" href="../../shadycss/apply-shim.html">
+  <link rel="import" href="../../polymer/lib/elements/custom-style.html">
+  <link rel="import" href="../../polymer/lib/elements/dom-bind.html">
+  <link rel="import" href="../../iron-demo-helpers/demo-pages-shared-styles.html">
+  <link rel="import" href="../../paper-input/paper-input.html">
+  <link rel="import" href="../../paper-button/paper-button.html">
+  <link rel="import" href="../../paper-checkbox/paper-checkbox.html">
+  <link rel="import" href="../../paper-toast/paper-toast.html">
+  <link rel="import" href="../../paper-dropdown-menu/paper-dropdown-menu.html">
+  <link rel="import" href="../../paper-item/paper-item.html">
+  <link rel="import" href="../../paper-listbox/paper-listbox.html">
+  <link rel="import" href="../../neon-animation/web-animations.html">
+  <link rel="import" href="../../app-pouchdb/pouchdb.html">
+  <link rel="import" href="../../paper-styles/shadow.html">
+  <link rel="import" href="../request-model.html">
+  <script src="../../chance/chance.js"></script>
+  <custom-style>
+    <style is="custom-style" include="demo-pages-shared-styles">
+    :root {
+      --arc-font-body1: {
+        @apply --paper-font-body1;
+      }
+    }
+
+    h1 {
+      @apply --paper-font-headline;
+    }
+
+    h2 {
+      @apply --paper-font-title;
+    }
+
+    .card {
+      @apply --shadow-elevation-3dp;
+      margin-top: 12px;
+      margin-bottom: 12px;
+      background-color: #fff;
+      padding: 12px;
+    }
+
+    .search-box {
+      @apply --layout-horizontal;
+    }
+
+    .search-box paper-input {
+      @apply --layout-flex;
+    }
+    </style>
+  </custom-style>
+</head>
+<body>
+  <header>
+    <h1>Query model demo<h1>
+  </header>
+  <dom-bind id="demo">
+    <template is="dom-bind">
+      <request-model id="model" on-request-indexing-finished="_indexFinished"></request-model>
+      <section class="card centered options">
+        <h2>Data options</h2>
+        <paper-button on-click="genData">Generate data</paper-button>
+        <paper-button on-click="deleteData">Destroy data</paper-button>
+        <paper-button on-click="forceIndex">Force PouchDB index</paper-button>
+      </section>
+
+      <section class="card centered options">
+        <h2>Search options</h2>
+        <paper-dropdown-menu label="Request type">
+          <paper-listbox slot="dropdown-content" selected="{{requestType}}">
+            <paper-item>History and saved</paper-item>
+            <paper-item>History only</paper-item>
+            <paper-item>Saved only</paper-item>
+          </paper-listbox>
+        </paper-dropdown-menu>
+        <div>
+          <paper-checkbox checked="{{detailedSearch}}">Perform detailed search</paper-checkbox>
+        </div>
+      </section>
+
+      <section class="centered card" role="main">
+        <h2>Search data store</h2>
+        <div class="search-box">
+          <paper-input label="Search term" id="q" name="q" value="{{q}}"></paper-input>
+          <paper-button on-click="search">Search</paper-button>
+        </div>
+      </section>
+
+      <template is="dom-if" if="[[hasResults]]">
+        <section class="centered card" role="main">
+          <h2>Search Results ([[results.length]])</h2>
+          <template is="dom-repeat" items="[[results]]">
+            <p>[[index]]: [[item._id]], [[item.type]]</p>
+          </template>
+        </section>
+      </template>
+
+    </template>
+  </dom-bind>
+  <paper-toast text="Data is indexed" id="indexOk"></paper-toast>
+  <paper-toast text="Datastore cleared" id="deleteOk"></paper-toast>
+  <paper-toast text="Datastore indexed" id="indexedOk"></paper-toast>
+  <script>
+  (function(scope) {
+    /* global chance, RequestDb */
+    scope.q = 'api';
+    scope.requestType = 0;
+    scope.hasResults = false;
+    scope.genData = function() {
+      const domains = [
+        'https://domain.com/',
+        'https://api.domain.com/',
+        'https://domain.com/domain/',
+        'https://mulesoft.com/',
+        'https://api.mulesoft.com/',
+        'http://other.com/'
+      ];
+      const history = [];
+      const saved = [];
+      for (let i = 0; i < 1000; i++) {
+        let url = chance.pickone(domains);
+        for (let j = 0; j < chance.integer({min: 0, max: 3}); j++) {
+          url += chance.word() + '/';
+        }
+        url = url.substr(0, url.length - 1);
+        if (chance.bool()) {
+          url += '?a=b&c=d';
+        }
+        const type = chance.bool() ? 'history' : 'saved';
+        const item = {
+          _id: chance.guid({version: 5}),
+          url,
+          type,
+          method: 'GET',
+          headers: 'x-headers: true'
+        };
+        if (type === 'history') {
+          history[history.length] = item;
+        } else {
+          saved[saved.length] = item;
+        }
+      }
+      performance.mark('inserts-start');
+      const model = document.getElementById('model');
+      model.updateBulk('history', history);
+      model.updateBulk('saved', saved);
+    };
+
+    scope._dumpMeasurements = function() {
+      const ms = performance.getEntriesByType('measure');
+      console.table(ms.map((item) => {
+        return {
+          name: item.name,
+          duration: item.duration
+        };
+      }));
+      performance.clearMeasures();
+    };
+
+    scope._indexFinished = function() {
+      performance.mark('inserts-end');
+      performance.measure('inserts-end', 'inserts-start');
+      console.log('Indexing finished');
+      scope._dumpMeasurements();
+      document.getElementById('indexOk').opened = true;
+    };
+    scope.deleteData = function() {
+      const indexer = new RequestDb();
+      return indexer.openSearchStore()
+      .then((db) => {
+        return new Promise((resolve, reject) => {
+          const tx = db.transaction('urls', 'readwrite');
+          const store = tx.objectStore('urls');
+          const results = [];
+          tx.onerror = () => {
+            reject(results);
+          };
+          tx.oncomplete = () => {
+            resolve(results);
+          };
+          store.clear();
+        });
+      })
+      .then(() => {
+        document.getElementById('deleteOk').opened = true;
+      });
+    };
+
+    scope.search = function() {
+      const detail = {
+        q: scope.q
+      };
+      switch (scope.requestType) {
+        case 1: detail.type = 'history'; break;
+        case 2: detail.type = 'saved'; break;
+      }
+      if (scope.detailedSearch) {
+        detail.detailed = true;
+      }
+      const e = new CustomEvent('request-query', {
+        cancelable: true,
+        bubbles: true,
+        detail
+      });
+      performance.mark('data-search');
+      document.body.dispatchEvent(e);
+      e.detail.result
+      .then((data) => {
+        performance.mark('data-search-end');
+        performance.measure('data-search-end', 'data-search');
+        scope._dumpMeasurements();
+        console.log('Query result', data);
+        scope.results = data;
+        scope.hasResults = true;
+      });
+    };
+
+    scope.forceIndex = function() {
+      const model = document.getElementById('model');
+      performance.mark('index-history');
+      model.indexData('history')
+      .then(() => {
+        performance.mark('index-history-end');
+        performance.measure('index-history-end', 'index-history');
+        performance.mark('index-saved');
+        return model.indexData('saved');
+      })
+      .then(() => {
+        performance.mark('index-saved-end');
+        performance.measure('index-saved-end', 'index-saved');
+        scope._dumpMeasurements();
+        document.getElementById('indexedOk').opened = true;
+      });
+    };
+  })(document.getElementById('demo'));
+  </script>
+</body>
+</html>

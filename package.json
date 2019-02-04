@@ -1,10 +1,10 @@
 {
-  "name": "@arc-components/arc-models",
+  "name": "@advanced-rest-client/arc-models",
   "version": "2.0.0-preview",
   "license": "Apache-2.0",
   "description": "Event based access to ARC datastores",
   "devDependencies": {
-    "@polymer/gen-typescript-declarations": "^1.1.1"
+    "@polymer/gen-typescript-declarations": "^1.6.1"
   },
   "private": false,
   "main": "arc-models.html",
