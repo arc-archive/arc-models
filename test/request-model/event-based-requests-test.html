@@ -558,6 +558,72 @@
         });
       });
     });
+
+    suite('request-project-list', function() {
+      let project;
+      suiteSetup(() => {
+        return DataGenerator.insertSavedRequestData()
+        .then((data) => {
+          project = data.projects.find((item) => !!(item.requests && item.requests.length));
+          if (!project) {
+            throw new Error('Data generator did not produced project with requests');
+          }
+        });
+      });
+
+      suiteTeardown(function() {
+        return DataGenerator.destroySavedRequestData();
+      });
+
+      let element;
+      setup(function() {
+        element = fixture('basic');
+      });
+
+      function fire(id, cancelable) {
+        if (typeof cancelable === 'undefined') {
+          cancelable = true;
+        }
+        const e = new CustomEvent('request-project-list', {
+          detail: {
+            id,
+            opts: {test: true}
+          },
+          bubbles: true,
+          composed: true,
+          cancelable
+        });
+        document.body.dispatchEvent(e);
+        return e;
+      }
+
+      test('Event is canceled', function() {
+        const e = fire(project._id);
+        assert.isTrue(e.defaultPrevented);
+        return e.detail.result;
+      });
+
+      test('Rejects when no ID', function() {
+        const e = fire();
+        return e.detail.result
+        .then(() => {
+          throw new Error('Should not resolve');
+        })
+        .catch((cause) => {
+          assert.equal(cause.message, 'Project id is not set.');
+        });
+      });
+
+      test('Calls readProjectRequests()', () => {
+        const spy = sinon.spy(element, 'readProjectRequests');
+        const e = fire(project._id);
+        return e.detail.result
+        .then(() => {
+          assert.equal(spy.args[0][0], project._id, 'Project id is set');
+          assert.deepEqual(spy.args[0][1], {test: true}, 'Options are set');
+        });
+      });
+    });
     </script>
 
   </body>

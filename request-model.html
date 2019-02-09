@@ -1287,7 +1287,7 @@ class RequestModel extends RequestBaseModel {
     e.stopPropagation();
 
     if (!e.detail.id) {
-      e.detail.result = new Promise.reject(new Error('Project id not set.'));
+      e.detail.result = Promise.reject(new Error('Project id is not set.'));
       return;
     }
     e.detail.result = this.readProjectRequests(e.detail.id, e.detail.opts);
