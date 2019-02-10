@@ -210,3 +210,63 @@
 
 
 
+## [2.0.1](https://github.com/advanced-rest-client/arc-models/compare/0.1.17...2.0.1) (2019-02-10)
+
+
+### Docs
+
+* Updating description for project model. ([9472f7314e504d8c1ed2e7c5075b8eba41b7d46e](https://github.com/advanced-rest-client/arc-models/commit/9472f7314e504d8c1ed2e7c5075b8eba41b7d46e))
+* Updating docs ([fd7d26060827a2ddfb49667472b793733ccdf431](https://github.com/advanced-rest-client/arc-models/commit/fd7d26060827a2ddfb49667472b793733ccdf431))
+* Updating docs ([f183abe2f4ee34306591464fc99c1a42fbe136e4](https://github.com/advanced-rest-client/arc-models/commit/f183abe2f4ee34306591464fc99c1a42fbe136e4))
+* Updating docs for request model. ([869062705713eff6a0c1e9ede0c163c70d5045df](https://github.com/advanced-rest-client/arc-models/commit/869062705713eff6a0c1e9ede0c163c70d5045df))
+* Updating documentation ([43d48d184c0d52c8b40aff2c41418807650d6b97](https://github.com/advanced-rest-client/arc-models/commit/43d48d184c0d52c8b40aff2c41418807650d6b97))
+* Updating Polymer docs ([e6bd6f6ac28ff682a37f53fea559a5d648fedee6](https://github.com/advanced-rest-client/arc-models/commit/e6bd6f6ac28ff682a37f53fea559a5d648fedee6))
+
+### Fix
+
+* Adding generated id to bulkUpdate ([a66bcc2ab94251441f2510094dfbcabc9cc4a8fb](https://github.com/advanced-rest-client/arc-models/commit/a66bcc2ab94251441f2510094dfbcabc9cc4a8fb))
+* Adding missing return statement ([cbd45e738ca449b67fa7bb7bb1a3728315b0f167](https://github.com/advanced-rest-client/arc-models/commit/cbd45e738ca449b67fa7bb7bb1a3728315b0f167))
+* Fixing data returned by _urlQueryHandler when no results. ([1238ab8ace0bd3215415f212c87d0116f38616b2](https://github.com/advanced-rest-client/arc-models/commit/1238ab8ace0bd3215415f212c87d0116f38616b2))
+* Fixing own event handling ([755458a9751cdb2dbbe03d8603499d3369aa4dd7](https://github.com/advanced-rest-client/arc-models/commit/755458a9751cdb2dbbe03d8603499d3369aa4dd7))
+* Fixing project request event call ([8fd581c24022962c47fb6f2688c7ba5687e9a70a](https://github.com/advanced-rest-client/arc-models/commit/8fd581c24022962c47fb6f2688c7ba5687e9a70a))
+* Fixing search data computation ([5b3ff280f8423f6524b94be4bc14b213a62b0532](https://github.com/advanced-rest-client/arc-models/commit/5b3ff280f8423f6524b94be4bc14b213a62b0532))
+* Fixing tests ([f6faf45825908ca7b2be9a0a6bf5e37b3a2cc823](https://github.com/advanced-rest-client/arc-models/commit/f6faf45825908ca7b2be9a0a6bf5e37b3a2cc823))
+* Fixing tests for rest-api model ([4c38a0ccf16f0ccf88caea7e9fc4f7340ab29764](https://github.com/advanced-rest-client/arc-models/commit/4c38a0ccf16f0ccf88caea7e9fc4f7340ab29764))
+* Fixing tests when clearing data. ([7034f8ab29439bc99f7693e3b07873f16c53b0bd](https://github.com/advanced-rest-client/arc-models/commit/7034f8ab29439bc99f7693e3b07873f16c53b0bd))
+* Fixing travis config ([45f0b0e91dbb6cf8ded8c51543b28eb9ad579f72](https://github.com/advanced-rest-client/arc-models/commit/45f0b0e91dbb6cf8ded8c51543b28eb9ad579f72))
+* Updating path for the database helper ([86e45c09af114fc95b24e16309fc52edc0f01836](https://github.com/advanced-rest-client/arc-models/commit/86e45c09af114fc95b24e16309fc52edc0f01836))
+
+### FIx
+
+* Fixing payload processor library usage ([7d57f6fe49bdc4760aa06381e15bb722cd064784](https://github.com/advanced-rest-client/arc-models/commit/7d57f6fe49bdc4760aa06381e15bb722cd064784))
+
+### New
+
+* Added `model-destroyed` event when deleting datastore ([abcb09cb6efa8ed799d397f39337d038eae8e53d](https://github.com/advanced-rest-client/arc-models/commit/abcb09cb6efa8ed799d397f39337d038eae8e53d))
+* Adding `list()` function and `request-list` event. ([9144760d635e069a091205e5861250f4c795eb7d](https://github.com/advanced-rest-client/arc-models/commit/9144760d635e069a091205e5861250f4c795eb7d))
+* Adding `project-update-bulk` event ([6b20957c37666679001dee70957d4ebb4275695d](https://github.com/advanced-rest-client/arc-models/commit/6b20957c37666679001dee70957d4ebb4275695d))
+* Adding common methods to destroy data ([84f54c7d8a43e685f1d6786ebdba9a8698b718a0](https://github.com/advanced-rest-client/arc-models/commit/84f54c7d8a43e685f1d6786ebdba9a8698b718a0))
+* Adding data query functions ([8cb25e217f2c24211f4a0b87de284666982e045b](https://github.com/advanced-rest-client/arc-models/commit/8cb25e217f2c24211f4a0b87de284666982e045b))
+* Adding functions and events to list project requests ([1a849f97a691ea2ac3a6ea3e15e142d2232bd4e7](https://github.com/advanced-rest-client/arc-models/commit/1a849f97a691ea2ac3a6ea3e15e142d2232bd4e7))
+* Adding functions and events to list project requests ([e60292bc2eb3752f26233b3c0d21f9a10b1f1933](https://github.com/advanced-rest-client/arc-models/commit/e60292bc2eb3752f26233b3c0d21f9a10b1f1933))
+* Adding new API for hosts model ([62ecf38828dbe11622ea9851dc28cdf889aae4a6](https://github.com/advanced-rest-client/arc-models/commit/62ecf38828dbe11622ea9851dc28cdf889aae4a6))
+* Adding request indexing ([9342adacf055ce012796c41f9d9cb200a9d91011](https://github.com/advanced-rest-client/arc-models/commit/9342adacf055ce012796c41f9d9cb200a9d91011))
+* Adding variables model ([1e414d8e1500514386ccd01d806ac628b53e8d13](https://github.com/advanced-rest-client/arc-models/commit/1e414d8e1500514386ccd01d806ac628b53e8d13))
+* Moving url-history-saved as new model ([55b13d02cad8bf471d2141427f1ef0598d614e61](https://github.com/advanced-rest-client/arc-models/commit/55b13d02cad8bf471d2141427f1ef0598d614e61))
+
+### Update
+
+* Adding argument for projects listing ([fa950d9e801b3cdc5663c9786df2abedc462a7db](https://github.com/advanced-rest-client/arc-models/commit/fa950d9e801b3cdc5663c9786df2abedc462a7db))
+* Adding destroy event dispatching ([4557c2722e2c004850824ab1eca9bbcf78a392d7](https://github.com/advanced-rest-client/arc-models/commit/4557c2722e2c004850824ab1eca9bbcf78a392d7))
+* Adding use of events-target-behavior methods ([e9628401a4e9ca20a86eaea5e1c43458798f90cf](https://github.com/advanced-rest-client/arc-models/commit/e9628401a4e9ca20a86eaea5e1c43458798f90cf))
+* Refactoring and removing of name change handler. ([61787ea0ac12c3a1e140608afd837b367a094983](https://github.com/advanced-rest-client/arc-models/commit/61787ea0ac12c3a1e140608afd837b367a094983))
+* Removing name change handler. ([8c3da1ae7cc0ed4d0f77e1151180516f6cb721a2](https://github.com/advanced-rest-client/arc-models/commit/8c3da1ae7cc0ed4d0f77e1151180516f6cb721a2))
+* Removing old CI files ([0cb5e3d141a385066eb3209c43f68472fd8b7a08](https://github.com/advanced-rest-client/arc-models/commit/0cb5e3d141a385066eb3209c43f68472fd8b7a08))
+* Replacing `console.error` with `console.warn` for tests ([93c6f3c41cfa8cf1268da34c71e774538cf21b09](https://github.com/advanced-rest-client/arc-models/commit/93c6f3c41cfa8cf1268da34c71e774538cf21b09))
+* Updating tests ([4f3d48c08de2505f37b9fac3a364cf27633dc249](https://github.com/advanced-rest-client/arc-models/commit/4f3d48c08de2505f37b9fac3a364cf27633dc249))
+* Updating tests for removed functions ([342d8c80988d3d583071c981985af79ab5c8657b](https://github.com/advanced-rest-client/arc-models/commit/342d8c80988d3d583071c981985af79ab5c8657b))
+* Updating variables model to work with new API ([ae31aaf9ab0ef6d7519c813f31992cfd882dfc0b](https://github.com/advanced-rest-client/arc-models/commit/ae31aaf9ab0ef6d7519c813f31992cfd882dfc0b))
+* When saving request all "_" data are removed ([5452d1dc79ec34917dacb64aa2c55fbb0ce664d4](https://github.com/advanced-rest-client/arc-models/commit/5452d1dc79ec34917dacb64aa2c55fbb0ce664d4))
+
+
+
