@@ -1,4 +1,4 @@
-<!--
+/**
 Copyright 2016 The Advanced REST client authors <arc@mulesoft.com>
 Licensed under the Apache License, Version 2.0 (the "License"); you may not
 use this file except in compliance with the License. You may obtain a copy of
@@ -9,12 +9,17 @@ distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
 WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
 License for the specific language governing permissions and limitations under
 the License.
--->
-<link rel="import" href="request-base-model.html">
-<link rel="import" href="../app-pouchdb-quick-search/pouchdb-quick-search.html">
-<link rel="import" href="../arc-electron-payload-processor/payload-processor.html">
-<dom-module id="request-model">
-<script>
+*/
+/*
+  FIXME(polymer-modulizer): the above comments were extracted
+  from HTML and may be out of place here. Review them and
+  then delete this comment!
+*/
+import './request-base-model.js';
+
+// import '../../app-pouchdb-quick-search/pouchdb-quick-search.js';
+// /pouchdb-quick-search/dist/pouchdb.quick-search.js
+import '../../arc-electron-payload-processor/payload-processor.js';
 /**
  * Event based access to saved and history request datastore.
  *
@@ -1443,5 +1448,3 @@ class RequestModel extends RequestBaseModel {
    */
 }
 window.customElements.define(RequestModel.is, RequestModel);
-</script>
-</dom-module>

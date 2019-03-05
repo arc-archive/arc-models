@@ -4,12 +4,12 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, minimum-scale=1.0, initial-scale=1.0, user-scalable=yes">
-  <script src="../../../webcomponentsjs/webcomponents-loader.js"></script>
-  <script src="../../../web-component-tester/browser.js"></script>
-  <script src="../../../iron-test-helpers/test-helpers.js"></script>
-  <link rel="import" href="../../../arc-data-generator/arc-data-generator.html">
-  <link rel="import" href="../../../app-pouchdb/pouchdb.html">
-  <link rel="import" href="../../request-model.html">
+  <script src="../../../../@webcomponents/webcomponentsjs/webcomponents-loader.js"></script>
+  <script src="../../../../wct-browser-legacy/browser.js"></script>
+  <script src="../../../../@polymer/iron-test-helpers/test-helpers.js" type="module"></script>
+  <script type="module" src="../../../../arc-data-generator/arc-data-generator.js"></script>
+  <script type="module" src="../../../../app-pouchdb/pouchdb.js"></script>
+  <script type="module" src="../../request-model.js"></script>
 </head>
 
 <body>
@@ -18,729 +18,290 @@
       <request-model></request-model>
     </template>
   </test-fixture>
-  <script>
-  /* global DataGenerator, PayloadProcessor */
-  suite('request-model test', function() {
-    const databaseType = 'saved-requests';
+  <script type="module">
+import '../../../../arc-data-generator/arc-data-generator.js';
+import '../../../../app-pouchdb/pouchdb.js';
+import '../../request-model.js';
+/* global DataGenerator, PayloadProcessor */
+suite('request-model test', function() {
+  const databaseType = 'saved-requests';
 
-    suite('normalizeRequest()', () => {
-      let element;
-      setup(function() {
-        element = fixture('basic');
+  suite('normalizeRequest()', () => {
+    let element;
+    setup(function() {
+      element = fixture('basic');
+    });
+
+    test('Returns undefined when no request', () => {
+      const result = element.normalizeRequest();
+      assert.isUndefined(result);
+    });
+
+    test('Moves legacyProject to projects array', () => {
+      const result = element.normalizeRequest({
+        legacyProject: 'test-project'
       });
+      assert.isUndefined(result.legacyProject);
+      assert.deepEqual(result.projects, ['test-project']);
+    });
 
-      test('Returns undefined when no request', () => {
-        const result = element.normalizeRequest();
-        assert.isUndefined(result);
+    test('Appends legacyProject to projects array', () => {
+      const result = element.normalizeRequest({
+        legacyProject: 'test-project',
+        projects: ['other-project']
       });
+      assert.isUndefined(result.legacyProject);
+      assert.deepEqual(result.projects, ['other-project', 'test-project']);
+    });
 
-      test('Moves legacyProject to projects array', () => {
-        const result = element.normalizeRequest({
-          legacyProject: 'test-project'
-        });
-        assert.isUndefined(result.legacyProject);
-        assert.deepEqual(result.projects, ['test-project']);
+    test('Removes properties with "_"', () => {
+      const result = element.normalizeRequest({
+        _tmp: true
       });
+      assert.isUndefined(result._tmp);
+    });
 
-      test('Appends legacyProject to projects array', () => {
-        const result = element.normalizeRequest({
-          legacyProject: 'test-project',
-          projects: ['other-project']
-        });
-        assert.isUndefined(result.legacyProject);
-        assert.deepEqual(result.projects, ['other-project', 'test-project']);
+    test('Keeps _id and _rev', () => {
+      const result = element.normalizeRequest({
+        _id: '1',
+        _rev: '2'
       });
+      assert.equal(result._id, '1');
+      assert.equal(result._rev, '2');
+    });
 
-      test('Removes properties with "_"', () => {
-        const result = element.normalizeRequest({
-          _tmp: true
-        });
-        assert.isUndefined(result._tmp);
+    test('Adds created time', () => {
+      const result = element.normalizeRequest({});
+      assert.typeOf(result.created, 'number');
+    });
+
+    test('Adds updated time', () => {
+      const result = element.normalizeRequest({});
+      assert.typeOf(result.updated, 'number');
+    });
+
+    test('Keeps created time', () => {
+      const result = element.normalizeRequest({
+        created: 1234
       });
+      assert.equal(result.created, 1234);
+    });
 
-      test('Keeps _id and _rev', () => {
-        const result = element.normalizeRequest({
-          _id: '1',
-          _rev: '2'
-        });
-        assert.equal(result._id, '1');
-        assert.equal(result._rev, '2');
+    test('Keeps updated time', () => {
+      const result = element.normalizeRequest({
+        updated: 5678
       });
+      assert.equal(result.updated, 5678);
+    });
+  });
 
-      test('Adds created time', () => {
-        const result = element.normalizeRequest({});
-        assert.typeOf(result.created, 'number');
-      });
+  suite('update()', function() {
+    suiteTeardown(function() {
+      return DataGenerator.destroySavedRequestData();
+    });
 
-      test('Adds updated time', () => {
-        const result = element.normalizeRequest({});
-        assert.typeOf(result.updated, 'number');
-      });
+    let element;
+    let dataObj;
+    setup(function() {
+      element = fixture('basic');
+      dataObj = {
+        name: 'test-' + Date.now(),
+        url: 'http://domain.com',
+        method: 'GET',
+        legacyProject: undefined
+      };
+    });
 
-      test('Keeps created time', () => {
-        const result = element.normalizeRequest({
-          created: 1234
-        });
-        assert.equal(result.created, 1234);
-      });
-
-      test('Keeps updated time', () => {
-        const result = element.normalizeRequest({
-          updated: 5678
-        });
-        assert.equal(result.updated, 5678);
+    test('Creates a new object in the datastore', function() {
+      return element.update(databaseType, dataObj)
+      .then((result) => element.read(databaseType, result._id, result._rev))
+      .then((result) => {
+        assert.typeOf(result._rev, 'string', '_rev is set');
+        assert.typeOf(result._id, 'string', '_id is set');
+        assert.equal(result.url, dataObj.url, 'URL is set');
+        assert.equal(result.name, dataObj.name, 'name is set');
+        assert.equal(result.method, dataObj.method, 'method is set');
       });
     });
 
-    suite('update()', function() {
-      suiteTeardown(function() {
-        return DataGenerator.destroySavedRequestData();
+    test('Calls normalizeRequest()', function() {
+      const spy = sinon.spy(element, 'normalizeRequest');
+      return element.update(databaseType, dataObj)
+      .then(() => {
+        assert.isTrue(spy.called);
       });
+    });
 
-      let element;
-      let dataObj;
-      setup(function() {
-        element = fixture('basic');
-        dataObj = {
-          name: 'test-' + Date.now(),
-          url: 'http://domain.com',
-          method: 'GET',
-          legacyProject: undefined
-        };
+    test('Updates created object', function() {
+      let originalRev;
+      return element.update(databaseType, dataObj)
+      .then((result) => {
+        originalRev = result._rev;
+        result.headers = 'x-test';
+        return element.update(databaseType, result);
+      })
+      .then((result) => {
+        assert.notEqual(result._rev, originalRev, '_rev is regenerated');
+        assert.equal(result.headers, 'x-test', 'Change is recorded');
       });
+    });
 
-      test('Creates a new object in the datastore', function() {
-        return element.update(databaseType, dataObj)
-        .then((result) => element.read(databaseType, result._id, result._rev))
-        .then((result) => {
-          assert.typeOf(result._rev, 'string', '_rev is set');
-          assert.typeOf(result._id, 'string', '_id is set');
-          assert.equal(result.url, dataObj.url, 'URL is set');
-          assert.equal(result.name, dataObj.name, 'name is set');
-          assert.equal(result.method, dataObj.method, 'method is set');
-        });
+    test('Fires request-object-changed custom event', function() {
+      const spy = sinon.spy();
+      element.addEventListener('request-object-changed', spy);
+      return element.update(databaseType, dataObj)
+      .then(() => {
+        assert.isTrue(spy.calledOnce);
       });
+    });
 
-      test('Calls normalizeRequest()', function() {
-        const spy = sinon.spy(element, 'normalizeRequest');
-        return element.update(databaseType, dataObj)
-        .then(() => {
-          assert.isTrue(spy.called);
-        });
+    test('The request-object-changed event has properties of newly created object', function() {
+      let eventData;
+      element.addEventListener('request-object-changed', function(e) {
+        eventData = e.detail;
       });
-
-      test('Updates created object', function() {
-        let originalRev;
-        return element.update(databaseType, dataObj)
-        .then((result) => {
-          originalRev = result._rev;
-          result.headers = 'x-test';
-          return element.update(databaseType, result);
-        })
-        .then((result) => {
-          assert.notEqual(result._rev, originalRev, '_rev is regenerated');
-          assert.equal(result.headers, 'x-test', 'Change is recorded');
-        });
+      return element.update(databaseType, dataObj)
+      .then((result) => {
+        assert.isUndefined(eventData.oldRev);
+        assert.isUndefined(result.oldRev);
+        assert.typeOf(eventData.request, 'object');
       });
+    });
 
-      test('Fires request-object-changed custom event', function() {
-        const spy = sinon.spy();
-        element.addEventListener('request-object-changed', spy);
-        return element.update(databaseType, dataObj)
-        .then(() => {
-          assert.isTrue(spy.calledOnce);
-        });
-      });
-
-      test('The request-object-changed event has properties of newly created object', function() {
-        let eventData;
+    test('The request-object-changed event has properties of updated object', function() {
+      let eventData;
+      let originalRev;
+      return element.update(databaseType, dataObj)
+      .then((result) => {
         element.addEventListener('request-object-changed', function(e) {
           eventData = e.detail;
         });
-        return element.update(databaseType, dataObj)
-        .then((result) => {
-          assert.isUndefined(eventData.oldRev);
-          assert.isUndefined(result.oldRev);
-          assert.typeOf(eventData.request, 'object');
-        });
+        originalRev = result._rev;
+        result.name = 'test-2';
+        return element.update(databaseType, result);
+      })
+      .then(() => {
+        assert.equal(eventData.oldRev, originalRev);
+        assert.typeOf(eventData.request, 'object');
+        assert.notEqual(eventData.request._rev, originalRev);
+        assert.equal(eventData.type, databaseType);
       });
+    });
+  });
 
-      test('The request-object-changed event has properties of updated object', function() {
-        let eventData;
-        let originalRev;
-        return element.update(databaseType, dataObj)
-        .then((result) => {
-          element.addEventListener('request-object-changed', function(e) {
-            eventData = e.detail;
-          });
-          originalRev = result._rev;
-          result.name = 'test-2';
-          return element.update(databaseType, result);
-        })
-        .then(() => {
-          assert.equal(eventData.oldRev, originalRev);
-          assert.typeOf(eventData.request, 'object');
-          assert.notEqual(eventData.request._rev, originalRev);
-          assert.equal(eventData.type, databaseType);
-        });
+  suite('updateBulk()', function() {
+    suiteTeardown(function() {
+      return DataGenerator.destroySavedRequestData();
+    });
+
+    let element;
+    let dataObj;
+    setup(function() {
+      element = fixture('basic');
+      dataObj = [{
+        name: 'test-1',
+        url: 'http://domain.com',
+        method: 'GET',
+        legacyProject: undefined
+      }, {
+        name: 'test-2',
+        url: 'http://domain.com',
+        method: 'POST',
+        legacyProject: 'abc'
+      }];
+    });
+
+    test('Creates objects in bulk', function() {
+      return element.updateBulk(databaseType, dataObj)
+      .then((result) => {
+        assert.typeOf(result, 'array', 'Response is an array');
+        assert.isTrue(result[0].ok, 'Item #1 is inserted');
+        assert.isTrue(result[1].ok, 'Item #2 is inserted');
+        assert.typeOf(result[0].rev, 'string', '_rev is set');
+        assert.typeOf(result[0].id, 'string', '_id is set');
       });
     });
 
-    suite('updateBulk()', function() {
-      suiteTeardown(function() {
-        return DataGenerator.destroySavedRequestData();
+    test('Calls normalizeRequest()', function() {
+      const spy = sinon.spy(element, 'normalizeRequest');
+      return element.updateBulk(databaseType, dataObj)
+      .then(() => {
+        assert.equal(spy.callCount, 2);
       });
+    });
 
-      let element;
-      let dataObj;
-      setup(function() {
-        element = fixture('basic');
-        dataObj = [{
-          name: 'test-1',
-          url: 'http://domain.com',
-          method: 'GET',
-          legacyProject: undefined
-        }, {
-          name: 'test-2',
-          url: 'http://domain.com',
-          method: 'POST',
-          legacyProject: 'abc'
-        }];
+    test('Updates created object', function() {
+      const originalRevs = [];
+      return element.updateBulk(databaseType, dataObj)
+      .then((result) => {
+        for (let i = 0; i < result.length; i++) {
+          originalRevs.push(result[i].rev);
+          dataObj[i]._rev = result[i].rev;
+          dataObj[i]._id = result[i].id;
+        }
+        dataObj[0].headers = 'x-test';
+        return element.updateBulk(databaseType, dataObj);
+      })
+      .then((result) => {
+        assert.notEqual(result[0].rev, originalRevs[0], '_rev is regenerated');
       });
+    });
 
-      test('Creates objects in bulk', function() {
-        return element.updateBulk(databaseType, dataObj)
-        .then((result) => {
-          assert.typeOf(result, 'array', 'Response is an array');
-          assert.isTrue(result[0].ok, 'Item #1 is inserted');
-          assert.isTrue(result[1].ok, 'Item #2 is inserted');
-          assert.typeOf(result[0].rev, 'string', '_rev is set');
-          assert.typeOf(result[0].id, 'string', '_id is set');
-        });
+    test('Fires request-object-changed custom event', function() {
+      const spy = sinon.spy();
+      element.addEventListener('request-object-changed', spy);
+      return element.updateBulk(databaseType, dataObj)
+      .then(() => {
+        assert.equal(spy.callCount, 2);
       });
+    });
 
-      test('Calls normalizeRequest()', function() {
-        const spy = sinon.spy(element, 'normalizeRequest');
-        return element.updateBulk(databaseType, dataObj)
-        .then(() => {
-          assert.equal(spy.callCount, 2);
-        });
+    test('The request-object-changed event has properties of newly created object', function() {
+      let eventData;
+      element.addEventListener('request-object-changed', function clb(e) {
+        element.removeEventListener('request-object-changed', clb);
+        eventData = e.detail;
       });
-
-      test('Updates created object', function() {
-        const originalRevs = [];
-        return element.updateBulk(databaseType, dataObj)
-        .then((result) => {
-          for (let i = 0; i < result.length; i++) {
-            originalRevs.push(result[i].rev);
-            dataObj[i]._rev = result[i].rev;
-            dataObj[i]._id = result[i].id;
-          }
-          dataObj[0].headers = 'x-test';
-          return element.updateBulk(databaseType, dataObj);
-        })
-        .then((result) => {
-          assert.notEqual(result[0].rev, originalRevs[0], '_rev is regenerated');
-        });
+      return element.updateBulk(databaseType, dataObj)
+      .then((result) => {
+        assert.isUndefined(eventData.oldRev);
+        assert.isUndefined(result.oldRev);
+        assert.typeOf(eventData.request, 'object');
       });
+    });
 
-      test('Fires request-object-changed custom event', function() {
-        const spy = sinon.spy();
-        element.addEventListener('request-object-changed', spy);
-        return element.updateBulk(databaseType, dataObj)
-        .then(() => {
-          assert.equal(spy.callCount, 2);
-        });
-      });
-
-      test('The request-object-changed event has properties of newly created object', function() {
-        let eventData;
+    test('The request-object-changed event has properties of updated object', function() {
+      let eventData;
+      let originalRev;
+      return element.updateBulk(databaseType, dataObj)
+      .then((result) => {
         element.addEventListener('request-object-changed', function clb(e) {
           element.removeEventListener('request-object-changed', clb);
           eventData = e.detail;
         });
-        return element.updateBulk(databaseType, dataObj)
-        .then((result) => {
-          assert.isUndefined(eventData.oldRev);
-          assert.isUndefined(result.oldRev);
-          assert.typeOf(eventData.request, 'object');
-        });
-      });
-
-      test('The request-object-changed event has properties of updated object', function() {
-        let eventData;
-        let originalRev;
-        return element.updateBulk(databaseType, dataObj)
-        .then((result) => {
-          element.addEventListener('request-object-changed', function clb(e) {
-            element.removeEventListener('request-object-changed', clb);
-            eventData = e.detail;
-          });
-          originalRev = result[0].rev;
-          for (let i = 0; i < result.length; i++) {
-            dataObj[i]._rev = result[i].rev;
-            dataObj[i]._id = result[i].id;
-          }
-          dataObj[0].name = 'test-2';
-          return element.updateBulk(databaseType, dataObj);
-        })
-        .then(() => {
-          assert.equal(eventData.oldRev, originalRev, 'oldRev is set');
-          assert.typeOf(eventData.request, 'object', 'request is an object');
-          assert.notEqual(eventData.request._rev, originalRev, 'request._rev is updates');
-          assert.equal(eventData.type, databaseType, 'Database type is set');
-        });
-      });
-    });
-
-    suite('read()', function() {
-      let requests;
-      suiteSetup(() => {
-        return DataGenerator.insertSavedRequestData()
-        .then((data) => {
-          requests = data.requests;
-        });
-      });
-
-      suiteTeardown(function() {
-        return DataGenerator.destroySavedRequestData();
-      });
-
-      let element;
-      setup(function() {
-        element = fixture('basic');
-      });
-
-      test('Reads request object by id only', function() {
-        return element.read(databaseType, requests[0]._id)
-        .then((result) => {
-          assert.equal(result._id, requests[0]._id);
-        });
-      });
-
-      test('Calls PayloadProcessor.restorePayload()', function() {
-        const spy = sinon.spy(PayloadProcessor, 'restorePayload');
-        return element.read(databaseType, requests[1]._id, undefined, {
-          restorePayload: true
-        })
-        .then(() => {
-          PayloadProcessor.restorePayload.restore();
-          assert.equal(spy.callCount, 1);
-        })
-        .catch((cause) => {
-          PayloadProcessor.restorePayload.restore();
-          throw cause;
-        });
-      });
-
-      test('Reads a revision', function() {
-        let originalRev;
-        let updatedRev;
-        return element.read(databaseType, requests[2]._id)
-        .then((result) => {
-          originalRev = result._rev;
-          result.name = 'test-2';
-          return element.update(databaseType, result);
-        })
-        .then((result) => {
-          updatedRev = result._rev;
-          return element.read(databaseType, requests[2]._id, originalRev);
-        })
-        .then((result) => {
-          assert.equal(result.name, requests[2].name);
-          assert.notEqual(originalRev, updatedRev);
-        });
-      });
-
-      test('Calls normalizeRequest()', function() {
-        const spy = sinon.spy(element, 'normalizeRequest');
-        return element.read(databaseType, requests[3]._id)
-        .then(() => {
-          assert.isTrue(spy.called);
-        });
-      });
-    });
-
-    suite('remove()', function() {
-      teardown(function() {
-        return DataGenerator.destroySavedRequestData();
-      });
-
-      let element;
-      let dataObj;
-      setup(function() {
-        element = fixture('basic');
-        dataObj = {
-          name: 'test-1',
-          url: 'http://domain.com',
-          method: 'GET'
-        };
-        return element.update(databaseType, dataObj)
-          .then((result) => dataObj = result);
-      });
-
-      test('Removes object from the datastore', function() {
-        return element.remove(databaseType, dataObj._id, dataObj._rev)
-          .then(() => {
-            return element.read(databaseType, dataObj._id);
-          })
-          .then(() => {
-            throw new Error('TEST');
-          })
-          .catch((cause) => {
-            assert.equal(cause.status, 404);
-          });
-      });
-
-      test('Fires request-object-deleted custom event', function() {
-        let spy = sinon.spy();
-        element.addEventListener('request-object-deleted', spy);
-        return element.remove(databaseType, dataObj._id, dataObj._rev)
-          .then(() => {
-            assert.isTrue(spy.calledOnce);
-          });
-      });
-
-      test('request-object-deleted event contains request data', function() {
-        let eventData;
-        element.addEventListener('request-object-deleted', function(e) {
-          eventData = e.detail;
-        });
-        return element.remove(databaseType, dataObj._id, dataObj._rev)
-          .then(() => {
-            assert.equal(eventData.id, dataObj._id);
-            assert.equal(eventData.oldRev, dataObj._rev);
-            assert.typeOf(eventData.rev, 'string');
-            assert.notEqual(eventData.rev, dataObj._rev);
-            assert.equal(eventData.type, databaseType);
-          });
-      });
-    });
-
-    suite('list()', () => {
-      suiteSetup(() => {
-        return DataGenerator.insertHistoryRequestData({
-          requestsSize: 150
-        });
-      });
-
-      suiteTeardown(function() {
-        return DataGenerator.destroyHistoryData();
-      });
-
-      let element;
-      setup(function() {
-        element = fixture('basic');
-      });
-
-      test('Returnes all results without limit options', () => {
-        return element.list('history', {})
-        .then((result) => {
-          assert.typeOf(result, 'object');
-          assert.typeOf(result.rows, 'array');
-          assert.lengthOf(result.rows, 150);
-        });
-      });
-
-      test('Limits number of results when set', () => {
-        return element.list('history', {
-          limit: 50
-        })
-        .then((result) => {
-          assert.typeOf(result, 'object');
-          assert.typeOf(result.rows, 'array');
-          assert.lengthOf(result.rows, 50);
-        });
-      });
-
-      test('Respects pagination', () => {
-        let firstKey;
-        return element.list('history', {
-          limit: 50
-        })
-        .then((result) => {
-          firstKey = result.rows[0].key;
-          return element.list('history', {
-            limit: 50,
-            startkey: result.rows[result.rows.length - 1].key,
-            skip: 1
-          });
-        })
-        .then((result) => {
-          assert.typeOf(result, 'object');
-          assert.typeOf(result.rows, 'array');
-          assert.lengthOf(result.rows, 50);
-          assert.notEqual(firstKey, result.rows[0].key);
-        });
-      });
-    });
-
-    suite('readBulk()', () => {
-      let requests;
-      suiteSetup(() => {
-        return DataGenerator.insertHistoryRequestData({
-          requestsSize: 10
-        })
-        .then((data) => {
-          requests = data;
-        });
-      });
-
-      suiteTeardown(function() {
-        return DataGenerator.destroyHistoryData();
-      });
-
-      let element;
-      setup(function() {
-        element = fixture('basic');
-      });
-
-      test('Reads data by ids', () => {
-        const ids = [requests[0]._id, requests[1]._id];
-        return element.readBulk('history', ids)
-        .then((result) => {
-          assert.lengthOf(result, 2);
-          assert.deepEqual(result[0], requests[0]);
-          assert.deepEqual(result[1], requests[1]);
-        });
-      });
-
-      test('Restores payload', () => {
-        const ids = [requests[0]._id, requests[1]._id];
-        const spy = sinon.spy(PayloadProcessor, 'restorePayload');
-        return element.readBulk('history', ids, {
-          restorePayload: true
-        })
-        .then(() => {
-          PayloadProcessor.restorePayload.restore();
-          assert.equal(spy.callCount, 2);
-        });
-      });
-    });
-
-    suite('queryPouchDb()', () => {
-      let element;
-      setup(function() {
-        element = fixture('basic');
-      });
-
-      test('Rejects when no query', () => {
-        return element.queryPouchDb()
-        .then(() => {
-          throw new Error('Should not resolve');
-        })
-        .catch((cause) => {
-          assert.typeOf(cause.message, 'string');
-          assert.equal(cause.message, 'The "q" parameter is required.');
-        });
-      });
-
-      test('Calls queryHistory() only', () => {
-        const spy1 = sinon.spy(element, 'queryHistory');
-        const spy2 = sinon.spy(element, 'querySaved');
-        return element.queryPouchDb('test', 'history', ['id'])
-        .then(() => {
-          assert.isTrue(spy1.called);
-          assert.equal(spy1.args[0][0], 'test');
-          assert.deepEqual(spy1.args[0][1], ['id']);
-          assert.isFalse(spy2.called);
-        });
-      });
-
-      test('Calls querySaved() only', () => {
-        const spy1 = sinon.spy(element, 'queryHistory');
-        const spy2 = sinon.spy(element, 'querySaved');
-        return element.queryPouchDb('test', 'saved', ['id'])
-        .then(() => {
-          assert.isTrue(spy2.called);
-          assert.equal(spy2.args[0][0], 'test');
-          assert.deepEqual(spy2.args[0][1], ['id']);
-          assert.isFalse(spy1.called);
-        });
-      });
-
-      test('Calls both querySaved() and queryHistory()', () => {
-        const spy1 = sinon.spy(element, 'queryHistory');
-        const spy2 = sinon.spy(element, 'querySaved');
-        return element.queryPouchDb('test', 'all', ['id'])
-        .then(() => {
-          assert.isTrue(spy1.called);
-          assert.equal(spy1.args[0][0], 'test');
-          assert.deepEqual(spy1.args[0][1], ['id']);
-          assert.isTrue(spy2.called);
-          assert.equal(spy2.args[0][0], 'test');
-          assert.deepEqual(spy2.args[0][1], ['id']);
-        });
-      });
-    });
-
-    suite('queryHistory()', () => {
-      let element;
-      setup(function() {
-        element = fixture('basic');
-      });
-
-      test('Calls _queryStore with arguments', () => {
-        const spy = sinon.spy(element, '_queryStore');
-        return element.queryHistory('test', ['id'])
-        .then(() => {
-          assert.isTrue(spy.called);
-          assert.equal(spy.args[0][0], 'test');
-          assert.deepEqual(spy.args[0][1], ['id']);
-          assert.typeOf(spy.args[0][2], 'object');
-          assert.deepEqual(spy.args[0][3], element.historyIndexes);
-        });
-      });
-    });
-
-    suite('querySaved()', () => {
-      let element;
-      setup(function() {
-        element = fixture('basic');
-      });
-
-      test('Calls _queryStore with arguments', () => {
-        const spy = sinon.spy(element, '_queryStore');
-        return element.querySaved('test', ['id'])
-        .then(() => {
-          assert.isTrue(spy.called);
-          assert.equal(spy.args[0][0], 'test');
-          assert.deepEqual(spy.args[0][1], ['id']);
-          assert.typeOf(spy.args[0][2], 'object');
-          assert.deepEqual(spy.args[0][3], element.savedIndexes);
-        });
-      });
-    });
-
-    suite('_queryStore()', () => {
-      let requests;
-      suiteSetup(() => {
-        return DataGenerator.insertHistoryRequestData({
-          requestsSize: 10
-        })
-        .then((data) => {
-          requests = data;
-        });
-      });
-
-      suiteTeardown(function() {
-        return DataGenerator.destroyHistoryData();
-      });
-
-      let element;
-      setup(function() {
-        element = fixture('basic');
-      });
-
-      test('Rejects when no query', () => {
-        return element._queryStore()
-        .then(() => {
-          throw new Error('Should not resolve');
-        })
-        .catch((cause) => {
-          assert.typeOf(cause.message, 'string');
-          assert.equal(cause.message, 'The "q" argument is required.');
-        });
-      });
-
-      test('Rejects when ignored is not an array', () => {
-        return element._queryStore('test', 'not-an-array')
-        .then(() => {
-          throw new Error('Should not resolve');
-        })
-        .catch((cause) => {
-          assert.typeOf(cause.message, 'string');
-          assert.equal(cause.message, 'The "ignore" argument is not an array.');
-        });
-      });
-
-      test('Queries the data store', () => {
-        const db = element.historyDb;
-        const indexes = element.historyIndexes;
-        const ignore = [];
-        const spy = sinon.spy(db, 'search');
-        return element._queryStore('test', ignore, db, indexes)
-        .then(() => {
-          db.search.restore();
-          assert.isTrue(spy.called, 'Search function is called');
-          const data = spy.args[0][0];
-          assert.equal(data.query, 'test', 'Query is set');
-          assert.deepEqual(data.fields, indexes, 'Fields is set');
-          assert.isTrue(data.include_docs, 'include_docs is set');
-          assert.equal(data.mm, 100, 'mm is set');
-        })
-        .catch((cause) => {
-          db.search.restore();
-          throw cause;
-        });
-      });
-
-      test('Returns the results', () => {
-        const db = element.historyDb;
-        const indexes = element.historyIndexes;
-        const ignore = [];
-        return element._queryStore(requests[0].method, ignore, db, indexes)
-        .then((results) => {
-          assert.typeOf(results, 'array');
-          // Sometimes this fails. It is an external plugin anyway.
-          // assert.isAbove(results.length, 0);
-        });
-      });
-
-      test('Removes ignored requests', () => {
-        const db = element.historyDb;
-        const indexes = element.historyIndexes;
-        const ignore = [requests[0]._id];
-        return element._queryStore(requests[0].method, ignore, db, indexes)
-        .then((results) => {
-          const index = results.findIndex((item) => item._id === requests[0]._id);
-          assert.equal(index, -1);
-        });
-      });
-    });
-
-    suite('indexData()', () => {
-      suiteSetup(() => {
-        return DataGenerator.insertHistoryRequestData({
-          requestsSize: 1
-        });
-      });
-
-      suiteTeardown(function() {
-        return DataGenerator.destroyHistoryData();
-      });
-
-      let element;
-      setup(function() {
-        element = fixture('basic');
-      });
-
-      test('Indexes history data', () => {
-        return element.indexData('history');
-      });
-
-      test('Indexes saved data', () => {
-        return element.indexData('saved');
+        originalRev = result[0].rev;
+        for (let i = 0; i < result.length; i++) {
+          dataObj[i]._rev = result[i].rev;
+          dataObj[i]._id = result[i].id;
+        }
+        dataObj[0].name = 'test-2';
+        return element.updateBulk(databaseType, dataObj);
+      })
+      .then(() => {
+        assert.equal(eventData.oldRev, originalRev, 'oldRev is set');
+        assert.typeOf(eventData.request, 'object', 'request is an object');
+        assert.notEqual(eventData.request._rev, originalRev, 'request._rev is updates');
+        assert.equal(eventData.type, databaseType, 'Database type is set');
       });
     });
   });
 
-  suite('readProjectRequests()', function() {
-    let project;
-    let projects;
+  suite('read()', function() {
+    let requests;
     suiteSetup(() => {
       return DataGenerator.insertSavedRequestData()
       .then((data) => {
-        projects = data.projects;
-        for (let i = 0; i < data.projects.length; i++) {
-          if (data.projects[i].requests && data.projects[i].requests.length) {
-            project = data.projects[i];
-            break;
-          }
-        }
-        if (!project) {
-          throw new Error('Unable to find a project with requests.');
-        }
+        requests = data.requests;
       });
     });
 
@@ -753,62 +314,121 @@
       element = fixture('basic');
     });
 
-    test('Calls readBulk() with arguments', () => {
-      const spy = sinon.spy(element, 'readBulk');
-      const opts = {restorePayload: true};
-      return element.readProjectRequests(project._id, opts)
-      .then(() => {
-        assert.isTrue(spy.called);
-        assert.equal(spy.args[0][0], 'saved');
-        assert.deepEqual(spy.args[0][1], project.requests);
-        assert.deepEqual(spy.args[0][2], opts);
-      });
-    });
-
-    test('Returns project requests', () => {
-      return element.readProjectRequests(project._id)
+    test('Reads request object by id only', function() {
+      return element.read(databaseType, requests[0]._id)
       .then((result) => {
-        assert.typeOf(result, 'array');
-        assert.lengthOf(result, project.requests.length);
+        assert.equal(result._id, requests[0]._id);
       });
     });
 
-    test('Calls readProjectRequestsLegacy() when project do not have requests', () => {
-      const project = projects.find((item) => !item.requests);
-      // generates projects have 30% chance to have request assigned.
-      // This test would fail when all projects have requests array which is still possible
-      // To eliminate false-positive test results this test ends when project is not found.
-      if (!project) {
-        console.warn('THIS TEST DID NOT RUN. RE-RUN THE TEST.');
-        return;
-      }
-      const spy = sinon.spy(element, 'readProjectRequestsLegacy');
-      return element.readProjectRequests(project._id)
+    test('Calls PayloadProcessor.restorePayload()', function() {
+      const spy = sinon.spy(PayloadProcessor, 'restorePayload');
+      return element.read(databaseType, requests[1]._id, undefined, {
+        restorePayload: true
+      })
+      .then(() => {
+        PayloadProcessor.restorePayload.restore();
+        assert.equal(spy.callCount, 1);
+      })
+      .catch((cause) => {
+        PayloadProcessor.restorePayload.restore();
+        throw cause;
+      });
+    });
+
+    test('Reads a revision', function() {
+      let originalRev;
+      let updatedRev;
+      return element.read(databaseType, requests[2]._id)
+      .then((result) => {
+        originalRev = result._rev;
+        result.name = 'test-2';
+        return element.update(databaseType, result);
+      })
+      .then((result) => {
+        updatedRev = result._rev;
+        return element.read(databaseType, requests[2]._id, originalRev);
+      })
+      .then((result) => {
+        assert.equal(result.name, requests[2].name);
+        assert.notEqual(originalRev, updatedRev);
+      });
+    });
+
+    test('Calls normalizeRequest()', function() {
+      const spy = sinon.spy(element, 'normalizeRequest');
+      return element.read(databaseType, requests[3]._id)
       .then(() => {
         assert.isTrue(spy.called);
-        assert.equal(spy.args[0][0], project._id);
       });
     });
   });
 
-  suite('readProjectRequestsLegacy()', function() {
+  suite('remove()', function() {
+    teardown(function() {
+      return DataGenerator.destroySavedRequestData();
+    });
+
+    let element;
+    let dataObj;
+    setup(function() {
+      element = fixture('basic');
+      dataObj = {
+        name: 'test-1',
+        url: 'http://domain.com',
+        method: 'GET'
+      };
+      return element.update(databaseType, dataObj)
+        .then((result) => dataObj = result);
+    });
+
+    test('Removes object from the datastore', function() {
+      return element.remove(databaseType, dataObj._id, dataObj._rev)
+        .then(() => {
+          return element.read(databaseType, dataObj._id);
+        })
+        .then(() => {
+          throw new Error('TEST');
+        })
+        .catch((cause) => {
+          assert.equal(cause.status, 404);
+        });
+    });
+
+    test('Fires request-object-deleted custom event', function() {
+      let spy = sinon.spy();
+      element.addEventListener('request-object-deleted', spy);
+      return element.remove(databaseType, dataObj._id, dataObj._rev)
+        .then(() => {
+          assert.isTrue(spy.calledOnce);
+        });
+    });
+
+    test('request-object-deleted event contains request data', function() {
+      let eventData;
+      element.addEventListener('request-object-deleted', function(e) {
+        eventData = e.detail;
+      });
+      return element.remove(databaseType, dataObj._id, dataObj._rev)
+        .then(() => {
+          assert.equal(eventData.id, dataObj._id);
+          assert.equal(eventData.oldRev, dataObj._rev);
+          assert.typeOf(eventData.rev, 'string');
+          assert.notEqual(eventData.rev, dataObj._rev);
+          assert.equal(eventData.type, databaseType);
+        });
+    });
+  });
+
+  suite('list()', () => {
     suiteSetup(() => {
-      const element = fixture('basic');
-      const requests = [{
-        _id: 'test/1234-project',
-        projectOrder: 2
-      }, {
-        _id: 'test/5678-project',
-        projectOrder: 1
-      }, {
-        _id: 'other/1234-project',
-        projectOrder: 0
-      }];
-      return element.updateBulk('saved', requests);
+      return DataGenerator.insertHistoryRequestData({
+        requestsSize: 150
+      });
     });
 
     suiteTeardown(function() {
-      return DataGenerator.destroySavedRequestData();
+      return DataGenerator.destroyHistoryData();
     });
 
     let element;
@@ -816,123 +436,506 @@
       element = fixture('basic');
     });
 
-    test('Reads requests by their ID', () => {
-      return element.readProjectRequestsLegacy('1234-project')
+    test('Returnes all results without limit options', () => {
+      return element.list('history', {})
+      .then((result) => {
+        assert.typeOf(result, 'object');
+        assert.typeOf(result.rows, 'array');
+        assert.lengthOf(result.rows, 150);
+      });
+    });
+
+    test('Limits number of results when set', () => {
+      return element.list('history', {
+        limit: 50
+      })
+      .then((result) => {
+        assert.typeOf(result, 'object');
+        assert.typeOf(result.rows, 'array');
+        assert.lengthOf(result.rows, 50);
+      });
+    });
+
+    test('Respects pagination', () => {
+      let firstKey;
+      return element.list('history', {
+        limit: 50
+      })
+      .then((result) => {
+        firstKey = result.rows[0].key;
+        return element.list('history', {
+          limit: 50,
+          startkey: result.rows[result.rows.length - 1].key,
+          skip: 1
+        });
+      })
+      .then((result) => {
+        assert.typeOf(result, 'object');
+        assert.typeOf(result.rows, 'array');
+        assert.lengthOf(result.rows, 50);
+        assert.notEqual(firstKey, result.rows[0].key);
+      });
+    });
+  });
+
+  suite('readBulk()', () => {
+    let requests;
+    suiteSetup(() => {
+      return DataGenerator.insertHistoryRequestData({
+        requestsSize: 10
+      })
+      .then((data) => {
+        requests = data;
+      });
+    });
+
+    suiteTeardown(function() {
+      return DataGenerator.destroyHistoryData();
+    });
+
+    let element;
+    setup(function() {
+      element = fixture('basic');
+    });
+
+    test('Reads data by ids', () => {
+      const ids = [requests[0]._id, requests[1]._id];
+      return element.readBulk('history', ids)
       .then((result) => {
         assert.lengthOf(result, 2);
+        assert.deepEqual(result[0], requests[0]);
+        assert.deepEqual(result[1], requests[1]);
       });
     });
 
-    test('Calls sorting function', () => {
-      const spy = sinon.spy(element, 'sortRequestProjectOrder');
-      return element.readProjectRequestsLegacy('1234-project')
+    test('Restores payload', () => {
+      const ids = [requests[0]._id, requests[1]._id];
+      const spy = sinon.spy(PayloadProcessor, 'restorePayload');
+      return element.readBulk('history', ids, {
+        restorePayload: true
+      })
+      .then(() => {
+        PayloadProcessor.restorePayload.restore();
+        assert.equal(spy.callCount, 2);
+      });
+    });
+  });
+
+  suite('queryPouchDb()', () => {
+    let element;
+    setup(function() {
+      element = fixture('basic');
+    });
+
+    test('Rejects when no query', () => {
+      return element.queryPouchDb()
+      .then(() => {
+        throw new Error('Should not resolve');
+      })
+      .catch((cause) => {
+        assert.typeOf(cause.message, 'string');
+        assert.equal(cause.message, 'The "q" parameter is required.');
+      });
+    });
+
+    test('Calls queryHistory() only', () => {
+      const spy1 = sinon.spy(element, 'queryHistory');
+      const spy2 = sinon.spy(element, 'querySaved');
+      return element.queryPouchDb('test', 'history', ['id'])
+      .then(() => {
+        assert.isTrue(spy1.called);
+        assert.equal(spy1.args[0][0], 'test');
+        assert.deepEqual(spy1.args[0][1], ['id']);
+        assert.isFalse(spy2.called);
+      });
+    });
+
+    test('Calls querySaved() only', () => {
+      const spy1 = sinon.spy(element, 'queryHistory');
+      const spy2 = sinon.spy(element, 'querySaved');
+      return element.queryPouchDb('test', 'saved', ['id'])
+      .then(() => {
+        assert.isTrue(spy2.called);
+        assert.equal(spy2.args[0][0], 'test');
+        assert.deepEqual(spy2.args[0][1], ['id']);
+        assert.isFalse(spy1.called);
+      });
+    });
+
+    test('Calls both querySaved() and queryHistory()', () => {
+      const spy1 = sinon.spy(element, 'queryHistory');
+      const spy2 = sinon.spy(element, 'querySaved');
+      return element.queryPouchDb('test', 'all', ['id'])
+      .then(() => {
+        assert.isTrue(spy1.called);
+        assert.equal(spy1.args[0][0], 'test');
+        assert.deepEqual(spy1.args[0][1], ['id']);
+        assert.isTrue(spy2.called);
+        assert.equal(spy2.args[0][0], 'test');
+        assert.deepEqual(spy2.args[0][1], ['id']);
+      });
+    });
+  });
+
+  suite('queryHistory()', () => {
+    let element;
+    setup(function() {
+      element = fixture('basic');
+    });
+
+    test('Calls _queryStore with arguments', () => {
+      const spy = sinon.spy(element, '_queryStore');
+      return element.queryHistory('test', ['id'])
       .then(() => {
         assert.isTrue(spy.called);
+        assert.equal(spy.args[0][0], 'test');
+        assert.deepEqual(spy.args[0][1], ['id']);
+        assert.typeOf(spy.args[0][2], 'object');
+        assert.deepEqual(spy.args[0][3], element.historyIndexes);
       });
     });
   });
 
-  suite('sortRequestProjectOrder()', () => {
+  suite('querySaved()', () => {
     let element;
     setup(function() {
       element = fixture('basic');
     });
 
-    test('Returns 1 when a.order > b.order', () => {
-      const result = element.sortRequestProjectOrder({
-        projectOrder: 1
-      }, {
-        projectOrder: 0
+    test('Calls _queryStore with arguments', () => {
+      const spy = sinon.spy(element, '_queryStore');
+      return element.querySaved('test', ['id'])
+      .then(() => {
+        assert.isTrue(spy.called);
+        assert.equal(spy.args[0][0], 'test');
+        assert.deepEqual(spy.args[0][1], ['id']);
+        assert.typeOf(spy.args[0][2], 'object');
+        assert.deepEqual(spy.args[0][3], element.savedIndexes);
       });
-      assert.equal(result, 1);
-    });
-
-    test('Returns -1 when a.order < b.order', () => {
-      const result = element.sortRequestProjectOrder({
-        projectOrder: 0
-      }, {
-        projectOrder: 1
-      });
-      assert.equal(result, -1);
-    });
-
-    test('Returns 1 when a.name > b.name', () => {
-      const result = element.sortRequestProjectOrder({
-        name: 1,
-        projectOrder: 0
-      }, {
-        name: 0,
-        projectOrder: 0
-      });
-      assert.equal(result, 1);
-    });
-
-    test('Returns -1 when a.order < b.order', () => {
-      const result = element.sortRequestProjectOrder({
-        name: 0,
-        projectOrder: 0
-      }, {
-        projectOrder: 0,
-        name: 1
-      });
-      assert.equal(result, -1);
-    });
-
-    test('Returns 0 otherwise', () => {
-      const result = element.sortRequestProjectOrder({
-        name: 0,
-        projectOrder: 0
-      }, {
-        projectOrder: 0,
-        name: 0
-      });
-      assert.equal(result, 0);
     });
   });
 
-  suite('deleteDataModel()', () => {
+  suite('_queryStore()', () => {
+    let requests;
+    suiteSetup(() => {
+      return DataGenerator.insertHistoryRequestData({
+        requestsSize: 10
+      })
+      .then((data) => {
+        requests = data;
+      });
+    });
+
+    suiteTeardown(function() {
+      return DataGenerator.destroyHistoryData();
+    });
+
     let element;
     setup(function() {
       element = fixture('basic');
     });
 
-    test('Returns single promise for saved-requests', () => {
-      const result = element.deleteDataModel('saved-requests');
-      assert.lengthOf(result, 1);
-      return Promise.all(result);
+    test('Rejects when no query', () => {
+      return element._queryStore()
+      .then(() => {
+        throw new Error('Should not resolve');
+      })
+      .catch((cause) => {
+        assert.typeOf(cause.message, 'string');
+        assert.equal(cause.message, 'The "q" argument is required.');
+      });
     });
 
-    test('Returns single promise for saved', () => {
-      const result = element.deleteDataModel('saved');
-      assert.lengthOf(result, 1);
-      return Promise.all(result);
+    test('Rejects when ignored is not an array', () => {
+      return element._queryStore('test', 'not-an-array')
+      .then(() => {
+        throw new Error('Should not resolve');
+      })
+      .catch((cause) => {
+        assert.typeOf(cause.message, 'string');
+        assert.equal(cause.message, 'The "ignore" argument is not an array.');
+      });
     });
 
-    test('Returns single promise for history-requests', () => {
-      const result = element.deleteDataModel('history-requests');
-      assert.lengthOf(result, 1);
-      return Promise.all(result);
+    test('Queries the data store', () => {
+      const db = element.historyDb;
+      const indexes = element.historyIndexes;
+      const ignore = [];
+      const spy = sinon.spy(db, 'search');
+      return element._queryStore('test', ignore, db, indexes)
+      .then(() => {
+        db.search.restore();
+        assert.isTrue(spy.called, 'Search function is called');
+        const data = spy.args[0][0];
+        assert.equal(data.query, 'test', 'Query is set');
+        assert.deepEqual(data.fields, indexes, 'Fields is set');
+        assert.isTrue(data.include_docs, 'include_docs is set');
+        assert.equal(data.mm, 100, 'mm is set');
+      })
+      .catch((cause) => {
+        db.search.restore();
+        throw cause;
+      });
     });
 
-    test('Returns single promise for history', () => {
-      const result = element.deleteDataModel('history');
-      assert.lengthOf(result, 1);
-      return Promise.all(result);
+    test('Returns the results', () => {
+      const db = element.historyDb;
+      const indexes = element.historyIndexes;
+      const ignore = [];
+      return element._queryStore(requests[0].method, ignore, db, indexes)
+      .then((results) => {
+        assert.typeOf(results, 'array');
+        // Sometimes this fails. It is an external plugin anyway.
+        // assert.isAbove(results.length, 0);
+      });
     });
 
-    test('Returns 2 promises for "all"', () => {
-      const result = element.deleteDataModel('all');
-      assert.lengthOf(result, 2);
-      return Promise.all(result);
-    });
-
-    test('Returns 2 promises for "saved" and "history"', () => {
-      const result = element.deleteDataModel(['saved', 'history']);
-      assert.lengthOf(result, 2);
-      return Promise.all(result);
+    test('Removes ignored requests', () => {
+      const db = element.historyDb;
+      const indexes = element.historyIndexes;
+      const ignore = [requests[0]._id];
+      return element._queryStore(requests[0].method, ignore, db, indexes)
+      .then((results) => {
+        const index = results.findIndex((item) => item._id === requests[0]._id);
+        assert.equal(index, -1);
+      });
     });
   });
-  </script>
+
+  suite('indexData()', () => {
+    suiteSetup(() => {
+      return DataGenerator.insertHistoryRequestData({
+        requestsSize: 1
+      });
+    });
+
+    suiteTeardown(function() {
+      return DataGenerator.destroyHistoryData();
+    });
+
+    let element;
+    setup(function() {
+      element = fixture('basic');
+    });
+
+    test('Indexes history data', () => {
+      return element.indexData('history');
+    });
+
+    test('Indexes saved data', () => {
+      return element.indexData('saved');
+    });
+  });
+});
+
+suite('readProjectRequests()', function() {
+  let project;
+  let projects;
+  suiteSetup(() => {
+    return DataGenerator.insertSavedRequestData()
+    .then((data) => {
+      projects = data.projects;
+      for (let i = 0; i < data.projects.length; i++) {
+        if (data.projects[i].requests && data.projects[i].requests.length) {
+          project = data.projects[i];
+          break;
+        }
+      }
+      if (!project) {
+        throw new Error('Unable to find a project with requests.');
+      }
+    });
+  });
+
+  suiteTeardown(function() {
+    return DataGenerator.destroySavedRequestData();
+  });
+
+  let element;
+  setup(function() {
+    element = fixture('basic');
+  });
+
+  test('Calls readBulk() with arguments', () => {
+    const spy = sinon.spy(element, 'readBulk');
+    const opts = {restorePayload: true};
+    return element.readProjectRequests(project._id, opts)
+    .then(() => {
+      assert.isTrue(spy.called);
+      assert.equal(spy.args[0][0], 'saved');
+      assert.deepEqual(spy.args[0][1], project.requests);
+      assert.deepEqual(spy.args[0][2], opts);
+    });
+  });
+
+  test('Returns project requests', () => {
+    return element.readProjectRequests(project._id)
+    .then((result) => {
+      assert.typeOf(result, 'array');
+      assert.lengthOf(result, project.requests.length);
+    });
+  });
+
+  test('Calls readProjectRequestsLegacy() when project do not have requests', () => {
+    const project = projects.find((item) => !item.requests);
+    // generates projects have 30% chance to have request assigned.
+    // This test would fail when all projects have requests array which is still possible
+    // To eliminate false-positive test results this test ends when project is not found.
+    if (!project) {
+      console.warn('THIS TEST DID NOT RUN. RE-RUN THE TEST.');
+      return;
+    }
+    const spy = sinon.spy(element, 'readProjectRequestsLegacy');
+    return element.readProjectRequests(project._id)
+    .then(() => {
+      assert.isTrue(spy.called);
+      assert.equal(spy.args[0][0], project._id);
+    });
+  });
+});
+
+suite('readProjectRequestsLegacy()', function() {
+  suiteSetup(() => {
+    const element = fixture('basic');
+    const requests = [{
+      _id: 'test/1234-project',
+      projectOrder: 2
+    }, {
+      _id: 'test/5678-project',
+      projectOrder: 1
+    }, {
+      _id: 'other/1234-project',
+      projectOrder: 0
+    }];
+    return element.updateBulk('saved', requests);
+  });
+
+  suiteTeardown(function() {
+    return DataGenerator.destroySavedRequestData();
+  });
+
+  let element;
+  setup(function() {
+    element = fixture('basic');
+  });
+
+  test('Reads requests by their ID', () => {
+    return element.readProjectRequestsLegacy('1234-project')
+    .then((result) => {
+      assert.lengthOf(result, 2);
+    });
+  });
+
+  test('Calls sorting function', () => {
+    const spy = sinon.spy(element, 'sortRequestProjectOrder');
+    return element.readProjectRequestsLegacy('1234-project')
+    .then(() => {
+      assert.isTrue(spy.called);
+    });
+  });
+});
+
+suite('sortRequestProjectOrder()', () => {
+  let element;
+  setup(function() {
+    element = fixture('basic');
+  });
+
+  test('Returns 1 when a.order > b.order', () => {
+    const result = element.sortRequestProjectOrder({
+      projectOrder: 1
+    }, {
+      projectOrder: 0
+    });
+    assert.equal(result, 1);
+  });
+
+  test('Returns -1 when a.order < b.order', () => {
+    const result = element.sortRequestProjectOrder({
+      projectOrder: 0
+    }, {
+      projectOrder: 1
+    });
+    assert.equal(result, -1);
+  });
+
+  test('Returns 1 when a.name > b.name', () => {
+    const result = element.sortRequestProjectOrder({
+      name: 1,
+      projectOrder: 0
+    }, {
+      name: 0,
+      projectOrder: 0
+    });
+    assert.equal(result, 1);
+  });
+
+  test('Returns -1 when a.order < b.order', () => {
+    const result = element.sortRequestProjectOrder({
+      name: 0,
+      projectOrder: 0
+    }, {
+      projectOrder: 0,
+      name: 1
+    });
+    assert.equal(result, -1);
+  });
+
+  test('Returns 0 otherwise', () => {
+    const result = element.sortRequestProjectOrder({
+      name: 0,
+      projectOrder: 0
+    }, {
+      projectOrder: 0,
+      name: 0
+    });
+    assert.equal(result, 0);
+  });
+});
+
+suite('deleteDataModel()', () => {
+  let element;
+  setup(function() {
+    element = fixture('basic');
+  });
+
+  test('Returns single promise for saved-requests', () => {
+    const result = element.deleteDataModel('saved-requests');
+    assert.lengthOf(result, 1);
+    return Promise.all(result);
+  });
+
+  test('Returns single promise for saved', () => {
+    const result = element.deleteDataModel('saved');
+    assert.lengthOf(result, 1);
+    return Promise.all(result);
+  });
+
+  test('Returns single promise for history-requests', () => {
+    const result = element.deleteDataModel('history-requests');
+    assert.lengthOf(result, 1);
+    return Promise.all(result);
+  });
+
+  test('Returns single promise for history', () => {
+    const result = element.deleteDataModel('history');
+    assert.lengthOf(result, 1);
+    return Promise.all(result);
+  });
+
+  test('Returns 2 promises for "all"', () => {
+    const result = element.deleteDataModel('all');
+    assert.lengthOf(result, 2);
+    return Promise.all(result);
+  });
+
+  test('Returns 2 promises for "saved" and "history"', () => {
+    const result = element.deleteDataModel(['saved', 'history']);
+    assert.lengthOf(result, 2);
+    return Promise.all(result);
+  });
+});
+</script>
 </body>
 
 </html>

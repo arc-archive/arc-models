@@ -3,12 +3,12 @@
   <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, minimum-scale=1.0, initial-scale=1.0, user-scalable=yes">
-    <script src="../../../webcomponentsjs/webcomponents-loader.js"></script>
-    <script src="../../../web-component-tester/browser.js"></script>
-    <link rel="import" href="../../url-history-model.html">
-    <link rel="import" href="../../../arc-polyfills/arc-polyfills.html">
-    <link rel="import" href="../../../app-pouchdb/pouchdb.html">
-    <script src="common.js"></script>
+    <script src="../../../../@webcomponents/webcomponentsjs/webcomponents-loader.js"></script>
+    <script src="../../../../wct-browser-legacy/browser.js"></script>
+    <script type="module" src="../../url-history-model.js"></script>
+    <script type="module" src="../../../../arc-polyfills/arc-polyfills.js"></script>
+    <script type="module" src="../../../../app-pouchdb/pouchdb.js"></script>
+    <script src="./common.js"></script>
   </head>
   <body>
 
@@ -18,54 +18,57 @@
       </template>
     </test-fixture>
 
-    <script>
-    /* global UrlHistoryHelper, fixture, assert */
-    suite('Storing the data', function() {
-      let element;
-      const baseUrl = 'https://api.mulesoft.com/endpoint/path?query=parameter';
-      const otherUrl = 'https://api.domain.com/endpoint/';
-      suite('store()', function() {
-        let previousInsert;
-        suiteSetup(function(done) {
-          setTimeout(function() {
-            UrlHistoryHelper.deleteDatabase().then(function() {
-              done();
-            });
-          }, 2000);
+    <script type="module">
+import '../../url-history-model.js';
+import '../../../../arc-polyfills/arc-polyfills.js';
+import '../../../../app-pouchdb/pouchdb.js';
+/* global UrlHistoryHelper, fixture, assert */
+suite('Storing the data', function() {
+  let element;
+  const baseUrl = 'https://api.mulesoft.com/endpoint/path?query=parameter';
+  const otherUrl = 'https://api.domain.com/endpoint/';
+  suite('store()', function() {
+    let previousInsert;
+    suiteSetup(function(done) {
+      setTimeout(function() {
+        UrlHistoryHelper.deleteDatabase().then(function() {
+          done();
         });
-        suiteTeardown(function(done) {
-          setTimeout(function() {
-            done();
-          }, 2000);
-        });
-        setup(function() {
-          element = fixture('basic');
-        });
-        test('Stores the URL', function() {
-          return element.store(baseUrl)
-          .then(function(result) {
-            assert.isTrue(result.ok);
-            previousInsert = result;
-          });
-        });
-        test('Updates existing URL data', function() {
-          return element.store(baseUrl)
-          .then(function(result) {
-            assert.isTrue(result.ok, 'Operation succeeded');
-            assert.equal(result.id, previousInsert.id, 'Ids matches previous');
-            assert.notEqual(result.rev, previousInsert.rev, 'Rev is different');
-          });
-        });
-        test('Creates another URL data', function() {
-          return element.store(otherUrl)
-          .then(function(result) {
-            assert.isTrue(result.ok, 'Operation succeeded');
-            assert.notEqual(result.id, previousInsert.id, 'IDs are different');
-          });
-        });
+      }, 2000);
+    });
+    suiteTeardown(function(done) {
+      setTimeout(function() {
+        done();
+      }, 2000);
+    });
+    setup(function() {
+      element = fixture('basic');
+    });
+    test('Stores the URL', function() {
+      return element.store(baseUrl)
+      .then(function(result) {
+        assert.isTrue(result.ok);
+        previousInsert = result;
       });
     });
-    </script>
+    test('Updates existing URL data', function() {
+      return element.store(baseUrl)
+      .then(function(result) {
+        assert.isTrue(result.ok, 'Operation succeeded');
+        assert.equal(result.id, previousInsert.id, 'Ids matches previous');
+        assert.notEqual(result.rev, previousInsert.rev, 'Rev is different');
+      });
+    });
+    test('Creates another URL data', function() {
+      return element.store(otherUrl)
+      .then(function(result) {
+        assert.isTrue(result.ok, 'Operation succeeded');
+        assert.notEqual(result.id, previousInsert.id, 'IDs are different');
+      });
+    });
+  });
+});
+</script>
 
   </body>
 </html>

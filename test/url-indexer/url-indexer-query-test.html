@@ -3,11 +3,11 @@
   <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, minimum-scale=1.0, initial-scale=1.0, user-scalable=yes">
-    <script src="../../../webcomponentsjs/webcomponents-loader.js"></script>
-    <script src="../../../web-component-tester/browser.js"></script>
-    <script src="../../../iron-test-helpers/test-helpers.js"></script>
-    <link rel="import" href="../../../app-pouchdb/pouchdb.html">
-    <link rel="import" href="../../url-indexer.html">
+    <script src="../../../../@webcomponents/webcomponentsjs/webcomponents-loader.js"></script>
+    <script src="../../../../wct-browser-legacy/browser.js"></script>
+    <script src="../../../../@polymer/iron-test-helpers/test-helpers.js" type="module"></script>
+    <script type="module" src="../../../../app-pouchdb/pouchdb.js"></script>
+    <script type="module" src="../../url-indexer.js"></script>
   </head>
   <body>
 
@@ -17,127 +17,129 @@
       </template>
     </test-fixture>
 
-    <script>
-    suite('Query index', function() {
-      function clearAllIndexes(db) {
-        return new Promise((resolve, reject) => {
-          const tx = db.transaction('urls', 'readwrite');
-          const store = tx.objectStore('urls');
-          const results = [];
-          tx.onerror = () => {
-            reject(results);
-          };
-          tx.oncomplete = () => {
-            resolve(results);
-          };
-          store.clear();
-        });
-      }
+    <script type="module">
+import '../../../../app-pouchdb/pouchdb.js';
+import '../../url-indexer.js';
+suite('Query index', function() {
+  function clearAllIndexes(db) {
+    return new Promise((resolve, reject) => {
+      const tx = db.transaction('urls', 'readwrite');
+      const store = tx.objectStore('urls');
+      const results = [];
+      tx.onerror = () => {
+        reject(results);
+      };
+      tx.oncomplete = () => {
+        resolve(results);
+      };
+      store.clear();
+    });
+  }
 
-      suite('Querying for data', function() {
-        let element;
+  suite('Querying for data', function() {
+    let element;
 
-        suiteSetup(function() {
-          element = fixture('Basic');
-          const toIndex = [{
-            id: 'test-id-1',
-            url: 'https://domain.com/Api/Path?p1=1&p2=2',
-            type: 'saved'
-          }, {
-            id: 'test-id-2',
-            url: 'https://domain.com/',
-            type: 'saved'
-          }, {
-            id: 'test-id-3',
-            url: 'https://api.domain.com/',
-            type: 'history'
-          }, {
-            id: 'test-id-4',
-            url: 'https://api.mulesoft.com/path/to?param=1',
-            type: 'history'
-          }];
-          return element.index(toIndex);
-        });
+    suiteSetup(function() {
+      element = fixture('Basic');
+      const toIndex = [{
+        id: 'test-id-1',
+        url: 'https://domain.com/Api/Path?p1=1&p2=2',
+        type: 'saved'
+      }, {
+        id: 'test-id-2',
+        url: 'https://domain.com/',
+        type: 'saved'
+      }, {
+        id: 'test-id-3',
+        url: 'https://api.domain.com/',
+        type: 'history'
+      }, {
+        id: 'test-id-4',
+        url: 'https://api.mulesoft.com/path/to?param=1',
+        type: 'history'
+      }];
+      return element.index(toIndex);
+    });
 
-        suiteTeardown(() => {
-          return element.openSearchStore()
-          .then((db) => clearAllIndexes(db));
-        });
+    suiteTeardown(() => {
+      return element.openSearchStore()
+      .then((db) => clearAllIndexes(db));
+    });
 
-        suite('Case search', function() {
-          [
-            ['https:', 4, 2, 2],
-            ['api', 2, 0, 2],
-            ['domain.com', 3, 2, 1],
-            ['mulesoft.com', 0, 0, 0]
-          ].forEach(function(data) {
-            test(`Querying for "${data[0]}"`, function() {
-              return element.query(data[0], {detailed: false})
-              .then((result) => {
-                assert.lengthOf(Object.keys(result), data[1]);
-              });
-            });
-
-            test(`Querying for "${data[0]}" - saved only `, function() {
-              return element.query(data[0], {
-                detailed: false,
-                type: 'saved'
-              })
-              .then((result) => {
-                assert.lengthOf(Object.keys(result), data[2]);
-              });
-            });
-
-            test(`Querying for "${data[0]}" - history only `, function() {
-              return element.query(data[0], {
-                detailed: false,
-                type: 'history'
-              })
-              .then((result) => {
-                assert.lengthOf(Object.keys(result), data[3]);
-              });
-            });
+    suite('Case search', function() {
+      [
+        ['https:', 4, 2, 2],
+        ['api', 2, 0, 2],
+        ['domain.com', 3, 2, 1],
+        ['mulesoft.com', 0, 0, 0]
+      ].forEach(function(data) {
+        test(`Querying for "${data[0]}"`, function() {
+          return element.query(data[0], {detailed: false})
+          .then((result) => {
+            assert.lengthOf(Object.keys(result), data[1]);
           });
         });
 
-        suite('Detailed search', function() {
-          [
-            ['https:', 4, 2, 2],
-            ['api', 3, 1, 2],
-            ['domain.com', 3, 2, 1],
-            ['mulesoft.com', 1, 0, 1]
-          ].forEach(function(data) {
-            test(`Querying for "${data[0]}"`, function() {
-              return element.query(data[0], {detailed: true})
-              .then((result) => {
-                assert.lengthOf(Object.keys(result), data[1]);
-              });
-            });
+        test(`Querying for "${data[0]}" - saved only `, function() {
+          return element.query(data[0], {
+            detailed: false,
+            type: 'saved'
+          })
+          .then((result) => {
+            assert.lengthOf(Object.keys(result), data[2]);
+          });
+        });
 
-            test(`Querying for "${data[0]}" - saved only `, function() {
-              return element.query(data[0], {
-                detailed: true,
-                type: 'saved'
-              })
-              .then((result) => {
-                assert.lengthOf(Object.keys(result), data[2]);
-              });
-            });
-
-            test(`Querying for "${data[0]}" - history only `, function() {
-              return element.query(data[0], {
-                detailed: true,
-                type: 'history'
-              })
-              .then((result) => {
-                assert.lengthOf(Object.keys(result), data[3]);
-              });
-            });
+        test(`Querying for "${data[0]}" - history only `, function() {
+          return element.query(data[0], {
+            detailed: false,
+            type: 'history'
+          })
+          .then((result) => {
+            assert.lengthOf(Object.keys(result), data[3]);
           });
         });
       });
     });
-    </script>
+
+    suite('Detailed search', function() {
+      [
+        ['https:', 4, 2, 2],
+        ['api', 3, 1, 2],
+        ['domain.com', 3, 2, 1],
+        ['mulesoft.com', 1, 0, 1]
+      ].forEach(function(data) {
+        test(`Querying for "${data[0]}"`, function() {
+          return element.query(data[0], {detailed: true})
+          .then((result) => {
+            assert.lengthOf(Object.keys(result), data[1]);
+          });
+        });
+
+        test(`Querying for "${data[0]}" - saved only `, function() {
+          return element.query(data[0], {
+            detailed: true,
+            type: 'saved'
+          })
+          .then((result) => {
+            assert.lengthOf(Object.keys(result), data[2]);
+          });
+        });
+
+        test(`Querying for "${data[0]}" - history only `, function() {
+          return element.query(data[0], {
+            detailed: true,
+            type: 'history'
+          })
+          .then((result) => {
+            assert.lengthOf(Object.keys(result), data[3]);
+          });
+        });
+      });
+    });
+  });
+});
+</script>
 
   </body>
 </html>

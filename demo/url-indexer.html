@@ -10,25 +10,36 @@
     passiveTouchGestures: true
   };
   </script>
-  <script src="../../webcomponentsjs/webcomponents-loader.js"></script>
-  <link rel="import" href="../../shadycss/apply-shim.html">
-  <link rel="import" href="../../polymer/lib/elements/custom-style.html">
-  <link rel="import" href="../../polymer/lib/elements/dom-bind.html">
-  <link rel="import" href="../../iron-demo-helpers/demo-pages-shared-styles.html">
-  <link rel="import" href="../../paper-input/paper-input.html">
-  <link rel="import" href="../../paper-button/paper-button.html">
-  <link rel="import" href="../../app-pouchdb/pouchdb.html">
-  <link rel="import" href="../../paper-dropdown-menu/paper-dropdown-menu.html">
-  <link rel="import" href="../../paper-listbox/paper-listbox.html">
-  <link rel="import" href="../../paper-item/paper-item.html">
-  <link rel="import" href="../../neon-animation/web-animations.html">
-  <link rel="import" href="../../paper-toast/paper-toast.html">
-  <link rel="import" href="../../arc-data-generator/arc-data-generator.html">
-  <link rel="import" href="../../paper-styles/shadow.html">
-  <link rel="import" href="../../iron-list/iron-list.html">
-  <link rel="import" href="../../paper-toggle-button/paper-toggle-button.html">
-  <link rel="import" href="../url-indexer.html">
-  <custom-style>
+  <script src="../../../@webcomponents/webcomponentsjs/webcomponents-loader.js"></script>
+  <script type="module" src="../../../@webcomponents/shadycss/entrypoints/apply-shim.js"></script>
+  <script type="module" src="../../../@polymer/polymer/lib/elements/custom-style.js"></script>
+  <script type="module" src="../../../@polymer/polymer/lib/elements/dom-bind.js"></script>
+  <script type="module" src="../../../@polymer/iron-demo-helpers/demo-pages-shared-styles.js"></script>
+  <script type="module" src="../../../@polymer/paper-input/paper-input.js"></script>
+  <script type="module" src="../../../@polymer/paper-button/paper-button.js"></script>
+  <script type="module" src="../../../app-pouchdb/pouchdb.js"></script>
+  <script type="module" src="../../../@polymer/paper-dropdown-menu/paper-dropdown-menu.js"></script>
+  <script type="module" src="../../../@polymer/paper-listbox/paper-listbox.js"></script>
+  <script type="module" src="../../../@polymer/paper-item/paper-item.js"></script>
+  <script type="module" src="../../../@polymer/neon-animation/web-animations.js"></script>
+  <script type="module" src="../../../@polymer/paper-toast/paper-toast.js"></script>
+  <script type="module" src="../../../arc-data-generator/arc-data-generator.js"></script>
+  <script type="module" src="../../../@polymer/paper-styles/shadow.js"></script>
+  <script type="module" src="../../../@polymer/iron-list/iron-list.js"></script>
+  <script type="module" src="../../../@polymer/paper-toggle-button/paper-toggle-button.js"></script>
+  <script type="module" src="../url-indexer.js"></script>
+  <!-- FIXME(polymer-modulizer):
+        These imperative modules that innerHTML your HTML are
+        a hacky way to be sure that any mixins in included style
+        modules are ready before any elements that reference them are
+        instantiated, otherwise the CSS @apply mixin polyfill won't be
+        able to expand the underlying CSS custom properties.
+        See: https://github.com/Polymer/polymer-modulizer/issues/154
+        -->
+    <script type="module">
+const $_documentContainer = document.createElement('template');
+
+$_documentContainer.innerHTML = `<custom-style>
     <style include="demo-pages-shared-styles">
     :root {
       --arc-font-body1: {
@@ -107,13 +118,25 @@
       @apply --layout-flex;
     }
     </style>
-  </custom-style>
+  </custom-style>`;
+
+document.body.appendChild($_documentContainer.content);
+</script>
 </head>
 <body>
-  <header>
-    <h1>URL indexer model<h1>
-  </header>
-  <dom-bind id="demo">
+  <script type="module">
+const $_documentContainer = document.createElement('template');
+
+$_documentContainer.innerHTML = `<header>
+    <h1>URL indexer model</h1><h1>
+  </h1></header>`;
+
+document.body.appendChild($_documentContainer.content);
+</script>
+  <script type="module">
+const $_documentContainer = document.createElement('template');
+
+$_documentContainer.innerHTML = `<dom-bind id="demo">
     <template>
       <url-indexer id="indexer"></url-indexer>
       <div class="vertical-section-container centered options card">
@@ -219,188 +242,208 @@
       <paper-toast text="Index for type cleared" id="typeClearReady"></paper-toast>
       <paper-toast text="Index is now cleared" id="indexClearReady"></paper-toast>
     </template>
-  </dom-bind>
-  <script>
-  (function(scope) {
-    /* global DataGenerator */
-    scope.q = 'api';
-    scope.genSize = 250;
-    scope.genType = 0;
-    scope.indexType = 0;
-    scope.clearType = 0;
-    scope.detailedQuery = true;
+  </dom-bind>`;
 
-    scope.load = function() {
-      scope.refreshData();
-    };
+document.body.appendChild($_documentContainer.content);
+</script>
+  <script type="module">
+import '../../../@webcomponents/shadycss/entrypoints/apply-shim.js';
+import '../../../@polymer/polymer/lib/elements/custom-style.js';
+import '../../../@polymer/polymer/lib/elements/dom-bind.js';
+import '../../../@polymer/iron-demo-helpers/demo-pages-shared-styles.js';
+import '../../../@polymer/paper-input/paper-input.js';
+import '../../../@polymer/paper-button/paper-button.js';
+import '../../../app-pouchdb/pouchdb.js';
+import '../../../@polymer/paper-dropdown-menu/paper-dropdown-menu.js';
+import '../../../@polymer/paper-listbox/paper-listbox.js';
+import '../../../@polymer/paper-item/paper-item.js';
+import '../../../@polymer/neon-animation/web-animations.js';
+import '../../../@polymer/paper-toast/paper-toast.js';
+import '../../../arc-data-generator/arc-data-generator.js';
+import '../../../@polymer/paper-styles/shadow.js';
+import '../../../@polymer/iron-list/iron-list.js';
+import '../../../@polymer/paper-toggle-button/paper-toggle-button.js';
+import '../url-indexer.js';
+(function(scope) {
+  /* global DataGenerator */
+  scope.q = 'api';
+  scope.genSize = 250;
+  scope.genType = 0;
+  scope.indexType = 0;
+  scope.clearType = 0;
+  scope.detailedQuery = true;
 
-    scope.genData = function() {
-      if (scope.genType === 0) {
-        scope.genSavedData();
-      } else if (scope.genType === 1) {
-        scope.genHistoryData();
-      }
-    };
+  scope.load = function() {
+    scope.refreshData();
+  };
 
-    scope.genSavedData = function() {
-      document.getElementById('creating').opened = true;
-      DataGenerator.insertSavedRequestData({
-        requestsSize: Number(scope.genSize)
-      })
-      .then(() => {
-        document.getElementById('creating').opened = false;
-        document.getElementById('requestDataReady').opened = true;
-        scope.refreshData('saved');
-      });
-    };
+  scope.genData = function() {
+    if (scope.genType === 0) {
+      scope.genSavedData();
+    } else if (scope.genType === 1) {
+      scope.genHistoryData();
+    }
+  };
 
-    scope.genHistoryData = function() {
-      document.getElementById('creating').opened = true;
-      DataGenerator.insertHistoryRequestData({
-        requestsSize: Number(scope.genSize)
-      })
-      .then(() => {
-        document.getElementById('creating').opened = false;
-        document.getElementById('requestDataReady').opened = true;
-        scope.refreshData('history');
-      });
-    };
+  scope.genSavedData = function() {
+    document.getElementById('creating').opened = true;
+    DataGenerator.insertSavedRequestData({
+      requestsSize: Number(scope.genSize)
+    })
+    .then(() => {
+      document.getElementById('creating').opened = false;
+      document.getElementById('requestDataReady').opened = true;
+      scope.refreshData('saved');
+    });
+  };
 
-    scope.refreshData = function(type) {
-      let p;
-      performance.mark('refresh-start');
-      if (type === 'saved') {
-        p = DataGenerator.getDatastoreRequestData();
-      } else if (type === 'history') {
-        p = DataGenerator.getDatastoreHistoryData();
-      } else {
-        p = DataGenerator.getDatastoreRequestData()
-        .then((data) => {
-          return DataGenerator.getDatastoreHistoryData()
-          .then((other) => {
-            return other.concat(data);
-          });
+  scope.genHistoryData = function() {
+    document.getElementById('creating').opened = true;
+    DataGenerator.insertHistoryRequestData({
+      requestsSize: Number(scope.genSize)
+    })
+    .then(() => {
+      document.getElementById('creating').opened = false;
+      document.getElementById('requestDataReady').opened = true;
+      scope.refreshData('history');
+    });
+  };
+
+  scope.refreshData = function(type) {
+    let p;
+    performance.mark('refresh-start');
+    if (type === 'saved') {
+      p = DataGenerator.getDatastoreRequestData();
+    } else if (type === 'history') {
+      p = DataGenerator.getDatastoreHistoryData();
+    } else {
+      p = DataGenerator.getDatastoreRequestData()
+      .then((data) => {
+        return DataGenerator.getDatastoreHistoryData()
+        .then((other) => {
+          return other.concat(data);
         });
-      }
-      p.then((data) => {
-        performance.mark('refresh-end');
-        data = data.map((item) => {
-          return {
-            name: item.name,
-            url: item.url,
-            isSaved: item.type === 'saved',
-            isHistory: item.type !== 'saved'
-          };
-        });
-        scope.generated = scope.generated ? scope.generated.concat(data) : data;
-        performance.measure(
-          'refresh-time',
-          'refresh-start',
-          'refresh-end'
-        );
-        const measures = performance.getEntriesByName('refresh-time');
-        const measure = measures[0];
-        scope.refreshTime = measure.duration;
-        performance.clearMarks();
-        performance.clearMeasures();
       });
-    };
-
-    scope.indexData = function() {
-      let t;
-      if (scope.indexType === 0) {
-        t = 'saved';
-      } else if (scope.indexType === 1) {
-        t = 'history';
-      } else {
-        throw new Error('Unknown type');
-      }
-
-      scope._indexData(t);
-    };
-
-    scope._indexData = function(type) {
-      document.getElementById('reindexing').opened = true;
-      const indexer = document.getElementById('indexer');
-      performance.mark('indexing-start');
-      indexer.reindex(type)
-      .then(() => {
-        performance.mark('indexing-end');
-        document.getElementById('reindexReady').opened = true;
-        performance.measure(
-          'indexing-time',
-          'indexing-start',
-          'indexing-end'
-        );
-        const measures = performance.getEntriesByName('indexing-time');
-        const measure = measures[0];
-        console.debug('Index built in', measure.duration);
-        performance.clearMarks();
-        performance.clearMeasures();
+    }
+    p.then((data) => {
+      performance.mark('refresh-end');
+      data = data.map((item) => {
+        return {
+          name: item.name,
+          url: item.url,
+          isSaved: item.type === 'saved',
+          isHistory: item.type !== 'saved'
+        };
       });
-    };
+      scope.generated = scope.generated ? scope.generated.concat(data) : data;
+      performance.measure(
+        'refresh-time',
+        'refresh-start',
+        'refresh-end'
+      );
+      const measures = performance.getEntriesByName('refresh-time');
+      const measure = measures[0];
+      scope.refreshTime = measure.duration;
+      performance.clearMarks();
+      performance.clearMeasures();
+    });
+  };
 
-    scope.clearData = function() {
-      let t;
-      if (scope.clearType === 0) {
-        t = 'saved';
-      } else if (scope.clearType === 1) {
-        t = 'history';
-      } else {
-        throw new Error('Unknown type');
-      }
-      const indexer = document.getElementById('indexer');
-      indexer.deleteIndexedType(t)
-      .then(() => {
-        document.getElementById('typeClearReady').opened = true;
+  scope.indexData = function() {
+    let t;
+    if (scope.indexType === 0) {
+      t = 'saved';
+    } else if (scope.indexType === 1) {
+      t = 'history';
+    } else {
+      throw new Error('Unknown type');
+    }
+
+    scope._indexData(t);
+  };
+
+  scope._indexData = function(type) {
+    document.getElementById('reindexing').opened = true;
+    const indexer = document.getElementById('indexer');
+    performance.mark('indexing-start');
+    indexer.reindex(type)
+    .then(() => {
+      performance.mark('indexing-end');
+      document.getElementById('reindexReady').opened = true;
+      performance.measure(
+        'indexing-time',
+        'indexing-start',
+        'indexing-end'
+      );
+      const measures = performance.getEntriesByName('indexing-time');
+      const measure = measures[0];
+      console.debug('Index built in', measure.duration);
+      performance.clearMarks();
+      performance.clearMeasures();
+    });
+  };
+
+  scope.clearData = function() {
+    let t;
+    if (scope.clearType === 0) {
+      t = 'saved';
+    } else if (scope.clearType === 1) {
+      t = 'history';
+    } else {
+      throw new Error('Unknown type');
+    }
+    const indexer = document.getElementById('indexer');
+    indexer.deleteIndexedType(t)
+    .then(() => {
+      document.getElementById('typeClearReady').opened = true;
+    });
+  };
+
+  scope.search = function() {
+    const query = document.getElementById('q').value;
+    const indexer = document.getElementById('indexer');
+    scope.queryResult = false;
+    const opts = {};
+    if (scope.detailedQuery === true) {
+      opts.detailed = true;
+    }
+    performance.mark('query-start');
+    return indexer.query(query, opts)
+    .then((result) => {
+      performance.mark('query-end');
+      console.debug('Search complete');
+      const data = Object.keys(result).map((key) => {
+        const type = result[key];
+        return {
+          isHistory: type === 'history',
+          isSaved: type === 'saved',
+          id: key
+        };
       });
-    };
+      scope.queryResult = data;
+      performance.measure(
+        'query-time',
+        'query-start',
+        'query-end'
+      );
+      const measures = performance.getEntriesByName('query-time');
+      const measure = measures[0];
+      scope.queryTime = measure.duration;
+      performance.clearMarks();
+      performance.clearMeasures();
+    });
+  };
 
-    scope.search = function() {
-      const query = document.getElementById('q').value;
-      const indexer = document.getElementById('indexer');
-      scope.queryResult = false;
-      const opts = {};
-      if (scope.detailedQuery === true) {
-        opts.detailed = true;
-      }
-      performance.mark('query-start');
-      return indexer.query(query, opts)
-      .then((result) => {
-        performance.mark('query-end');
-        console.debug('Search complete');
-        const data = Object.keys(result).map((key) => {
-          const type = result[key];
-          return {
-            isHistory: type === 'history',
-            isSaved: type === 'saved',
-            id: key
-          };
-        });
-        scope.queryResult = data;
-        performance.measure(
-          'query-time',
-          'query-start',
-          'query-end'
-        );
-        const measures = performance.getEntriesByName('query-time');
-        const measure = measures[0];
-        scope.queryTime = measure.duration;
-        performance.clearMarks();
-        performance.clearMeasures();
-      });
-    };
+  scope.deleteData = function() {
+    const indexer = document.getElementById('indexer');
+    return indexer.clearIndexedData()
+    .then(() => {
+      document.getElementById('indexClearReady').opened = true;
+    });
+  };
 
-    scope.deleteData = function() {
-      const indexer = document.getElementById('indexer');
-      return indexer.clearIndexedData()
-      .then(() => {
-        document.getElementById('indexClearReady').opened = true;
-      });
-    };
-
-    window.addEventListener('WebComponentsReady', scope.load);
-  })(document.getElementById('demo'));
-  </script>
+  window.addEventListener('WebComponentsReady', scope.load);
+})(document.getElementById('demo'));
+</script>
 </body>
 </html>

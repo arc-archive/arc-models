@@ -1,4 +1,4 @@
-<!--
+/**
 @license
 Copyright 2018 The Advanced REST client authors <arc@mulesoft.com>
 Licensed under the Apache License, Version 2.0 (the "License"); you may not
@@ -10,11 +10,10 @@ distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
 WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
 License for the specific language governing permissions and limitations under
 the License.
--->
-<link rel="import" href="../polymer/polymer-element.html">
-<link rel="import" href="../uuid-generator/uuid-generator.html">
-<dom-module id="url-indexer">
-<script>
+*/
+import { PolymerElement } from '../../@polymer/polymer/polymer-element.js';
+
+import '../../uuid-generator/uuid-generator.js';
 /**
  * An element responsible for indexing and querying for URL data.
  *
@@ -107,7 +106,7 @@ the License.
  * @customElement
  * @memberof LogicElements
  */
-class UrlIndexer extends Polymer.Element {
+class UrlIndexer extends PolymerElement {
   static get is() {return 'url-indexer';}
   /**
    * @return {Element} Instance of `uuid-generator`
@@ -974,5 +973,3 @@ class UrlIndexer extends Polymer.Element {
   }
 }
 window.customElements.define(UrlIndexer.is, UrlIndexer);
-</script>
-</dom-module>

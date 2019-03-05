@@ -3,11 +3,11 @@
   <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, minimum-scale=1.0, initial-scale=1.0, user-scalable=yes">
-    <script src="../../webcomponentsjs/webcomponents-loader.js"></script>
-    <script src="../../web-component-tester/browser.js"></script>
-    <script src="../../iron-test-helpers/test-helpers.js"></script>
-    <script src="database-helper.js"></script>
-    <link rel="import" href="../arc-models.html">
+    <script src="../../../@webcomponents/webcomponentsjs/webcomponents-loader.js"></script>
+    <script src="../../../wct-browser-legacy/browser.js"></script>
+    <script src="../../../@polymer/iron-test-helpers/test-helpers.js" type="module"></script>
+    <script src="./database-helper.js"></script>
+    <script type="module" src="../arc-models.js"></script>
   </head>
   <body>
 
@@ -17,404 +17,405 @@
       </template>
     </test-fixture>
 
-    <script>
-    /* global DatabaseHelper, fixture, assert */
-    suite('Events API for projects', function() {
-      // See https://gist.github.com/haroldtreen/5f1055eee5fcf01da3e0e15b8ec86bf6
-      function isError(e) {
-        if (typeof e === 'string') {
-          return Promise.reject(new Error(e));
-        }
-        return Promise.resolve(e);
-      }
+    <script type="module">
+import '../arc-models.js';
+/* global DatabaseHelper, fixture, assert */
+suite('Events API for projects', function() {
+  // See https://gist.github.com/haroldtreen/5f1055eee5fcf01da3e0e15b8ec86bf6
+  function isError(e) {
+    if (typeof e === 'string') {
+      return Promise.reject(new Error(e));
+    }
+    return Promise.resolve(e);
+  }
 
-      suite('project-object-changed', function() {
-        teardown(function() {
-          return DatabaseHelper.clearProjects();
-        });
+  suite('project-object-changed', function() {
+    teardown(function() {
+      return DatabaseHelper.clearProjects();
+    });
 
-        let element;
-        let dataObj;
-        setup(function() {
-          element = fixture('basic');
-          dataObj = {
-            _id: 'test-id-1',
-            name: 'test-1',
-            order: 1
-          };
-        });
+    let element;
+    let dataObj;
+    setup(function() {
+      element = fixture('basic');
+      dataObj = {
+        _id: 'test-id-1',
+        name: 'test-1',
+        order: 1
+      };
+    });
 
-        function fire(project) {
-          const event = new CustomEvent('project-object-changed', {
-            detail: {
-              project: project
-            },
-            bubbles: true,
-            composed: true,
-            cancelable: true
-          });
-          document.body.dispatchEvent(event);
-          return event;
-        }
-
-        test('Event is canceled', function() {
-          const event = fire(dataObj);
-          assert.isTrue(event.defaultPrevented);
-        });
-
-        test('Event detail contains "result" as promise', function() {
-          const event = fire(dataObj);
-          assert.typeOf(event.detail.result, 'promise');
-        });
-
-        test('Creates a new object in the datastore', function() {
-          const event = fire(dataObj);
-          return event.detail.result
-          .then((result) => {
-            assert.typeOf(result._rev, 'string', '_rev is set');
-            assert.equal(result._id, 'test-id-1', '_id is set');
-            assert.equal(result.name, 'test-1', 'Name is set');
-            assert.equal(result.order, 1, 'order is set');
-          });
-        });
-
-        test('Updates created object', function() {
-          let originalRev;
-          const event = fire(dataObj);
-          return event.detail.result
-          .then((result) => {
-            originalRev = result._rev;
-            result.name = 'test-2';
-            const event = fire(result);
-            return event.detail.result;
-          })
-          .then((result) => {
-            assert.notEqual(result._rev, originalRev, '_rev is regenerated');
-            assert.equal(result._id, 'test-id-1', '_id is the same');
-            assert.equal(result.name, 'test-2', 'Name is set');
-            assert.equal(result.order, 1, 'order is set');
-          });
-        });
-
-        test('Updates created object without "_rev" property', function() {
-          let originalRev;
-          const event = fire(dataObj);
-          return event.detail.result
-          .then((result) => {
-            originalRev = result._rev;
-            result.name = 'test-2';
-            delete result._rev;
-            const event = fire(result);
-            return event.detail.result;
-          })
-          .then((result) => {
-            assert.notEqual(result._rev, originalRev, '_rev is regenerated');
-            assert.equal(result._id, 'test-id-1', '_id is the same');
-            assert.equal(result.name, 'test-2', 'Name is set');
-            assert.equal(result.order, 1, 'order is set');
-          });
-        });
-        test('Rejects promise when save object is not set', function() {
-          const event = fire();
-          return event.detail.result
-          .then(() => {
-            return Promise.reject('Expected method to reject.');
-          })
-          .catch(isError)
-          .then((err) => {
-            assert.isDefined(err);
-          });
-        });
+    function fire(project) {
+      const event = new CustomEvent('project-object-changed', {
+        detail: {
+          project: project
+        },
+        bubbles: true,
+        composed: true,
+        cancelable: true
       });
+      document.body.dispatchEvent(event);
+      return event;
+    }
 
-      suite('project-read', function() {
-        teardown(function() {
-          return DatabaseHelper.clearProjects();
-        });
+    test('Event is canceled', function() {
+      const event = fire(dataObj);
+      assert.isTrue(event.defaultPrevented);
+    });
 
-        let element;
-        let dataObj;
-        setup(function() {
-          element = fixture('basic');
-          dataObj = {
-            _id: 'test-id-1',
-            name: 'test-1',
-            order: 1
-          };
-          return element.update(dataObj);
-        });
+    test('Event detail contains "result" as promise', function() {
+      const event = fire(dataObj);
+      assert.typeOf(event.detail.result, 'promise');
+    });
 
-        function fire(id, rev) {
-          const event = new CustomEvent('project-read', {
-            detail: {
-              id: id,
-              rev: rev
-            },
-            bubbles: true,
-            composed: true,
-            cancelable: true
-          });
-          document.body.dispatchEvent(event);
-          return event;
-        }
-
-        test('Event is canceled', function() {
-          const event = fire(dataObj._id);
-          assert.isTrue(event.defaultPrevented);
-        });
-
-        test('Event detail contains "result" as promise', function() {
-          const event = fire(dataObj._id);
-          assert.typeOf(event.detail.result, 'promise');
-        });
-
-        test('Reads project object by id only', function() {
-          const event = fire(dataObj._id);
-          return event.detail.result
-          .then(result => {
-            assert.equal(result._id, dataObj._id);
-          });
-        });
-
-        test('Reads a revision', function() {
-          let originalRev;
-          let updatedRev;
-          const event = fire(dataObj._id);
-          return event.detail.result
-          .then((result) => {
-            originalRev = result._rev;
-            result.name = 'test-2';
-            return element.update(result);
-          })
-          .then((result) => {
-            updatedRev = result._rev;
-            const event = fire(dataObj._id, originalRev);
-            return event.detail.result;
-          })
-          .then((result) => {
-            assert.equal(result.name, dataObj.name);
-            assert.notEqual(originalRev, updatedRev);
-          });
-        });
-
-        test('Rejects promise when no ID', function() {
-          const event = fire();
-          return event.detail.result
-          .then(() => {
-            return Promise.reject('Expected method to reject.');
-          })
-          .catch(isError)
-          .then((err) => {
-            assert.isDefined(err);
-          });
-        });
-      });
-
-      suite('project-name-changed', function() {
-        teardown(function() {
-          return DatabaseHelper.clearProjects();
-        });
-
-        let element;
-        let dataObj;
-        setup(function() {
-          element = fixture('basic');
-          dataObj = {
-            _id: 'test-id-1',
-            name: 'test-1',
-            order: 1
-          };
-          return element.update(dataObj)
-          .then(result => dataObj = result);
-        });
-
-        function fire(name, id, project) {
-          const event = new CustomEvent('project-name-changed', {
-            detail: {
-              id: id,
-              project: project,
-              name: name
-            },
-            bubbles: true,
-            composed: true,
-            cancelable: true
-          });
-          document.body.dispatchEvent(event);
-          return event;
-        }
-
-        test('Event is canceled', function() {
-          const event = fire('test-2', dataObj._id);
-          assert.isTrue(event.defaultPrevented);
-        });
-
-        test('Event detail contains "result" as promise', function() {
-          const event = fire('test-2', dataObj._id);
-          assert.typeOf(event.detail.result, 'promise');
-        });
-
-        test('Updates project object by id only', function() {
-          const event = fire('test-2', dataObj._id);
-          return event.detail.result
-          .then(result => {
-            assert.equal(result.name, 'test-2');
-            assert.notEqual(result._rev, dataObj._rev);
-          });
-        });
-
-        test('Updates project object', function() {
-          const event = fire('test-2', undefined, dataObj);
-          return event.detail.result
-          .then(result => {
-            assert.equal(result.name, 'test-2');
-            assert.notEqual(result._rev, dataObj._rev);
-          });
-        });
-
-        test('Rejects promise when no ID and no project', function() {
-          const event = fire('test-2');
-          return event.detail.result
-          .then(() => {
-            return Promise.reject('Expected method to reject.');
-          })
-          .catch(isError)
-          .then((err) => {
-            assert.isDefined(err);
-          });
-        });
-
-        test('Rejects promise when no name', function() {
-          const event = fire(undefined, dataObj._id);
-          return event.detail.result
-          .then(() => {
-            return Promise.reject('Expected method to reject.');
-          })
-          .catch(isError)
-          .then((err) => {
-            assert.isDefined(err);
-          });
-        });
-      });
-
-      suite('project-object-deleted', function() {
-        teardown(function() {
-          return DatabaseHelper.clearProjects();
-        });
-
-        let element;
-        let dataObj;
-        setup(function() {
-          element = fixture('basic');
-          dataObj = {
-            _id: 'test-id-1',
-            name: 'test-1',
-            order: 1
-          };
-          return element.update(dataObj)
-          .then(result => dataObj = result);
-        });
-
-        function fire(id, rev) {
-          const event = new CustomEvent('project-object-deleted', {
-            detail: {
-              id: id,
-              rev: rev
-            },
-            bubbles: true,
-            composed: true,
-            cancelable: true
-          });
-          document.body.dispatchEvent(event);
-          return event;
-        }
-
-        test('Event is canceled', function() {
-          const event = fire(dataObj._id);
-          assert.isTrue(event.defaultPrevented);
-        });
-
-        test('Event detail contains "result" as promise', function() {
-          const event = fire(dataObj._id);
-          assert.typeOf(event.detail.result, 'promise');
-        });
-
-        test('Removes object from the datastore', function() {
-          const event = fire(dataObj._id, dataObj._rev);
-          return event.detail.result
-          .then(() => {
-            return element.read(dataObj._id);
-          })
-          .then(() => {
-            throw new Error('TEST');
-          })
-          .catch(cause => {
-            assert.equal(cause.status, 404);
-          });
-        });
-
-        test('Rejects promise when no ID', function() {
-          const event = fire();
-          return event.detail.result
-          .then(() => {
-            return Promise.reject('Expected method to reject.');
-          })
-          .catch(isError)
-          .then((err) => {
-            assert.isDefined(err);
-          });
-        });
-      });
-
-      suite('project-model-query', function() {
-        teardown(function() {
-          return DatabaseHelper.clearProjects();
-        });
-
-        let element;
-        let dataObj;
-        setup(function() {
-          element = fixture('basic');
-          dataObj = {
-            _id: 'test-id-1',
-            name: 'test-1',
-            order: 1
-          };
-          return element.update(dataObj)
-          .then(result => dataObj = result);
-        });
-
-        function fire() {
-          const event = new CustomEvent('project-model-query', {
-            detail: {},
-            bubbles: true,
-            composed: true,
-            cancelable: true
-          });
-          document.body.dispatchEvent(event);
-          return event;
-        }
-
-        test('Event is canceled', function() {
-          const event = fire();
-          assert.isTrue(event.defaultPrevented);
-        });
-
-        test('Event detail contains "result" as promise', function() {
-          const event = fire();
-          assert.typeOf(event.detail.result, 'promise');
-        });
-
-        test('Lists saved projects', function() {
-          const event = fire();
-          return event.detail.result
-          .then(result => {
-            assert.typeOf(result, 'array');
-            assert.lengthOf(result, 1);
-          });
-        });
+    test('Creates a new object in the datastore', function() {
+      const event = fire(dataObj);
+      return event.detail.result
+      .then((result) => {
+        assert.typeOf(result._rev, 'string', '_rev is set');
+        assert.equal(result._id, 'test-id-1', '_id is set');
+        assert.equal(result.name, 'test-1', 'Name is set');
+        assert.equal(result.order, 1, 'order is set');
       });
     });
-    </script>
+
+    test('Updates created object', function() {
+      let originalRev;
+      const event = fire(dataObj);
+      return event.detail.result
+      .then((result) => {
+        originalRev = result._rev;
+        result.name = 'test-2';
+        const event = fire(result);
+        return event.detail.result;
+      })
+      .then((result) => {
+        assert.notEqual(result._rev, originalRev, '_rev is regenerated');
+        assert.equal(result._id, 'test-id-1', '_id is the same');
+        assert.equal(result.name, 'test-2', 'Name is set');
+        assert.equal(result.order, 1, 'order is set');
+      });
+    });
+
+    test('Updates created object without "_rev" property', function() {
+      let originalRev;
+      const event = fire(dataObj);
+      return event.detail.result
+      .then((result) => {
+        originalRev = result._rev;
+        result.name = 'test-2';
+        delete result._rev;
+        const event = fire(result);
+        return event.detail.result;
+      })
+      .then((result) => {
+        assert.notEqual(result._rev, originalRev, '_rev is regenerated');
+        assert.equal(result._id, 'test-id-1', '_id is the same');
+        assert.equal(result.name, 'test-2', 'Name is set');
+        assert.equal(result.order, 1, 'order is set');
+      });
+    });
+    test('Rejects promise when save object is not set', function() {
+      const event = fire();
+      return event.detail.result
+      .then(() => {
+        return Promise.reject('Expected method to reject.');
+      })
+      .catch(isError)
+      .then((err) => {
+        assert.isDefined(err);
+      });
+    });
+  });
+
+  suite('project-read', function() {
+    teardown(function() {
+      return DatabaseHelper.clearProjects();
+    });
+
+    let element;
+    let dataObj;
+    setup(function() {
+      element = fixture('basic');
+      dataObj = {
+        _id: 'test-id-1',
+        name: 'test-1',
+        order: 1
+      };
+      return element.update(dataObj);
+    });
+
+    function fire(id, rev) {
+      const event = new CustomEvent('project-read', {
+        detail: {
+          id: id,
+          rev: rev
+        },
+        bubbles: true,
+        composed: true,
+        cancelable: true
+      });
+      document.body.dispatchEvent(event);
+      return event;
+    }
+
+    test('Event is canceled', function() {
+      const event = fire(dataObj._id);
+      assert.isTrue(event.defaultPrevented);
+    });
+
+    test('Event detail contains "result" as promise', function() {
+      const event = fire(dataObj._id);
+      assert.typeOf(event.detail.result, 'promise');
+    });
+
+    test('Reads project object by id only', function() {
+      const event = fire(dataObj._id);
+      return event.detail.result
+      .then(result => {
+        assert.equal(result._id, dataObj._id);
+      });
+    });
+
+    test('Reads a revision', function() {
+      let originalRev;
+      let updatedRev;
+      const event = fire(dataObj._id);
+      return event.detail.result
+      .then((result) => {
+        originalRev = result._rev;
+        result.name = 'test-2';
+        return element.update(result);
+      })
+      .then((result) => {
+        updatedRev = result._rev;
+        const event = fire(dataObj._id, originalRev);
+        return event.detail.result;
+      })
+      .then((result) => {
+        assert.equal(result.name, dataObj.name);
+        assert.notEqual(originalRev, updatedRev);
+      });
+    });
+
+    test('Rejects promise when no ID', function() {
+      const event = fire();
+      return event.detail.result
+      .then(() => {
+        return Promise.reject('Expected method to reject.');
+      })
+      .catch(isError)
+      .then((err) => {
+        assert.isDefined(err);
+      });
+    });
+  });
+
+  suite('project-name-changed', function() {
+    teardown(function() {
+      return DatabaseHelper.clearProjects();
+    });
+
+    let element;
+    let dataObj;
+    setup(function() {
+      element = fixture('basic');
+      dataObj = {
+        _id: 'test-id-1',
+        name: 'test-1',
+        order: 1
+      };
+      return element.update(dataObj)
+      .then(result => dataObj = result);
+    });
+
+    function fire(name, id, project) {
+      const event = new CustomEvent('project-name-changed', {
+        detail: {
+          id: id,
+          project: project,
+          name: name
+        },
+        bubbles: true,
+        composed: true,
+        cancelable: true
+      });
+      document.body.dispatchEvent(event);
+      return event;
+    }
+
+    test('Event is canceled', function() {
+      const event = fire('test-2', dataObj._id);
+      assert.isTrue(event.defaultPrevented);
+    });
+
+    test('Event detail contains "result" as promise', function() {
+      const event = fire('test-2', dataObj._id);
+      assert.typeOf(event.detail.result, 'promise');
+    });
+
+    test('Updates project object by id only', function() {
+      const event = fire('test-2', dataObj._id);
+      return event.detail.result
+      .then(result => {
+        assert.equal(result.name, 'test-2');
+        assert.notEqual(result._rev, dataObj._rev);
+      });
+    });
+
+    test('Updates project object', function() {
+      const event = fire('test-2', undefined, dataObj);
+      return event.detail.result
+      .then(result => {
+        assert.equal(result.name, 'test-2');
+        assert.notEqual(result._rev, dataObj._rev);
+      });
+    });
+
+    test('Rejects promise when no ID and no project', function() {
+      const event = fire('test-2');
+      return event.detail.result
+      .then(() => {
+        return Promise.reject('Expected method to reject.');
+      })
+      .catch(isError)
+      .then((err) => {
+        assert.isDefined(err);
+      });
+    });
+
+    test('Rejects promise when no name', function() {
+      const event = fire(undefined, dataObj._id);
+      return event.detail.result
+      .then(() => {
+        return Promise.reject('Expected method to reject.');
+      })
+      .catch(isError)
+      .then((err) => {
+        assert.isDefined(err);
+      });
+    });
+  });
+
+  suite('project-object-deleted', function() {
+    teardown(function() {
+      return DatabaseHelper.clearProjects();
+    });
+
+    let element;
+    let dataObj;
+    setup(function() {
+      element = fixture('basic');
+      dataObj = {
+        _id: 'test-id-1',
+        name: 'test-1',
+        order: 1
+      };
+      return element.update(dataObj)
+      .then(result => dataObj = result);
+    });
+
+    function fire(id, rev) {
+      const event = new CustomEvent('project-object-deleted', {
+        detail: {
+          id: id,
+          rev: rev
+        },
+        bubbles: true,
+        composed: true,
+        cancelable: true
+      });
+      document.body.dispatchEvent(event);
+      return event;
+    }
+
+    test('Event is canceled', function() {
+      const event = fire(dataObj._id);
+      assert.isTrue(event.defaultPrevented);
+    });
+
+    test('Event detail contains "result" as promise', function() {
+      const event = fire(dataObj._id);
+      assert.typeOf(event.detail.result, 'promise');
+    });
+
+    test('Removes object from the datastore', function() {
+      const event = fire(dataObj._id, dataObj._rev);
+      return event.detail.result
+      .then(() => {
+        return element.read(dataObj._id);
+      })
+      .then(() => {
+        throw new Error('TEST');
+      })
+      .catch(cause => {
+        assert.equal(cause.status, 404);
+      });
+    });
+
+    test('Rejects promise when no ID', function() {
+      const event = fire();
+      return event.detail.result
+      .then(() => {
+        return Promise.reject('Expected method to reject.');
+      })
+      .catch(isError)
+      .then((err) => {
+        assert.isDefined(err);
+      });
+    });
+  });
+
+  suite('project-model-query', function() {
+    teardown(function() {
+      return DatabaseHelper.clearProjects();
+    });
+
+    let element;
+    let dataObj;
+    setup(function() {
+      element = fixture('basic');
+      dataObj = {
+        _id: 'test-id-1',
+        name: 'test-1',
+        order: 1
+      };
+      return element.update(dataObj)
+      .then(result => dataObj = result);
+    });
+
+    function fire() {
+      const event = new CustomEvent('project-model-query', {
+        detail: {},
+        bubbles: true,
+        composed: true,
+        cancelable: true
+      });
+      document.body.dispatchEvent(event);
+      return event;
+    }
+
+    test('Event is canceled', function() {
+      const event = fire();
+      assert.isTrue(event.defaultPrevented);
+    });
+
+    test('Event detail contains "result" as promise', function() {
+      const event = fire();
+      assert.typeOf(event.detail.result, 'promise');
+    });
+
+    test('Lists saved projects', function() {
+      const event = fire();
+      return event.detail.result
+      .then(result => {
+        assert.typeOf(result, 'array');
+        assert.lengthOf(result, 1);
+      });
+    });
+  });
+});
+</script>
 
   </body>
 </html>

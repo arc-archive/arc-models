@@ -3,33 +3,44 @@
   "plugins": {
     "local": {
       "disabled": true,
-      "browsers": ["chrome", "firefox"]
+      "browsers": [
+        "chrome",
+        "firefox"
+      ]
     },
     "sauce": {
       "disabled": true,
-      "browsers": [{
-        "browserName": "firefox",
-        "platform": "Windows 10",
-        "version": "latest-4"
-      }, {
-        "browserName": "firefox",
-        "platform": "Windows 10",
-        "version": "latest"
-      }, {
-        "browserName": "chrome",
-        "platform": "Windows 10",
-        "version": "latest-4"
-      }, {
-        "browserName": "chrome",
-        "platform": "Windows 10",
-        "version": "latest"
-      }]
+      "browsers": [
+        {
+          "browserName": "firefox",
+          "platform": "Windows 10",
+          "version": "latest-4"
+        },
+        {
+          "browserName": "firefox",
+          "platform": "Windows 10",
+          "version": "latest"
+        },
+        {
+          "browserName": "chrome",
+          "platform": "Windows 10",
+          "version": "latest-4"
+        },
+        {
+          "browserName": "chrome",
+          "platform": "Windows 10",
+          "version": "latest"
+        }
+      ]
     },
-    "istanbub": {
+    "@advanced-rest-client/wct-istanbub": {
       "dir": "./coverage",
-      "reporters": ["text-summary", "lcov"],
+      "reporters": [
+        "text-summary",
+        "lcov"
+      ],
       "include": [
-        "**/*.html"
+        "**/*.js"
       ],
       "exclude": [
         "**/test/**",
@@ -38,10 +49,10 @@
       ],
       "thresholds": {
         "global": {
-          "statements": 70,
-          "branches": 60,
-          "functions": 75,
-          "lines": 70
+          "statements": 80,
+          "branches": 80,
+          "functions": 90,
+          "lines": 80
         }
       }
     }

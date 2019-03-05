@@ -1,4 +1,4 @@
-<!--
+/**
 @license
 Copyright 2018 The Advanced REST client authors <arc@mulesoft.com>
 Licensed under the Apache License, Version 2.0 (the "License"); you may not
@@ -10,17 +10,17 @@ distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
 WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
 License for the specific language governing permissions and limitations under
 the License.
--->
-<link rel="import" href="../polymer/polymer-element.html">
-<link rel="import" href="../uuid-generator/uuid-generator.html">
-<link rel="import" href="../events-target-behavior/events-target-behavior.html">
-<script>
+*/
+import { PolymerElement } from '../../@polymer/polymer/polymer-element.js';
+
+import '../../uuid-generator/uuid-generator.js';
+import { EventsTargetBehavior } from '../../events-target-behavior/events-target-behavior.js';
 /**
  * A base class for all models.
  *
  * @appliesMixin ArcBehaviors.EventsTargetBehavior
  */
-class ArcBaseModel extends ArcBehaviors.EventsTargetBehavior(Polymer.Element) {
+class ArcBaseModel extends EventsTargetBehavior(PolymerElement) {
   /**
    * @param {String} dbname Name of the data store
    * @param {Number} revsLimit Limit number of revisions on the data store.
@@ -228,4 +228,3 @@ class ArcBaseModel extends ArcBehaviors.EventsTargetBehavior(Polymer.Element) {
     e.stopPropagation();
   }
 }
-</script>

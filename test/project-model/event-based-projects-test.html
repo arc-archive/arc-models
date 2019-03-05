@@ -3,12 +3,12 @@
   <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, minimum-scale=1.0, initial-scale=1.0, user-scalable=yes">
-    <script src="../../../webcomponentsjs/webcomponents-loader.js"></script>
-    <script src="../../../web-component-tester/browser.js"></script>
-    <script src="../../../iron-test-helpers/test-helpers.js"></script>
-    <link rel="import" href="../../../arc-data-generator/arc-data-generator.html">
-    <link rel="import" href="../../../app-pouchdb/pouchdb.html">
-    <link rel="import" href="../../project-model.html">
+    <script src="../../../../@webcomponents/webcomponentsjs/webcomponents-loader.js"></script>
+    <script src="../../../../wct-browser-legacy/browser.js"></script>
+    <script src="../../../../@polymer/iron-test-helpers/test-helpers.js" type="module"></script>
+    <script type="module" src="../../../../arc-data-generator/arc-data-generator.js"></script>
+    <script type="module" src="../../../../app-pouchdb/pouchdb.js"></script>
+    <script type="module" src="../../project-model.js"></script>
   </head>
   <body>
 
@@ -18,483 +18,486 @@
       </template>
     </test-fixture>
 
-    <script>
-    /* global DataGenerator, fixture, assert */
-    suite('Events API for projects', function() {
-      /**
-       * See https://gist.github.com/haroldtreen/5f1055eee5fcf01da3e0e15b8ec86bf6
-       * @param {any} e
-       * @return {Promise}
-       */
-      function isError(e) {
-        if (typeof e === 'string') {
-          return Promise.reject(new Error(e));
+    <script type="module">
+import '../../../../arc-data-generator/arc-data-generator.js';
+import '../../../../app-pouchdb/pouchdb.js';
+import '../../project-model.js';
+/* global DataGenerator, fixture, assert */
+suite('Events API for projects', function() {
+  /**
+   * See https://gist.github.com/haroldtreen/5f1055eee5fcf01da3e0e15b8ec86bf6
+   * @param {any} e
+   * @return {Promise}
+   */
+  function isError(e) {
+    if (typeof e === 'string') {
+      return Promise.reject(new Error(e));
+    }
+    return Promise.resolve(e);
+  }
+
+  suite('project-object-changed', function() {
+    teardown(function() {
+      return DataGenerator.clearLegacyProjects();
+    });
+    let dataObj;
+    let element;
+    setup(function() {
+      element = fixture('basic');
+      dataObj = {
+        _id: 'test-id-1',
+        name: 'test-1',
+        order: 1
+      };
+    });
+    /**
+     * Dispatches `project-object-changed` event
+     * @param {Object} project
+     * @return {CustomEvent}
+     */
+    function fire(project) {
+      const e = new CustomEvent('project-object-changed', {
+        detail: {
+          project: project
+        },
+        bubbles: true,
+        composed: true,
+        cancelable: true
+      });
+      document.body.dispatchEvent(e);
+      return e;
+    }
+
+    test('Event is canceled', function() {
+      const e = fire(dataObj);
+      assert.isTrue(e.defaultPrevented);
+      return e.detail.result;
+    });
+
+    test('Event detail contains "result" as promise', function() {
+      const e = fire(dataObj);
+      assert.typeOf(e.detail.result, 'promise');
+      return e.detail.result;
+    });
+
+    test('Creates a new object in the datastore', function() {
+      const e = fire(dataObj);
+      return e.detail.result
+      .then((result) => {
+        assert.typeOf(result._rev, 'string', '_rev is set');
+        assert.equal(result._id, 'test-id-1', '_id is set');
+        assert.equal(result.name, 'test-1', 'Name is set');
+        assert.equal(result.order, 1, 'order is set');
+      });
+    });
+
+    test('Updates created object', function() {
+      let originalRev;
+      const e = fire(dataObj);
+      return e.detail.result
+      .then((result) => {
+        originalRev = result._rev;
+        result.name = 'test-2';
+        const e = fire(result);
+        return e.detail.result;
+      })
+      .then((result) => {
+        assert.notEqual(result._rev, originalRev, '_rev is regenerated');
+        assert.equal(result._id, 'test-id-1', '_id is the same');
+        assert.equal(result.name, 'test-2', 'Name is set');
+        assert.equal(result.order, 1, 'order is set');
+      });
+    });
+
+    test('Updates created object without "_rev" property', function() {
+      let originalRev;
+      const e = fire(dataObj);
+      return e.detail.result
+      .then((result) => {
+        originalRev = result._rev;
+        result.name = 'test-2';
+        delete result._rev;
+        const e = fire(result);
+        return e.detail.result;
+      })
+      .then((result) => {
+        assert.notEqual(result._rev, originalRev, '_rev is regenerated');
+        assert.equal(result._id, 'test-id-1', '_id is the same');
+        assert.equal(result.name, 'test-2', 'Name is set');
+        assert.equal(result.order, 1, 'order is set');
+      });
+    });
+
+    test('Rejects promise when save object is not set', function() {
+      const e = fire();
+      return e.detail.result
+      .then(() => {
+        return Promise.reject('Expected method to reject.');
+      })
+      .catch(isError)
+      .then((err) => {
+        assert.isDefined(err);
+      });
+    });
+
+    test('Handles exceptions', () => {
+      let called = false;
+      element.updateProject = () => {
+        return Promise.reject(new Error('test'));
+      };
+      const e = fire(dataObj);
+      return e.detail.result
+      .catch((cause) => {
+        if (cause.message === 'test') {
+          called = true;
         }
-        return Promise.resolve(e);
+      })
+      .then(() => {
+        assert.isTrue(called);
+      });
+    });
+  });
+
+  suite('"project-read" event', function() {
+    teardown(function() {
+      return DataGenerator.clearLegacyProjects();
+    });
+
+    let element;
+    let created;
+    setup(function() {
+      element = fixture('basic');
+      return DataGenerator.insertProjectsData({projectsSize: 1})
+      .then((result) => created = result);
+    });
+    /**
+     * Dispatches `project-read` event
+     * @param {String} id
+     * @param {?String} rev
+     * @param {?Boolean} cancelable
+     * @return {CustomEvent}
+     */
+    function fire(id, rev, cancelable) {
+      if (cancelable === undefined) {
+        cancelable = true;
       }
-
-      suite('project-object-changed', function() {
-        teardown(function() {
-          return DataGenerator.clearLegacyProjects();
-        });
-        let dataObj;
-        let element;
-        setup(function() {
-          element = fixture('basic');
-          dataObj = {
-            _id: 'test-id-1',
-            name: 'test-1',
-            order: 1
-          };
-        });
-        /**
-         * Dispatches `project-object-changed` event
-         * @param {Object} project
-         * @return {CustomEvent}
-         */
-        function fire(project) {
-          const e = new CustomEvent('project-object-changed', {
-            detail: {
-              project: project
-            },
-            bubbles: true,
-            composed: true,
-            cancelable: true
-          });
-          document.body.dispatchEvent(e);
-          return e;
-        }
-
-        test('Event is canceled', function() {
-          const e = fire(dataObj);
-          assert.isTrue(e.defaultPrevented);
-          return e.detail.result;
-        });
-
-        test('Event detail contains "result" as promise', function() {
-          const e = fire(dataObj);
-          assert.typeOf(e.detail.result, 'promise');
-          return e.detail.result;
-        });
-
-        test('Creates a new object in the datastore', function() {
-          const e = fire(dataObj);
-          return e.detail.result
-          .then((result) => {
-            assert.typeOf(result._rev, 'string', '_rev is set');
-            assert.equal(result._id, 'test-id-1', '_id is set');
-            assert.equal(result.name, 'test-1', 'Name is set');
-            assert.equal(result.order, 1, 'order is set');
-          });
-        });
-
-        test('Updates created object', function() {
-          let originalRev;
-          const e = fire(dataObj);
-          return e.detail.result
-          .then((result) => {
-            originalRev = result._rev;
-            result.name = 'test-2';
-            const e = fire(result);
-            return e.detail.result;
-          })
-          .then((result) => {
-            assert.notEqual(result._rev, originalRev, '_rev is regenerated');
-            assert.equal(result._id, 'test-id-1', '_id is the same');
-            assert.equal(result.name, 'test-2', 'Name is set');
-            assert.equal(result.order, 1, 'order is set');
-          });
-        });
-
-        test('Updates created object without "_rev" property', function() {
-          let originalRev;
-          const e = fire(dataObj);
-          return e.detail.result
-          .then((result) => {
-            originalRev = result._rev;
-            result.name = 'test-2';
-            delete result._rev;
-            const e = fire(result);
-            return e.detail.result;
-          })
-          .then((result) => {
-            assert.notEqual(result._rev, originalRev, '_rev is regenerated');
-            assert.equal(result._id, 'test-id-1', '_id is the same');
-            assert.equal(result.name, 'test-2', 'Name is set');
-            assert.equal(result.order, 1, 'order is set');
-          });
-        });
-
-        test('Rejects promise when save object is not set', function() {
-          const e = fire();
-          return e.detail.result
-          .then(() => {
-            return Promise.reject('Expected method to reject.');
-          })
-          .catch(isError)
-          .then((err) => {
-            assert.isDefined(err);
-          });
-        });
-
-        test('Handles exceptions', () => {
-          let called = false;
-          element.updateProject = () => {
-            return Promise.reject(new Error('test'));
-          };
-          const e = fire(dataObj);
-          return e.detail.result
-          .catch((cause) => {
-            if (cause.message === 'test') {
-              called = true;
-            }
-          })
-          .then(() => {
-            assert.isTrue(called);
-          });
-        });
+      const e = new CustomEvent('project-read', {
+        detail: {
+          id: id,
+          rev: rev
+        },
+        bubbles: true,
+        composed: true,
+        cancelable
       });
+      document.body.dispatchEvent(e);
+      return e;
+    }
 
-      suite('"project-read" event', function() {
-        teardown(function() {
-          return DataGenerator.clearLegacyProjects();
-        });
+    test('Event is canceled', function() {
+      const e = fire(created[0]._id);
+      assert.isTrue(e.defaultPrevented);
+      return e.detail.result;
+    });
 
-        let element;
-        let created;
-        setup(function() {
-          element = fixture('basic');
-          return DataGenerator.insertProjectsData({projectsSize: 1})
-          .then((result) => created = result);
-        });
-        /**
-         * Dispatches `project-read` event
-         * @param {String} id
-         * @param {?String} rev
-         * @param {?Boolean} cancelable
-         * @return {CustomEvent}
-         */
-        function fire(id, rev, cancelable) {
-          if (cancelable === undefined) {
-            cancelable = true;
-          }
-          const e = new CustomEvent('project-read', {
-            detail: {
-              id: id,
-              rev: rev
-            },
-            bubbles: true,
-            composed: true,
-            cancelable
-          });
-          document.body.dispatchEvent(e);
-          return e;
-        }
+    test('Non cancellable event is ignored', function() {
+      const e = fire(created[0]._id, undefined, false);
+      assert.isUndefined(e.detail.result);
+    });
 
-        test('Event is canceled', function() {
-          const e = fire(created[0]._id);
-          assert.isTrue(e.defaultPrevented);
-          return e.detail.result;
-        });
+    test('Event detail contains "result" as promise', function() {
+      const e = fire(created[0]._id);
+      assert.typeOf(e.detail.result, 'promise');
+      return e.detail.result;
+    });
 
-        test('Non cancellable event is ignored', function() {
-          const e = fire(created[0]._id, undefined, false);
-          assert.isUndefined(e.detail.result);
-        });
-
-        test('Event detail contains "result" as promise', function() {
-          const e = fire(created[0]._id);
-          assert.typeOf(e.detail.result, 'promise');
-          return e.detail.result;
-        });
-
-        test('Reads project object by id only', function() {
-          const e = fire(created[0]._id);
-          return e.detail.result
-          .then((result) => {
-            assert.equal(result._id, created[0]._id);
-          });
-        });
-
-        test('Reads a revision', function() {
-          let originalRev;
-          let updatedRev;
-          const e = fire(created[0]._id);
-          return e.detail.result
-          .then((result) => {
-            originalRev = result._rev;
-            result.name = 'test-2';
-            return element.updateProject(result);
-          })
-          .then((result) => {
-            updatedRev = result._rev;
-            const e = fire(created[0]._id, originalRev);
-            return e.detail.result;
-          })
-          .then((result) => {
-            assert.equal(result.name, created[0].name);
-            assert.notEqual(originalRev, updatedRev);
-          });
-        });
-
-        test('Rejects promise when no ID', function() {
-          const e = fire();
-          return e.detail.result
-          .then(() => {
-            return Promise.reject('Expected method to reject.');
-          })
-          .catch(isError)
-          .then((err) => {
-            assert.isDefined(err);
-          });
-        });
-
-        test('Handles exceptions', () => {
-          let called = false;
-          element.readProject = () => {
-            return Promise.reject(new Error('test'));
-          };
-          const e = fire(created[0]._id);
-          return e.detail.result
-          .catch((cause) => {
-            if (cause.message === 'test') {
-              called = true;
-            }
-          })
-          .then(() => {
-            assert.isTrue(called);
-          });
-        });
+    test('Reads project object by id only', function() {
+      const e = fire(created[0]._id);
+      return e.detail.result
+      .then((result) => {
+        assert.equal(result._id, created[0]._id);
       });
+    });
 
-      suite('project-object-deleted', function() {
-        teardown(function() {
-          return DataGenerator.clearLegacyProjects();
-        });
-
-        let element;
-        let dataObj;
-        setup(function() {
-          element = fixture('basic');
-          dataObj = {
-            _id: 'test-id-1',
-            name: 'test-1',
-            order: 1
-          };
-          return element.updateProject(dataObj)
-          .then((result) => dataObj = result);
-        });
-        /**
-         * Dispates custom event
-         * @param {String} id Project id
-         * @param {String} rev Project rev
-         * @return {CustomEvent}
-         */
-        function fire(id, rev) {
-          const e = new CustomEvent('project-object-deleted', {
-            detail: {
-              id: id,
-              rev: rev
-            },
-            bubbles: true,
-            composed: true,
-            cancelable: true
-          });
-          document.body.dispatchEvent(e);
-          return e;
-        }
-
-        test('Event is canceled', function() {
-          const e = fire(dataObj._id);
-          assert.isTrue(e.defaultPrevented);
-          return e.detail.result;
-        });
-
-        test('Event detail contains "result" as promise', function() {
-          const e = fire(dataObj._id);
-          assert.typeOf(e.detail.result, 'promise');
-          return e.detail.result;
-        });
-
-        test('Removes object from the datastore', function() {
-          const event = fire(dataObj._id, dataObj._rev);
-          return event.detail.result
-          .then(() => {
-            return element.readProject(dataObj._id);
-          })
-          .then(() => {
-            throw new Error('TEST');
-          })
-          .catch((cause) => {
-            assert.equal(cause.status, 404);
-          });
-        });
-
-        test('Rejects promise when no ID', function() {
-          const e = fire();
-          return e.detail.result
-          .then(() => {
-            return Promise.reject('Expected method to reject.');
-          })
-          .catch(isError)
-          .then((err) => {
-            assert.isDefined(err);
-          });
-        });
-
-        test('Handles exceptions', () => {
-          let called = false;
-          element.removeProject = () => {
-            return Promise.reject(new Error('test'));
-          };
-          const e = fire(dataObj._id);
-          return e.detail.result
-          .catch((cause) => {
-            if (cause.message === 'test') {
-              called = true;
-            }
-          })
-          .then(() => {
-            assert.isTrue(called);
-          });
-        });
+    test('Reads a revision', function() {
+      let originalRev;
+      let updatedRev;
+      const e = fire(created[0]._id);
+      return e.detail.result
+      .then((result) => {
+        originalRev = result._rev;
+        result.name = 'test-2';
+        return element.updateProject(result);
+      })
+      .then((result) => {
+        updatedRev = result._rev;
+        const e = fire(created[0]._id, originalRev);
+        return e.detail.result;
+      })
+      .then((result) => {
+        assert.equal(result.name, created[0].name);
+        assert.notEqual(originalRev, updatedRev);
       });
+    });
 
-      suite('project-model-query', function() {
-        teardown(function() {
-          return DataGenerator.clearLegacyProjects();
-        });
-
-        let element;
-        let dataObj;
-        setup(function() {
-          element = fixture('basic');
-          dataObj = {
-            _id: 'test-id-1',
-            name: 'test-1',
-            order: 1
-          };
-          return element.updateProject(dataObj)
-          .then((result) => dataObj = result);
-        });
-
-        function fire(detail, cancelable) {
-          if (cancelable === undefined) {
-            cancelable = true;
-          }
-          const e = new CustomEvent('project-model-query', {
-            bubbles: true,
-            detail,
-            cancelable
-          });
-          document.body.dispatchEvent(e);
-          return e;
-        }
-
-        test('Non cancellable event is ignored', function() {
-          const e = fire({}, false);
-          assert.isUndefined(e.detail.result);
-        });
-
-        test('Event is canceled', function() {
-          const e = fire({});
-          assert.isTrue(e.defaultPrevented);
-          return e.detail.result;
-        });
-
-        test('Event detail contains "result" as promise', function() {
-          const e = fire({});
-          assert.typeOf(e.detail.result, 'promise');
-        });
-
-        test('Lists saved projects', function() {
-          const e = fire({});
-          return e.detail.result
-          .then((result) => {
-            assert.typeOf(result, 'array');
-            assert.lengthOf(result, 1);
-          });
-        });
-
-        test('Throws without "detail" object', () => {
-          assert.throws(() => {
-            element._queryHandler({
-              cancelable: true,
-              composedPath: () => []
-            });
-          });
-        });
+    test('Rejects promise when no ID', function() {
+      const e = fire();
+      return e.detail.result
+      .then(() => {
+        return Promise.reject('Expected method to reject.');
+      })
+      .catch(isError)
+      .then((err) => {
+        assert.isDefined(err);
       });
+    });
 
-      suite('"project-update-bulk" event', () => {
-        let element;
-        setup(function() {
-          element = fixture('basic');
-        });
-
-        teardown(function() {
-          return DataGenerator.clearLegacyProjects();
-        });
-
-        function fire(projects, cancelable) {
-          if (cancelable === undefined) {
-            cancelable = true;
-          }
-          const e = new CustomEvent('project-update-bulk', {
-            detail: {
-              projects
-            },
-            bubbles: true,
-            cancelable
-          });
-          document.body.dispatchEvent(e);
-          return e;
+    test('Handles exceptions', () => {
+      let called = false;
+      element.readProject = () => {
+        return Promise.reject(new Error('test'));
+      };
+      const e = fire(created[0]._id);
+      return e.detail.result
+      .catch((cause) => {
+        if (cause.message === 'test') {
+          called = true;
         }
+      })
+      .then(() => {
+        assert.isTrue(called);
+      });
+    });
+  });
 
-        test('Non cancellable event is ignored', function() {
-          const projects = DataGenerator.generateProjects();
-          const e = fire(projects, false);
-          assert.isUndefined(e.detail.result);
-        });
+  suite('project-object-deleted', function() {
+    teardown(function() {
+      return DataGenerator.clearLegacyProjects();
+    });
 
-        test('Event is canceled', function() {
-          const projects = DataGenerator.generateProjects();
-          const e = fire(projects);
-          assert.isTrue(e.defaultPrevented);
-          return e.detail.result;
-        });
+    let element;
+    let dataObj;
+    setup(function() {
+      element = fixture('basic');
+      dataObj = {
+        _id: 'test-id-1',
+        name: 'test-1',
+        order: 1
+      };
+      return element.updateProject(dataObj)
+      .then((result) => dataObj = result);
+    });
+    /**
+     * Dispates custom event
+     * @param {String} id Project id
+     * @param {String} rev Project rev
+     * @return {CustomEvent}
+     */
+    function fire(id, rev) {
+      const e = new CustomEvent('project-object-deleted', {
+        detail: {
+          id: id,
+          rev: rev
+        },
+        bubbles: true,
+        composed: true,
+        cancelable: true
+      });
+      document.body.dispatchEvent(e);
+      return e;
+    }
 
-        test('Rejects when projects is not set', function(done) {
-          const e = fire();
-          e.detail.result
-          .catch(() => {
-            done();
-          });
-        });
+    test('Event is canceled', function() {
+      const e = fire(dataObj._id);
+      assert.isTrue(e.defaultPrevented);
+      return e.detail.result;
+    });
 
-        test('Rejects when projects is empty', function(done) {
-          const e = fire([]);
-          e.detail.result
-          .catch(() => {
-            done();
-          });
-        });
+    test('Event detail contains "result" as promise', function() {
+      const e = fire(dataObj._id);
+      assert.typeOf(e.detail.result, 'promise');
+      return e.detail.result;
+    });
 
-        test('Inserts projects into the store', function() {
-          const projects = DataGenerator.generateProjects();
-          const e = fire(projects);
-          return e.detail.result
-          .then((result) => {
-            assert.typeOf(result, 'array');
-            assert.lengthOf(result, projects.length);
-            for (let i = 0; i < result.length; i++) {
-              assert.isUndefined(result[i].error);
-            }
-          });
+    test('Removes object from the datastore', function() {
+      const event = fire(dataObj._id, dataObj._rev);
+      return event.detail.result
+      .then(() => {
+        return element.readProject(dataObj._id);
+      })
+      .then(() => {
+        throw new Error('TEST');
+      })
+      .catch((cause) => {
+        assert.equal(cause.status, 404);
+      });
+    });
+
+    test('Rejects promise when no ID', function() {
+      const e = fire();
+      return e.detail.result
+      .then(() => {
+        return Promise.reject('Expected method to reject.');
+      })
+      .catch(isError)
+      .then((err) => {
+        assert.isDefined(err);
+      });
+    });
+
+    test('Handles exceptions', () => {
+      let called = false;
+      element.removeProject = () => {
+        return Promise.reject(new Error('test'));
+      };
+      const e = fire(dataObj._id);
+      return e.detail.result
+      .catch((cause) => {
+        if (cause.message === 'test') {
+          called = true;
+        }
+      })
+      .then(() => {
+        assert.isTrue(called);
+      });
+    });
+  });
+
+  suite('project-model-query', function() {
+    teardown(function() {
+      return DataGenerator.clearLegacyProjects();
+    });
+
+    let element;
+    let dataObj;
+    setup(function() {
+      element = fixture('basic');
+      dataObj = {
+        _id: 'test-id-1',
+        name: 'test-1',
+        order: 1
+      };
+      return element.updateProject(dataObj)
+      .then((result) => dataObj = result);
+    });
+
+    function fire(detail, cancelable) {
+      if (cancelable === undefined) {
+        cancelable = true;
+      }
+      const e = new CustomEvent('project-model-query', {
+        bubbles: true,
+        detail,
+        cancelable
+      });
+      document.body.dispatchEvent(e);
+      return e;
+    }
+
+    test('Non cancellable event is ignored', function() {
+      const e = fire({}, false);
+      assert.isUndefined(e.detail.result);
+    });
+
+    test('Event is canceled', function() {
+      const e = fire({});
+      assert.isTrue(e.defaultPrevented);
+      return e.detail.result;
+    });
+
+    test('Event detail contains "result" as promise', function() {
+      const e = fire({});
+      assert.typeOf(e.detail.result, 'promise');
+    });
+
+    test('Lists saved projects', function() {
+      const e = fire({});
+      return e.detail.result
+      .then((result) => {
+        assert.typeOf(result, 'array');
+        assert.lengthOf(result, 1);
+      });
+    });
+
+    test('Throws without "detail" object', () => {
+      assert.throws(() => {
+        element._queryHandler({
+          cancelable: true,
+          composedPath: () => []
         });
       });
     });
-    </script>
+  });
+
+  suite('"project-update-bulk" event', () => {
+    let element;
+    setup(function() {
+      element = fixture('basic');
+    });
+
+    teardown(function() {
+      return DataGenerator.clearLegacyProjects();
+    });
+
+    function fire(projects, cancelable) {
+      if (cancelable === undefined) {
+        cancelable = true;
+      }
+      const e = new CustomEvent('project-update-bulk', {
+        detail: {
+          projects
+        },
+        bubbles: true,
+        cancelable
+      });
+      document.body.dispatchEvent(e);
+      return e;
+    }
+
+    test('Non cancellable event is ignored', function() {
+      const projects = DataGenerator.generateProjects();
+      const e = fire(projects, false);
+      assert.isUndefined(e.detail.result);
+    });
+
+    test('Event is canceled', function() {
+      const projects = DataGenerator.generateProjects();
+      const e = fire(projects);
+      assert.isTrue(e.defaultPrevented);
+      return e.detail.result;
+    });
+
+    test('Rejects when projects is not set', function(done) {
+      const e = fire();
+      e.detail.result
+      .catch(() => {
+        done();
+      });
+    });
+
+    test('Rejects when projects is empty', function(done) {
+      const e = fire([]);
+      e.detail.result
+      .catch(() => {
+        done();
+      });
+    });
+
+    test('Inserts projects into the store', function() {
+      const projects = DataGenerator.generateProjects();
+      const e = fire(projects);
+      return e.detail.result
+      .then((result) => {
+        assert.typeOf(result, 'array');
+        assert.lengthOf(result, projects.length);
+        for (let i = 0; i < result.length; i++) {
+          assert.isUndefined(result[i].error);
+        }
+      });
+    });
+  });
+});
+</script>
 
   </body>
 </html>

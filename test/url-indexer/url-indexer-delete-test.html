@@ -3,12 +3,12 @@
   <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, minimum-scale=1.0, initial-scale=1.0, user-scalable=yes">
-    <script src="../../../webcomponentsjs/webcomponents-loader.js"></script>
-    <script src="../../../web-component-tester/browser.js"></script>
-    <script src="../../../iron-test-helpers/test-helpers.js"></script>
-    <link rel="import" href="../../../app-pouchdb/pouchdb.html">
-    <link rel="import" href="../../url-indexer.html">
-    <script src="db-helper.js"></script>
+    <script src="../../../../@webcomponents/webcomponentsjs/webcomponents-loader.js"></script>
+    <script src="../../../../wct-browser-legacy/browser.js"></script>
+    <script src="../../../../@polymer/iron-test-helpers/test-helpers.js" type="module"></script>
+    <script type="module" src="../../../../app-pouchdb/pouchdb.js"></script>
+    <script type="module" src="../../url-indexer.js"></script>
+    <script src="./db-helper.js"></script>
   </head>
   <body>
 
@@ -18,99 +18,101 @@
       </template>
     </test-fixture>
 
-    <script>
-    /* global DbHelper */
-    suite('deleteIndexedData()', function() {
-      const FULL_URL = 'https://domain.com/api?a=b&c=d';
-      const REQUEST_ID = 'test-id';
-      const REQUEST_ID_2 = 'test-id-2';
-      const REQUEST_TYPE = 'saved';
+    <script type="module">
+import '../../../../app-pouchdb/pouchdb.js';
+import '../../url-indexer.js';
+/* global DbHelper */
+suite('deleteIndexedData()', function() {
+  const FULL_URL = 'https://domain.com/api?a=b&c=d';
+  const REQUEST_ID = 'test-id';
+  const REQUEST_ID_2 = 'test-id-2';
+  const REQUEST_TYPE = 'saved';
 
-      let element;
-      setup(() => {
-        element = fixture('Basic');
-        return element.index([{
-            url: FULL_URL,
-            id: REQUEST_ID,
-            type: REQUEST_TYPE
-          }, {
-            url: FULL_URL,
-            id: REQUEST_ID_2,
-            type: REQUEST_TYPE
-          }]);
-      });
+  let element;
+  setup(() => {
+    element = fixture('Basic');
+    return element.index([{
+        url: FULL_URL,
+        id: REQUEST_ID,
+        type: REQUEST_TYPE
+      }, {
+        url: FULL_URL,
+        id: REQUEST_ID_2,
+        type: REQUEST_TYPE
+      }]);
+  });
 
-      teardown(() => DbHelper.clearData());
+  teardown(() => DbHelper.clearData());
 
-      test('Deletes index of a single request', () => {
-        return element.deleteIndexedData([REQUEST_ID])
-        .then(() => DbHelper.readAllIndexes())
-        .then((data) => {
-          assert.lengthOf(data, 8);
-        });
-      });
-
-      test('Deletes both indexes', () => {
-        return element.deleteIndexedData([REQUEST_ID, REQUEST_ID_2])
-        .then(() => DbHelper.readAllIndexes())
-        .then((data) => {
-          assert.lengthOf(data, 0);
-        });
-      });
+  test('Deletes index of a single request', () => {
+    return element.deleteIndexedData([REQUEST_ID])
+    .then(() => DbHelper.readAllIndexes())
+    .then((data) => {
+      assert.lengthOf(data, 8);
     });
+  });
 
-    suite('deleteIndexedType()', () => {
-      let element;
-      setup(() => {
-        element = fixture('Basic');
-        return element.index([{
-            url: 'https://domain.com/',
-            id: 'r1',
-            type: 't1'
-          }, {
-            url: 'https://domain.com/',
-            id: 'r2',
-            type: 't2'
-          }]);
-      });
-
-      teardown(() => DbHelper.clearData());
-
-      test('Deletes by type only', () => {
-        return element.deleteIndexedType('t1')
-        .then(() => DbHelper.readAllIndexes())
-        .then((data) => {
-          assert.lengthOf(data, 3);
-        });
-      });
+  test('Deletes both indexes', () => {
+    return element.deleteIndexedData([REQUEST_ID, REQUEST_ID_2])
+    .then(() => DbHelper.readAllIndexes())
+    .then((data) => {
+      assert.lengthOf(data, 0);
     });
+  });
+});
 
-    suite('clearIndexedData()', () => {
-      let element;
-      setup(() => {
-        element = fixture('Basic');
-        return element.index([{
-            url: 'https://domain.com/',
-            id: 'r1',
-            type: 't1'
-          }, {
-            url: 'https://domain.com/',
-            id: 'r2',
-            type: 't2'
-          }]);
-      });
+suite('deleteIndexedType()', () => {
+  let element;
+  setup(() => {
+    element = fixture('Basic');
+    return element.index([{
+        url: 'https://domain.com/',
+        id: 'r1',
+        type: 't1'
+      }, {
+        url: 'https://domain.com/',
+        id: 'r2',
+        type: 't2'
+      }]);
+  });
 
-      teardown(() => DbHelper.clearData());
+  teardown(() => DbHelper.clearData());
 
-      test('Deletes all index data', () => {
-        return element.clearIndexedData()
-        .then(() => DbHelper.readAllIndexes())
-        .then((data) => {
-          assert.lengthOf(data, 0);
-        });
-      });
+  test('Deletes by type only', () => {
+    return element.deleteIndexedType('t1')
+    .then(() => DbHelper.readAllIndexes())
+    .then((data) => {
+      assert.lengthOf(data, 3);
     });
-    </script>
+  });
+});
+
+suite('clearIndexedData()', () => {
+  let element;
+  setup(() => {
+    element = fixture('Basic');
+    return element.index([{
+        url: 'https://domain.com/',
+        id: 'r1',
+        type: 't1'
+      }, {
+        url: 'https://domain.com/',
+        id: 'r2',
+        type: 't2'
+      }]);
+  });
+
+  teardown(() => DbHelper.clearData());
+
+  test('Deletes all index data', () => {
+    return element.clearIndexedData()
+    .then(() => DbHelper.readAllIndexes())
+    .then((data) => {
+      assert.lengthOf(data, 0);
+    });
+  });
+});
+</script>
 
   </body>
 </html>

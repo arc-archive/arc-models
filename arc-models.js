@@ -1,4 +1,15 @@
-<!--
+import './project-model.js';
+import './request-model.js';
+import './url-history-model.js';
+import './websocket-url-history-model.js';
+import './rest-api-model.js';
+import './host-rules-model.js';
+import './variables-model.js';
+import './auth-data-model.js';
+import './host-rules-model.js';
+import './url-indexer.js';
+
+/**
 @license
 Copyright 2018 The Advanced REST client authors <arc@mulesoft.com>
 Licensed under the Apache License, Version 2.0 (the "License"); you may not
@@ -10,14 +21,10 @@ distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
 WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
 License for the specific language governing permissions and limitations under
 the License.
--->
-<link rel="import" href="project-model.html">
-<link rel="import" href="request-model.html">
-<link rel="import" href="url-history-model.html">
-<link rel="import" href="websocket-url-history-model.html">
-<link rel="import" href="rest-api-model.html">
-<link rel="import" href="host-rules-model.html">
-<link rel="import" href="variables-model.html">
-<link rel="import" href="auth-data-model.html">
-<link rel="import" href="host-rules-model.html">
-<link rel="import" href="url-indexer.html">
+*/
+/*
+  FIXME(polymer-modulizer): the above comments were extracted
+  from HTML and may be out of place here. Review them and
+  then delete this comment!
+*/
+;
