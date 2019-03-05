@@ -3,11 +3,13 @@
   <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, minimum-scale=1.0, initial-scale=1.0, user-scalable=yes">
+
     <script src="../../../../@webcomponents/webcomponentsjs/webcomponents-loader.js"></script>
-    <script src="../../../../wct-browser-legacy/browser.js"></script>
-    <script type="module" src="../../../../app-pouchdb/pouchdb.js"></script>
-    <script type="module" src="../../../../arc-data-generator/arc-data-generator.js"></script>
-    <script type="module" src="../../auth-data-model.js"></script>
+    <script src="../../../../@polymer/test-fixture/test-fixture.js"></script>
+    <script src="../../../../mocha/mocha.js"></script>
+    <script src="../../../../chai/chai.js"></script>
+    <script src="../../../../wct-mocha/wct-mocha.js"></script>
+
   </head>
   <body>
     <test-fixture id="Basic">
@@ -16,260 +18,258 @@
       </template>
     </test-fixture>
     <script type="module">
-import '../../../../app-pouchdb/pouchdb.js';
-import '../../../../arc-data-generator/arc-data-generator.js';
-import '../../auth-data-model.js';
-/* global DataGenerator */
-const url = 'http://domain.com/auth';
-const method = 'x-ntlm';
+      import {DataGenerator} from '../../../../@advanced-rest-client/arc-data-generator/arc-data-generator.js';
+      import '../../auth-data-model.js';
+      const url = 'http://domain.com/auth';
+      const method = 'x-ntlm';
 
-suite('"auth-data-query"', function() {
-  suiteSetup(function() {
-    const element = fixture('Basic');
-    return element.update(url, method, {
-      username: 'uname-test',
-      password: 'pwd-test',
-      domain: 'some'
-    });
-  });
+      suite('"auth-data-query"', function() {
+        suiteSetup(function() {
+          const element = fixture('Basic');
+          return element.update(url, method, {
+            username: 'uname-test',
+            password: 'pwd-test',
+            domain: 'some'
+          });
+        });
 
-  suiteTeardown(function() {
-    return DataGenerator.destroyAuthDataData();
-  });
+        suiteTeardown(function() {
+          return DataGenerator.destroyAuthDataData();
+        });
 
-  test('Cancels the event', () => {
-    fixture('Basic');
-    const e = new CustomEvent('auth-data-query', {
-      bubbles: true,
-      cancelable: true,
-      detail: {
-        url,
-        authMethod: method
-      }
-    });
-    document.body.dispatchEvent(e);
-    return e.detail.result
-    .then(() => {
-      assert.isTrue(e.defaultPrevented);
-    });
-  });
+        test('Cancels the event', () => {
+          fixture('Basic');
+          const e = new CustomEvent('auth-data-query', {
+            bubbles: true,
+            cancelable: true,
+            detail: {
+              url,
+              authMethod: method
+            }
+          });
+          document.body.dispatchEvent(e);
+          return e.detail.result
+          .then(() => {
+            assert.isTrue(e.defaultPrevented);
+          });
+        });
 
-  test('Ignores non-cancellable event', () => {
-    const element = fixture('Basic');
-    const e = {
-      cancelable: false,
-      detail: {
-        url,
-        authMethod: method
-      }
-    };
-    element._queryHandler(e);
-    assert.isUndefined(e.detail.result);
-  });
+        test('Ignores non-cancellable event', () => {
+          const element = fixture('Basic');
+          const e = {
+            cancelable: false,
+            detail: {
+              url,
+              authMethod: method
+            }
+          };
+          element._queryHandler(e);
+          assert.isUndefined(e.detail.result);
+        });
 
-  test('Ignores cancelled event', () => {
-    const element = fixture('Basic');
-    const e = {
-      cancelable: true,
-      defaultPrevented: true,
-      detail: {
-        url,
-        authMethod: method
-      }
-    };
-    element._queryHandler(e);
-    assert.isUndefined(e.detail.result);
-  });
+        test('Ignores cancelled event', () => {
+          const element = fixture('Basic');
+          const e = {
+            cancelable: true,
+            defaultPrevented: true,
+            detail: {
+              url,
+              authMethod: method
+            }
+          };
+          element._queryHandler(e);
+          assert.isUndefined(e.detail.result);
+        });
 
-  test('Ignores self dispatched events', () => {
-    const element = fixture('Basic');
-    const e = {
-      cancelable: true,
-      composedPath: function() {
-        return [element];
-      },
-      detail: {
-        url,
-        authMethod: method
-      }
-    };
-    element._queryHandler(e);
-    assert.isUndefined(e.detail.result);
-  });
+        test('Ignores self dispatched events', () => {
+          const element = fixture('Basic');
+          const e = {
+            cancelable: true,
+            composedPath: function() {
+              return [element];
+            },
+            detail: {
+              url,
+              authMethod: method
+            }
+          };
+          element._queryHandler(e);
+          assert.isUndefined(e.detail.result);
+        });
 
-  test('Resutls with auth data', () => {
-    fixture('Basic');
-    const e = new CustomEvent('auth-data-query', {
-      bubbles: true,
-      cancelable: true,
-      detail: {
-        url,
-        authMethod: method
-      }
-    });
-    document.body.dispatchEvent(e);
-    return e.detail.result
-    .then((result) => {
-      assert.equal(result.username, 'uname-test');
-      assert.equal(result.password, 'pwd-test');
-      assert.equal(result.domain, 'some');
-    });
-  });
+        test('Resutls with auth data', () => {
+          fixture('Basic');
+          const e = new CustomEvent('auth-data-query', {
+            bubbles: true,
+            cancelable: true,
+            detail: {
+              url,
+              authMethod: method
+            }
+          });
+          document.body.dispatchEvent(e);
+          return e.detail.result
+          .then((result) => {
+            assert.equal(result.username, 'uname-test');
+            assert.equal(result.password, 'pwd-test');
+            assert.equal(result.domain, 'some');
+          });
+        });
 
-  test('Handles exceptions', () => {
-    const element = fixture('Basic');
-    const e = {
-      cancelable: true,
-      composedPath: () => [],
-      preventDefault: () => {},
-      stopPropagation: () => {},
-      detail: {
-        url,
-        authMethod: method
-      }
-    };
-    element.query = () => {
-      return Promise.reject(new Error('test'));
-    };
-    let called = false;
-    element._queryHandler(e);
-    return e.detail.result
-    .catch((cause) => {
-      if (cause.message === 'test') {
-        called = true;
-      }
-    })
-    .then(() => {
-      assert.isTrue(called);
-    });
-  });
-});
+        test('Handles exceptions', () => {
+          const element = fixture('Basic');
+          const e = {
+            cancelable: true,
+            composedPath: () => [],
+            preventDefault: () => {},
+            stopPropagation: () => {},
+            detail: {
+              url,
+              authMethod: method
+            }
+          };
+          element.query = () => {
+            return Promise.reject(new Error('test'));
+          };
+          let called = false;
+          element._queryHandler(e);
+          return e.detail.result
+          .catch((cause) => {
+            if (cause.message === 'test') {
+              called = true;
+            }
+          })
+          .then(() => {
+            assert.isTrue(called);
+          });
+        });
+      });
 
-suite('"auth-data-changed" event', () => {
-  const authData = {test: true};
-  suiteTeardown(function() {
-    return DataGenerator.destroyAuthDataData();
-  });
+      suite('"auth-data-changed" event', () => {
+        const authData = {test: true};
+        suiteTeardown(function() {
+          return DataGenerator.destroyAuthDataData();
+        });
 
-  test('Ignores non-cancellable event', () => {
-    const element = fixture('Basic');
-    const e = {
-      cancelable: false,
-      detail: {
-        url,
-        authMethod: method,
-        authData
-      }
-    };
-    element._updateHandler(e);
-    assert.isUndefined(e.detail.result);
-  });
+        test('Ignores non-cancellable event', () => {
+          const element = fixture('Basic');
+          const e = {
+            cancelable: false,
+            detail: {
+              url,
+              authMethod: method,
+              authData
+            }
+          };
+          element._updateHandler(e);
+          assert.isUndefined(e.detail.result);
+        });
 
-  test('Ignores cancelled event', () => {
-    const element = fixture('Basic');
-    const e = {
-      cancelable: true,
-      defaultPrevented: true,
-      detail: {
-        url,
-        authMethod: method,
-        authData
-      }
-    };
-    element._updateHandler(e);
-    assert.isUndefined(e.detail.result);
-  });
+        test('Ignores cancelled event', () => {
+          const element = fixture('Basic');
+          const e = {
+            cancelable: true,
+            defaultPrevented: true,
+            detail: {
+              url,
+              authMethod: method,
+              authData
+            }
+          };
+          element._updateHandler(e);
+          assert.isUndefined(e.detail.result);
+        });
 
-  test('Ignores self dispatched events', () => {
-    const element = fixture('Basic');
-    const e = {
-      cancelable: true,
-      composedPath: function() {
-        return [element];
-      },
-      detail: {
-        url,
-        authMethod: method,
-        authData
-      }
-    };
-    element._updateHandler(e);
-    assert.isUndefined(e.detail.result);
-  });
+        test('Ignores self dispatched events', () => {
+          const element = fixture('Basic');
+          const e = {
+            cancelable: true,
+            composedPath: function() {
+              return [element];
+            },
+            detail: {
+              url,
+              authMethod: method,
+              authData
+            }
+          };
+          element._updateHandler(e);
+          assert.isUndefined(e.detail.result);
+        });
 
-  test('Cancels the event', () => {
-    fixture('Basic');
-    const e = new CustomEvent('auth-data-changed', {
-      bubbles: true,
-      cancelable: true,
-      detail: {
-        url,
-        authMethod: method,
-        authData
-      }
-    });
-    document.body.dispatchEvent(e);
-    return e.detail.result
-    .then(() => {
-      assert.isTrue(e.defaultPrevented);
-    });
-  });
+        test('Cancels the event', () => {
+          fixture('Basic');
+          const e = new CustomEvent('auth-data-changed', {
+            bubbles: true,
+            cancelable: true,
+            detail: {
+              url,
+              authMethod: method,
+              authData
+            }
+          });
+          document.body.dispatchEvent(e);
+          return e.detail.result
+          .then(() => {
+            assert.isTrue(e.defaultPrevented);
+          });
+        });
 
-  test('Handles exceptions', () => {
-    const element = fixture('Basic');
-    const e = {
-      cancelable: true,
-      composedPath: () => [],
-      preventDefault: () => {},
-      stopPropagation: () => {},
-      detail: {
-        url,
-        authMethod: method,
-        authData
-      }
-    };
-    element.update = () => {
-      return Promise.reject(new Error('test'));
-    };
-    let called = false;
-    element._updateHandler(e);
-    return e.detail.result
-    .catch((cause) => {
-      if (cause.message === 'test') {
-        called = true;
-      }
-    })
-    .then(() => {
-      assert.isTrue(called);
-    });
-  });
+        test('Handles exceptions', () => {
+          const element = fixture('Basic');
+          const e = {
+            cancelable: true,
+            composedPath: () => [],
+            preventDefault: () => {},
+            stopPropagation: () => {},
+            detail: {
+              url,
+              authMethod: method,
+              authData
+            }
+          };
+          element.update = () => {
+            return Promise.reject(new Error('test'));
+          };
+          let called = false;
+          element._updateHandler(e);
+          return e.detail.result
+          .catch((cause) => {
+            if (cause.message === 'test') {
+              called = true;
+            }
+          })
+          .then(() => {
+            assert.isTrue(called);
+          });
+        });
 
-  test('Calls update function', () => {
-    let args;
-    const element = fixture('Basic');
-    element.update = function() {
-      args = arguments;
-      return Promise.resolve();
-    };
-    const e = new CustomEvent('auth-data-changed', {
-      bubbles: true,
-      cancelable: true,
-      detail: {
-        url,
-        authMethod: method,
-        authData
-      }
-    });
-    document.body.dispatchEvent(e);
-    return e.detail.result
-    .then(() => {
-      assert.ok(args);
-      assert.equal(args[0], url);
-      assert.equal(args[1], method);
-      assert.deepEqual(args[2], authData);
-    });
-  });
-});
-</script>
+        test('Calls update function', () => {
+          let args;
+          const element = fixture('Basic');
+          element.update = function() {
+            args = arguments;
+            return Promise.resolve();
+          };
+          const e = new CustomEvent('auth-data-changed', {
+            bubbles: true,
+            cancelable: true,
+            detail: {
+              url,
+              authMethod: method,
+              authData
+            }
+          });
+          document.body.dispatchEvent(e);
+          return e.detail.result
+          .then(() => {
+            assert.ok(args);
+            assert.equal(args[0], url);
+            assert.equal(args[1], method);
+            assert.deepEqual(args[2], authData);
+          });
+        });
+      });
+    </script>
   </body>
 </html>

@@ -3,13 +3,13 @@
   <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, minimum-scale=1.0, initial-scale=1.0, user-scalable=yes">
+
     <script src="../../../../@webcomponents/webcomponentsjs/webcomponents-loader.js"></script>
-    <script src="../../../../wct-browser-legacy/browser.js"></script>
-    <script src="../../../../@polymer/iron-test-helpers/test-helpers.js" type="module"></script>
-    <script src="./data-helper.js"></script>
-    <script type="module" src="../../../../arc-data-generator/arc-data-generator.js"></script>
-    <script type="module" src="../../../../app-pouchdb/pouchdb.js"></script>
-    <script type="module" src="../../variables-model.js"></script>
+    <script src="../../../../@polymer/test-fixture/test-fixture.js"></script>
+    <script src="../../../../mocha/mocha.js"></script>
+    <script src="../../../../chai/chai.js"></script>
+    <script src="../../../../wct-mocha/wct-mocha.js"></script>
+
   </head>
   <body>
 
@@ -20,183 +20,183 @@
     </test-fixture>
 
     <script type="module">
-import '../../../../arc-data-generator/arc-data-generator.js';
-import '../../../../app-pouchdb/pouchdb.js';
-import '../../variables-model.js';
-/* global DataHelper, DataGenerator */
-suite('environment event tests', function() {
-  suite('environment-deleted event', function() {
-    let databaseRecordId;
-    let databaseRecordRev;
-    let element;
-    suiteTeardown(function() {
-      return DataGenerator.destroyVariablesData();
-    });
+      import {DataGenerator} from '../../../../@advanced-rest-client/arc-data-generator/arc-data-generator.js';
+      import '../../variables-model.js';
+      import {DataHelper} from './data-helper.js';
 
-    setup(function() {
-      element = fixture('basic');
-      return DataHelper.addEnv('test')
-      .then((result) => {
-        databaseRecordId = result.id;
-        databaseRecordRev = result.rev;
-      })
-      .then(() => {
-        const vars = [{
-          variable: 'test',
-          value: 'some variable',
-          environment: 'test'
-        }, {
-          variable: 'test-2',
-          value: 'some variable-2',
-          environment: 'test'
-        }];
-        return DataHelper.addVars(vars);
-      });
-    });
+      suite('environment event tests', function() {
+        suite('environment-deleted event', function() {
+          let databaseRecordId;
+          let databaseRecordRev;
+          let element;
+          suiteTeardown(function() {
+            return DataGenerator.destroyVariablesData();
+          });
 
-    test('Cancels the event', function() {
-      const e = new CustomEvent('environment-deleted', {
-        bubbles: true,
-        cancelable: true,
-        detail: {
-          id: databaseRecordId
-        }
-      });
-      document.body.dispatchEvent(e);
-      assert.isTrue(e.defaultPrevented);
-      return e.detail.result.then(() => {});
-    });
+          setup(function() {
+            element = fixture('basic');
+            return DataHelper.addEnv('test')
+            .then((result) => {
+              databaseRecordId = result.id;
+              databaseRecordRev = result.rev;
+            })
+            .then(() => {
+              const vars = [{
+                variable: 'test',
+                value: 'some variable',
+                environment: 'test'
+              }, {
+                variable: 'test-2',
+                value: 'some variable-2',
+                environment: 'test'
+              }];
+              return DataHelper.addVars(vars);
+            });
+          });
 
-    test('Event promise has result data', function() {
-      const e = new CustomEvent('environment-deleted', {
-        bubbles: true,
-        cancelable: true,
-        detail: {
-          id: databaseRecordId
-        }
-      });
-      document.body.dispatchEvent(e);
-      return e.detail.result
-      .then((result) => {
-        assert.equal(result.id, databaseRecordId, 'Has env ID');
-        assert.notEqual(result.rev, databaseRecordRev, 'Has new rev');
-      });
-    });
+          test('Cancels the event', function() {
+            const e = new CustomEvent('environment-deleted', {
+              bubbles: true,
+              cancelable: true,
+              detail: {
+                id: databaseRecordId
+              }
+            });
+            document.body.dispatchEvent(e);
+            assert.isTrue(e.defaultPrevented);
+            return e.detail.result.then(() => {});
+          });
 
-    test('Dispatches environment-deleted', function(done) {
-      const e = new CustomEvent('environment-deleted', {
-        bubbles: true,
-        cancelable: true,
-        detail: {
-          id: databaseRecordId
-        }
-      });
-      document.body.dispatchEvent(e);
-      element.addEventListener('environment-deleted', function(e) {
-        assert.isFalse(e.cancelable);
-        done();
-      });
-    });
-  });
+          test('Event promise has result data', function() {
+            const e = new CustomEvent('environment-deleted', {
+              bubbles: true,
+              cancelable: true,
+              detail: {
+                id: databaseRecordId
+              }
+            });
+            document.body.dispatchEvent(e);
+            return e.detail.result
+            .then((result) => {
+              assert.equal(result.id, databaseRecordId, 'Has env ID');
+              assert.notEqual(result.rev, databaseRecordRev, 'Has new rev');
+            });
+          });
 
-  suite('environment-list-variables event', function() {
-    suiteTeardown(function() {
-      return DataGenerator.destroyVariablesData();
-    });
-    setup(function() {
-      fixture('basic');
-    });
+          test('Dispatches environment-deleted', function(done) {
+            const e = new CustomEvent('environment-deleted', {
+              bubbles: true,
+              cancelable: true,
+              detail: {
+                id: databaseRecordId
+              }
+            });
+            document.body.dispatchEvent(e);
+            element.addEventListener('environment-deleted', function(e) {
+              assert.isFalse(e.cancelable);
+              done();
+            });
+          });
+        });
 
-    test('Cancels the event', function() {
-      const e = new CustomEvent('environment-list-variables', {
-        bubbles: true,
-        cancelable: true,
-        detail: {
-          environment: 'test'
-        }
-      });
-      document.body.dispatchEvent(e);
-      assert.isTrue(e.defaultPrevented);
-      return e.detail.result.then(() => {});
-    });
+        suite('environment-list-variables event', function() {
+          suiteTeardown(function() {
+            return DataGenerator.destroyVariablesData();
+          });
+          setup(function() {
+            fixture('basic');
+          });
 
-    test('Event promise has result data', function() {
-      const e = new CustomEvent('environment-list-variables', {
-        bubbles: true,
-        cancelable: true,
-        detail: {
-          environment: 'test'
-        }
-      });
-      document.body.dispatchEvent(e);
-      return e.detail.result
-      .then((result) => {
-        assert.typeOf(result, 'array');
-      });
-    });
-  });
+          test('Cancels the event', function() {
+            const e = new CustomEvent('environment-list-variables', {
+              bubbles: true,
+              cancelable: true,
+              detail: {
+                environment: 'test'
+              }
+            });
+            document.body.dispatchEvent(e);
+            assert.isTrue(e.defaultPrevented);
+            return e.detail.result.then(() => {});
+          });
 
-  suite('environment-updated event', function() {
-    suiteTeardown(function() {
-      return DataGenerator.destroyVariablesData();
-    });
+          test('Event promise has result data', function() {
+            const e = new CustomEvent('environment-list-variables', {
+              bubbles: true,
+              cancelable: true,
+              detail: {
+                environment: 'test'
+              }
+            });
+            document.body.dispatchEvent(e);
+            return e.detail.result
+            .then((result) => {
+              assert.typeOf(result, 'array');
+            });
+          });
+        });
 
-    let element;
-    let env;
-    setup(function() {
-      element = fixture('basic');
-      env = {
-        name: 'test'
-      };
-    });
+        suite('environment-updated event', function() {
+          suiteTeardown(function() {
+            return DataGenerator.destroyVariablesData();
+          });
 
-    test('Cancels the event', function() {
-      const e = new CustomEvent('environment-updated', {
-        bubbles: true,
-        cancelable: true,
-        detail: {
-          value: env
-        }
-      });
-      document.body.dispatchEvent(e);
-      assert.isTrue(e.defaultPrevented);
-      return e.detail.result.then(() => {});
-    });
+          let element;
+          let env;
+          setup(function() {
+            element = fixture('basic');
+            env = {
+              name: 'test'
+            };
+          });
 
-    test('Event promise has result data', function() {
-      const e = new CustomEvent('environment-updated', {
-        bubbles: true,
-        cancelable: true,
-        detail: {
-          value: env
-        }
-      });
-      document.body.dispatchEvent(e);
-      return e.detail.result
-      .then((result) => {
-        assert.typeOf(result._id, 'string');
-        assert.typeOf(result._rev, 'string');
-      });
-    });
+          test('Cancels the event', function() {
+            const e = new CustomEvent('environment-updated', {
+              bubbles: true,
+              cancelable: true,
+              detail: {
+                value: env
+              }
+            });
+            document.body.dispatchEvent(e);
+            assert.isTrue(e.defaultPrevented);
+            return e.detail.result.then(() => {});
+          });
 
-    test('Dispatches environment-updated', function(done) {
-      const e = new CustomEvent('environment-updated', {
-        bubbles: true,
-        cancelable: true,
-        detail: {
-          value: env
-        }
+          test('Event promise has result data', function() {
+            const e = new CustomEvent('environment-updated', {
+              bubbles: true,
+              cancelable: true,
+              detail: {
+                value: env
+              }
+            });
+            document.body.dispatchEvent(e);
+            return e.detail.result
+            .then((result) => {
+              assert.typeOf(result._id, 'string');
+              assert.typeOf(result._rev, 'string');
+            });
+          });
+
+          test('Dispatches environment-updated', function(done) {
+            const e = new CustomEvent('environment-updated', {
+              bubbles: true,
+              cancelable: true,
+              detail: {
+                value: env
+              }
+            });
+            document.body.dispatchEvent(e);
+            element.addEventListener('environment-updated', function f(e) {
+              element.removeEventListener('environment-updated', f);
+              assert.isFalse(e.cancelable);
+              done();
+            });
+          });
+        });
       });
-      document.body.dispatchEvent(e);
-      element.addEventListener('environment-updated', function f(e) {
-        element.removeEventListener('environment-updated', f);
-        assert.isFalse(e.cancelable);
-        done();
-      });
-    });
-  });
-});
-</script>
+    </script>
 
   </body>
 </html>

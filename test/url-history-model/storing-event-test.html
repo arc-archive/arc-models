@@ -1,14 +1,16 @@
 <!doctype html>
 <html>
+
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, minimum-scale=1.0, initial-scale=1.0, user-scalable=yes">
+
   <script src="../../../../@webcomponents/webcomponentsjs/webcomponents-loader.js"></script>
-  <script src="../../../../wct-browser-legacy/browser.js"></script>
-  <script type="module" src="../../url-history-model.js"></script>
-  <script type="module" src="../../../../arc-polyfills/arc-polyfills.js"></script>
-  <script type="module" src="../../../../app-pouchdb/pouchdb.js"></script>
-  <script src="./common.js"></script>
+  <script src="../../../../@polymer/test-fixture/test-fixture.js"></script>
+  <script src="../../../../mocha/mocha.js"></script>
+  <script src="../../../../chai/chai.js"></script>
+  <script src="../../../../wct-mocha/wct-mocha.js"></script>
+
 </head>
 
 <body>
@@ -18,69 +20,76 @@
     </template>
   </test-fixture>
   <script type="module">
-import '../../url-history-model.js';
-import '../../../../arc-polyfills/arc-polyfills.js';
-import '../../../../app-pouchdb/pouchdb.js';
-/* global UrlHistoryHelper */
-suite('Storing the data event based', function() {
-  let element;
-  let previousInsert;
-  const baseUrl = 'https://api.mulesoft.com/endpoint/path?query=parameter';
-  const otherUrl = 'https://api.domain.com/endpoint/';
-  setup(function() {
-    element = fixture('basic');
-  });
-  suiteSetup(function(done) {
-    setTimeout(function() {
-      UrlHistoryHelper.deleteDatabase().then(function() {
-        done();
+    import '../../../../pouchdb/dist/pouchdb.js';
+    import {UrlHistoryHelper} from './common.js';
+    import '../../url-history-model.js';
+
+    suite('Storing the data event based', function() {
+      let element;
+      let previousInsert;
+      const baseUrl = 'https://api.mulesoft.com/endpoint/path?query=parameter';
+      const otherUrl = 'https://api.domain.com/endpoint/';
+
+      setup(function() {
+        element = fixture('basic');
       });
-    }, 2000);
-  });
-  suiteTeardown(function(done) {
-    setTimeout(function() {
-      done();
-    }, 2000);
-  });
-  test('Stores the URL', function() {
-    const e = UrlHistoryHelper.fire('url-history-store', {
-      value: baseUrl
-    });
-    return e.detail.result
-      .then(function(result) {
-        assert.isTrue(result.ok);
-        previousInsert = result;
+
+      suiteSetup(function(done) {
+        setTimeout(function() {
+          UrlHistoryHelper.deleteDatabase().then(function() {
+            done();
+          });
+        }, 2000);
       });
-  });
-  test('Updates existing URL data', function() {
-    const e = UrlHistoryHelper.fire('url-history-store', {
-      value: baseUrl
-    });
-    return e.detail.result
-      .then(function(result) {
-        assert.isTrue(result.ok, 'Operation succeeded');
-        assert.equal(result.id, previousInsert.id, 'Ids matches previous');
-        assert.notEqual(result.rev, previousInsert.rev, 'Rev is different');
+
+      suiteTeardown(function(done) {
+        setTimeout(function() {
+          done();
+        }, 2000);
       });
-  });
-  test('Creates another URL data', function() {
-    const e = UrlHistoryHelper.fire('url-history-store', {
-      value: otherUrl
-    });
-    return e.detail.result
-      .then(function(result) {
-        assert.isTrue(result.ok, 'Operation succeeded');
-        assert.notEqual(result.id, previousInsert.id, 'IDs are different');
+
+      test('Stores the URL', function() {
+        const e = UrlHistoryHelper.fire('url-history-store', {
+          value: baseUrl
+        });
+        return e.detail.result
+          .then(function(result) {
+            assert.isTrue(result.ok);
+            previousInsert = result;
+          });
       });
-  });
-  test('Event is cancelled', function() {
-    const e = UrlHistoryHelper.fire('url-history-store', {
-      value: baseUrl
+
+      test('Updates existing URL data', function() {
+        const e = UrlHistoryHelper.fire('url-history-store', {
+          value: baseUrl
+        });
+        return e.detail.result
+          .then(function(result) {
+            assert.isTrue(result.ok, 'Operation succeeded');
+            assert.equal(result.id, previousInsert.id, 'Ids matches previous');
+            assert.notEqual(result.rev, previousInsert.rev, 'Rev is different');
+          });
+      });
+
+      test('Creates another URL data', function() {
+        const e = UrlHistoryHelper.fire('url-history-store', {
+          value: otherUrl
+        });
+        return e.detail.result
+          .then(function(result) {
+            assert.isTrue(result.ok, 'Operation succeeded');
+            assert.notEqual(result.id, previousInsert.id, 'IDs are different');
+          });
+      });
+
+      test('Event is cancelled', function() {
+        const e = UrlHistoryHelper.fire('url-history-store', {
+          value: baseUrl
+        });
+        assert.isTrue(e.defaultPrevented);
+      });
     });
-    assert.isTrue(e.defaultPrevented);
-  });
-});
-</script>
+  </script>
 </body>
 
 </html>

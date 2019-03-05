@@ -5,7 +5,10 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, minimum-scale=1, initial-scale=1, user-scalable=yes">
   <title>Project data demo</title>
+
   <script src="../../../@webcomponents/webcomponentsjs/webcomponents-loader.js"></script>
+  <script src="../../../web-animations-js/web-animations-next.min.js"></script>
+
   <script type="module" src="../../../@webcomponents/shadycss/entrypoints/apply-shim.js"></script>
   <script type="module" src="../../../@polymer/polymer/lib/elements/custom-style.js"></script>
   <script type="module" src="../../../@polymer/polymer/lib/elements/dom-bind.js"></script>
@@ -17,26 +20,11 @@
   <script type="module" src="../../../@polymer/paper-dropdown-menu/paper-dropdown-menu.js"></script>
   <script type="module" src="../../../@polymer/paper-item/paper-item.js"></script>
   <script type="module" src="../../../@polymer/paper-listbox/paper-listbox.js"></script>
-  <script type="module" src="../../../@polymer/neon-animation/web-animations.js"></script>
-  <script type="module" src="../../../app-pouchdb/pouchdb.js"></script>
   <script type="module" src="../../../@polymer/paper-styles/shadow.js"></script>
   <script type="module" src="../../../@polymer/iron-form/iron-form.js"></script>
-  <script type="module" src="../../../arc-data-generator/arc-data-generator.js"></script>
   <script type="module" src="../request-model.js"></script>
   <script type="module" src="../project-model.js"></script>
-  <script src="../../../chance/chance.js"></script>
-  <!-- FIXME(polymer-modulizer):
-        These imperative modules that innerHTML your HTML are
-        a hacky way to be sure that any mixins in included style
-        modules are ready before any elements that reference them are
-        instantiated, otherwise the CSS @apply mixin polyfill won't be
-        able to expand the underlying CSS custom properties.
-        See: https://github.com/Polymer/polymer-modulizer/issues/154
-        -->
-    <script type="module">
-const $_documentContainer = document.createElement('template');
-
-$_documentContainer.innerHTML = `<custom-style>
+  <custom-style>
     <style is="custom-style" include="demo-pages-shared-styles">
     :root {
       --arc-font-body1: {
@@ -69,49 +57,49 @@ $_documentContainer.innerHTML = `<custom-style>
       @apply --layout-flex;
     }
     </style>
-  </custom-style>`;
-
-document.body.appendChild($_documentContainer.content);
-</script>
+  </custom-style>
 </head>
 <body>
-  <script type="module">
-const $_documentContainer = document.createElement('template');
-
-$_documentContainer.innerHTML = `<header>
+  <header>
     <h1>Query model demo</h1><h1>
-  </h1></header>`;
-
-document.body.appendChild($_documentContainer.content);
-</script>
-  <script type="module">
-const $_documentContainer = document.createElement('template');
-
-$_documentContainer.innerHTML = `<dom-bind id="demo">
+  </h1></header>
+  <dom-bind id="demo">
     <template is="dom-bind">
-      <request-model id="rModel" on-request-indexing-finished="_indexFinished"></request-model>
+      <request-model id="rModel"></request-model>
       <project-model id="pModel"></project-model>
+
       <section class="card centered options">
         <h2>Data options</h2>
         <paper-button on-click="genData">Generate data</paper-button>
         <paper-button on-click="deleteData">Destroy data</paper-button>
+        <paper-button on-click="refreshProjects">Refresh data</paper-button>
       </section>
 
       <section class="card centered options">
         <h2>Select project</h2>
         <paper-dropdown-menu label="Project name">
-          <paper-listbox slot="dropdown-content" selected="{{project}}">
+          <paper-listbox slot="dropdown-content" selected="{{project}}" on-iron-select="_projectChanged">
             <template is="dom-repeat" items="[[projects]]" index-as="index">
               <paper-item>[[item.name]]</paper-item>
             </template>
           </paper-listbox>
         </paper-dropdown-menu>
-        <paper-button on-click="getData">Get requests in project</paper-button>
+        <paper-button on-click="getProjectRequests">Query requests in project</paper-button>
       </section>
+
+      <template is="dom-if" if="[[projectData]]">
+        <section class="centered card" role="main">
+          <h2>Project details</h2>
+          <p>Name: [[projectData.name]]</p>
+          <p>Description: [[projectData.description]]</p>
+          <p>Created: [[projectData.created]]</p>
+          <p>Updated: [[projectData.updated]]</p>
+        </section>
+      </template>
 
       <template is="dom-if" if="[[hasResults]]">
         <section class="centered card" role="main">
-          <h2>Search Results ([[results.length]])</h2>
+          <h2>Project requests ([[results.length]])</h2>
           <template is="dom-repeat" items="[[results]]">
             <p>[[index]]: [[item._id]], [[item.type]]</p>
           </template>
@@ -119,164 +107,134 @@ $_documentContainer.innerHTML = `<dom-bind id="demo">
       </template>
 
     </template>
-  </dom-bind>`;
-
-document.body.appendChild($_documentContainer.content);
-</script>
+  </dom-bind>
+  <paper-toast text="Data is indexed" id="indexOk"></paper-toast>
+  <paper-toast text="Datastore cleared" id="deleteOk"></paper-toast>
+  <paper-toast id="errorToast"></paper-toast>
   <script type="module">
-const $_documentContainer = document.createElement('template');
-$_documentContainer.innerHTML = `<paper-toast text="Data is indexed" id="indexOk"></paper-toast>`;
-document.body.appendChild($_documentContainer.content);
-</script>
-  <script type="module">
-const $_documentContainer = document.createElement('template');
-$_documentContainer.innerHTML = `<paper-toast text="Datastore cleared" id="deleteOk"></paper-toast>`;
-document.body.appendChild($_documentContainer.content);
-</script>
-  <script type="module">
-import '../../../@webcomponents/shadycss/entrypoints/apply-shim.js';
-import '../../../@polymer/polymer/lib/elements/custom-style.js';
-import '../../../@polymer/polymer/lib/elements/dom-bind.js';
-import '../../../@polymer/iron-demo-helpers/demo-pages-shared-styles.js';
-import '../../../@polymer/paper-input/paper-input.js';
-import '../../../@polymer/paper-button/paper-button.js';
-import '../../../@polymer/paper-checkbox/paper-checkbox.js';
-import '../../../@polymer/paper-toast/paper-toast.js';
-import '../../../@polymer/paper-dropdown-menu/paper-dropdown-menu.js';
-import '../../../@polymer/paper-item/paper-item.js';
-import '../../../@polymer/paper-listbox/paper-listbox.js';
-import '../../../@polymer/neon-animation/web-animations.js';
-import '../../../app-pouchdb/pouchdb.js';
-import '../../../@polymer/paper-styles/shadow.js';
-import '../../../@polymer/iron-form/iron-form.js';
-import '../../../arc-data-generator/arc-data-generator.js';
-import '../request-model.js';
-import '../project-model.js';
-(function(scope) {
-  /* global RequestDb */
-  scope.keys = [{'id': ''}];
-  scope.requestType = 0;
-  scope.hasResults = false;
+    import {DataGenerator} from '../../../@advanced-rest-client/arc-data-generator/arc-data-generator.js';
+    (function(scope) {
+      scope.hasResults = false;
 
-  scope.init = function() {
-    scope.refreshProjects();
-  };
-
-  scope.addKey = function() {
-    scope.push('keys', {'id': ''});
-  };
-
-  scope.removeKey = function(e) {
-    const index = e.model.get('index');
-    scope.splice('keys', index, 1);
-  };
-
-  scope.genData = function() {
-    /* global DataGenerator */
-    const data = DataGenerator.generateSavedRequestData({
-      projectsSize: 25,
-      requestsSize: 500
-    });
-    performance.mark('inserts-start');
-    const rModel = document.getElementById('rModel');
-    const pModel = document.getElementById('pModel');
-    pModel.updateBulk(data.projects)
-    .then(() => rModel.updateBulk('saved', data.requests))
-    .then(() => {
-      data.requests.forEach((request) => {
-        rModel._indexRequest(request);
-      });
-    });
-  };
-
-  scope._dumpMeasurements = function() {
-    const ms = performance.getEntriesByType('measure');
-    console.table(ms.map((item) => {
-      return {
-        name: item.name,
-        duration: item.duration
+      scope.init = function() {
+        scope.refreshProjects();
       };
-    }));
-    performance.clearMeasures();
-  };
 
-  scope._indexFinished = function() {
-    performance.mark('inserts-end');
-    performance.measure('inserts-end', 'inserts-start');
-    console.log('Indexing finished');
-    scope._dumpMeasurements();
-    document.getElementById('indexOk').opened = true;
-  };
+      scope.genData = function() {
+        const data = DataGenerator.generateSavedRequestData({
+          projectsSize: 25,
+          requestsSize: 500
+        });
+        performance.mark('inserts-start');
+        const rModel = document.getElementById('rModel');
+        const pModel = document.getElementById('pModel');
+        pModel.updateBulk(data.projects)
+        .then(() => rModel.updateBulk('saved', data.requests))
+        .then(() => scope.refreshProjects());
+      };
 
-  scope.deleteData = function() {
-    const indexer = new RequestDb();
-    return indexer.openSearchStore()
-    .then((db) => {
-      return new Promise((resolve, reject) => {
-        const tx = db.transaction('urls', 'readwrite');
-        const store = tx.objectStore('urls');
-        const results = [];
-        tx.onerror = () => {
-          reject(results);
+      scope._dumpMeasurements = function() {
+        const ms = performance.getEntriesByType('measure');
+        console.table(ms.map((item) => {
+          return {
+            name: item.name,
+            duration: item.duration
+          };
+        }));
+        performance.clearMeasures();
+      };
+
+      scope.deleteData = function() {
+        DataGenerator.destroySavedRequestData()
+        .then(() => {
+          document.getElementById('deleteOk').opened = true;
+        });
+      };
+
+      scope.refreshProjects = function() {
+        scope.projects = undefined;
+        const e = new CustomEvent('project-model-query', {
+          cancelable: true,
+          bubbles: true,
+          detail: {}
+        });
+        performance.mark('projects-query');
+        document.body.dispatchEvent(e);
+        e.detail.result
+        .then((data) => {
+          performance.mark('projects-query-end');
+          performance.measure('projects-query-end', 'projects-query');
+          scope._dumpMeasurements();
+          console.log('Query result', data);
+          scope.projects = data;
+        });
+      };
+
+      scope.getProjectRequests = function() {
+        scope.hasResults = false;
+        const project = scope.projects[scope.project];
+        if (!project) {
+          return;
+        }
+        const detail = {
+          id: project._id
         };
-        tx.oncomplete = () => {
-          resolve(results);
-        };
-        store.clear();
-      });
-    })
-    .then(() => DataGenerator.destroySavedRequestData())
-    .then(() => {
-      document.getElementById('deleteOk').opened = true;
-    });
-  };
+        const e = new CustomEvent('request-project-list', {
+          cancelable: true,
+          bubbles: true,
+          detail
+        });
+        performance.mark('requests-list');
+        document.body.dispatchEvent(e);
+        e.detail.result
+        .then((data) => {
+          performance.mark('requests-list-end');
+          performance.measure('requests-list-end', 'requests-list');
+          scope._dumpMeasurements();
+          console.log('Query result', data);
+          scope.results = data;
+          scope.hasResults = true;
+        });
+      };
 
-  scope.refreshProjects = function() {
-    const e = new CustomEvent('project-model-query', {
-      cancelable: true,
-      bubbles: true,
-      detail: {}
-    });
-    performance.mark('projects-query');
-    document.body.dispatchEvent(e);
-    e.detail.result
-    .then((data) => {
-      performance.mark('projects-query-end');
-      performance.measure('projects-query-end', 'projects-query');
-      scope._dumpMeasurements();
-      console.log('Query result', data);
-      scope.projects = data;
-    });
-  };
+      scope._projectChanged = function(e) {
+        if (e.target.selected === undefined || e.target.selected < 0) {
+          return;
+        }
+        const project = scope.projects[e.target.selected];
+        if (!project) {
+          return;
+        }
+        const id = project._id;
+        const rev = project._rev;
+        scope.readProjectData(id, rev);
+      };
 
-  scope.getData = function() {
-    scope.hasResults = false;
-    const project = scope.projects[scope.project];
-    if (!project) {
-      return;
-    }
-    const detail = {
-      id: project._id
-    };
-    const e = new CustomEvent('request-project-list', {
-      cancelable: true,
-      bubbles: true,
-      detail
-    });
-    performance.mark('requests-list');
-    document.body.dispatchEvent(e);
-    e.detail.result
-    .then((data) => {
-      performance.mark('requests-list-end');
-      performance.measure('requests-list-end', 'requests-list');
-      scope._dumpMeasurements();
-      console.log('Query result', data);
-      scope.results = data;
-      scope.hasResults = true;
-    });
-  };
-  window.addEventListener('WebComponentsReady', scope.init);
-})(document.getElementById('demo'));
-</script>
+      scope.readProjectData = function(id, rev) {
+        scope.projectData = undefined;
+        const e = new CustomEvent('project-read', {
+          bubbles: true,
+          cancelable: true,
+          detail: {
+            id,
+            rev
+          }
+        });
+        document.body.dispatchEvent(e);
+        e.detail.result.then((data) => {
+          scope.projectData = data;
+        })
+        .catch((cause) => scope.onError(cause));
+      };
+
+      scope.onError = function(cause) {
+        console.error(cause);
+        const toast = document.getElementById('errorToast');
+        toast.text = cause.message;
+        toast.opened = true;
+      };
+      window.addEventListener('WebComponentsReady', scope.init);
+    })(document.getElementById('demo'));
+  </script>
 </body>
 </html>

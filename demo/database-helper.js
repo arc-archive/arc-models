@@ -1,4 +1,8 @@
-const DatabaseHelper = {};
+import '../../pouchdb/dist/pouchdb.js';
+import '../../chance/dist/chance.min.js';
+/* global Chance, PouchDB */
+const chance = new Chance();
+export const DatabaseHelper = {};
 let LAST_TIME = Date.now();
 DatabaseHelper.payloadMethods = ['POST', 'PUT', 'DELETE', 'OPTIONS'];
 DatabaseHelper.nonPayloadMethods = ['GET', 'HEAD'];
@@ -134,7 +138,6 @@ DatabaseHelper.generateDescription = function(opts) {
  */
 DatabaseHelper.createProjectObject = function() {
   const project = {
-    /* global chance */
     _id: chance.guid({
       version: 5
     }),
@@ -370,7 +373,6 @@ DatabaseHelper.insertHistoryRequestData = function(opts) {
   });
 };
 DatabaseHelper.clearDatabases = function(...names) {
-  /* global PouchDB */
   const promises = names.map((name) => new PouchDB(name).destroy());
   return Promise.all(promises);
 };

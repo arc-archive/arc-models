@@ -3,13 +3,13 @@
   <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, minimum-scale=1.0, initial-scale=1.0, user-scalable=yes">
+
     <script src="../../../../@webcomponents/webcomponentsjs/webcomponents-loader.js"></script>
-    <script src="../../../../wct-browser-legacy/browser.js"></script>
-    <script src="../../../../@polymer/iron-test-helpers/test-helpers.js" type="module"></script>
-    <script src="./data-helper.js"></script>
-    <script type="module" src="../../../../arc-data-generator/arc-data-generator.js"></script>
-    <script type="module" src="../../../../app-pouchdb/pouchdb.js"></script>
-    <script type="module" src="../../variables-model.js"></script>
+    <script src="../../../../@polymer/test-fixture/test-fixture.js"></script>
+    <script src="../../../../mocha/mocha.js"></script>
+    <script src="../../../../chai/chai.js"></script>
+    <script src="../../../../wct-mocha/wct-mocha.js"></script>
+
   </head>
   <body>
 
@@ -20,109 +20,108 @@
     </test-fixture>
 
     <script type="module">
-import '../../../../arc-data-generator/arc-data-generator.js';
-import '../../../../app-pouchdb/pouchdb.js';
-import '../../variables-model.js';
-/* global DataGenerator */
-suite('variable event tests', function() {
-  suite('variable-updated', function() {
-    suiteTeardown(function() {
-      return DataGenerator.destroyVariablesData();
-    });
+      import {DataGenerator} from '../../../../@advanced-rest-client/arc-data-generator/arc-data-generator.js';
+      import '../../variables-model.js';
 
-    let element;
-    let varData;
-    setup(function() {
-      element = fixture('basic');
-      varData = {
-        name: 'test',
-        variable: 'var-value',
-        enabled: true
-      };
-    });
+      suite('variable event tests', function() {
+        suite('variable-updated', function() {
+          suiteTeardown(function() {
+            return DataGenerator.destroyVariablesData();
+          });
 
-    test('Creates new variable', function() {
-      const e = new CustomEvent('variable-updated', {
-        bubbles: true,
-        cancelable: true,
-        detail: {
-          value: varData
-        }
-      });
-      document.body.dispatchEvent(e);
-      assert.isTrue(e.defaultPrevented);
-      return e.detail.result
-      .then((result) => {
-        assert.equal(result.name, 'test');
-        assert.typeOf(result._id, 'string');
-        assert.typeOf(result._rev, 'string');
-      });
-    });
+          let element;
+          let varData;
+          setup(function() {
+            element = fixture('basic');
+            varData = {
+              name: 'test',
+              variable: 'var-value',
+              enabled: true
+            };
+          });
 
-    test('Updates existing variable', () => {
-      let id;
-      let rev;
-      return element.updateVariable(varData)
-      .then((result) => {
-        id = result._id;
-        rev = result._rev;
-        result.enabled = false;
-        const e = new CustomEvent('variable-updated', {
-          bubbles: true,
-          cancelable: true,
-          detail: {
-            value: varData
-          }
+          test('Creates new variable', function() {
+            const e = new CustomEvent('variable-updated', {
+              bubbles: true,
+              cancelable: true,
+              detail: {
+                value: varData
+              }
+            });
+            document.body.dispatchEvent(e);
+            assert.isTrue(e.defaultPrevented);
+            return e.detail.result
+            .then((result) => {
+              assert.equal(result.name, 'test');
+              assert.typeOf(result._id, 'string');
+              assert.typeOf(result._rev, 'string');
+            });
+          });
+
+          test('Updates existing variable', () => {
+            let id;
+            let rev;
+            return element.updateVariable(varData)
+            .then((result) => {
+              id = result._id;
+              rev = result._rev;
+              result.enabled = false;
+              const e = new CustomEvent('variable-updated', {
+                bubbles: true,
+                cancelable: true,
+                detail: {
+                  value: varData
+                }
+              });
+              document.body.dispatchEvent(e);
+              return e.detail.result;
+            })
+            .then((result) => {
+              assert.isFalse(result.enabled);
+              assert.equal(result._id, id);
+              assert.notEqual(result._rev, rev);
+            });
+          });
         });
-        document.body.dispatchEvent(e);
-        return e.detail.result;
-      })
-      .then((result) => {
-        assert.isFalse(result.enabled);
-        assert.equal(result._id, id);
-        assert.notEqual(result._rev, rev);
-      });
-    });
-  });
 
-  suite('variable-deleted', function() {
-    suiteTeardown(function() {
-      return DataGenerator.destroyVariablesData();
-    });
+        suite('variable-deleted', function() {
+          suiteTeardown(function() {
+            return DataGenerator.destroyVariablesData();
+          });
 
-    let element;
-    let varData;
-    setup(function() {
-      element = fixture('basic');
-      varData = {
-        name: 'test',
-        variable: 'var-value',
-        enabled: true
-      };
-    });
+          let element;
+          let varData;
+          setup(function() {
+            element = fixture('basic');
+            varData = {
+              name: 'test',
+              variable: 'var-value',
+              enabled: true
+            };
+          });
 
-    test('Deletes variables', () => {
-      return element.updateVariable(varData)
-      .then((result) => {
-        const e = new CustomEvent('variable-deleted', {
-          bubbles: true,
-          cancelable: true,
-          detail: {
-            id: result._id
-          }
+          test('Deletes variables', () => {
+            return element.updateVariable(varData)
+            .then((result) => {
+              const e = new CustomEvent('variable-deleted', {
+                bubbles: true,
+                cancelable: true,
+                detail: {
+                  id: result._id
+                }
+              });
+              document.body.dispatchEvent(e);
+              assert.isTrue(e.defaultPrevented);
+              return e.detail.result;
+            })
+            .then(() => DataGenerator.getDatastoreVariablesData())
+            .then((result) => {
+              assert.lengthOf(result, 0);
+            });
+          });
         });
-        document.body.dispatchEvent(e);
-        assert.isTrue(e.defaultPrevented);
-        return e.detail.result;
-      })
-      .then(() => DataGenerator.getDatastoreVariablesData())
-      .then((result) => {
-        assert.lengthOf(result, 0);
       });
-    });
-  });
-});
-</script>
+    </script>
 
   </body>
 </html>

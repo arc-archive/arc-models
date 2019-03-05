@@ -11,7 +11,7 @@ WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
 License for the specific language governing permissions and limitations under
 the License.
 */
-import './base-model.js';
+import {ArcBaseModel} from './base-model.js';
 
 /**
  * Model for host rules.
@@ -20,12 +20,7 @@ import './base-model.js';
  * @customElement
  * @memberof LogicElements
  */
-class AuthDataModel extends ArcBaseModel {
-  /* global ArcBaseModel */
-  static get is() {
-    return 'auth-data-model';
-  }
-
+export class AuthDataModel extends ArcBaseModel {
   constructor() {
     super('auth-data', 10);
     this._queryHandler = this._queryHandler.bind(this);
@@ -160,4 +155,4 @@ class AuthDataModel extends ArcBaseModel {
     return path;
   }
 }
-window.customElements.define(AuthDataModel.is, AuthDataModel);
+window.customElements.define('auth-data-model', AuthDataModel);

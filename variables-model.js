@@ -11,8 +11,7 @@ WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
 License for the specific language governing permissions and limitations under
 the License.
 */
-import './base-model.js';
-
+import {ArcBaseModel} from './base-model.js';
 /**
  * Model for variables
  *
@@ -35,10 +34,7 @@ import './base-model.js';
  * @customElement
  * @memberof LogicElements
  */
-class VariablesModel extends ArcBaseModel {
-  /* global ArcBaseModel */
-  static get is() {return 'variables-model';}
-
+export class VariablesModel extends ArcBaseModel {
   constructor() {
     super();
     this._envReadHandler = this._envReadHandler.bind(this);
@@ -559,4 +555,4 @@ class VariablesModel extends ArcBaseModel {
     .then(() => this._notifyModelDestroyed('variables-environments'));
   }
 }
-window.customElements.define(VariablesModel.is, VariablesModel);
+window.customElements.define('variables-model', VariablesModel);

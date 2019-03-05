@@ -1,4 +1,4 @@
-const DataHelper = {};
+export const DataHelper = {};
 /* global PouchDB */
 DataHelper.addVars = function(items) {
   const db = new PouchDB('variables');
@@ -7,6 +7,7 @@ DataHelper.addVars = function(items) {
   }
   return db.post(items);
 };
+
 DataHelper.addEnv = function(names) {
   const db = new PouchDB('variables-environments');
   if (names instanceof Array) {

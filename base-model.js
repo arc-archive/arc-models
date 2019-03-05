@@ -11,16 +11,14 @@ WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
 License for the specific language governing permissions and limitations under
 the License.
 */
-import { PolymerElement } from '../../@polymer/polymer/polymer-element.js';
-
-import '../../uuid-generator/uuid-generator.js';
-import { EventsTargetBehavior } from '../../events-target-behavior/events-target-behavior.js';
+import {EventsTargetMixin} from '@advanced-rest-client/events-target-mixin/events-target-mixin.js';
+import '@advanced-rest-client/uuid-generator/uuid-generator.js';
 /**
  * A base class for all models.
  *
- * @appliesMixin ArcBehaviors.EventsTargetBehavior
+ * @appliesMixin EventsTargetMixin
  */
-class ArcBaseModel extends EventsTargetBehavior(PolymerElement) {
+export class ArcBaseModel extends EventsTargetMixin(HTMLElement) {
   /**
    * @param {String} dbname Name of the data store
    * @param {Number} revsLimit Limit number of revisions on the data store.

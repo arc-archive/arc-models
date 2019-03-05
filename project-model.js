@@ -11,8 +11,7 @@ WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
 License for the specific language governing permissions and limitations under
 the License.
 */
-import './request-base-model.js';
-
+import {RequestBaseModel} from './request-base-model.js';
 /**
  * Events based access to projects datastore.
  *
@@ -28,14 +27,13 @@ import './request-base-model.js';
  *
  * Each handled event contains the `result` property on the `detail` object. It
  * contains a `Promise` object with a result of the operation. Also, for update
- * / delete events the same non-cancelable event is fired.
+ * or delete events the same non-cancelable event is fired.
  *
  * Events handled by this element are cancelled and propagation of the event is
  * stopped.
  *
  * See model description here:
- * https://github.com/advanced-rest-client/api-components-api/blob/master/docs/
- * arc-models.md#arcproject
+ * https://github.com/advanced-rest-client/api-components-api/blob/master/docs/arc-models.md#arcproject
  *
  * Supported operations:
  *
@@ -59,7 +57,7 @@ import './request-base-model.js';
  * ##### Example
  *
  * ```javascript
- * var event = new CustomEvent('project-read', {
+ * const event = new CustomEvent('project-read', {
  *    detail: { id: 'some-id' },
  *    bubbles: true,
  *    composed: true,
@@ -82,7 +80,7 @@ import './request-base-model.js';
  * ##### Example
  *
  * ```javascript
- * var event = new CustomEvent('project-object-changed', {
+ * const event = new CustomEvent('project-object-changed', {
  *    detail: { project: {...} },
  *    bubbles: true,
  *    composed: true,
@@ -108,7 +106,7 @@ import './request-base-model.js';
  * ##### Example
  *
  * ```javascript
- * var event = new CustomEvent('project-object-deleted', {
+ * const event = new CustomEvent('project-object-deleted', {
  *    detail: { id: 'some-id' },
  *    bubbles: true,
  *    composed: true,
@@ -134,7 +132,7 @@ import './request-base-model.js';
  * ##### Example
  *
  * ```javascript
- * var event = new CustomEvent('project-model-query', {
+ * const event = new CustomEvent('project-model-query', {
  *    detail: {}, // THIS MUST BE SET
  *    bubbles: true,
  *    composed: true,
@@ -157,7 +155,7 @@ import './request-base-model.js';
  * ##### Example
  *
  * ```javascript
- * var event = new CustomEvent('project-update-bulk', {
+ * const event = new CustomEvent('project-update-bulk', {
  *    detail: {
  *      projects: [{name: 'my project'}]
  *    },
@@ -177,9 +175,6 @@ import './request-base-model.js';
  * @extends RequestBaseModel
  */
 class ProjectModel extends RequestBaseModel {
-  static get is() {
-    return 'project-model';
-  }
   /**
    * @constructor
    */
@@ -224,7 +219,6 @@ class ProjectModel extends RequestBaseModel {
       return;
     }
     this._cancelEvent(e);
-
     if (!e.detail.id) {
       e.detail.result = Promise.reject(
         new Error('Project "id" property must be set.'));
@@ -421,4 +415,4 @@ class ProjectModel extends RequestBaseModel {
    * @param {String} oldRev Entity old `_rev` property (before delete).
    */
 }
-window.customElements.define(ProjectModel.is, ProjectModel);
+window.customElements.define('project-model', ProjectModel);

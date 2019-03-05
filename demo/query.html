@@ -5,7 +5,10 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, minimum-scale=1, initial-scale=1, user-scalable=yes">
   <title>Request query demo</title>
+
   <script src="../../../@webcomponents/webcomponentsjs/webcomponents-loader.js"></script>
+  <script src="../../../web-animations-js/web-animations-next.min.js"></script>
+
   <script type="module" src="../../../@webcomponents/shadycss/entrypoints/apply-shim.js"></script>
   <script type="module" src="../../../@polymer/polymer/lib/elements/custom-style.js"></script>
   <script type="module" src="../../../@polymer/polymer/lib/elements/dom-bind.js"></script>
@@ -17,23 +20,13 @@
   <script type="module" src="../../../@polymer/paper-dropdown-menu/paper-dropdown-menu.js"></script>
   <script type="module" src="../../../@polymer/paper-item/paper-item.js"></script>
   <script type="module" src="../../../@polymer/paper-listbox/paper-listbox.js"></script>
-  <script type="module" src="../../../@polymer/neon-animation/web-animations.js"></script>
-  <script type="module" src="../../../app-pouchdb/pouchdb.js"></script>
   <script type="module" src="../../../@polymer/paper-styles/shadow.js"></script>
   <script type="module" src="../request-model.js"></script>
-  <script src="../../../chance/chance.js"></script>
-  <!-- FIXME(polymer-modulizer):
-        These imperative modules that innerHTML your HTML are
-        a hacky way to be sure that any mixins in included style
-        modules are ready before any elements that reference them are
-        instantiated, otherwise the CSS @apply mixin polyfill won't be
-        able to expand the underlying CSS custom properties.
-        See: https://github.com/Polymer/polymer-modulizer/issues/154
-        -->
-    <script type="module">
-const $_documentContainer = document.createElement('template');
-
-$_documentContainer.innerHTML = `<custom-style>
+  <script type="module" src="../project-model.js"></script>
+  <script type="module" src="../url-indexer.js"></script>
+  <!-- <script src="../../../pouchdb/dist/pouchdb.js"></script> -->
+  <script src="../../../pouchdb-quick-search/dist/pouchdb.quick-search.js"></script>
+  <custom-style>
     <style is="custom-style" include="demo-pages-shared-styles">
     :root {
       --arc-font-body1: {
@@ -65,30 +58,21 @@ $_documentContainer.innerHTML = `<custom-style>
       @apply --layout-flex;
     }
     </style>
-  </custom-style>`;
-
-document.body.appendChild($_documentContainer.content);
-</script>
+  </custom-style>
 </head>
 <body>
-  <script type="module">
-const $_documentContainer = document.createElement('template');
-
-$_documentContainer.innerHTML = `<header>
-    <h1>Query model demo</h1><h1>
-  </h1></header>`;
-
-document.body.appendChild($_documentContainer.content);
-</script>
-  <script type="module">
-const $_documentContainer = document.createElement('template');
-
-$_documentContainer.innerHTML = `<dom-bind id="demo">
+  <header>
+    <h1>Query model demo</h1>
+  </header>
+  <dom-bind id="demo">
     <template is="dom-bind">
-      <request-model id="model" on-request-indexing-finished="_indexFinished"></request-model>
+      <request-model id="rModel"></request-model>
+      <project-model id="pModel"></project-model>
+      <url-indexer on-request-indexing-finished="_indexFinished"></url-indexer>
+
       <section class="card centered options">
         <h2>Data options</h2>
-        <paper-button on-click="genData">Generate data</paper-button>
+        <paper-button on-click="generateData">Generate data</paper-button>
         <paper-button on-click="deleteData">Destroy data</paper-button>
         <paper-button on-click="forceIndex">Force PouchDB index</paper-button>
       </section>
@@ -125,173 +109,171 @@ $_documentContainer.innerHTML = `<dom-bind id="demo">
       </template>
 
     </template>
-  </dom-bind>`;
+  </dom-bind>
+  <paper-toast text="Data is indexed" id="indexOk"></paper-toast>
+  <paper-toast text="Datastore cleared" id="deleteOk"></paper-toast>
+  <paper-toast text="Datastore indexed" id="indexedOk"></paper-toast>
+  <script type="module">
+    import {DataGenerator} from '../../../@advanced-rest-client/arc-data-generator/arc-data-generator.js';
+    /* global PouchDB, PouchQuickSearch */
+    // PouchDB is imported by the generator
+    // PouchQuickSearch is included into the page as a regular script as it doesn't export anything for ES6 modules
+    // and therefore it cannot be loaded here (it produces errors as some variable is not defined
+    // and modules always work in strict mode).
+    // This is a hack to make it all work.
+    // TODO: (pawel) Consider creating own IDB adapter as maitainers of PouchDB are
+    // not very cooperative.
+    PouchDB.plugin(PouchQuickSearch);
+    (function(scope) {
+      scope.q = 'api';
+      scope.requestType = 0;
+      scope.hasResults = false;
 
-document.body.appendChild($_documentContainer.content);
-</script>
-  <script type="module">
-const $_documentContainer = document.createElement('template');
-$_documentContainer.innerHTML = `<paper-toast text="Data is indexed" id="indexOk"></paper-toast>`;
-document.body.appendChild($_documentContainer.content);
-</script>
-  <script type="module">
-const $_documentContainer = document.createElement('template');
-$_documentContainer.innerHTML = `<paper-toast text="Datastore cleared" id="deleteOk"></paper-toast>`;
-document.body.appendChild($_documentContainer.content);
-</script>
-  <script type="module">
-const $_documentContainer = document.createElement('template');
-$_documentContainer.innerHTML = `<paper-toast text="Datastore indexed" id="indexedOk"></paper-toast>`;
-document.body.appendChild($_documentContainer.content);
-</script>
-  <script type="module">
-import '../../../@webcomponents/shadycss/entrypoints/apply-shim.js';
-import '../../../@polymer/polymer/lib/elements/custom-style.js';
-import '../../../@polymer/polymer/lib/elements/dom-bind.js';
-import '../../../@polymer/iron-demo-helpers/demo-pages-shared-styles.js';
-import '../../../@polymer/paper-input/paper-input.js';
-import '../../../@polymer/paper-button/paper-button.js';
-import '../../../@polymer/paper-checkbox/paper-checkbox.js';
-import '../../../@polymer/paper-toast/paper-toast.js';
-import '../../../@polymer/paper-dropdown-menu/paper-dropdown-menu.js';
-import '../../../@polymer/paper-item/paper-item.js';
-import '../../../@polymer/paper-listbox/paper-listbox.js';
-import '../../../@polymer/neon-animation/web-animations.js';
-import '../../../app-pouchdb/pouchdb.js';
-import '../../../@polymer/paper-styles/shadow.js';
-import '../request-model.js';
-(function(scope) {
-  /* global chance, RequestDb */
-  scope.q = 'api';
-  scope.requestType = 0;
-  scope.hasResults = false;
-  scope.genData = function() {
-    const domains = [
-      'https://domain.com/',
-      'https://api.domain.com/',
-      'https://domain.com/domain/',
-      'https://mulesoft.com/',
-      'https://api.mulesoft.com/',
-      'http://other.com/'
-    ];
-    const history = [];
-    const saved = [];
-    for (let i = 0; i < 1000; i++) {
-      let url = chance.pickone(domains);
-      for (let j = 0; j < chance.integer({min: 0, max: 3}); j++) {
-        url += chance.word() + '/';
-      }
-      url = url.substr(0, url.length - 1);
-      if (chance.bool()) {
-        url += '?a=b&c=d';
-      }
-      const type = chance.bool() ? 'history' : 'saved';
-      const item = {
-        _id: chance.guid({version: 5}),
-        url,
-        type,
-        method: 'GET',
-        headers: 'x-headers: true'
+      scope.generateData = function() {
+        console.log('Generating data.');
+        scope.generateHistory()
+        .then(() => scope.generateSaved());
       };
-      if (type === 'history') {
-        history[history.length] = item;
-      } else {
-        saved[saved.length] = item;
-      }
-    }
-    performance.mark('inserts-start');
-    const model = document.getElementById('model');
-    model.updateBulk('history', history);
-    model.updateBulk('saved', saved);
-  };
 
-  scope._dumpMeasurements = function() {
-    const ms = performance.getEntriesByType('measure');
-    console.table(ms.map((item) => {
-      return {
-        name: item.name,
-        duration: item.duration
+      scope.generateHistory = function() {
+        const data = DataGenerator.generateHistoryRequestsData({
+          requestsSize: 100
+        });
+        console.log('Inserting Requests.');
+        performance.mark('requests-inserts-start');
+        const rModel = document.getElementById('rModel');
+        return rModel.updateBulk('history', data)
+        .then(() => {
+          performance.mark('indexing-start');
+          console.log('Data inserted');
+          performance.mark('requests-inserts-end');
+          performance.measure('requests-inserts-end', 'requests-inserts-start');
+          scope._dumpMeasurements();
+        })
+        .catch((cause) => {
+          console.log(cause);
+          scope._dumpMeasurements();
+        });
       };
-    }));
-    performance.clearMeasures();
-  };
 
-  scope._indexFinished = function() {
-    performance.mark('inserts-end');
-    performance.measure('inserts-end', 'inserts-start');
-    console.log('Indexing finished');
-    scope._dumpMeasurements();
-    document.getElementById('indexOk').opened = true;
-  };
-  scope.deleteData = function() {
-    const indexer = new RequestDb();
-    return indexer.openSearchStore()
-    .then((db) => {
-      return new Promise((resolve, reject) => {
-        const tx = db.transaction('urls', 'readwrite');
-        const store = tx.objectStore('urls');
-        const results = [];
-        tx.onerror = () => {
-          reject(results);
+      scope.generateSaved = function() {
+        const data = DataGenerator.generateSavedRequestData({
+          projectsSize: 25,
+          requestsSize: 100
+        });
+        performance.mark('projects-inserts-start');
+        const rModel = document.getElementById('rModel');
+        const pModel = document.getElementById('pModel');
+        console.log('Inserting projects.');
+        pModel.updateBulk(data.projects)
+        .then(() => {
+          performance.mark('projects-inserts-end');
+          performance.measure('projects-inserts-end', 'projects-inserts-start');
+          console.log('Projects ready. Inserting Requests.');
+          performance.mark('requests-inserts-start');
+          return rModel.updateBulk('saved', data.requests);
+        })
+        .then(() => {
+          performance.mark('indexing-start');
+          console.log('Data inserted');
+          performance.mark('requests-inserts-end');
+          performance.measure('requests-inserts-end', 'requests-inserts-start');
+          scope._dumpMeasurements();
+        })
+        .catch((cause) => {
+          console.log(cause);
+          scope._dumpMeasurements();
+        });
+      };
+
+      scope._dumpMeasurements = function() {
+        const ms = performance.getEntriesByType('measure');
+        console.table(ms.map((item) => {
+          return {
+            name: item.name,
+            duration: item.duration
+          };
+        }));
+        performance.clearMeasures();
+      };
+
+      scope._indexFinished = function() {
+        performance.mark('inserts-end');
+        performance.measure('inserts-end', 'inserts-start');
+        console.log('Indexing finished');
+        scope._dumpMeasurements();
+        document.getElementById('indexOk').opened = true;
+      };
+
+      scope.deleteData = function() {
+        // const indexer = new RequestDb();
+        // return indexer.openSearchStore()
+        // .then((db) => {
+        //   return new Promise((resolve, reject) => {
+        //     const tx = db.transaction('urls', 'readwrite');
+        //     const store = tx.objectStore('urls');
+        //     const results = [];
+        //     tx.onerror = () => {
+        //       reject(results);
+        //     };
+        //     tx.oncomplete = () => {
+        //       resolve(results);
+        //     };
+        //     store.clear();
+        //   });
+        // })
+        // .then(() => {
+        //   document.getElementById('deleteOk').opened = true;
+        // });
+      };
+
+      scope.search = function() {
+        const detail = {
+          q: scope.q
         };
-        tx.oncomplete = () => {
-          resolve(results);
-        };
-        store.clear();
-      });
-    })
-    .then(() => {
-      document.getElementById('deleteOk').opened = true;
-    });
-  };
+        switch (scope.requestType) {
+          case 1: detail.type = 'history'; break;
+          case 2: detail.type = 'saved'; break;
+        }
+        if (scope.detailedSearch) {
+          detail.detailed = true;
+        }
+        const e = new CustomEvent('request-query', {
+          cancelable: true,
+          bubbles: true,
+          detail
+        });
+        performance.mark('data-search');
+        document.body.dispatchEvent(e);
+        e.detail.result
+        .then((data) => {
+          performance.mark('data-search-end');
+          performance.measure('data-search-end', 'data-search');
+          scope._dumpMeasurements();
+          console.log('Query result', data);
+          scope.results = data;
+          scope.hasResults = true;
+        });
+      };
 
-  scope.search = function() {
-    const detail = {
-      q: scope.q
-    };
-    switch (scope.requestType) {
-      case 1: detail.type = 'history'; break;
-      case 2: detail.type = 'saved'; break;
-    }
-    if (scope.detailedSearch) {
-      detail.detailed = true;
-    }
-    const e = new CustomEvent('request-query', {
-      cancelable: true,
-      bubbles: true,
-      detail
-    });
-    performance.mark('data-search');
-    document.body.dispatchEvent(e);
-    e.detail.result
-    .then((data) => {
-      performance.mark('data-search-end');
-      performance.measure('data-search-end', 'data-search');
-      scope._dumpMeasurements();
-      console.log('Query result', data);
-      scope.results = data;
-      scope.hasResults = true;
-    });
-  };
-
-  scope.forceIndex = function() {
-    const model = document.getElementById('model');
-    performance.mark('index-history');
-    model.indexData('history')
-    .then(() => {
-      performance.mark('index-history-end');
-      performance.measure('index-history-end', 'index-history');
-      performance.mark('index-saved');
-      return model.indexData('saved');
-    })
-    .then(() => {
-      performance.mark('index-saved-end');
-      performance.measure('index-saved-end', 'index-saved');
-      scope._dumpMeasurements();
-      document.getElementById('indexedOk').opened = true;
-    });
-  };
-})(document.getElementById('demo'));
-</script>
+      scope.forceIndex = function() {
+        const model = document.getElementById('model');
+        performance.mark('index-history');
+        model.indexData('history')
+        .then(() => {
+          performance.mark('index-history-end');
+          performance.measure('index-history-end', 'index-history');
+          performance.mark('index-saved');
+          return model.indexData('saved');
+        })
+        .then(() => {
+          performance.mark('index-saved-end');
+          performance.measure('index-saved-end', 'index-saved');
+          scope._dumpMeasurements();
+          document.getElementById('indexedOk').opened = true;
+        });
+      };
+    })(document.getElementById('demo'));
+  </script>
 </body>
 </html>

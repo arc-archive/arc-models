@@ -11,8 +11,7 @@ WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
 License for the specific language governing permissions and limitations under
 the License.
 */
-import './base-model.js';
-
+import {ArcBaseModel} from './base-model.js';
 /**
  * An element that saves Request URL in the history and serves list
  * of saved URLs.
@@ -73,10 +72,7 @@ import './base-model.js';
  * @polymer
  * @memberof LogicElements
  */
-class UrlHistoryModel extends ArcBaseModel {
-  /* global ArcBaseModel */
-  static get is() {return 'url-history-model';}
-
+export class UrlHistoryModel extends ArcBaseModel {
   constructor() {
     super('url-history', 10);
     this._handleStore = this._handleStore.bind(this);
@@ -244,4 +240,4 @@ class UrlHistoryModel extends ArcBaseModel {
     return -1;
   }
 }
-window.customElements.define(UrlHistoryModel.is, UrlHistoryModel);
+window.customElements.define('url-history-model', UrlHistoryModel);

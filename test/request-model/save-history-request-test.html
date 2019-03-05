@@ -4,102 +4,99 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, minimum-scale=1.0, initial-scale=1.0, user-scalable=yes">
+
   <script src="../../../../@webcomponents/webcomponentsjs/webcomponents-loader.js"></script>
-  <script src="../../../../wct-browser-legacy/browser.js"></script>
-  <script type="module" src="../../../../arc-data-generator/arc-data-generator.js"></script>
-  <script type="module" src="../../../../app-pouchdb/pouchdb.js"></script>
-  <script type="module" src="../../request-model.js"></script>
+  <script src="../../../../@polymer/test-fixture/test-fixture.js"></script>
+  <script src="../../../../mocha/mocha.js"></script>
+  <script src="../../../../chai/chai.js"></script>
+  <script src="../../../../wct-mocha/wct-mocha.js"></script>
+
 </head>
 
 <body>
   <test-fixture id="Basic">
     <template>
-      <request-model no-indexing></request-model>
+      <request-model></request-model>
     </template>
   </test-fixture>
+
   <script type="module">
-import '../../../../arc-data-generator/arc-data-generator.js';
-import '../../../../app-pouchdb/pouchdb.js';
-import '../../request-model.js';
-/* global DataGenerator */
-function databaseCleanup() {
-  return DataGenerator.destroyHistoryData();
-}
-
-function fire(request) {
-  const e = new CustomEvent('save-history', {
-    bubbles: true,
-    cancelable: true,
-    detail: {
-      request
+    import '../../../../pouchdb/dist/pouchdb.js';
+    import '../../request-model.js';
+    function fire(request) {
+      const e = new CustomEvent('save-history', {
+        bubbles: true,
+        cancelable: true,
+        detail: {
+          request
+        }
+      });
+      document.body.dispatchEvent(e);
+      return e;
     }
-  });
-  document.body.dispatchEvent(e);
-  return e;
-}
 
-function generateId(request) {
-  const d = new Date();
-  d.setHours(0, 0, 0, 0);
-  let id = d.getTime();
-  id += '/' + encodeURIComponent(request.url);
-  id += '/' + request.method;
-  return id;
-}
+    function generateId(request) {
+      const d = new Date();
+      d.setHours(0, 0, 0, 0);
+      let id = d.getTime();
+      id += '/' + encodeURIComponent(request.url);
+      id += '/' + request.method;
+      return id;
+    }
 
-suite('saving history data', function() {
-  let request;
-  let element;
-  setup(() => {
-    request = {
-      url: 'test-url',
-      method: 'test-method',
-      headers: 'test-headers',
-      payload: ''
-    };
-    element = fixture('Basic');
-  });
+    suite('saving history data', function() {
+      let request;
+      let element;
+      setup(() => {
+        request = {
+          url: 'test-url',
+          method: 'test-method',
+          headers: 'test-headers',
+          payload: ''
+        };
+        element = fixture('Basic');
+      });
 
-  test('Generates history ID', () => {
-    element.saveRequest = function(request) {
-      return Promise.resolve(request);
-    };
-    const id = generateId(request);
-    const e = fire(request);
-    return e.detail.result
-    .then((request) => {
-      assert.equal(request._id, id);
+      test('Generates history ID', () => {
+        element.saveRequest = function(request) {
+          return Promise.resolve(request);
+        };
+        const id = generateId(request);
+        const e = fire(request);
+        return e.detail.result
+        .then((request) => {
+          assert.equal(request._id, id);
+        });
+      });
+
+      test('Sets history type', () => {
+        element.saveRequest = function(request) {
+          return Promise.resolve(request);
+        };
+        const e = fire(request);
+        return e.detail.result
+        .then((request) => {
+          assert.equal(request.type, 'history');
+        });
+      });
+
+      test('Inserts object to the data store', () => {
+        const e = fire(request);
+        return e.detail.result
+        .then((request) => {
+          assert.typeOf(request._rev, 'string');
+        });
+      });
+
+      test('Updates existing item', () => {
+        const e = fire(request);
+        return e.detail.result
+        .then((request) => {
+          assert.equal(request._rev.indexOf('2-'), 0);
+        });
+      });
     });
-  });
-
-  test('Sets history type', () => {
-    element.saveRequest = function(request) {
-      return Promise.resolve(request);
-    };
-    const e = fire(request);
-    return e.detail.result
-    .then((request) => {
-      assert.equal(request.type, 'history');
-    });
-  });
-
-  test('Inserts object to the data store', () => {
-    const e = fire(request);
-    return e.detail.result
-    .then((request) => {
-      assert.typeOf(request._rev, 'string');
-    });
-  });
-
-  test('Updates existing item', () => {
-    const e = fire(request);
-    return e.detail.result
-    .then((request) => {
-      assert.equal(request._rev.indexOf('2-'), 0);
-    });
-  });
-});
-</script>
+  </script>
 </body>
 
 </html>

@@ -11,8 +11,7 @@ WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
 License for the specific language governing permissions and limitations under
 the License.
 */
-import './base-model.js';
-
+import {ArcBaseModel} from './base-model.js';
 /**
  * Model for host rules.
  *
@@ -32,12 +31,7 @@ import './base-model.js';
  * @customElement
  * @memberof LogicElements
  */
-class HostRulesModel extends ArcBaseModel {
-  /* global ArcBaseModel */
-  static get is() {
-    return 'host-rules-model';
-  }
-
+export class HostRulesModel extends ArcBaseModel {
   constructor() {
     super('host-rules', 10);
     this._updatedHandler = this._updatedHandler.bind(this);
@@ -261,4 +255,4 @@ class HostRulesModel extends ArcBaseModel {
     });
   }
 }
-window.customElements.define(HostRulesModel.is, HostRulesModel);
+window.customElements.define('host-rules-model', HostRulesModel);

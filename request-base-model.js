@@ -11,14 +11,14 @@ WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
 License for the specific language governing permissions and limitations under
 the License.
 */
-import './base-model.js';
+import {ArcBaseModel} from './base-model.js';
 
 /**
  * A base class for Request and Projects` models.
  *
  * @extends ArcBaseModel
  */
-class RequestBaseModel extends ArcBaseModel {
+export class RequestBaseModel extends ArcBaseModel {
   get savedDb() {
     /* global PouchDB */
     return new PouchDB('saved-requests');

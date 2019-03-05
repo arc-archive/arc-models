@@ -1,7 +1,7 @@
 const INDEX_STORE_NAME = 'request-index';
 const INDEX_STORE_VERSION = 1;
 
-const DbHelper = {};
+export const DbHelper = {};
 /**
  * Removes all indexes from the index data store.
  * @return {Promise}

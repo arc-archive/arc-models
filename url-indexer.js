@@ -11,9 +11,7 @@ WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
 License for the specific language governing permissions and limitations under
 the License.
 */
-import { PolymerElement } from '../../@polymer/polymer/polymer-element.js';
-
-import '../../uuid-generator/uuid-generator.js';
+import '@advanced-rest-client/uuid-generator/uuid-generator.js';
 /**
  * An element responsible for indexing and querying for URL data.
  *
@@ -106,8 +104,7 @@ import '../../uuid-generator/uuid-generator.js';
  * @customElement
  * @memberof LogicElements
  */
-class UrlIndexer extends PolymerElement {
-  static get is() {return 'url-indexer';}
+class UrlIndexer extends HTMLElement {
   /**
    * @return {Element} Instance of `uuid-generator`
    */
@@ -139,7 +136,6 @@ class UrlIndexer extends PolymerElement {
   }
 
   connectedCallback() {
-    super.connectedCallback();
     window.addEventListener('url-index-update', this._indexUpdateHandler);
     window.addEventListener('url-index-query', this._indexQueryHandler);
     window.addEventListener('request-object-changed', this._requestChangeHandler);
@@ -148,7 +144,6 @@ class UrlIndexer extends PolymerElement {
   }
 
   disconnectedCallback() {
-    super.disconnectedCallback();
     if (this._uuid) {
       delete this._uuid;
     }
@@ -972,4 +967,4 @@ class UrlIndexer extends PolymerElement {
     });
   }
 }
-window.customElements.define(UrlIndexer.is, UrlIndexer);
+window.customElements.define('url-indexer', UrlIndexer);

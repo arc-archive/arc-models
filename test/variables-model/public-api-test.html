@@ -3,13 +3,13 @@
   <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, minimum-scale=1.0, initial-scale=1.0, user-scalable=yes">
+
     <script src="../../../../@webcomponents/webcomponentsjs/webcomponents-loader.js"></script>
-    <script src="../../../../wct-browser-legacy/browser.js"></script>
-    <script src="../../../../@polymer/iron-test-helpers/test-helpers.js" type="module"></script>
-    <script src="./data-helper.js"></script>
-    <script type="module" src="../../../../arc-data-generator/arc-data-generator.js"></script>
-    <script type="module" src="../../../../app-pouchdb/pouchdb.js"></script>
-    <script type="module" src="../../variables-model.js"></script>
+    <script src="../../../../@polymer/test-fixture/test-fixture.js"></script>
+    <script src="../../../../mocha/mocha.js"></script>
+    <script src="../../../../chai/chai.js"></script>
+    <script src="../../../../wct-mocha/wct-mocha.js"></script>
+
   </head>
   <body>
 
@@ -20,323 +20,324 @@
     </test-fixture>
 
     <script type="module">
-import '../../../../arc-data-generator/arc-data-generator.js';
-import '../../../../app-pouchdb/pouchdb.js';
-import '../../variables-model.js';
-/* global DataGenerator, DataHelper */
-suite('Public methods', function() {
-  suite('deleteEnvironment()', function() {
-    let databaseRecordId;
-    let databaseRecordRev;
-    let element;
-    suiteTeardown(function() {
-      return DataGenerator.destroyVariablesData();
-    });
+      import {DataGenerator} from '../../../../@advanced-rest-client/arc-data-generator/arc-data-generator.js';
+      import {spy as sinonSpy} from '../../../../sinon/pkg/sinon-esm.js';
+      import '../../variables-model.js';
+      import {DataHelper} from './data-helper.js';
 
-    setup(function() {
-      element = fixture('basic');
-      return DataHelper.addEnv('test')
-      .then((result) => {
-        databaseRecordId = result.id;
-        databaseRecordRev = result.rev;
-      })
-      .then(() => {
-        const vars = [{
-          variable: 'test',
-          value: 'some variable',
-          environment: 'test'
-        }, {
-          variable: 'test-2',
-          value: 'some variable-2',
-          environment: 'test'
-        }];
-        return DataHelper.addVars(vars);
+      suite('Public methods', function() {
+        suite('deleteEnvironment()', function() {
+          let databaseRecordId;
+          let databaseRecordRev;
+          let element;
+          suiteTeardown(function() {
+            return DataGenerator.destroyVariablesData();
+          });
+
+          setup(function() {
+            element = fixture('basic');
+            return DataHelper.addEnv('test')
+            .then((result) => {
+              databaseRecordId = result.id;
+              databaseRecordRev = result.rev;
+            })
+            .then(() => {
+              const vars = [{
+                variable: 'test',
+                value: 'some variable',
+                environment: 'test'
+              }, {
+                variable: 'test-2',
+                value: 'some variable-2',
+                environment: 'test'
+              }];
+              return DataHelper.addVars(vars);
+            });
+          });
+
+          test('Returns new _rev for deleted item', function() {
+            return element.deleteEnvironment(databaseRecordId)
+            .then(function(result) {
+              assert.typeOf(result.rev, 'string');
+              assert.notEqual(result.rev, databaseRecordRev);
+            });
+          });
+
+          test('Returns _id for deleted item', function() {
+            return element.deleteEnvironment(databaseRecordId)
+            .then(function(result) {
+              assert.equal(result.id, databaseRecordId);
+            });
+          });
+
+          test('Dispatches environment-deleted custom event', function(done) {
+            element.addEventListener('environment-deleted', function f(e) {
+              element.removeEventListener('environment-deleted', f);
+              assert.isFalse(e.cancelable);
+            });
+            element.deleteEnvironment(databaseRecordId)
+            .then(function() {
+              done();
+            });
+          });
+
+          // Should be last, it leases an environment in the data store.
+          test('Rejects promise without ID', function() {
+            return element.deleteEnvironment()
+            .then(function() {
+              throw new Error('TEST');
+            })
+            .catch(function(cause) {
+              if (cause.message === 'TEST') {
+                throw new Error('Validation passed invalid input');
+              }
+            });
+          });
+
+          test('Removes variables added to the environment', () => {
+            return element.deleteEnvironment(databaseRecordId)
+            .then(() => {
+              return DataGenerator.getDatastoreVariablesData();
+            })
+            .then((result) => {
+              assert.lengthOf(result, 0);
+            });
+          });
+        });
+
+        suite('updateEnvironment()', function() {
+          suiteTeardown(function() {
+            return DataGenerator.destroyVariablesData();
+          });
+
+          let element;
+          setup(function() {
+            element = fixture('basic');
+          });
+
+          test('Rejects promise without name property', function() {
+            return element.updateEnvironment({})
+            .then(function() {
+              throw new Error('TEST');
+            })
+            .catch(function(cause) {
+              if (cause.message === 'TEST') {
+                throw new Error('Validation passed invalid input');
+              }
+            });
+          });
+
+          test('Creates new object in the data store', function() {
+            return element.updateEnvironment({
+              name: 'test'
+            })
+            .then((result) => {
+              assert.typeOf(result._id, 'string');
+              assert.typeOf(result._rev, 'string');
+            });
+          });
+
+          test('Dispatches environment-updated custom event', function() {
+            const spy = sinonSpy();
+            element.addEventListener('environment-updated', spy);
+            return element.updateEnvironment({
+              name: 'test'
+            })
+            .then(function() {
+              assert.isTrue(spy.called);
+            });
+          });
+
+          test('The environment-updated custom event is not cancellable', function() {
+            let cancelable;
+            element.addEventListener('environment-updated', function(e) {
+              cancelable = e.cancelable;
+            });
+            return element.updateEnvironment({
+              name: 'test'
+            })
+            .then(function() {
+              assert.isFalse(cancelable);
+            });
+          });
+
+          test('Updates existing item', function() {
+            let rev;
+            return element.updateEnvironment({
+              name: 'test'
+            })
+            .then((result) => {
+              rev = result._rev;
+              result.name = 'xxx';
+              return element.updateEnvironment(result);
+            })
+            .then(function(result) {
+              assert.notEqual(result._rev, rev);
+            });
+          });
+        });
+
+        suite('listEnvironments()', function() {
+          suiteTeardown(function() {
+            return DataGenerator.destroyVariablesData();
+          });
+
+          let element;
+          setup(function() {
+            element = fixture('basic');
+          });
+
+          test('Returns empty array when no data', function() {
+            return element.listEnvironments()
+            .then((result) => {
+              assert.typeOf(result, 'array');
+              assert.lengthOf(result, 0);
+            });
+          });
+
+          test('Returns existing environments', () => {
+            return DataHelper.addEnv(['test', 'other'])
+            .then(() => element.listEnvironments())
+            .then((result) => {
+              assert.lengthOf(result, 2);
+            });
+          });
+        });
+
+
+        suite('updateVariable()', function() {
+          suiteTeardown(function() {
+            return DataGenerator.destroyVariablesData();
+          });
+
+          let element;
+          let varData;
+          setup(function() {
+            element = fixture('basic');
+            varData = {
+              name: 'test',
+              variable: 'var-value',
+              enabled: true
+            };
+          });
+
+          test('Creates new variable', function() {
+            return element.updateVariable(varData)
+            .then((result) => {
+              assert.equal(result.name, 'test');
+              assert.typeOf(result._id, 'string');
+              assert.typeOf(result._rev, 'string');
+            });
+          });
+
+          test('Updates existing variable', () => {
+            let id;
+            let rev;
+            return element.updateVariable(varData)
+            .then((result) => {
+              id = result._id;
+              rev = result._rev;
+              result.enabled = false;
+              return element.updateVariable(varData);
+            })
+            .then((result) => {
+              assert.isFalse(result.enabled);
+              assert.equal(result._id, id);
+              assert.notEqual(result._rev, rev);
+            });
+          });
+
+          test('Dispatches variable-updated event', function() {
+            element.addEventListener('variable-updated', function f(e) {
+              element.removeEventListener('variable-updated', f);
+              assert.isFalse(e.cancelable);
+            });
+            return element.updateVariable(varData);
+          });
+        });
+
+        suite('deleteVariable()', function() {
+          suiteTeardown(function() {
+            return DataGenerator.destroyVariablesData();
+          });
+
+          let element;
+          let varData;
+          setup(function() {
+            element = fixture('basic');
+            varData = {
+              name: 'test',
+              variable: 'var-value',
+              enabled: true
+            };
+          });
+
+          test('Does nothing when var do not exists', function() {
+            return element.deleteVariable('not-existing');
+          });
+
+          test('Deletes variables', () => {
+            return element.updateVariable(varData)
+            .then((result) => {
+              return element.deleteVariable(result._id);
+            })
+            .then(() => DataGenerator.getDatastoreVariablesData())
+            .then((result) => {
+              assert.lengthOf(result, 0);
+            });
+          });
+        });
+
+        suite('listVariables()', function() {
+          suiteTeardown(function() {
+            return DataGenerator.destroyVariablesData();
+          });
+
+          suiteSetup(() => {
+            return DataHelper.addVars([{
+              name: 'test',
+              variable: 'var-value',
+              enabled: true,
+              environment: 'default'
+            }, {
+              name: 'other',
+              variable: 'var-value',
+              enabled: true,
+              environment: 'other'
+            }]);
+          });
+
+          let element;
+          setup(function() {
+            element = fixture('basic');
+          });
+
+          test('Returns data for default', function() {
+            return element.listVariables('default')
+            .then((result) => {
+              assert.typeOf(result, 'array');
+              assert.lengthOf(result, 1);
+            });
+          });
+
+          test('Returns data for "other"', function() {
+            return element.listVariables('other')
+            .then((result) => {
+              assert.typeOf(result, 'array');
+              assert.lengthOf(result, 1);
+            });
+          });
+
+          test('Returns empty list', function() {
+            return element.listVariables('not-existing')
+            .then((result) => {
+              assert.typeOf(result, 'array');
+              assert.lengthOf(result, 0);
+            });
+          });
+        });
       });
-    });
-
-    test('Returns new _rev for deleted item', function() {
-      return element.deleteEnvironment(databaseRecordId)
-      .then(function(result) {
-        assert.typeOf(result.rev, 'string');
-        assert.notEqual(result.rev, databaseRecordRev);
-      });
-    });
-
-    test('Returns _id for deleted item', function() {
-      return element.deleteEnvironment(databaseRecordId)
-      .then(function(result) {
-        assert.equal(result.id, databaseRecordId);
-      });
-    });
-
-    test('Dispatches environment-deleted custom event', function(done) {
-      element.addEventListener('environment-deleted', function f(e) {
-        element.removeEventListener('environment-deleted', f);
-        assert.isFalse(e.cancelable);
-      });
-      element.deleteEnvironment(databaseRecordId)
-      .then(function() {
-        done();
-      });
-    });
-
-    // Should be last, it leases an environment in the data store.
-    test('Rejects promise without ID', function() {
-      return element.deleteEnvironment()
-      .then(function() {
-        throw new Error('TEST');
-      })
-      .catch(function(cause) {
-        if (cause.message === 'TEST') {
-          throw new Error('Validation passed invalid input');
-        }
-      });
-    });
-
-    test('Removes variables added to the environment', () => {
-      return element.deleteEnvironment(databaseRecordId)
-      .then(() => {
-        return DataGenerator.getDatastoreVariablesData();
-      })
-      .then((result) => {
-        assert.lengthOf(result, 0);
-      });
-    });
-  });
-
-  suite('updateEnvironment()', function() {
-    suiteTeardown(function() {
-      return DataGenerator.destroyVariablesData();
-    });
-
-    let element;
-    setup(function() {
-      element = fixture('basic');
-    });
-
-    test('Rejects promise without name property', function() {
-      return element.updateEnvironment({})
-      .then(function() {
-        throw new Error('TEST');
-      })
-      .catch(function(cause) {
-        if (cause.message === 'TEST') {
-          throw new Error('Validation passed invalid input');
-        }
-      });
-    });
-
-    test('Creates new object in the data store', function() {
-      return element.updateEnvironment({
-        name: 'test'
-      })
-      .then((result) => {
-        assert.typeOf(result._id, 'string');
-        assert.typeOf(result._rev, 'string');
-      });
-    });
-
-    test('Dispatches environment-updated custom event', function() {
-      const spy = sinon.spy();
-      element.addEventListener('environment-updated', spy);
-      return element.updateEnvironment({
-        name: 'test'
-      })
-      .then(function() {
-        assert.isTrue(spy.called);
-      });
-    });
-
-    test('The environment-updated custom event is not cancellable', function() {
-      let cancelable;
-      element.addEventListener('environment-updated', function(e) {
-        cancelable = e.cancelable;
-      });
-      return element.updateEnvironment({
-        name: 'test'
-      })
-      .then(function() {
-        assert.isFalse(cancelable);
-      });
-    });
-
-    test('Updates existing item', function() {
-      let rev;
-      return element.updateEnvironment({
-        name: 'test'
-      })
-      .then((result) => {
-        rev = result._rev;
-        result.name = 'xxx';
-        return element.updateEnvironment(result);
-      })
-      .then(function(result) {
-        assert.notEqual(result._rev, rev);
-      });
-    });
-  });
-
-  suite('listEnvironments()', function() {
-    suiteTeardown(function() {
-      return DataGenerator.destroyVariablesData();
-    });
-
-    let element;
-    setup(function() {
-      element = fixture('basic');
-    });
-
-    test('Returns empty array when no data', function() {
-      return element.listEnvironments()
-      .then((result) => {
-        assert.typeOf(result, 'array');
-        assert.lengthOf(result, 0);
-      });
-    });
-
-    test('Returns existing environments', () => {
-      return DataHelper.addEnv(['test', 'other'])
-      .then(() => element.listEnvironments())
-      .then((result) => {
-        assert.lengthOf(result, 2);
-      });
-    });
-  });
-
-
-  suite('updateVariable()', function() {
-    suiteTeardown(function() {
-      return DataGenerator.destroyVariablesData();
-    });
-
-    let element;
-    let varData;
-    setup(function() {
-      element = fixture('basic');
-      varData = {
-        name: 'test',
-        variable: 'var-value',
-        enabled: true
-      };
-    });
-
-    test('Creates new variable', function() {
-      return element.updateVariable(varData)
-      .then((result) => {
-        assert.equal(result.name, 'test');
-        assert.typeOf(result._id, 'string');
-        assert.typeOf(result._rev, 'string');
-      });
-    });
-
-    test('Updates existing variable', () => {
-      let id;
-      let rev;
-      return element.updateVariable(varData)
-      .then((result) => {
-        id = result._id;
-        rev = result._rev;
-        result.enabled = false;
-        return element.updateVariable(varData);
-      })
-      .then((result) => {
-        assert.isFalse(result.enabled);
-        assert.equal(result._id, id);
-        assert.notEqual(result._rev, rev);
-      });
-    });
-
-    test('Dispatches variable-updated event', function() {
-      element.addEventListener('variable-updated', function f(e) {
-        element.removeEventListener('variable-updated', f);
-        assert.isFalse(e.cancelable);
-      });
-      return element.updateVariable(varData);
-    });
-  });
-
-  suite('deleteVariable()', function() {
-    suiteTeardown(function() {
-      return DataGenerator.destroyVariablesData();
-    });
-
-    let element;
-    let varData;
-    setup(function() {
-      element = fixture('basic');
-      varData = {
-        name: 'test',
-        variable: 'var-value',
-        enabled: true
-      };
-    });
-
-    test('Does nothing when var do not exists', function() {
-      return element.deleteVariable('not-existing');
-    });
-
-    test('Deletes variables', () => {
-      return element.updateVariable(varData)
-      .then((result) => {
-        return element.deleteVariable(result._id);
-      })
-      .then(() => DataGenerator.getDatastoreVariablesData())
-      .then((result) => {
-        assert.lengthOf(result, 0);
-      });
-    });
-  });
-
-  suite('listVariables()', function() {
-    suiteTeardown(function() {
-      return DataGenerator.destroyVariablesData();
-    });
-
-    suiteSetup(() => {
-      return DataHelper.addVars([{
-        name: 'test',
-        variable: 'var-value',
-        enabled: true,
-        environment: 'default'
-      }, {
-        name: 'other',
-        variable: 'var-value',
-        enabled: true,
-        environment: 'other'
-      }]);
-    });
-
-    let element;
-    setup(function() {
-      element = fixture('basic');
-    });
-
-    test('Returns data for default', function() {
-      return element.listVariables('default')
-      .then((result) => {
-        assert.typeOf(result, 'array');
-        assert.lengthOf(result, 1);
-      });
-    });
-
-    test('Returns data for "other"', function() {
-      return element.listVariables('other')
-      .then((result) => {
-        assert.typeOf(result, 'array');
-        assert.lengthOf(result, 1);
-      });
-    });
-
-    test('Returns empty list', function() {
-      return element.listVariables('not-existing')
-      .then((result) => {
-        assert.typeOf(result, 'array');
-        assert.lengthOf(result, 0);
-      });
-    });
-  });
-});
-</script>
+    </script>
 
   </body>
 </html>

@@ -3,13 +3,13 @@
   <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, minimum-scale=1.0, initial-scale=1.0, user-scalable=yes">
+
     <script src="../../../../@webcomponents/webcomponentsjs/webcomponents-loader.js"></script>
-    <script src="../../../../wct-browser-legacy/browser.js"></script>
-    <script src="../../../../@polymer/iron-test-helpers/test-helpers.js" type="module"></script>
-    <script src="../../demo/database-helper.js"></script>
-    <script src="../../../../chance/chance.js"></script>
-    <script type="module" src="../../../../app-pouchdb/pouchdb.js"></script>
-    <script type="module" src="../../arc-models.js"></script>
+    <script src="../../../../@polymer/test-fixture/test-fixture.js"></script>
+    <script src="../../../../mocha/mocha.js"></script>
+    <script src="../../../../chai/chai.js"></script>
+    <script src="../../../../wct-mocha/wct-mocha.js"></script>
+
   </head>
   <body>
 
@@ -20,414 +20,423 @@
     </test-fixture>
 
     <script type="module">
-import '../../../../app-pouchdb/pouchdb.js';
-import '../../arc-models.js';
-/* global DatabaseHelper, PouchDB, chance */
-function indexDb() {
-  return new PouchDB('api-index');
-}
-function dataDb() {
-  return new PouchDB('api-data');
-}
-
-suite('Basic API', function() {
-  suite('updateIndex()', function() {
-    suiteSetup(function() {
-      return DatabaseHelper.clearRestAPi();
-    });
-
-    suiteTeardown(function() {
-      return DatabaseHelper.clearRestAPi();
-    });
-
-    let element;
-    let obj;
-    setup(function() {
-      element = fixture('basic');
-      obj = {
-        _id: 'test-index-id'
-      };
-    });
-
-    test('Creates new object', function() {
-      return element.updateIndex(obj)
-      .then((result) => {
-        assert.typeOf(result._rev, 'string');
-      });
-    });
-
-    test('Index datastore contains one object', function() {
-      return indexDb().allDocs({
-        // jscs:disable
-        include_docs: true
-        // jscs:enable
-      }).then((result) => {
-        assert.lengthOf(result.rows, 1);
-      });
-    });
-
-    test('Dispatches api-index-changed event', function() {
-      obj._id = 'other-id';
-      let eventData;
-      element.addEventListener('api-index-changed', function f(e) {
-        element.removeEventListener('api-index-changed', f);
-        if (e.cancelable) {
-          return;
-        }
-        eventData = e.detail;
-      });
-      return element.updateIndex(obj)
-      .then(() => {
-        assert.typeOf(eventData, 'object', 'Event was dispatched');
-        assert.typeOf(eventData.apiInfo, 'object', 'Contains apiInfo property');
-        assert.typeOf(eventData.apiInfo._rev, 'string', 'The _rev is set');
-      });
-    });
-  });
-
-  suite('updateData()', function() {
-    suiteTeardown(function() {
-      return DatabaseHelper.clearRestAPi();
-    });
-
-    let element;
-    const indexId = 'test-index-id';
-    const version = 'v1';
-    const data = {};
-    setup(function() {
-      element = fixture('basic');
-    });
-
-    test('Creates new object', function() {
-      return element.updateData(indexId, version, data)
-      .then((result) => {
-        assert.typeOf(result, 'object', 'Returns an object');
-        assert.typeOf(result._rev, 'string', 'The _rew is set');
-        assert.equal(result._id, indexId + '|' + version);
-      });
-    });
-
-    test('Index datastore contains one object', function() {
-      return dataDb().allDocs({
-        // jscs:disable
-        include_docs: true
-        // jscs:enable
-      }).then((result) => {
-        assert.lengthOf(result.rows, 1);
-      });
-    });
-  });
-
-  suite('readIndex()', function() {
-    let element;
-    let created;
-
-    suiteSetup(function() {
-      element = fixture('basic');
-      let obj = {
-        _id: 'test-index-id'
-      };
-      return element.updateIndex(obj)
-      .then((doc) => {
-        created = doc;
-      });
-    });
-
-    suiteTeardown(function() {
-      return DatabaseHelper.clearRestAPi();
-    });
-
-    test('Reads index data', function() {
-      return element.readIndex(created._id)
-      .then((doc) => {
-        assert.deepEqual(doc, created);
-      });
-    });
-  });
-
-  suite('readData()', function() {
-    let element;
-    let created;
-
-    const indexId = 'test-index-id';
-    const version = 'v1';
-    const data = {};
-
-    suiteSetup(function() {
-      element = fixture('basic');
-      return element.updateData(indexId, version, data)
-      .then((doc) => {
-        created = doc;
-      });
-    });
-
-    suiteTeardown(function() {
-      return DatabaseHelper.clearRestAPi();
-    });
-
-    test('Reads index data', function() {
-      return element.readData(indexId + '|' + version)
-      .then((doc) => {
-        assert.deepEqual(doc, created);
-      });
-    });
-  });
-
-  suite('updateIndexBatch()', () => {
-    let element;
-    let items = [{
-      _id: 'test-index-id'
-    }, {
-      _id: 'test-index-other'
-    }];
-
-    suiteSetup(function() {
-      element = fixture('basic');
-    });
-
-    suiteTeardown(function() {
-      return DatabaseHelper.clearRestAPi();
-    });
-
-    test('Creates index data', () => {
-      return element.updateIndexBatch(items)
-      .then((result) => {
-        assert.typeOf(result, 'array');
-        assert.lengthOf(result, 2);
-        assert.typeOf(result[0]._rev, 'string');
-        assert.typeOf(result[1]._rev, 'string');
-        items = result;
-      });
-    });
-
-    test('Dispatches api-index-changed event', function() {
-      const eventData = [];
-      function clb(e) {
-        if (e.cancelable) {
-          return;
-        }
-        eventData[eventData.length] = e.detail;
+      import '../../../../pouchdb/dist/pouchdb.js';
+      import '../../../../chance/dist/chance.min.js';
+      import '../../rest-api-model.js';
+      /* global Chance, PouchDB */
+      const chance = new Chance();
+      function indexDb() {
+        return new PouchDB('api-index');
       }
-      element.addEventListener('api-index-changed', clb);
-      return element.updateIndexBatch(items)
-      .then(() => {
-        element.removeEventListener('api-index-changed', clb);
-        assert.lengthOf(eventData, 2, 'Event dispatched 2 times');
-        assert.typeOf(eventData[0].apiInfo, 'object', 'Contains apiInfo property');
-        assert.typeOf(eventData[0].apiInfo._rev, 'string', 'The _rev is set');
-        assert.typeOf(eventData[1].apiInfo, 'object', 'Contains apiInfo property');
-        assert.typeOf(eventData[1].apiInfo._rev, 'string', 'The _rev is set');
-      });
-    });
-  });
 
-  suite('removeVersion()', () => {
-    let element;
-    let id;
-    const version = 'v1';
-    suiteSetup(function() {
-      element = fixture('basic');
-    });
+      function dataDb() {
+        return new PouchDB('api-data');
+      }
 
-    teardown(function() {
-      return DatabaseHelper.clearRestAPi();
-    });
+      function clearRestAPi() {
+        const names = ['api-index', 'api-data'];
+        const promises = names.map((name) => new PouchDB(name).destroy());
+        return Promise.all(promises);
+      }
 
-    setup(() => {
-      id = 'test-index-id' + chance.word();
-      return element.updateIndex({
-        _id: id,
-        versions: [version, 'v2'],
-        latest: version
-      })
-      .then(() => {
-        return element.updateData(id, version, {});
-      });
-    });
+      suite('Basic API', function() {
+        suite('updateIndex()', function() {
+          suiteSetup(function() {
+            return clearRestAPi();
+          });
 
-    test('Removes version from datastore', () => {
-      return element.removeVersion(id, version)
-      .then(() => {
-        return dataDb().allDocs({
-          // jscs:disable
-          include_docs: true
-          // jscs:enable
+          suiteTeardown(function() {
+            return clearRestAPi();
+          });
+
+          let element;
+          let obj;
+          setup(function() {
+            element = fixture('basic');
+            obj = {
+              _id: 'test-index-id'
+            };
+          });
+
+          test('Creates new object', function() {
+            return element.updateIndex(obj)
+            .then((result) => {
+              assert.typeOf(result._rev, 'string');
+            });
+          });
+
+          test('Index datastore contains one object', function() {
+            return indexDb().allDocs({
+              // jscs:disable
+              include_docs: true
+              // jscs:enable
+            }).then((result) => {
+              assert.lengthOf(result.rows, 1);
+            });
+          });
+
+          test('Dispatches api-index-changed event', function() {
+            obj._id = 'other-id';
+            let eventData;
+            element.addEventListener('api-index-changed', function f(e) {
+              element.removeEventListener('api-index-changed', f);
+              if (e.cancelable) {
+                return;
+              }
+              eventData = e.detail;
+            });
+            return element.updateIndex(obj)
+            .then(() => {
+              assert.typeOf(eventData, 'object', 'Event was dispatched');
+              assert.typeOf(eventData.apiInfo, 'object', 'Contains apiInfo property');
+              assert.typeOf(eventData.apiInfo._rev, 'string', 'The _rev is set');
+            });
+          });
         });
-      })
-      .then((docs) => {
-        assert.lengthOf(docs.rows, 0);
-      });
-    });
 
-    test('Keeps index object when it has a version', () => {
-      return element.removeVersion(id, version)
-      .then(() => {
-        return indexDb().allDocs({
-          // jscs:disable
-          include_docs: true
-          // jscs:enable
+        suite('updateData()', function() {
+          suiteTeardown(function() {
+            return clearRestAPi();
+          });
+
+          let element;
+          const indexId = 'test-index-id';
+          const version = 'v1';
+          const data = {};
+          setup(function() {
+            element = fixture('basic');
+          });
+
+          test('Creates new object', function() {
+            return element.updateData(indexId, version, data)
+            .then((result) => {
+              assert.typeOf(result, 'object', 'Returns an object');
+              assert.typeOf(result._rev, 'string', 'The _rew is set');
+              assert.equal(result._id, indexId + '|' + version);
+            });
+          });
+
+          test('Index datastore contains one object', function() {
+            return dataDb().allDocs({
+              // jscs:disable
+              include_docs: true
+              // jscs:enable
+            }).then((result) => {
+              assert.lengthOf(result.rows, 1);
+            });
+          });
         });
-      })
-      .then((docs) => {
-        assert.lengthOf(docs.rows, 1);
-      });
-    });
 
-    test('Version is removed from index', () => {
-      return element.removeVersion(id, version)
-      .then(() => {
-        return indexDb().allDocs({
-          // jscs:disable
-          include_docs: true
-          // jscs:enable
+        suite('readIndex()', function() {
+          let element;
+          let created;
+
+          suiteSetup(function() {
+            element = fixture('basic');
+            let obj = {
+              _id: 'test-index-id'
+            };
+            return element.updateIndex(obj)
+            .then((doc) => {
+              created = doc;
+            });
+          });
+
+          suiteTeardown(function() {
+            return clearRestAPi();
+          });
+
+          test('Reads index data', function() {
+            return element.readIndex(created._id)
+            .then((doc) => {
+              assert.deepEqual(doc, created);
+            });
+          });
         });
-      })
-      .then((docs) => {
-        assert.equal(docs.rows[0].doc.versions[0], 'v2');
-      });
-    });
 
-    test('Latest version is not removed version', () => {
-      return element.removeVersion(id, version)
-      .then(() => {
-        return indexDb().allDocs({
-          // jscs:disable
-          include_docs: true
-          // jscs:enable
+        suite('readData()', function() {
+          let element;
+          let created;
+
+          const indexId = 'test-index-id';
+          const version = 'v1';
+          const data = {};
+
+          suiteSetup(function() {
+            element = fixture('basic');
+            return element.updateData(indexId, version, data)
+            .then((doc) => {
+              created = doc;
+            });
+          });
+
+          suiteTeardown(function() {
+            return clearRestAPi();
+          });
+
+          test('Reads index data', function() {
+            return element.readData(indexId + '|' + version)
+            .then((doc) => {
+              assert.deepEqual(doc, created);
+            });
+          });
         });
-      })
-      .then((docs) => {
-        assert.equal(docs.rows[0].doc.latest, 'v2');
-      });
-    });
-  });
 
-  suite('remove()', () => {
-    let element;
-    let createdIndex;
-    suiteSetup(function() {
-      element = fixture('basic');
-    });
+        suite('updateIndexBatch()', () => {
+          let element;
+          let items = [{
+            _id: 'test-index-id'
+          }, {
+            _id: 'test-index-other'
+          }];
 
-    teardown(function() {
-      return DatabaseHelper.clearRestAPi();
-    });
+          suiteSetup(function() {
+            element = fixture('basic');
+          });
 
-    setup(() => {
-      const obj = {
-        _id: 'test-index-id' + chance.word(),
-        versions: ['v1'],
-        latest: 'v1'
-      };
-      return element.updateIndex(obj)
-      .then((doc) => {
-        createdIndex = doc;
-        return element.updateData(doc._id, 'v1', {});
-      });
-    });
+          suiteTeardown(function() {
+            return clearRestAPi();
+          });
 
-    test('Removes index object', () => {
-      return element.remove(createdIndex._id)
-      .then(() => {
-        return indexDb().allDocs({
-          // jscs:disable
-          include_docs: true
-          // jscs:enable
+          test('Creates index data', () => {
+            return element.updateIndexBatch(items)
+            .then((result) => {
+              assert.typeOf(result, 'array');
+              assert.lengthOf(result, 2);
+              assert.typeOf(result[0]._rev, 'string');
+              assert.typeOf(result[1]._rev, 'string');
+              items = result;
+            });
+          });
+
+          test('Dispatches api-index-changed event', function() {
+            const eventData = [];
+            function clb(e) {
+              if (e.cancelable) {
+                return;
+              }
+              eventData[eventData.length] = e.detail;
+            }
+            element.addEventListener('api-index-changed', clb);
+            return element.updateIndexBatch(items)
+            .then(() => {
+              element.removeEventListener('api-index-changed', clb);
+              assert.lengthOf(eventData, 2, 'Event dispatched 2 times');
+              assert.typeOf(eventData[0].apiInfo, 'object', 'Contains apiInfo property');
+              assert.typeOf(eventData[0].apiInfo._rev, 'string', 'The _rev is set');
+              assert.typeOf(eventData[1].apiInfo, 'object', 'Contains apiInfo property');
+              assert.typeOf(eventData[1].apiInfo._rev, 'string', 'The _rev is set');
+            });
+          });
         });
-      })
-      .then((docs) => {
-        assert.lengthOf(docs.rows, 0);
-      });
-    });
 
-    test('Removes data object', () => {
-      return element.remove(createdIndex._id)
-      .then(() => {
-        return dataDb().allDocs({
-          // jscs:disable
-          include_docs: true
-          // jscs:enable
+        suite('removeVersion()', () => {
+          let element;
+          let id;
+          const version = 'v1';
+          suiteSetup(function() {
+            element = fixture('basic');
+          });
+
+          teardown(function() {
+            return clearRestAPi();
+          });
+
+          setup(() => {
+            id = 'test-index-id' + chance.word();
+            return element.updateIndex({
+              _id: id,
+              versions: [version, 'v2'],
+              latest: version
+            })
+            .then(() => {
+              return element.updateData(id, version, {});
+            });
+          });
+
+          test('Removes version from datastore', () => {
+            return element.removeVersion(id, version)
+            .then(() => {
+              return dataDb().allDocs({
+                // jscs:disable
+                include_docs: true
+                // jscs:enable
+              });
+            })
+            .then((docs) => {
+              assert.lengthOf(docs.rows, 0);
+            });
+          });
+
+          test('Keeps index object when it has a version', () => {
+            return element.removeVersion(id, version)
+            .then(() => {
+              return indexDb().allDocs({
+                // jscs:disable
+                include_docs: true
+                // jscs:enable
+              });
+            })
+            .then((docs) => {
+              assert.lengthOf(docs.rows, 1);
+            });
+          });
+
+          test('Version is removed from index', () => {
+            return element.removeVersion(id, version)
+            .then(() => {
+              return indexDb().allDocs({
+                // jscs:disable
+                include_docs: true
+                // jscs:enable
+              });
+            })
+            .then((docs) => {
+              assert.equal(docs.rows[0].doc.versions[0], 'v2');
+            });
+          });
+
+          test('Latest version is not removed version', () => {
+            return element.removeVersion(id, version)
+            .then(() => {
+              return indexDb().allDocs({
+                // jscs:disable
+                include_docs: true
+                // jscs:enable
+              });
+            })
+            .then((docs) => {
+              assert.equal(docs.rows[0].doc.latest, 'v2');
+            });
+          });
         });
-      })
-      .then((docs) => {
-        assert.lengthOf(docs.rows, 0);
-      });
-    });
 
-    test('Fires api-deleted event', function() {
-      let eventData;
-      element.addEventListener('api-deleted', function clb(e) {
-        element.removeEventListener('api-deleted', clb);
-        eventData = e.detail;
-      });
-      return element.remove(createdIndex._id)
-      .then(() => {
-        assert.typeOf(eventData, 'object', 'Event was fired');
-        assert.equal(eventData.id, createdIndex._id, 'Event detail contains id');
-      });
-    });
-  });
+        suite('remove()', () => {
+          let element;
+          let createdIndex;
+          suiteSetup(function() {
+            element = fixture('basic');
+          });
 
-  suite('listIndex()', function() {
-    let element;
+          teardown(function() {
+            return clearRestAPi();
+          });
 
-    const docs = [{
-      _id: 'test-1',
-      versions: ['v1'],
-      latest: 'v1'
-    }, {
-      _id: 'test-2',
-      versions: ['v1'],
-      latest: 'v1'
-    }];
+          setup(() => {
+            const obj = {
+              _id: 'test-index-id' + chance.word(),
+              versions: ['v1'],
+              latest: 'v1'
+            };
+            return element.updateIndex(obj)
+            .then((doc) => {
+              createdIndex = doc;
+              return element.updateData(doc._id, 'v1', {});
+            });
+          });
 
-    setup(function() {
-      return DatabaseHelper.clearRestAPi()
-      .then(() => {
-        element = fixture('basic');
-        delete docs[0]._rev;
-        delete docs[1]._rev;
-        return element.updateIndexBatch(docs);
-      });
-    });
+          test('Removes index object', () => {
+            return element.remove(createdIndex._id)
+            .then(() => {
+              return indexDb().allDocs({
+                // jscs:disable
+                include_docs: true
+                // jscs:enable
+              });
+            })
+            .then((docs) => {
+              assert.lengthOf(docs.rows, 0);
+            });
+          });
 
-    test('Lists index data', function() {
-      return element.listIndex()
-      .then((result) => {
-        assert.typeOf(result, 'object', 'returns an object');
-        assert.typeOf(result.nextPageToken, 'string', 'nextPageToken is set');
-        assert.typeOf(result.items, 'array', 'items is a list');
-        assert.lengthOf(result.items, 2, 'There are two items on the list');
-      });
-    });
+          test('Removes data object', () => {
+            return element.remove(createdIndex._id)
+            .then(() => {
+              return dataDb().allDocs({
+                // jscs:disable
+                include_docs: true
+                // jscs:enable
+              });
+            })
+            .then((docs) => {
+              assert.lengthOf(docs.rows, 0);
+            });
+          });
 
-    test('_cachedQueryOptions contains query options for token', function() {
-      return element.listIndex()
-      .then((result) => {
-        const pageData = element._cachedQueryOptions[result.nextPageToken];
-        assert.typeOf(pageData, 'object');
-        assert.equal(pageData.startkey, result.items[result.items.length - 1]._id);
-        assert.equal(pageData.skip, 1);
-      });
-    });
-
-    test('Call with nextPageToken returns empty result', function() {
-      let nextPageToken;
-      return element.listIndex()
-      .then((result) => {
-        nextPageToken = result.nextPageToken;
-        return element.listIndex({
-          nextPageToken: result.nextPageToken
+          test('Fires api-deleted event', function() {
+            let eventData;
+            element.addEventListener('api-deleted', function clb(e) {
+              element.removeEventListener('api-deleted', clb);
+              eventData = e.detail;
+            });
+            return element.remove(createdIndex._id)
+            .then(() => {
+              assert.typeOf(eventData, 'object', 'Event was fired');
+              assert.equal(eventData.id, createdIndex._id, 'Event detail contains id');
+            });
+          });
         });
-      })
-      .then((result) => {
-        assert.equal(result.nextPageToken, nextPageToken, 'nextPageToken is the same');
-        assert.lengthOf(result.items, 0, 'There is no items on list');
+
+        suite('listIndex()', function() {
+          let element;
+
+          const docs = [{
+            _id: 'test-1',
+            versions: ['v1'],
+            latest: 'v1'
+          }, {
+            _id: 'test-2',
+            versions: ['v1'],
+            latest: 'v1'
+          }];
+
+          setup(function() {
+            return clearRestAPi()
+            .then(() => {
+              element = fixture('basic');
+              delete docs[0]._rev;
+              delete docs[1]._rev;
+              return element.updateIndexBatch(docs);
+            });
+          });
+
+          test('Lists index data', function() {
+            return element.listIndex()
+            .then((result) => {
+              assert.typeOf(result, 'object', 'returns an object');
+              assert.typeOf(result.nextPageToken, 'string', 'nextPageToken is set');
+              assert.typeOf(result.items, 'array', 'items is a list');
+              assert.lengthOf(result.items, 2, 'There are two items on the list');
+            });
+          });
+
+          test('_cachedQueryOptions contains query options for token', function() {
+            return element.listIndex()
+            .then((result) => {
+              const pageData = element._cachedQueryOptions[result.nextPageToken];
+              assert.typeOf(pageData, 'object');
+              assert.equal(pageData.startkey, result.items[result.items.length - 1]._id);
+              assert.equal(pageData.skip, 1);
+            });
+          });
+
+          test('Call with nextPageToken returns empty result', function() {
+            let nextPageToken;
+            return element.listIndex()
+            .then((result) => {
+              nextPageToken = result.nextPageToken;
+              return element.listIndex({
+                nextPageToken: result.nextPageToken
+              });
+            })
+            .then((result) => {
+              assert.equal(result.nextPageToken, nextPageToken, 'nextPageToken is the same');
+              assert.lengthOf(result.items, 0, 'There is no items on list');
+            });
+          });
+        });
       });
-    });
-  });
-});
-</script>
+    </script>
 
   </body>
 </html>

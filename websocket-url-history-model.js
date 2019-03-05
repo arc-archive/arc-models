@@ -11,8 +11,7 @@ WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
 License for the specific language governing permissions and limitations under
 the License.
 */
-import './base-model.js';
-
+import {ArcBaseModel} from './base-model.js';
 /**
  * Events based access to websockets URL history datastore.
  *
@@ -37,10 +36,7 @@ import './base-model.js';
  * @customElement
  * @memberof LogicElements
  */
-class WebsocketUrlHistoryModel extends ArcBaseModel {
-  /* global ArcBaseModel */
-  static get is() {return 'websocket-url-history-model';}
-
+export class WebsocketUrlHistoryModel extends ArcBaseModel {
   constructor() {
     super('websocket-url-history', 10);
     this._handleChange = this._handleChange.bind(this);
@@ -205,4 +201,4 @@ class WebsocketUrlHistoryModel extends ArcBaseModel {
     return item;
   }
 }
-window.customElements.define(WebsocketUrlHistoryModel.is, WebsocketUrlHistoryModel);
+window.customElements.define('websocket-url-history-model', WebsocketUrlHistoryModel);

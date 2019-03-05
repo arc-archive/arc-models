@@ -3,11 +3,13 @@
   <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, minimum-scale=1.0, initial-scale=1.0, user-scalable=yes">
+
     <script src="../../../../@webcomponents/webcomponentsjs/webcomponents-loader.js"></script>
-    <script src="../../../../wct-browser-legacy/browser.js"></script>
-    <script type="module" src="../../../../app-pouchdb/pouchdb.js"></script>
-    <script type="module" src="../../websocket-url-history-model.js"></script>
-    <script src="../../demo/database-helper.js"></script>
+    <script src="../../../../@polymer/test-fixture/test-fixture.js"></script>
+    <script src="../../../../mocha/mocha.js"></script>
+    <script src="../../../../chai/chai.js"></script>
+    <script src="../../../../wct-mocha/wct-mocha.js"></script>
+
   </head>
   <body>
 
@@ -18,66 +20,64 @@
     </test-fixture>
 
     <script type="module">
-import '../../../../app-pouchdb/pouchdb.js';
-import '../../websocket-url-history-model.js';
-suite('_sortFunction()', function() {
-  let element;
-  suiteSetup(function() {
-    element = fixture('basic');
-  });
+      import '../../websocket-url-history-model.js';
+      suite('_sortFunction()', function() {
+        let element;
+        suiteSetup(function() {
+          element = fixture('basic');
+        });
 
-  test('Returns 1 when a "time" is bigger', () => {
-    const result = element._sortFunction({
-      _time: 1
-    }, {
-      _time: 0
-    });
-    assert.equal(result, 1);
-  });
+        test('Returns 1 when a "time" is bigger', () => {
+          const result = element._sortFunction({
+            _time: 1
+          }, {
+            _time: 0
+          });
+          assert.equal(result, 1);
+        });
 
-  test('Returns 1 when a "cnt" is bigger', () => {
-    const result = element._sortFunction({
-      _time: 0,
-      cnt: 1
-    }, {
-      _time: 0,
-      cnt: 0
-    });
-    assert.equal(result, 1);
-  });
+        test('Returns 1 when a "cnt" is bigger', () => {
+          const result = element._sortFunction({
+            _time: 0,
+            cnt: 1
+          }, {
+            _time: 0,
+            cnt: 0
+          });
+          assert.equal(result, 1);
+        });
 
-  test('Returns -1 when a "time" is smaller', () => {
-    const result = element._sortFunction({
-      _time: 0
-    }, {
-      _time: 1
-    });
-    assert.equal(result, -1);
-  });
+        test('Returns -1 when a "time" is smaller', () => {
+          const result = element._sortFunction({
+            _time: 0
+          }, {
+            _time: 1
+          });
+          assert.equal(result, -1);
+        });
 
-  test('Returns -1 when a "cnt" is samller', () => {
-    const result = element._sortFunction({
-      _time: 0,
-      cnt: 0
-    }, {
-      _time: 0,
-      cnt: 1
-    });
-    assert.equal(result, -1);
-  });
+        test('Returns -1 when a "cnt" is samller', () => {
+          const result = element._sortFunction({
+            _time: 0,
+            cnt: 0
+          }, {
+            _time: 0,
+            cnt: 1
+          });
+          assert.equal(result, -1);
+        });
 
-  test('Returns 0 when "time" and "cnt" equals', () => {
-    const result = element._sortFunction({
-      _time: 0,
-      cnt: 0
-    }, {
-      _time: 0,
-      cnt: 0
-    });
-    assert.equal(result, 0);
-  });
-});
-</script>
-
+        test('Returns 0 when "time" and "cnt" equals', () => {
+          const result = element._sortFunction({
+            _time: 0,
+            cnt: 0
+          }, {
+            _time: 0,
+            cnt: 0
+          });
+          assert.equal(result, 0);
+        });
+      });
+    </script>
   </body>
 </html>

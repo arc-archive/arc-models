@@ -11,7 +11,23 @@ WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
 License for the specific language governing permissions and limitations under
 the License.
 */
-import './base-model.js';
+import {ArcBaseModel} from './base-model.js';
+
+/**
+ * Database query options for pagination.
+ * Override this value to change the query options like limit of the results in one call.
+ *
+ * This is query options passed to the PouchDB `allDocs` function. Note that it will not
+ * set `include_docs` option. A conviniet shortcut is to set the the `includeDocs` property
+ * and the directive will be added automatically.
+ *
+ * @type {Object}
+ */
+const defaultQueryOptions = {
+  limit: 100,
+  descending: true,
+  include_docs: true
+};
 
 /**
  * Events based access to REST APIs datastore.
@@ -20,47 +36,7 @@ import './base-model.js';
  * @customElement
  * @memberof LogicElements
  */
-class RestApiModel extends ArcBaseModel {
-  static get is() {return 'rest-api-model';}
-
-  static get properties() {
-    return {
-      /**
-       * Cached query options for index data listing.
-       * Keys is the nextPageToken returned with listing response. If the
-       * page token has been used with the query it will takes this data
-       * to return next page results.
-       */
-      _cachedQueryOptions: {
-        type: Object,
-        value() {
-          return {};
-        }
-      },
-      /**
-       * Database query options for pagination.
-       * Override this value to change the query options like limit of the results in one call.
-       *
-       * This is query options passed to the PouchDB `allDocs` function. Note that it will not
-       * set `include_docs` option. A conviniet shortcut is to set the the `includeDocs` property
-       * and the directive will be added automatically.
-       */
-      defaultQueryOptions: {
-        type: Object,
-        readOnly: true,
-        value() {
-          return {
-            limit: 100,
-            descending: true,
-            // jscs:disable
-            include_docs: true
-            // jscs:enable
-          };
-        }
-      }
-    };
-  }
-
+export class RestApiModel extends ArcBaseModel {
   constructor() {
     super();
     this._readHandler = this._readHandler.bind(this);
@@ -71,6 +47,8 @@ class RestApiModel extends ArcBaseModel {
     this._deletedHandler = this._deletedHandler.bind(this);
     this._indexesUpdatedHandler = this._indexesUpdatedHandler.bind(this);
     this._versionDeletedHandler = this._versionDeletedHandler.bind(this);
+
+    this._cachedQueryOptions = {};
   }
 
   _attachListeners(node) {
@@ -350,7 +328,7 @@ class RestApiModel extends ArcBaseModel {
       queryOptions = this._cachedQueryOptions[opts.nextPageToken];
     }
     if (!queryOptions) {
-      queryOptions = Object.assign({}, this.defaultQueryOptions);
+      queryOptions = Object.assign({}, defaultQueryOptions);
     }
     return this.indexDb.allDocs(queryOptions)
     .then((response) => {
@@ -593,4 +571,4 @@ class RestApiModel extends ArcBaseModel {
    */
 }
 
-window.customElements.define(RestApiModel.is, RestApiModel);
+window.customElements.define('rest-api-model', RestApiModel);

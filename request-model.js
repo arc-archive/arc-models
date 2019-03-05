@@ -10,16 +10,8 @@ WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
 License for the specific language governing permissions and limitations under
 the License.
 */
-/*
-  FIXME(polymer-modulizer): the above comments were extracted
-  from HTML and may be out of place here. Review them and
-  then delete this comment!
-*/
-import './request-base-model.js';
-
-// import '../../app-pouchdb-quick-search/pouchdb-quick-search.js';
-// /pouchdb-quick-search/dist/pouchdb.quick-search.js
-import '../../arc-electron-payload-processor/payload-processor.js';
+import {RequestBaseModel} from './request-base-model.js';
+import {PayloadProcessor} from '@advanced-rest-client/arc-electron-payload-processor/payload-processor.mjs';
 /**
  * Event based access to saved and history request datastore.
  *
@@ -27,6 +19,21 @@ import '../../arc-electron-payload-processor/payload-processor.js';
  * URL index associated with the request.
  * It also supports querying for request data, deleting request data and
  * undeleting it.
+ *
+ * ## Required dependency
+ *
+ * Because `pouchdb.quick-search` plugin and PouchDB in general is not ES6 ready
+ * the plugin has to be included as a regular script and then added as a Plugin to
+ * PouchDB global instance. This component has `pouchdb.quick-search` as a
+ * dependency.
+ *
+ * ```html
+ * <script src="node_modules/pouchdb-quick-search/dist/pouchdb.quick-search.js"></script>
+ * <script type="module">
+ * import 'node_modules/pouchdb/dist/pouchdb.js';
+ * PouchDB.plugin(PouchQuickSearch);
+ * <script>
+ * ```
  *
  * ## Events API
  *
@@ -139,25 +146,6 @@ import '../../arc-electron-payload-processor/payload-processor.js';
  * @extends RequestBaseModel
  */
 class RequestModel extends RequestBaseModel {
-  /* global RequestBaseModel */
-  static get is() {
-    return 'request-model';
-  }
-
-  static get properties() {
-    return {
-      _workerRequestId: {
-        type: Number,
-        value: function() {
-          return 0;
-        }
-      },
-      _workerPromises: {
-        type: Array,
-        value: []
-      }
-    };
-  }
   /**
    * @constructor
    */
@@ -174,7 +162,6 @@ class RequestModel extends RequestBaseModel {
     this._handleQuery = this._handleQuery.bind(this);
     this._handleList = this._handleList.bind(this);
     this._listProjectRequestsHandler = this._listProjectRequestsHandler.bind(this);
-    /* global PayloadProcessor */
   }
   /**
    * Adds event listeners.
@@ -1447,4 +1434,4 @@ class RequestModel extends RequestBaseModel {
    * @param {String} file Drive file name
    */
 }
-window.customElements.define(RequestModel.is, RequestModel);
+window.customElements.define('request-model', RequestModel);
