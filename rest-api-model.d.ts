@@ -5,14 +5,16 @@
  *   https://github.com/Polymer/tools/tree/master/packages/gen-typescript-declarations
  *
  * To modify these typings, edit the source file(s):
- *   rest-api-model.html
+ *   rest-api-model.js
  */
 
 
 // tslint:disable:variable-name Describing an API that's defined elsewhere.
 // tslint:disable:no-any describes the API as best we are able today
 
-/// <reference path="base-model.d.ts" />
+import {ArcBaseModel} from './base-model.js';
+
+export {RestApiModel};
 
 declare namespace LogicElements {
 
@@ -33,24 +35,6 @@ declare namespace LogicElements {
      *    
      */
     readonly dataDb: any;
-
-    /**
-     * Cached query options for index data listing.
-     * Keys is the nextPageToken returned with listing response. If the
-     * page token has been used with the query it will takes this data
-     * to return next page results.
-     */
-    _cachedQueryOptions: object|null|undefined;
-
-    /**
-     * Database query options for pagination.
-     * Override this value to change the query options like limit of the results in one call.
-     *
-     * This is query options passed to the PouchDB `allDocs` function. Note that it will not
-     * set `include_docs` option. A conviniet shortcut is to set the the `includeDocs` property
-     * and the directive will be added automatically.
-     */
-    readonly defaultQueryOptions: object|null|undefined;
 
     /**
      * @param dbname Name of the data store
@@ -207,6 +191,9 @@ declare namespace LogicElements {
   }
 }
 
-interface HTMLElementTagNameMap {
-  "rest-api-model": LogicElements.RestApiModel;
+declare global {
+
+  interface HTMLElementTagNameMap {
+    "rest-api-model": LogicElements.RestApiModel;
+  }
 }

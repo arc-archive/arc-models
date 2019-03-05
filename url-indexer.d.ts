@@ -5,15 +5,12 @@
  *   https://github.com/Polymer/tools/tree/master/packages/gen-typescript-declarations
  *
  * To modify these typings, edit the source file(s):
- *   url-indexer.html
+ *   url-indexer.js
  */
 
 
 // tslint:disable:variable-name Describing an API that's defined elsewhere.
 // tslint:disable:no-any describes the API as best we are able today
-
-/// <reference path="../polymer/types/polymer-element.d.ts" />
-/// <reference path="../uuid-generator/uuid-generator.d.ts" />
 
 declare namespace LogicElements {
 
@@ -105,7 +102,7 @@ declare namespace LogicElements {
    * ```
    * See query method for description of parameters.
    */
-  class UrlIndexer extends Polymer.Element {
+  class UrlIndexer extends HTMLElement {
     readonly uuid: Element|null;
     readonly indexStoreName: any;
     readonly indexStoreVersion: any;
@@ -370,6 +367,11 @@ declare namespace LogicElements {
   }
 }
 
-interface HTMLElementTagNameMap {
-  "url-indexer": LogicElements.UrlIndexer;
+declare global {
+
+  interface HTMLElementTagNameMap {
+    "url-indexer": LogicElements.UrlIndexer;
+  }
 }
+
+export {};

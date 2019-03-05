@@ -5,14 +5,16 @@
  *   https://github.com/Polymer/tools/tree/master/packages/gen-typescript-declarations
  *
  * To modify these typings, edit the source file(s):
- *   host-rules-model.html
+ *   host-rules-model.js
  */
 
 
 // tslint:disable:variable-name Describing an API that's defined elsewhere.
 // tslint:disable:no-any describes the API as best we are able today
 
-/// <reference path="base-model.d.ts" />
+import {ArcBaseModel} from './base-model.js';
+
+export {HostRulesModel};
 
 declare namespace LogicElements {
 
@@ -89,6 +91,9 @@ declare namespace LogicElements {
   }
 }
 
-interface HTMLElementTagNameMap {
-  "host-rules-model": LogicElements.HostRulesModel;
+declare global {
+
+  interface HTMLElementTagNameMap {
+    "host-rules-model": LogicElements.HostRulesModel;
+  }
 }

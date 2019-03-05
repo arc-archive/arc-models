@@ -5,16 +5,16 @@
  *   https://github.com/Polymer/tools/tree/master/packages/gen-typescript-declarations
  *
  * To modify these typings, edit the source file(s):
- *   request-model.html
+ *   request-model.js
  */
 
 
 // tslint:disable:variable-name Describing an API that's defined elsewhere.
 // tslint:disable:no-any describes the API as best we are able today
 
-/// <reference path="request-base-model.d.ts" />
-/// <reference path="../app-pouchdb-quick-search/pouchdb-quick-search.d.ts" />
-/// <reference path="../arc-electron-payload-processor/payload-processor.d.ts" />
+import {RequestBaseModel} from './request-base-model.js';
+
+import {PayloadProcessor} from '@advanced-rest-client/arc-electron-payload-processor/payload-processor.mjs';
 
 declare namespace LogicElements {
 
@@ -25,6 +25,21 @@ declare namespace LogicElements {
    * URL index associated with the request.
    * It also supports querying for request data, deleting request data and
    * undeleting it.
+   *
+   * ## Required dependency
+   *
+   * Because `pouchdb.quick-search` plugin and PouchDB in general is not ES6 ready
+   * the plugin has to be included as a regular script and then added as a Plugin to
+   * PouchDB global instance. This component has `pouchdb.quick-search` as a
+   * dependency.
+   *
+   * ```html
+   * <script src="node_modules/pouchdb-quick-search/dist/pouchdb.quick-search.js"></script>
+   * <script type="module">
+   * import 'node_modules/pouchdb/dist/pouchdb.js';
+   * PouchDB.plugin(PouchQuickSearch);
+   * <script>
+   * ```
    *
    * ## Events API
    *
@@ -142,8 +157,6 @@ declare namespace LogicElements {
      * List of fields to index in the saved store.
      */
     readonly savedIndexes: Array<String|null>|null;
-    _workerRequestId: number|null|undefined;
-    _workerPromises: any[]|null|undefined;
 
     /**
      * @param dbname Name of the data store
@@ -514,6 +527,9 @@ declare namespace LogicElements {
   }
 }
 
-interface HTMLElementTagNameMap {
-  "request-model": LogicElements.RequestModel;
+declare global {
+
+  interface HTMLElementTagNameMap {
+    "request-model": LogicElements.RequestModel;
+  }
 }
