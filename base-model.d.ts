@@ -5,22 +5,22 @@
  *   https://github.com/Polymer/tools/tree/master/packages/gen-typescript-declarations
  *
  * To modify these typings, edit the source file(s):
- *   base-model.html
+ *   base-model.js
  */
 
 
 // tslint:disable:variable-name Describing an API that's defined elsewhere.
 // tslint:disable:no-any describes the API as best we are able today
 
-/// <reference path="../polymer/types/polymer-element.d.ts" />
-/// <reference path="../uuid-generator/uuid-generator.d.ts" />
-/// <reference path="../events-target-behavior/events-target-behavior.d.ts" />
+import {EventsTargetMixin} from '@advanced-rest-client/events-target-mixin/events-target-mixin.js';
+
+export {ArcBaseModel};
 
 /**
  * A base class for all models.
  */
 declare class ArcBaseModel extends
-  ArcBehaviors.EventsTargetBehavior(
+  EventsTargetMixin(
   Object) {
 
   /**
