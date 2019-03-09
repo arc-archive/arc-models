@@ -196,7 +196,7 @@ export class ArcBaseModel extends EventsTargetMixin(HTMLElement) {
       if (!e.detail.result) {
         e.detail.result = [];
       }
-      e.detail.result.push(this.deleteModel());
+      e.detail.result.push(this.deleteModel(this.name));
     }
   }
   /**
