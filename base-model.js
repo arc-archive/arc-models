@@ -11,8 +11,8 @@ WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
 License for the specific language governing permissions and limitations under
 the License.
 */
-import {EventsTargetMixin} from '@advanced-rest-client/events-target-mixin/events-target-mixin.js';
-import '@advanced-rest-client/uuid-generator/uuid-generator.js';
+import {EventsTargetMixin} from '../../@advanced-rest-client/events-target-mixin/events-target-mixin.js';
+import '../../@advanced-rest-client/uuid-generator/uuid-generator.js';
 /**
  * A base class for all models.
  *
