@@ -13,6 +13,7 @@ the License.
 */
 import {EventsTargetMixin} from '../../@advanced-rest-client/events-target-mixin/events-target-mixin.js';
 import '../../@advanced-rest-client/uuid-generator/uuid-generator.js';
+import '../../pouchdb/dist/pouchdb.js';
 /**
  * A base class for all models.
  *

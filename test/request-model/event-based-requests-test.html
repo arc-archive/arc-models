@@ -30,11 +30,9 @@
     <script type="module">
       import {DataGenerator} from '../../../../@advanced-rest-client/arc-data-generator/arc-data-generator.js';
       import {spy as sinonSpy} from '../../../../sinon/pkg/sinon-esm.js';
-      import '../../../../pouchdb/dist/pouchdb.js';
       import '../../request-model.js';
       import '../../url-indexer.js';
       import {DbHelper} from '../url-indexer/db-helper.js';
-      PouchDB.plugin(PouchQuickSearch);
 
       suite('Events API for requests', function() {
         const databaseType = 'saved';
