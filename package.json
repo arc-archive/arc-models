@@ -11,7 +11,7 @@
     "url": "git://github.com/advanced-rest-client/arc-models.git"
   },
   "name": "@advanced-rest-client/arc-models",
-  "version": "3.0.0-preview.3",
+  "version": "3.0.0-preview.4",
   "license": "Apache-2.0",
   "devDependencies": {
     "@advanced-rest-client/arc-data-generator": "^3.0.0-preview.1",
