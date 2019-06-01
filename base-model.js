@@ -11,8 +11,9 @@ WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
 License for the specific language governing permissions and limitations under
 the License.
 */
-import {EventsTargetMixin} from '@advanced-rest-client/events-target-mixin/events-target-mixin.js';
-import '@advanced-rest-client/uuid-generator/uuid-generator.js';
+import {EventsTargetMixin} from '../../@advanced-rest-client/events-target-mixin/events-target-mixin.js';
+import '../../@advanced-rest-client/uuid-generator/uuid-generator.js';
+import '../../pouchdb/dist/pouchdb.js';
 /**
  * A base class for all models.
  *
@@ -196,7 +197,7 @@ export class ArcBaseModel extends EventsTargetMixin(HTMLElement) {
       if (!e.detail.result) {
         e.detail.result = [];
       }
-      e.detail.result.push(this.deleteModel());
+      e.detail.result.push(this.deleteModel(this.name));
     }
   }
   /**

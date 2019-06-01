@@ -21,8 +21,8 @@
 
     <script type="module">
       import {DataGenerator} from '../../../../@advanced-rest-client/arc-data-generator/arc-data-generator.js';
-      import '../../../../pouchdb/dist/pouchdb.js';
       import '../../websocket-url-history-model.js';
+      import sinon from '../../../../sinon/pkg/sinon-esm.js';
 
       suite('Events API for websocket url history', function() {
         // See https://gist.github.com/haroldtreen/5f1055eee5fcf01da3e0e15b8ec86bf6
@@ -557,6 +557,36 @@
             .then(() => {
               assert.isTrue(called);
             });
+          });
+        });
+
+        suite('"destroy-model" event', () => {
+          function fire(models) {
+            const e = new CustomEvent('destroy-model', {
+              detail: {
+                models
+              },
+              bubbles: true
+            });
+            document.body.dispatchEvent(e);
+            return e;
+          }
+
+          test('Deletes saved model', function() {
+            fixture('basic');
+            const e = fire(['websocket-url-history']);
+            assert.typeOf(e.detail.result, 'array');
+            assert.lengthOf(e.detail.result, 1);
+            return Promise.all(e.detail.result);
+          });
+
+          test('Calls delete functions', function() {
+            const element = fixture('basic');
+            const spy = sinon.spy(element, 'deleteModel');
+            const e = fire(['websocket-url-history']);
+            assert.isTrue(spy.called);
+            assert.equal(spy.args[0][0], 'websocket-url-history');
+            return Promise.all(e.detail.result);
           });
         });
       });

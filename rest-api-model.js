@@ -60,6 +60,7 @@ export class RestApiModel extends ArcBaseModel {
     node.addEventListener('api-deleted', this._deletedHandler);
     node.addEventListener('api-version-deleted', this._versionDeletedHandler);
     node.addEventListener('api-data-read', this._readHandler);
+    node.addEventListener('destroy-model', this._deleteModelHandler);
   }
 
   _detachListeners(node) {
@@ -71,6 +72,7 @@ export class RestApiModel extends ArcBaseModel {
     node.removeEventListener('api-deleted', this._deletedHandler);
     node.removeEventListener('api-version-deleted', this._versionDeletedHandler);
     node.removeEventListener('api-data-read', this._readHandler);
+    node.removeEventListener('destroy-model', this._deleteModelHandler);
   }
   /**
    * A handler to the datastore. Contains listing data.
@@ -533,6 +535,39 @@ export class RestApiModel extends ArcBaseModel {
     e.stopPropagation();
     e.detail.result = this.listIndex(e.detail)
     .catch((e) => this._handleException(e));
+  }
+  /**
+   * Handler for `destroy-model` custom event.
+   * Deletes saved or history data when scheduled for deletion.
+   * @param {CustomEvent} e
+   */
+  _deleteModelHandler(e) {
+    const models = e.detail.models;
+    if (!models || !models.length) {
+      return;
+    }
+    if (models.indexOf('rest-apis') === -1) {
+      return;
+    }
+    const p = Promise.all([
+      this._delIndexModel(),
+      this._delDataModel(),
+    ]);
+    if (!e.detail.result) {
+      e.detail.result = [];
+    }
+    e.detail.result.push(p);
+    p.then(() => this._notifyModelDestroyed('rest-apis'));
+  }
+
+  _delIndexModel() {
+    return this.indexDb.destroy()
+    .then(() => this._notifyModelDestroyed('api-index'));
+  }
+
+  _delDataModel() {
+    return this.dataDb.destroy()
+    .then(() => this._notifyModelDestroyed('api-data'));
   }
   /**
    * Fired when index data has been updated.

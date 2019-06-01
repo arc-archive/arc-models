@@ -24,9 +24,7 @@
     import {DataGenerator} from '../../../../@advanced-rest-client/arc-data-generator/arc-data-generator.js';
     import {spy as sinonSpy} from '../../../../sinon/pkg/sinon-esm.js';
     import {PayloadProcessor} from '../../../../@advanced-rest-client/arc-electron-payload-processor/payload-processor.mjs';
-    import '../../../../pouchdb/dist/pouchdb.js';
     import '../../request-model.js';
-    PouchDB.plugin(PouchQuickSearch);
 
     suite('request-model test', function() {
       const databaseType = 'saved-requests';

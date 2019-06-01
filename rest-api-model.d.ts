@@ -45,6 +45,12 @@ declare namespace LogicElements {
     _detachListeners(node: any): void;
 
     /**
+     * Handler for `destroy-model` custom event.
+     * Deletes saved or history data when scheduled for deletion.
+     */
+    _deleteModelHandler(e: CustomEvent|null): void;
+
+    /**
      * Reads an entry from the index datastore.
      *
      * @param id The ID of the datastore entry.
@@ -188,6 +194,8 @@ declare namespace LogicElements {
      * Handler for the `api-index-list` custom event.
      */
     _indexListHandler(e: CustomEvent|null): void;
+    _delIndexModel(): any;
+    _delDataModel(): any;
   }
 }
 

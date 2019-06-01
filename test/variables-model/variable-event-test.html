@@ -21,6 +21,7 @@
 
     <script type="module">
       import {DataGenerator} from '../../../../@advanced-rest-client/arc-data-generator/arc-data-generator.js';
+      import sinon from '../../../../sinon/pkg/sinon-esm.js';
       import '../../variables-model.js';
 
       suite('variable event tests', function() {
@@ -118,6 +119,37 @@
             .then((result) => {
               assert.lengthOf(result, 0);
             });
+          });
+        });
+
+        suite('"destroy-model" event', () => {
+          function fire(models) {
+            const e = new CustomEvent('destroy-model', {
+              detail: {
+                models
+              },
+              bubbles: true
+            });
+            document.body.dispatchEvent(e);
+            return e;
+          }
+
+          test('Deletes saved model', function() {
+            fixture('basic');
+            const e = fire(['variables']);
+            assert.typeOf(e.detail.result, 'array');
+            assert.lengthOf(e.detail.result, 2);
+            return Promise.all(e.detail.result);
+          });
+
+          test('Calls delete functions', function() {
+            const element = fixture('basic');
+            const spy1 = sinon.spy(element, '_delVariablesModel');
+            const spy2 = sinon.spy(element, '_delEnvironmentsModel');
+            const e = fire(['variables']);
+            assert.isTrue(spy1.called);
+            assert.isTrue(spy2.called);
+            return Promise.all(e.detail.result);
           });
         });
       });

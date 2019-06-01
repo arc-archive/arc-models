@@ -14,8 +14,6 @@
 
 import {RequestBaseModel} from './request-base-model.js';
 
-import {PayloadProcessor} from '@advanced-rest-client/arc-electron-payload-processor/payload-processor.mjs';
-
 declare namespace LogicElements {
 
   /**

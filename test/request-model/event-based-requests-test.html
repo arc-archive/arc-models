@@ -30,11 +30,9 @@
     <script type="module">
       import {DataGenerator} from '../../../../@advanced-rest-client/arc-data-generator/arc-data-generator.js';
       import {spy as sinonSpy} from '../../../../sinon/pkg/sinon-esm.js';
-      import '../../../../pouchdb/dist/pouchdb.js';
       import '../../request-model.js';
       import '../../url-indexer.js';
       import {DbHelper} from '../url-indexer/db-helper.js';
-      PouchDB.plugin(PouchQuickSearch);
 
       suite('Events API for requests', function() {
         const databaseType = 'saved';
@@ -629,6 +627,35 @@
             assert.equal(spy.args[0][0], project._id, 'Project id is set');
             assert.deepEqual(spy.args[0][1], {test: true}, 'Options are set');
           });
+        });
+      });
+
+      suite('"destroy-model" event', () => {
+        function fire(models) {
+          const e = new CustomEvent('destroy-model', {
+            detail: {
+              models
+            },
+            bubbles: true
+          });
+          document.body.dispatchEvent(e);
+          return e;
+        }
+
+        test('Deletes saved model', function() {
+          fixture('basic');
+          const e = fire('saved-requests');
+          assert.typeOf(e.detail.result, 'array');
+          assert.lengthOf(e.detail.result, 1);
+          return Promise.all(e.detail.result);
+        });
+
+        test('Deletes history model', function() {
+          fixture('basic');
+          const e = fire('history-requests');
+          assert.typeOf(e.detail.result, 'array');
+          assert.lengthOf(e.detail.result, 1);
+          return Promise.all(e.detail.result);
         });
       });
     </script>

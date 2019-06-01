@@ -10,7 +10,6 @@
     <script src="../../../../chai/chai.js"></script>
     <script src="../../../../wct-mocha/wct-mocha.js"></script>
 
-    <script src="../../../../pouchdb/dist/pouchdb.js"></script>
   </head>
   <body>
     <test-fixture id="Basic">
@@ -18,10 +17,10 @@
         <test-model></test-model>
       </template>
     </test-fixture>
+
     <script type="module">
       import {ArcBaseModel} from '../../base-model.js';
       import {spy as sinonSpy} from '../../../../sinon/pkg/sinon-esm.js';
-      import '../../../../pouchdb/dist/pouchdb.js';
       const STORE_NAME = 'todo-list';
       /**
        * @polymer

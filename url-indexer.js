@@ -11,7 +11,7 @@ WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
 License for the specific language governing permissions and limitations under
 the License.
 */
-import '@advanced-rest-client/uuid-generator/uuid-generator.js';
+import '../../@advanced-rest-client/uuid-generator/uuid-generator.js';
 /**
  * An element responsible for indexing and querying for URL data.
  *

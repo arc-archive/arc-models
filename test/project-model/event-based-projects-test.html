@@ -497,6 +497,27 @@
           });
         });
       });
+
+      suite('"destroy-model" event', () => {
+        function fire(models) {
+          const e = new CustomEvent('destroy-model', {
+            detail: {
+              models
+            },
+            bubbles: true
+          });
+          document.body.dispatchEvent(e);
+          return e;
+        }
+
+        test('Deletes the model', function() {
+          fixture('basic');
+          const e = fire('legacy-projects');
+          assert.typeOf(e.detail.result, 'array');
+          assert.lengthOf(e.detail.result, 1);
+          return Promise.all(e.detail.result);
+        });
+      });
     </script>
 
   </body>

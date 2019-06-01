@@ -20,9 +20,9 @@
     </test-fixture>
 
     <script type="module">
-      import '../../../../pouchdb/dist/pouchdb.js';
       import '../../../../chance/dist/chance.min.js';
       import '../../rest-api-model.js';
+      import sinon from '../../../../sinon/pkg/sinon-esm.js';
       /* global Chance, PouchDB */
       const chance = new Chance();
       function indexDb() {
@@ -433,6 +433,47 @@
               assert.equal(result.nextPageToken, nextPageToken, 'nextPageToken is the same');
               assert.lengthOf(result.items, 0, 'There is no items on list');
             });
+          });
+        });
+      });
+
+      suite('"destroy-model" event', () => {
+        function fire(models) {
+          const e = new CustomEvent('destroy-model', {
+            detail: {
+              models
+            },
+            bubbles: true
+          });
+          document.body.dispatchEvent(e);
+          return e;
+        }
+
+        test('Deletes saved model', function() {
+          fixture('basic');
+          const e = fire(['rest-apis']);
+          assert.typeOf(e.detail.result, 'array');
+          assert.lengthOf(e.detail.result, 1);
+          return Promise.all(e.detail.result);
+        });
+
+        test('Calls delete functions', function() {
+          const element = fixture('basic');
+          const spy1 = sinon.spy(element, '_delIndexModel');
+          const spy2 = sinon.spy(element, '_delDataModel');
+          const e = fire(['rest-apis']);
+          assert.isTrue(spy1.called);
+          assert.isTrue(spy2.called);
+          return Promise.all(e.detail.result);
+        });
+
+        test('Calls _notifyModelDestroyed() function', function() {
+          const element = fixture('basic');
+          const spy = sinon.spy(element, '_notifyModelDestroyed');
+          const e = fire(['rest-apis']);
+          return Promise.all(e.detail.result)
+          .then(() => {
+            assert.equal(spy.callCount, 3);
           });
         });
       });
