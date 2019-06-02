@@ -11,7 +11,8 @@ License for the specific language governing permissions and limitations under
 the License.
 */
 import {RequestBaseModel} from './request-base-model.js';
-import {PayloadProcessor} from '../../@advanced-rest-client/arc-electron-payload-processor/payload-processor.mjs';
+import {PayloadProcessor} from '@advanced-rest-client/arc-electron-payload-processor/payload-processor.mjs';
+import '@advanced-rest-client/pouchdb-quick-search/dist/pouchdb.quick-search.min.js';
 /**
  * Event based access to saved and history request datastore.
  *
@@ -19,21 +20,6 @@ import {PayloadProcessor} from '../../@advanced-rest-client/arc-electron-payload
  * URL index associated with the request.
  * It also supports querying for request data, deleting request data and
  * undeleting it.
- *
- * ## Required dependency
- *
- * Because `pouchdb.quick-search` plugin and PouchDB in general is not ES6 ready
- * the plugin has to be included as a regular script and then added as a Plugin to
- * PouchDB global instance. This component has `pouchdb.quick-search` as a
- * dependency.
- *
- * ```html
- * <script src="node_modules/pouchdb-quick-search/dist/pouchdb.quick-search.js"></script>
- * <script type="module">
- * import 'node_modules/pouchdb/dist/pouchdb.js';
- * PouchDB.plugin(PouchQuickSearch);
- * <script>
- * ```
  *
  * ## Events API
  *

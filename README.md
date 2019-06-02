@@ -26,8 +26,6 @@ npm install --save @advanced-rest-client/arc-models
 ```html
 <html>
   <head>
-    <!-- Quick search has to be included old fashon way otherwise it won't work. -->
-    <script src="./node_modules/pouchdb-quick-search/dist/pouchdb.quick-search.min.js"></script>
     <script type="module">
       import './node_modules/@advanced-rest-client/arc-models/auth-data-model.js';
       import './node_modules/@advanced-rest-client/arc-models/host-rules-model.js';
