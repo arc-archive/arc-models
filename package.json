@@ -16,6 +16,7 @@
   "devDependencies": {
     "@advanced-rest-client/arc-data-generator": "^3.0.0-preview.1",
     "@advanced-rest-client/arc-demo-helper": "^1.0.1",
+    "@advanced-rest-client/testing-karma-sl": "^1.0.2",
     "@api-components/http-method-label": "^3.0.0-preview.2",
     "@polymer/gen-typescript-declarations": "^1.6.1",
     "@polymer/iron-form": "^3.0.0",
@@ -59,7 +60,6 @@
   ],
   "dependencies": {
     "@advanced-rest-client/arc-electron-payload-processor": "^0.2.3",
-    "@advanced-rest-client/events-target-mixin": "^3.0.0-preview.3",
     "@advanced-rest-client/uuid-generator": "^3.0.0",
     "pouchdb": "^7.0.0",
     "@advanced-rest-client/pouchdb-quick-search": "^1.3.1"

@@ -11,7 +11,6 @@ WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
 License for the specific language governing permissions and limitations under
 the License.
 */
-import {EventsTargetMixin} from '../../@advanced-rest-client/events-target-mixin/events-target-mixin.js';
 import '../../@advanced-rest-client/uuid-generator/uuid-generator.js';
 import '../../pouchdb/dist/pouchdb.js';
 /**
@@ -19,7 +18,7 @@ import '../../pouchdb/dist/pouchdb.js';
  *
  * @appliesMixin EventsTargetMixin
  */
-export class ArcBaseModel extends EventsTargetMixin(HTMLElement) {
+export class ArcBaseModel extends HTMLElement {
   /**
    * @param {String} dbname Name of the data store
    * @param {Number} revsLimit Limit number of revisions on the data store.
@@ -51,6 +50,14 @@ export class ArcBaseModel extends EventsTargetMixin(HTMLElement) {
     }
     return new PouchDB(this.name, opts);
   }
+
+  set eventsTarget(value) {
+    this._eventsTargetChanged(value);
+  }
+
+  get eventsTarget() {
+    return this._oldEventsTarget || window;
+  }
   /**
    * Useful to generate uuid string.
    * Use it as `this.uuid.generate()`.
@@ -65,11 +72,17 @@ export class ArcBaseModel extends EventsTargetMixin(HTMLElement) {
     return this._uuid;
   }
 
+  connectedCallback() {
+    if (!this._oldEventsTarget) {
+      this._eventsTargetChanged(this.eventsTarget);
+    }
+  }
+
   disconnectedCallback() {
-    super.disconnectedCallback();
     if (this._uuid) {
       delete this._uuid;
     }
+    this._detachListeners(this.eventsTarget);
   }
 
   _attachListeners(node) {
@@ -80,6 +93,20 @@ export class ArcBaseModel extends EventsTargetMixin(HTMLElement) {
     node.removeEventListener('destroy-model', this._deleteModelHandler);
   }
 
+  /**
+   * Removes old handlers (if any) and attaches listeners on new event
+   * event target.
+   *
+   * @param {?Node} eventsTarget Event target to set handlers on. If not set it
+   * will set handlers on the `window` object.
+   */
+  _eventsTargetChanged(eventsTarget) {
+    if (this._oldEventsTarget) {
+      this._detachListeners(this._oldEventsTarget);
+    }
+    this._oldEventsTarget = eventsTarget || window;
+    this._attachListeners(this._oldEventsTarget);
+  }
   /**
    * Reads an entry from the datastore.
    *
