@@ -37,11 +37,20 @@
     "mocha": "^5.2.0",
     "sinon": "^7.3.2",
     "wct-mocha": "^1.0.0",
-    "web-animations-js": "^2.3.1"
+    "web-animations-js": "^2.3.1",
+    "@open-wc/testing": "^0.12.5",
+    "@open-wc/testing-karma": "^2.0.3"
   },
   "main": "arc-models.js",
   "scripts": {
-    "lint": "polymer lint arc-models.html",
+
+    "test:karma": "karma start --coverage",
+    "test:watch": "karma start --auto-watch=true --single-run=false",
+    "test:legacy": "karma start --legacy --coverage",
+    "test:legacy:watch": "karma start --legacy --auto-watch=true --single-run=false",
+    "test:sl": "karma start karma.sl.config.js --legacy --coverage",
+
+    "lint": "polymer lint arc-models.js",
     "test-sauce": "polymer test --plugin sauce --job-name \"arc-models:local-test\"",
     "test": "polymer test --plugin local",
     "update-types": "gen-typescript-declarations --deleteExisting --outDir ."

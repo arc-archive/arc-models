@@ -12,7 +12,6 @@ the License.
 */
 import {RequestBaseModel} from './request-base-model.js';
 import {PayloadProcessor} from '@advanced-rest-client/arc-electron-payload-processor/payload-processor.mjs';
-import '@advanced-rest-client/pouchdb-quick-search/dist/pouchdb.quick-search.min.js';
 /**
  * Event based access to saved and history request datastore.
  *

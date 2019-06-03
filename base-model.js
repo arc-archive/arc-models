@@ -11,8 +11,8 @@ WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
 License for the specific language governing permissions and limitations under
 the License.
 */
-import '../../@advanced-rest-client/uuid-generator/uuid-generator.js';
-import '../../pouchdb/dist/pouchdb.js';
+import '@advanced-rest-client/uuid-generator/uuid-generator.js';
+import 'pouchdb/dist/pouchdb.js';
 /**
  * A base class for all models.
  *
@@ -37,9 +37,6 @@ export class ArcBaseModel extends HTMLElement {
   get db() {
     if (!this.name) {
       throw new Error('Model name not set');
-    }
-    if (typeof PouchDB === 'undefined') {
-      throw new Error('Include PouchDB into the document first');
     }
     /* global PouchDB */
     const opts = {};

@@ -12,11 +12,9 @@ License for the specific language governing permissions and limitations under
 the License.
 */
 import {ArcBaseModel} from './base-model.js';
-if (typeof PouchQuickSearch !== 'undefined') {
-  /* global PouchQuickSearch */
-  PouchDB.plugin(PouchQuickSearch);
-}
-
+import '@advanced-rest-client/pouchdb-quick-search/dist/pouchdb.quick-search.min.js';
+/* global PouchQuickSearch */
+PouchDB.plugin(PouchQuickSearch);
 /**
  * A base class for Request and Projects` models.
  *
