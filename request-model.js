@@ -11,7 +11,7 @@ License for the specific language governing permissions and limitations under
 the License.
 */
 import {RequestBaseModel} from './request-base-model.js';
-import {PayloadProcessor} from '@advanced-rest-client/arc-electron-payload-processor/payload-processor.mjs';
+import {PayloadProcessor} from '@advanced-rest-client/arc-electron-payload-processor/payload-processor-esm.js';
 /**
  * Event based access to saved and history request datastore.
  *
