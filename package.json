@@ -40,9 +40,7 @@
   "scripts": {
     "test": "karma start --coverage",
     "test:watch": "karma start --auto-watch=true --single-run=false",
-    "test:legacy": "karma start --legacy --coverage",
-    "test:legacy:watch": "karma start --legacy --auto-watch=true --single-run=false",
-    "test:sl": "karma start karma.sl.config.js --legacy --coverage",
+    "test:sl": "karma start karma.sl.config.js --coverage",
     "update-types": "gen-typescript-declarations --deleteExisting --outDir ."
   },
   "bugs": {
