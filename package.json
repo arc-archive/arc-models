@@ -14,10 +14,12 @@
   "version": "3.0.0-preview.5",
   "license": "Apache-2.0",
   "devDependencies": {
-    "@advanced-rest-client/arc-data-generator": "^3.0.0-preview.1",
+    "@advanced-rest-client/arc-data-generator": "^3.0.0",
     "@advanced-rest-client/arc-demo-helper": "^1.0.1",
     "@advanced-rest-client/testing-karma-sl": "^1.0.2",
-    "@api-components/http-method-label": "^3.0.0-preview.2",
+    "@api-components/http-method-label": "^3.0.0",
+    "@open-wc/testing": "^0.12.5",
+    "@open-wc/testing-karma": "^2.0.3",
     "@polymer/gen-typescript-declarations": "^1.6.1",
     "@polymer/iron-form": "^3.0.0",
     "@polymer/iron-list": "^3.0.0",
@@ -37,19 +39,15 @@
     "mocha": "^5.2.0",
     "sinon": "^7.3.2",
     "wct-mocha": "^1.0.0",
-    "web-animations-js": "^2.3.1",
-    "@open-wc/testing": "^0.12.5",
-    "@open-wc/testing-karma": "^2.0.3"
+    "web-animations-js": "^2.3.1"
   },
   "main": "arc-models.js",
   "scripts": {
-
     "test:karma": "karma start --coverage",
     "test:watch": "karma start --auto-watch=true --single-run=false",
     "test:legacy": "karma start --legacy --coverage",
     "test:legacy:watch": "karma start --legacy --auto-watch=true --single-run=false",
     "test:sl": "karma start karma.sl.config.js --legacy --coverage",
-
     "lint": "polymer lint arc-models.js",
     "test-sauce": "polymer test --plugin sauce --job-name \"arc-models:local-test\"",
     "test": "polymer test --plugin local",
