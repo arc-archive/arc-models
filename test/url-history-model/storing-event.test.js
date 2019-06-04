@@ -7,19 +7,15 @@ describe('<url-history-model> - Storing event', function() {
     return /** @type {UrlHistoryModel} */ (await fixture('<url-history-model></url-history-model>'));
   }
 
-  describe('Storing the data event based', function() {
+  describe('Storing the data - Event based', function() {
     let element;
     let previousInsert;
     const baseUrl = 'https://api.mulesoft.com/endpoint/path?query=parameter';
     const otherUrl = 'https://api.domain.com/endpoint/';
 
-    before(function(done) {
+    before(async function() {
       this.timeout(10000);
-      setTimeout(function() {
-        UrlHistoryHelper.deleteDatabase().then(function() {
-          done();
-        });
-      }, 2000);
+      await UrlHistoryHelper.deleteDatabase();
     });
 
     after(function(done) {
