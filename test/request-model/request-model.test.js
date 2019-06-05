@@ -744,7 +744,7 @@ describe('<request-model>', () => {
 
     it('Calls readBulk() with arguments', () => {
       const spy = sinon.spy(element, 'readBulk');
-      const opts = {restorePayload: true};
+      const opts = { restorePayload: true };
       return element.readProjectRequests(project._id, opts)
       .then(() => {
         assert.isTrue(spy.called);
@@ -919,6 +919,101 @@ describe('<request-model>', () => {
       const result = element.deleteDataModel(['saved', 'history']);
       assert.lengthOf(result, 2);
       return Promise.all(result);
+    });
+  });
+
+  describe('_findUndeletedRevision()', () => {
+    let element;
+    beforeEach(async () => {
+      element = await basicFixture();
+    });
+
+    it('Finds revision before delete', () => {
+      const revs = {
+        start: 3,
+        ids: ['aaa', 'bbb', 'ccc']
+      };
+      const deleted = '3-aaa';
+      const result = element._findUndeletedRevision(revs, deleted);
+      assert.equal(result, '2-bbb');
+    });
+
+    it('Returns undefined when not found', () => {
+      const revs = {
+        start: 3,
+        ids: ['aaa', 'bbb', 'ccc']
+      };
+      const deleted = '4-000';
+      const result = element._findUndeletedRevision(revs, deleted);
+      assert.isUndefined(result);
+    });
+  });
+
+  describe('_findNotDeleted()', () => {
+    let element;
+    let doc;
+    let undeletedRev;
+    beforeEach(async () => {
+      element = await basicFixture();
+      const db = element.getDatabase('saved');
+      doc = {
+        _id: 'test-id-deleted'
+      };
+      const result = await db.put(doc);
+      undeletedRev = result.rev;
+      doc._rev = undeletedRev;
+      const delReq = await db.remove(doc);
+      doc._rev = delReq.rev;
+    });
+
+    afterEach(function() {
+      return DataGenerator.destroySavedRequestData();
+    });
+
+    it('Finds revision that is not deleted', async () => {
+      const db = element.getDatabase('saved');
+      const result = await element._findNotDeleted(db, [doc]);
+      assert.equal(result[0]._rev, undeletedRev);
+    });
+  });
+
+  describe('revertRemove()', () => {
+    let element;
+    let doc;
+    beforeEach(async () => {
+      element = await basicFixture();
+      const db = element.getDatabase('saved');
+      doc = {
+        _id: 'test-id-deleted'
+      };
+      const result = await db.put(doc);
+      doc._rev = result.rev;
+      const delReq = await db.remove(doc);
+      doc._rev = delReq.rev;
+    });
+
+    afterEach(function() {
+      return DataGenerator.destroySavedRequestData();
+    });
+
+    it('Restores deleted items', async () => {
+      const result = await element.revertRemove('saved', [doc]);
+      const updatedRev = result[0].doc._rev;
+      assert.equal(updatedRev.indexOf('3-'), 0, 'The rev property is updated.');
+      const data = await DataGenerator.getDatastoreRequestData();
+      console.log(data);
+      assert.equal(data[0]._id, 'test-id-deleted');
+      assert.equal(data[0]._rev, updatedRev);
+    });
+
+    it('Dispatches request-object-changed event', async () => {
+      const spy = sinon.spy();
+      element.addEventListener('request-object-changed', spy);
+      await element.revertRemove('saved', [doc]);
+      assert.typeOf(spy.args[0][0].detail.request, 'object');
+      assert.typeOf(spy.args[0][0].detail.oldRev, 'string');
+      assert.typeOf(spy.args[0][0].detail.oldId, 'string');
+      assert.equal(spy.args[0][0].detail.type, 'saved');
     });
   });
 });

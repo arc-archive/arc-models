@@ -1,5 +1,5 @@
 import { fixture, assert } from '@open-wc/testing';
-import {UrlHistoryHelper} from './common.js';
+import { UrlHistoryHelper } from './common.js';
 import '../../url-history-model.js';
 
 describe('<url-history-model> - Storing event', function() {
@@ -8,7 +8,6 @@ describe('<url-history-model> - Storing event', function() {
   }
 
   describe('Storing the data - Event based', function() {
-    let element;
     let previousInsert;
     const baseUrl = 'https://api.mulesoft.com/endpoint/path?query=parameter';
     const otherUrl = 'https://api.domain.com/endpoint/';
@@ -26,7 +25,7 @@ describe('<url-history-model> - Storing event', function() {
     });
 
     beforeEach(async () => {
-      element = await basicFixture();
+      await basicFixture();
     });
 
     it('Stores the URL', function() {
@@ -68,6 +67,18 @@ describe('<url-history-model> - Storing event', function() {
         value: baseUrl
       });
       assert.isTrue(e.defaultPrevented);
+    });
+
+    it('Rejects when no value', async () => {
+      const e = UrlHistoryHelper.fire('url-history-store', {});
+      let called = false;
+      try {
+        await e.detail.result;
+      } catch (e) {
+        assert.equal(e.message, 'The "value" property is not defined.');
+        called = true;
+      }
+      assert.isTrue(called);
     });
   });
 });

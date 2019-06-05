@@ -1,5 +1,5 @@
 import { fixture, assert } from '@open-wc/testing';
-import {UrlHistoryHelper} from './common.js';
+import { UrlHistoryHelper } from './common.js';
 import '../../url-history-model.js';
 
 describe('<url-history-model> - Querying', () => {
@@ -7,7 +7,7 @@ describe('<url-history-model> - Querying', () => {
     return /** @type {UrlHistoryModel} */ (await fixture('<url-history-model></url-history-model>'));
   }
 
-  describe('Storing the data', function() {
+  describe('Querying the data', function() {
     let element;
     const baseUrl = 'https://api.mulesoft.com/endpoint/path?query=parameter';
     const similarUrl = 'https://api.mulesoft.com/';
@@ -120,6 +120,76 @@ describe('<url-history-model> - Querying', () => {
         });
         assert.isTrue(e.defaultPrevented);
       });
+
+      it('Rejects when query is not set', async () => {
+        const e = UrlHistoryHelper.fire('url-history-query', {});
+        let called = false;
+        try {
+          await e.detail.result;
+        } catch (e) {
+          assert.equal(e.message, 'The "q" property is not defined.');
+          called = true;
+        }
+        assert.isTrue(called);
+      });
+    });
+  });
+
+  describe('_sortFunction()', () => {
+    let element;
+    before(async () => {
+      element = await basicFixture();
+    });
+
+    it('Returns 1 when a._time > b._time', () => {
+      const result = element._sortFunction({
+        _time: 2
+      }, {
+        _time: 1
+      });
+      assert.equal(result, 1);
+    });
+
+    it('Returns -1 when a._time < b._time', () => {
+      const result = element._sortFunction({
+        _time: 1
+      }, {
+        _time: 2
+      });
+      assert.equal(result, -1);
+    });
+
+    it('Returns 1 when a.cnt > b.cnt', () => {
+      const result = element._sortFunction({
+        _time: 1,
+        cnt: 2
+      }, {
+        _time: 1,
+        cnt: 1
+      });
+      assert.equal(result, 1);
+    });
+
+    it('Returns -1 when a.cnt < b.cnt', () => {
+      const result = element._sortFunction({
+        _time: 1,
+        cnt: 1
+      }, {
+        _time: 1,
+        cnt: 2
+      });
+      assert.equal(result, -1);
+    });
+
+    it('Returns 0 when a.cnt = b.cnt', () => {
+      const result = element._sortFunction({
+        _time: 1,
+        cnt: 1
+      }, {
+        _time: 1,
+        cnt: 1
+      });
+      assert.equal(result, 0);
     });
   });
 });

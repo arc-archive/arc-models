@@ -29,6 +29,7 @@ describe('<request-model> - Save request', () => {
     };
 
     function db() {
+      /* global PouchDB */
       return new PouchDB('saved-requests');
     }
 
@@ -355,7 +356,7 @@ describe('<request-model> - Save request', () => {
 
       it('Rejects the promise when event not handled', (done) => {
         const request = DataGenerator.generateSavedItem();
-        element.saveRequest(request, {isDrive: true})
+        element.saveRequest(request, { isDrive: true })
         .then(() => {
           clearSaved = true;
           done(new Error('Save request finished with success'));
@@ -369,7 +370,7 @@ describe('<request-model> - Save request', () => {
         handleDriveEvent = true;
         clearSaved = true;
         const request = DataGenerator.generateSavedItem();
-        return element.saveRequest(request, {isDrive: true})
+        return element.saveRequest(request, { isDrive: true })
         .then((request) => {
           assert.equal(request.driveId, 'test-drive-id');
         });
@@ -385,7 +386,7 @@ describe('<request-model> - Save request', () => {
           eventData = e.detail;
           eventData.content.url = 'test-url';
         });
-        return element.saveRequest(request, {isDrive: true})
+        return element.saveRequest(request, { isDrive: true })
         .then(() => {
           assert.typeOf(eventData, 'object');
           assert.notEqual(request.url, 'test-url');
@@ -401,7 +402,7 @@ describe('<request-model> - Save request', () => {
           element.removeEventListener('export-google-drive', f);
           eventData = e.detail;
         });
-        return element.saveRequest(request, {isDrive: true})
+        return element.saveRequest(request, { isDrive: true })
         .then(() => {
           assert.equal(eventData.contentType, 'application/json');
         });
@@ -417,7 +418,7 @@ describe('<request-model> - Save request', () => {
           element.removeEventListener('export-google-drive', f);
           eventData = e.detail;
         });
-        return element.saveRequest(request, {isDrive: true})
+        return element.saveRequest(request, { isDrive: true })
         .then(() => {
           assert.equal(eventData.file, 'test.arc');
         });

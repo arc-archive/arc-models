@@ -20,7 +20,7 @@ describe('<variables-model> - Public API', function() {
 
       beforeEach(async () => {
         element = await basicFixture();
-        const result = await DataHelper.addEnv('test')
+        const result = await DataHelper.addEnv('test');
         databaseRecordId = result.id;
         databaseRecordRev = result.rev;
         const vars = [{
@@ -153,6 +153,16 @@ describe('<variables-model> - Public API', function() {
         })
         .then(function(result) {
           assert.notEqual(result._rev, rev);
+        });
+      });
+
+      it('Replaces "created"\'s Date to time', function() {
+        return element.updateEnvironment({
+          name: 'test-date',
+          created: new Date()
+        })
+        .then((result) => {
+          assert.typeOf(result.created, 'number');
         });
       });
     });
@@ -314,6 +324,82 @@ describe('<variables-model> - Public API', function() {
           assert.typeOf(result, 'array');
           assert.lengthOf(result, 0);
         });
+      });
+    });
+
+    describe('__updateEnvironmentName()', () => {
+      let element;
+      after(function() {
+        return DataGenerator.destroyVariablesData();
+      });
+
+      beforeEach(async () => {
+        element = await basicFixture();
+        await DataHelper.addEnv('test');
+        const vars = [{
+          variable: 'test',
+          value: 'some variable',
+          environment: 'test'
+        }, {
+          variable: 'test-2',
+          value: 'some variable-2',
+          environment: 'test'
+        }];
+        await DataHelper.addVars(vars);
+      });
+
+      it('Updates variables environment', async () => {
+        await element.__updateEnvironmentName('test', {
+          name: 'new-env'
+        });
+        const vars = await DataGenerator.getDatastoreVariablesData();
+        assert.lengthOf(vars, 2);
+        assert.equal(vars[0].environment, 'new-env');
+        assert.equal(vars[1].environment, 'new-env');
+      });
+    });
+
+    describe('_deleteEnvironmentVariables()', () => {
+      let element;
+      after(function() {
+        return DataGenerator.destroyVariablesData();
+      });
+
+      beforeEach(async () => {
+        element = await basicFixture();
+      });
+
+      it('Does nothing when no argument', async () => {
+        const spy = sinon.spy(element, 'listVariables');
+        await element._deleteEnvironmentVariables();
+        assert.isFalse(spy.called);
+      });
+
+      it('Does nothing when argument equals Default', async () => {
+        const spy = sinon.spy(element, 'listVariables');
+        await element._deleteEnvironmentVariables('Default');
+        assert.isFalse(spy.called);
+      });
+
+      it('Ignores when no variables in environment', async () => {
+        await element._deleteEnvironmentVariables('test');
+        // No error
+      });
+
+      it('Removes variables for environment', async () => {
+        const vars = [{
+          variable: 'test',
+          value: 'some variable',
+          environment: 'test'
+        }, {
+          variable: 'test-2',
+          value: 'some variable-2',
+          environment: 'test'
+        }];
+        await DataHelper.addVars(vars);
+        await element._deleteEnvironmentVariables('test');
+        const result = await DataGenerator.getDatastoreVariablesData();
+        assert.lengthOf(result, 0);
       });
     });
   });

@@ -11,7 +11,7 @@ WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
 License for the specific language governing permissions and limitations under
 the License.
 */
-import {ArcBaseModel} from './base-model.js';
+import { ArcBaseModel } from './base-model.js';
 /**
  * An element that saves Request URL in the history and serves list
  * of saved URLs.
@@ -107,12 +107,12 @@ export class UrlHistoryModel extends ArcBaseModel {
   _handleStore(e) {
     e.preventDefault();
     e.stopPropagation();
-    const url = e.detail.value;
-    if (!url) {
-      this._handleException(new Error('The "url" property is not defined.'));
+    const { value } = e.detail;
+    if (!value) {
+      e.detail.result = Promise.reject(new Error('The "value" property is not defined.'));
       return;
     }
-    e.detail.result = this.store(url);
+    e.detail.result = this.store(value);
   }
   /**
    * It creates new entry if the URL wasn't already in the data store or
@@ -163,9 +163,9 @@ export class UrlHistoryModel extends ArcBaseModel {
   _handleQuery(e) {
     e.preventDefault();
     e.stopPropagation();
-    const q = e.detail.q;
+    const { q } = e.detail;
     if (!q) {
-      const err = new Error('You must set "q" parameter');
+      const err = new Error('The "q" property is not defined.');
       e.detail.result = Promise.reject(err);
       return;
     }

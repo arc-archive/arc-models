@@ -10,8 +10,8 @@ WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
 License for the specific language governing permissions and limitations under
 the License.
 */
-import {RequestBaseModel} from './request-base-model.js';
-import {PayloadProcessor} from '@advanced-rest-client/arc-electron-payload-processor/payload-processor-esm.js';
+import { RequestBaseModel } from './request-base-model.js';
+import { PayloadProcessor } from '@advanced-rest-client/arc-electron-payload-processor/payload-processor-esm.js';
 /**
  * Event based access to saved and history request datastore.
  *
@@ -198,9 +198,7 @@ class RequestModel extends RequestBaseModel {
     }
     e.preventDefault();
     e.stopPropagation();
-    const request = e.detail.request;
-    const projects = e.detail.projects;
-    const options = e.detail.options;
+    const { request, projects, options } = e.detail;
     if (!request._id) {
       request._id = this.uuid.generate();
     }
@@ -636,7 +634,7 @@ class RequestModel extends RequestBaseModel {
           request: request.doc,
           oldRev: items[i]._rev,
           oldId: request.id,
-          type: type
+          type
         };
         this._fireUpdated('request-object-changed', detail);
       });
@@ -670,7 +668,7 @@ class RequestModel extends RequestBaseModel {
         if (!undeletedRevision) {
           throw new Error('Previous version of the object not found');
         }
-        return db.get(doc._id, {rev: undeletedRevision});
+        return db.get(doc._id, { rev: undeletedRevision });
       });
     })
     .then((promises) => Promise.all(promises));
@@ -680,7 +678,7 @@ class RequestModel extends RequestBaseModel {
    * which is the one that reverts any changes made after it.
    *
    * @param {Object} revs PouchDB revision history object
-   * @param {Object} deletedRevision Revision of deleted object (after delete).
+   * @param {String} deletedRevision Revision of deleted object (after delete).
    * @return {String} Revision ID of the object before a change registered in
    * `deletedRevision`
    */
@@ -711,8 +709,7 @@ class RequestModel extends RequestBaseModel {
     }
     e.preventDefault();
     e.stopPropagation();
-
-    const {type, id, opts} = e.detail;
+    const { type, id, opts } = e.detail;
     if (!id) {
       e.detail.result = Promise.reject(
         new Error('Request "id" property is missing.'));
@@ -787,7 +784,7 @@ class RequestModel extends RequestBaseModel {
     e.preventDefault();
     e.stopPropagation();
 
-    const {requests, type} = e.detail;
+    const { requests, type } = e.detail;
     if (!requests) {
       e.detail.result = Promise.reject(
         new Error('The "requests" property is missing.'));
@@ -987,7 +984,7 @@ class RequestModel extends RequestBaseModel {
     }
     e.preventDefault();
     e.stopPropagation();
-    const {type, queryOptions} = e.detail;
+    const { type, queryOptions } = e.detail;
     if (!type) {
       e.detail.result = Promise.reject(new Error(
         'The "type" parameter is required.'

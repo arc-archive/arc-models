@@ -5,7 +5,8 @@ import '../../websocket-url-history-model.js';
 
 describe('<websocket-url-history-model> - Events API', function() {
   async function basicFixture() {
-    return /** @type {WebsocketUrlHistoryModel} */ (await fixture('<websocket-url-history-model></websocket-url-history-model>'));
+    return /** @type {WebsocketUrlHistoryModel} */ (await fixture(
+      '<websocket-url-history-model></websocket-url-history-model>'));
   }
 
   describe('Events API for websocket url history', function() {

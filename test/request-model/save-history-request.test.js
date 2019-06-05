@@ -1,7 +1,7 @@
 import { fixture, assert } from '@open-wc/testing';
 import '../../request-model.js';
 
-describe('<request-model> - Save history', () => {
+describe('save-history event', () => {
   async function basicFixture() {
     return /** @type {RequestModel} */ (await fixture('<request-model></request-model>'));
   }
@@ -38,6 +38,13 @@ describe('<request-model> - Save history', () => {
         payload: ''
       };
       element = await basicFixture();
+    });
+
+    it('Ignores cancelled events', function() {
+      element._saveHistoryHandler({
+        defaultPrevented: true
+      });
+      // No error
     });
 
     it('Generates history ID', () => {

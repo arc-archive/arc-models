@@ -1,5 +1,5 @@
 import { fixture, assert } from '@open-wc/testing';
-import {UrlHistoryHelper} from './common.js';
+import { UrlHistoryHelper } from './common.js';
 import '../../url-history-model.js';
 
 describe('<url-history-model> - Storing data', function() {
