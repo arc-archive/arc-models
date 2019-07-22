@@ -43,7 +43,7 @@ import { PayloadProcessor } from '@advanced-rest-client/arc-electron-payload-pro
  * - projects - Optional, Array of strings, List of project names to create
  * with this request and associate with the request object.
  * - options - Optional, map of additional options. Currently only `isDrive` is
- * supported. When set `export-google-drive` is dispatched. If the event is not
+ * supported. When set `google-drive-data-save` is dispatched. If the event is not
  * handled by the application the save flow fails.
  *
  * ```javascript
@@ -926,8 +926,8 @@ class RequestModel extends RequestBaseModel {
   }
   /**
    * Saves the request on Google Drive.
-   * It sends `drive-request-save` event to call a component responsible
-   * for saving the request.
+   * It dispatches `google-drive-data-save` event to call a component responsible
+   * for saving the request on Google Drive.
    *
    * This do nothing if `opts.drive is not set.`
    *
@@ -940,20 +940,22 @@ class RequestModel extends RequestBaseModel {
       return Promise.resolve(data);
     }
     const copy = Object.assign({}, data);
-    const e = new CustomEvent('export-google-drive', {
+    const e = new CustomEvent('google-drive-data-save', {
       bubbles: true,
       cancelable: true,
       composed: true,
       detail: {
         content: copy,
-        contentType: 'application/json',
-        file: copy.name + '.arc'
+        file: copy.name + '.arc',
+        options: {
+          contentType: 'application/restclient+data',
+        }
       }
     });
     this.dispatchEvent(e);
     if (!e.defaultPrevented) {
       console.warn('Unable to export request to Google Drive.');
-      console.warn('The drive-request-save was not handled.');
+      console.warn('The google-drive-data-save was not handled.');
       return Promise.reject(new Error('Drive export module not found'));
     }
     return e.detail.result
@@ -1358,16 +1360,6 @@ class RequestModel extends RequestBaseModel {
     return p;
   }
   /**
-   * Fired when the request should be expored to Google Drive.
-   * This element doesn't support this operation but this way it queries for
-   * an element that can export data to Google Drive.
-   *
-   * @event drive-request-save
-   * @param {Object} request Request data to export
-   * @param {String} fileName Google Drive file name.
-   */
-
-  /**
    * Fired when the project entity has been saved / updated in the datastore.
    *
    * @event request-object-changed
@@ -1390,29 +1382,15 @@ class RequestModel extends RequestBaseModel {
    */
 
   /**
-   * Dispatched when request object indexing finishes.
-   * This event does not bubbles.
-   *
-   * @event request-indexing-finished
-   */
-  /**
-   * Dispatched when request object indexing finishes with error.
-   * This event does not bubbles.
-   *
-   * @event request-indexing-error
-   * @param {String} message Error message
-   */
-
-  /**
    * Dispatched when saving request object to the data store and configuration
    * option says to save request to Google Drive.
    * This component does not handles the logic responsible for Drive integration.
    *
    * Note, The request save flow fails when this event is not handled.
    *
-   * @event export-google-drive
+   * @event google-drive-data-save
    * @param {Object} content Data to store in the Drive
-   * @param {String} contentType Always 'application/json'
+   * @param {Object} options `contentType` property set to `application/restclient+data`
    * @param {String} file Drive file name
    */
 }

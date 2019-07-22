@@ -326,11 +326,11 @@ describe('<request-model> - Save request', () => {
       }
 
       before(() => {
-        window.addEventListener('export-google-drive', driveHandler);
+        window.addEventListener('google-drive-data-save', driveHandler);
       });
 
       after(() => {
-        window.removeEventListener('export-google-drive', driveHandler);
+        window.removeEventListener('google-drive-data-save', driveHandler);
       });
 
       beforeEach(async () => {
@@ -347,7 +347,7 @@ describe('<request-model> - Save request', () => {
         clearSaved = true;
         const request = DataGenerator.generateSavedItem();
         const spy = sinon.spy();
-        element.addEventListener('export-google-drive', spy);
+        element.addEventListener('google-drive-data-save', spy);
         return element.saveRequest(request)
         .then(() => {
           assert.isFalse(spy.called);
@@ -381,8 +381,8 @@ describe('<request-model> - Save request', () => {
         handleDriveEvent = true;
         const request = DataGenerator.generateSavedItem();
         let eventData;
-        element.addEventListener('export-google-drive', function f(e) {
-          element.removeEventListener('export-google-drive', f);
+        element.addEventListener('google-drive-data-save', function f(e) {
+          element.removeEventListener('google-drive-data-save', f);
           eventData = e.detail;
           eventData.content.url = 'test-url';
         });
@@ -398,13 +398,13 @@ describe('<request-model> - Save request', () => {
         handleDriveEvent = true;
         const request = DataGenerator.generateSavedItem();
         let eventData;
-        element.addEventListener('export-google-drive', function f(e) {
-          element.removeEventListener('export-google-drive', f);
+        element.addEventListener('google-drive-data-save', function f(e) {
+          element.removeEventListener('google-drive-data-save', f);
           eventData = e.detail;
         });
         return element.saveRequest(request, { isDrive: true })
         .then(() => {
-          assert.equal(eventData.contentType, 'application/json');
+          assert.equal(eventData.options.contentType, 'application/restclient+data');
         });
       });
 
@@ -414,8 +414,8 @@ describe('<request-model> - Save request', () => {
         const request = DataGenerator.generateSavedItem();
         request.name = 'test';
         let eventData;
-        element.addEventListener('export-google-drive', function f(e) {
-          element.removeEventListener('export-google-drive', f);
+        element.addEventListener('google-drive-data-save', function f(e) {
+          element.removeEventListener('google-drive-data-save', f);
           eventData = e.detail;
         });
         return element.saveRequest(request, { isDrive: true })
