@@ -8,8 +8,6 @@
 
 Event based access to ARC datastores.
 
-Note, request model requires `pouchdb.quick-search.min.js` script to be included into the document.
-
 ### API components
 
 This components is a part of [API components ecosystem](https://elements.advancedrestclient.com/)
@@ -50,18 +48,47 @@ npm install --save @advanced-rest-client/arc-models
 </html>
 ```
 
+### In a LitElement template
+
+```javascript
+import { LitElement, html } from 'lit-element';
+import '@advanced-rest-client/arc-models/auth-data-model.js';
+import '@advanced-rest-client/arc-models/host-rules-model.js';
+import '@advanced-rest-client/arc-models/project-model.js';
+import '@advanced-rest-client/arc-models/request-model.js';
+import '@advanced-rest-client/arc-models/rest-api-model.js';
+import '@advanced-rest-client/arc-models/url-indexer.js';
+import '@advanced-rest-client/arc-models/variables-model.js';
+import '@advanced-rest-client/arc-models/websocket-url-history-model.js';
+
+class SampleElement extends LitElement {
+  render() { `
+    <auth-data-model></auth-data-model>
+    <host-rules-model></host-rules-model>
+    <project-model></project-model>
+    <request-model></request-model>
+    <rest-api-model></rest-api-model>
+    <url-indexer></url-indexer>
+    <variables-model></variables-model>
+    <websocket-url-history-model></websocket-url-history-model>
+    `;
+  }
+}
+customElements.define('sample-element', SampleElement);
+```
+
 ### In a Polymer 3 element
 
 ```js
-import {PolymerElement, html} from './node_modules/@polymer/polymer';
-import './node_modules/@advanced-rest-client/arc-models/auth-data-model.js';
-import './node_modules/@advanced-rest-client/arc-models/host-rules-model.js';
-import './node_modules/@advanced-rest-client/arc-models/project-model.js';
-import './node_modules/@advanced-rest-client/arc-models/request-model.js';
-import './node_modules/@advanced-rest-client/arc-models/rest-api-model.js';
-import './node_modules/@advanced-rest-client/arc-models/url-indexer.js';
-import './node_modules/@advanced-rest-client/arc-models/variables-model.js';
-import './node_modules/@advanced-rest-client/arc-models/websocket-url-history-model.js';
+import {PolymerElement, html} from '@polymer/polymer';
+import '@advanced-rest-client/arc-models/auth-data-model.js';
+import '@advanced-rest-client/arc-models/host-rules-model.js';
+import '@advanced-rest-client/arc-models/project-model.js';
+import '@advanced-rest-client/arc-models/request-model.js';
+import '@advanced-rest-client/arc-models/rest-api-model.js';
+import '@advanced-rest-client/arc-models/url-indexer.js';
+import '@advanced-rest-client/arc-models/variables-model.js';
+import '@advanced-rest-client/arc-models/websocket-url-history-model.js';
 
 class SampleElement extends PolymerElement {
   static get template() {
@@ -78,23 +105,21 @@ class SampleElement extends PolymerElement {
 customElements.define('sample-element', SampleElement);
 ```
 
-### Installation
+### Development
 
 ```sh
-git clone https://github.com/advanced-rest-client/arc-models
-cd api-url-editor
+git clone https://github.com/@advanced-rest-client/arc-models
+cd arc-models
 npm install
-npm install -g polymer-cli
 ```
 
 ### Running the demo locally
 
 ```sh
-polymer serve --npm
-open http://127.0.0.1:<port>/demo/
+npm start
 ```
 
 ### Running the tests
 ```sh
-polymer test --npm
+npm test
 ```
