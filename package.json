@@ -1,7 +1,7 @@
 {
   "name": "@advanced-rest-client/arc-models",
   "description": "Event based access to ARC datastores",
-  "version": "3.0.0-preview.7",
+  "version": "3.0.0-preview.8",
   "license": "Apache-2.0",
   "main": "arc-models.js",
   "keywords": [
