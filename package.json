@@ -32,16 +32,16 @@
     "pouchdb": "^7.1.1"
   },
   "devDependencies": {
-    "@advanced-rest-client/arc-data-generator": "^3.0.1",
-    "@advanced-rest-client/arc-demo-helper": "^1.0.4",
-    "@advanced-rest-client/eslint-config": "^1.0.6",
-    "@advanced-rest-client/testing-karma-sl": "^1.0.2",
+    "@advanced-rest-client/arc-data-generator": "^3.0.3",
+    "@advanced-rest-client/arc-demo-helper": "^1.0.14",
+    "@advanced-rest-client/eslint-config": "^1.1.2",
+    "@advanced-rest-client/testing-karma-sl": "^1.0.4",
+    "@advanced-rest-client/prettier-config": "^0.1.0",
     "@api-components/http-method-label": "^3.0.0",
     "@commitlint/cli": "^8.1.0",
     "@commitlint/config-conventional": "^7.0.0",
-    "@open-wc/prettier-config": "^0.1.0",
-    "@open-wc/testing": "^0.12.6",
-    "@open-wc/testing-karma": "^2.0.16",
+    "@open-wc/testing": "^2.3.3",
+    "@open-wc/testing-karma": "^3.1.29",
     "@polymer/gen-typescript-declarations": "^1.6.2",
     "@polymer/iron-form": "^3.0.0",
     "@polymer/iron-list": "^3.0.0",
@@ -54,15 +54,15 @@
     "@polymer/paper-toast": "^3.0.0",
     "@polymer/paper-toggle-button": "^3.0.0",
     "@webcomponents/webcomponentsjs": "^2.2.10",
-    "chance": "^1.0.18",
-    "es-dev-server": "^1.5.0",
+    "chance": "^1.1.0",
+    "deepmerge": "^4.0.0",
+    "es-dev-server": "^1.17.2",
     "husky": "^1.0.0",
     "lint-staged": "^8.0.0",
-    "lit-element": "^2.0.1",
-    "lit-html": "^1.1.1",
-    "sinon": "^7.3.2",
-    "web-animations-js": "^2.3.2",
-    "webpack-merge": "^4.1.5"
+    "lit-element": "^2.2.1",
+    "lit-html": "^1.1.2",
+    "sinon": "^7.4.2",
+    "web-animations-js": "^2.3.2"
   },
   "scripts": {
     "test": "karma start --coverage",
@@ -76,9 +76,9 @@
     "lint": "npm run lint:eslint && npm run lint:prettier",
     "format": "npm run format:eslint && npm run format:prettier",
     "test:watch": "karma start --auto-watch=true --single-run=false",
-    "test:legacy": "karma start --legacy --coverage",
-    "test:legacy:watch": "karma start --legacy --auto-watch=true --single-run=false",
-    "test:sl": "karma start karma.sl.config.js --legacy --coverage"
+    "test:legacy": "karma start --compatibility all --coverage",
+    "test:legacy:watch": "karma start --compatibility all --auto-watch=true --single-run=false",
+    "test:sl": "karma start karma.sl.config.js --compatibility all --coverage"
   },
   "lint-staged": {
     "*.js": [
