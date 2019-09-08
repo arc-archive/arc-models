@@ -177,9 +177,9 @@ class RequestModel extends RequestBaseModel {
     node.removeEventListener('request-object-changed', this._handleObjectSave);
     node.removeEventListener('request-objects-changed', this._handleObjectsSave);
     node.removeEventListener('request-object-deleted',
-      this._handleObjectDelete);
+        this._handleObjectDelete);
     node.removeEventListener('request-objects-deleted',
-      this._handleObjectsDelete);
+        this._handleObjectsDelete);
     node.removeEventListener('request-objects-undeleted', this._handleUndelete);
     node.removeEventListener('request-query', this._handleQuery);
     node.removeEventListener('request-list', this._handleList);
@@ -317,7 +317,7 @@ class RequestModel extends RequestBaseModel {
    * is supported
    * @return {Promise} A promise resilved to updated request object.
    */
-  saveRequest(request, opts) {
+  async saveRequest(request, opts) {
     opts = opts || {};
     if (!request.type) {
       if (request.name) {
@@ -331,17 +331,16 @@ class RequestModel extends RequestBaseModel {
     if (!request._id) {
       request._id = this.uuid.generate();
     }
-    return PayloadProcessor.payloadToString(request)
-    .then((result) => {
-      request = result;
-      return this._saveGoogleDrive(request, opts);
-    })
-    .then((request) => this.update(request.type, request))
-    .then((request) => {
-      return this._syncProjects(request._id, request.projects)
-      .then(() => request);
-    })
-    .catch((cause) => this._handleException(cause));
+    try {
+      let item = Object.assign({}, request);
+      item = await PayloadProcessor.payloadToString(item);
+      item = await this._saveGoogleDrive(item, opts);
+      item = await this.update(item.type, item);
+      await this._syncProjects(item._id, item.projects);
+      return item;
+    } catch (e) {
+      this._handleException(e)
+    }
   }
   /**
    * Sunchronizes project requests to ensure each project contains this
@@ -351,59 +350,52 @@ class RequestModel extends RequestBaseModel {
    * @param {?Array<String>} projects List of request projects.
    * @return {Promise}
    */
-  _syncProjects(requestId, projects) {
+  async _syncProjects(requestId, projects) {
     if (!projects || !projects.length) {
-      return Promise.resolve();
+      return;
     }
     const db = this.projectDb;
     const update = [];
-    return db.allDocs({
-      // jscs:disable
+    const queryResponse = await db.allDocs({
       include_docs: true
-      // jscs:enable
     })
-    .then((response) => {
-      const rows = response.rows;
-      for (let i = 0, len = rows.length; i < len; i++) {
-        const project = rows[i];
-        const doc = project.doc;
-        if (projects.indexOf(project.id) === -1) {
-          const index = doc.requests ? doc.requests.indexOf(requestId) : -1;
-          if (index !== -1) {
-            doc.requests.splice(index, 1);
-            update.push(doc);
-          }
-          continue;
-        }
-        if (!doc.requests) {
-          doc.requests = [requestId];
-          update.push(doc);
-        } else if (doc.requests.indexOf(requestId) === -1) {
-          doc.requests.push(requestId);
+
+    const rows = queryResponse.rows;
+    for (let i = 0, len = rows.length; i < len; i++) {
+      const project = rows[i];
+      const doc = project.doc;
+      if (projects.indexOf(project.id) === -1) {
+        const index = doc.requests ? doc.requests.indexOf(requestId) : -1;
+        if (index !== -1) {
+          doc.requests.splice(index, 1);
           update.push(doc);
         }
+        continue;
       }
-      if (update.length) {
-        return db.bulkDocs(update);
+      if (!doc.requests) {
+        doc.requests = [requestId];
+        update.push(doc);
+      } else if (doc.requests.indexOf(requestId) === -1) {
+        doc.requests.push(requestId);
+        update.push(doc);
       }
-    })
-    .then((response) => {
-      if (!response) {
-        return;
+    }
+    if (!update.length) {
+      return;
+    }
+    const response = await db.bulkDocs(update);
+    for (let i = 0, len = response.length; i < len; i++) {
+      const r = response[i];
+      if (r.error) {
+        this._handleException(r, true);
+        continue;
       }
-      for (let i = 0, len = response.length; i < len; i++) {
-        const r = response[i];
-        if (r.error) {
-          this._handleException(r, true);
-          continue;
-        }
-        const project = update[i];
-        project._rev = r.rev;
-        this._fireUpdated('project-object-changed', {
-          project: project
-        });
-      }
-    });
+      const project = update[i];
+      project._rev = r.rev;
+      this._fireUpdated('project-object-changed', {
+        project: project
+      });
+    }
   }
   /**
    * Normalizes request object to whatever the app is currently using.
@@ -447,19 +439,17 @@ class RequestModel extends RequestBaseModel {
    * is supported
    * @return {Promise} Promise resolved to a project object.
    */
-  read(type, id, rev, opts) {
+  async read(type, id, rev, opts) {
     const conf = {};
     if (rev) {
       conf.rev = rev;
     }
     const db = this.getDatabase(type);
-    return db.get(id, conf)
-    .then((request) => {
-      if (opts && opts.restorePayload) {
-        request = PayloadProcessor.restorePayload(request);
-      }
-      return this.normalizeRequest(request);
-    });
+    let request = await db.get(id, conf)
+    if (opts && opts.restorePayload) {
+      request = PayloadProcessor.restorePayload(request);
+    }
+    return this.normalizeRequest(request);
   }
   /**
    * The same as `read()` but for a list of requests.
@@ -469,26 +459,24 @@ class RequestModel extends RequestBaseModel {
    * is supported
    * @return {Promise}
    */
-  readBulk(type, keys, opts) {
+  async readBulk(type, keys, opts) {
     const db = this.getDatabase(type);
-    return db.allDocs({
+    const response = await db.allDocs({
       include_docs: true,
       keys
-    })
-    .then((response) => {
-      const requests = [];
-      response.rows.forEach((item) => {
-        const request = item.doc;
-        if (!request) {
-          return;
-        }
-        if (opts && opts.restorePayload) {
-          PayloadProcessor.restorePayload(request);
-        }
-        requests[requests.length] = request;
-      });
-      return requests;
     });
+    const requests = [];
+    response.rows.forEach((item) => {
+      const request = item.doc;
+      if (!request) {
+        return;
+      }
+      if (opts && opts.restorePayload) {
+        PayloadProcessor.restorePayload(request);
+      }
+      requests[requests.length] = request;
+    });
+    return requests;
   }
   /**
    * Updates / saves the request object in the datastore.
@@ -501,28 +489,27 @@ class RequestModel extends RequestBaseModel {
    * @param {Object} request An object to save / update
    * @return {Promise} Resolved promise to request object with updated `_rev`
    */
-  update(type, request) {
+  async update(type, request) {
     const db = this.getDatabase(type);
-    let oldRev = request._rev;
+    const oldRev = request._rev;
     if (!request._id) {
       request._id = this.uuid.generate();
     }
     request.updated = Date.now();
     let copy = Object.assign({}, request);
     copy = this.normalizeRequest(copy);
-    return db.put(copy)
-    .then((result) => {
-      request._rev = result.rev;
-      const detail = {
-        request: request,
-        oldRev: oldRev,
-        // oldId will be removed
-        oldId: request._id,
-        type: type
-      };
-      this._fireUpdated('request-object-changed', detail);
-      return request;
-    });
+    const result = await db.put(copy);
+    /* eslint-disable-next-line require-atomic-updates */
+    request._rev = result.rev;
+    const detail = {
+      request: request,
+      oldRev: oldRev,
+      // oldId will be removed
+      oldId: request._id,
+      type: type
+    };
+    this._fireUpdated('request-object-changed', detail);
+    return request;
   }
   /**
    * Updates more than one request in a bulk.
@@ -530,39 +517,33 @@ class RequestModel extends RequestBaseModel {
    * @param {Array<Object>} requests List of requests to update.
    * @return {Array} List of PouchDB responses to each insert
    */
-  updateBulk(type, requests) {
+  async updateBulk(type, requests) {
     const db = this.getDatabase(type);
     for (let i = 0; i < requests.length; i++) {
       requests[i] = this.normalizeRequest(requests[i]);
     }
-    return db.bulkDocs(requests)
-    .then((response) => {
-      for (let i = 0, len = response.length; i < len; i++) {
-        const r = response[i];
-        if (r.error) {
-          this._handleException(r, true);
-          continue;
-        }
-        const request = requests[i];
-        const oldRev = request._rev;
-        request._rev = r.rev;
-        if (!request._id) {
-          request._id = r.id;
-        }
-        const detail = {
-          request,
-          oldRev: oldRev,
-          oldId: request._id,
-          type: type
-        };
-        this._fireUpdated('request-object-changed', detail);
+    const response = await db.bulkDocs(requests);
+    for (let i = 0, len = response.length; i < len; i++) {
+      const r = response[i];
+      if (r.error) {
+        this._handleException(r, true);
+        continue;
       }
-      return response;
-    })
-    .catch((cause) => {
-      console.warn('[request-model] ' + cause.message);
-      throw cause;
-    });
+      const request = requests[i];
+      const oldRev = request._rev;
+      request._rev = r.rev;
+      if (!request._id) {
+        request._id = r.id;
+      }
+      const detail = {
+        request,
+        oldRev: oldRev,
+        oldId: request._id,
+        type: type
+      };
+      this._fireUpdated('request-object-changed', detail);
+    }
+    return response;
   }
   /**
    * Removed an object from the datastore.
@@ -575,28 +556,21 @@ class RequestModel extends RequestBaseModel {
    * @return {Promise} Promise resolved to a new `_rev` property of deleted
    * object.
    */
-  remove(type, id, rev) {
-    let promise;
+  async remove(type, id, rev) {
     if (!rev) {
-      promise = this.read(type, id)
-      .then((obj) => rev = obj._rev);
-    } else {
-      promise = Promise.resolve();
+      const obj = await this.read(type, id);
+      rev = obj._rev;
     }
-    return promise.then(() => {
-      const db = this.getDatabase(type);
-      return db.remove(id, rev);
-    })
-    .then((response) => {
-      const detail = {
-        id: id,
-        rev: response.rev,
-        oldRev: rev,
-        type: type
-      };
-      this._fireUpdated('request-object-deleted', detail);
-      return response.rev;
-    });
+    const db = this.getDatabase(type);
+    const response = await db.remove(id, rev);
+    const detail = {
+      id: id,
+      rev: response.rev,
+      oldRev: rev,
+      type: type
+    };
+    this._fireUpdated('request-object-deleted', detail);
+    return response.rev;
   }
   /**
    * Reverts deleted items.
@@ -609,37 +583,41 @@ class RequestModel extends RequestBaseModel {
    * @return {Promise} Resolved promise with restored objects. Objects have
    * updated `_rev` property.
    */
-  revertRemove(type, items) {
+  async revertRemove(type, items) {
+    if (!type) {
+      throw new Error('The "type" argument is missing');
+    }
+    if (!items) {
+      throw new Error('The "items" argument is missing');
+    }
     const db = this.getDatabase(type);
     // first get information about previous revision (before delete)
-    return this._findNotDeleted(db, items)
-    .then((restored) => {
-      restored = restored.map((doc, i) => {
-        doc._rev = items[i]._rev;
-        return doc;
-      });
-      return db.bulkDocs(restored);
-    })
-    .then((result) => {
-      return db.allDocs({
-        keys: result.map((item) => item.id),
-        // jscs:disable
-        include_docs: true
-        // jscs:enable
-      });
-    })
-    .then((result) => {
-      result.rows.forEach((request, i) => {
-        const detail = {
-          request: request.doc,
-          oldRev: items[i]._rev,
-          oldId: request.id,
-          type
-        };
-        this._fireUpdated('request-object-changed', detail);
-      });
-      return result.rows;
+    const restored = await this._findNotDeleted(db, items);
+    for (let i = restored.length - 1; i >= 0; i--) {
+      const item = restored[i];
+      if (item.ok === false) {
+        items.splice(i, 1);
+        restored.splice(i, 1);
+      } else {
+        item._rev = items[i]._rev;
+      }
+    }
+    const updated = await db.bulkDocs(restored);
+    const query = {
+      keys: updated.map((item) => item.id),
+      include_docs: true
+    }
+    const result = await db.allDocs(query);
+    result.rows.forEach((request, i) => {
+      const detail = {
+        request: request.doc,
+        oldRev: items[i]._rev,
+        oldId: request.id,
+        type
+      };
+      this._fireUpdated('request-object-changed', detail);
     });
+    return result.rows;
   }
   /**
    * Finds last not deleted revision of a document.
@@ -647,7 +625,7 @@ class RequestModel extends RequestBaseModel {
    * @param {Array} items List of documents to process
    * @return {Promise<Array>} Last not deleted version of each document.
    */
-  _findNotDeleted(db, items) {
+  async _findNotDeleted(db, items) {
     const list = items.map((item) => {
       return {
         id: item._id,
@@ -658,20 +636,21 @@ class RequestModel extends RequestBaseModel {
       docs: list,
       revs: true
     };
-    return db.bulkGet(options)
-    .then((result) => {
-      return result.results.map((item, i) => {
-        const doc = item.docs[0].ok;
-        const revs = doc._revisions;
-        const undeletedRevision =
-          this._findUndeletedRevision(revs, items[i]._rev);
-        if (!undeletedRevision) {
-          throw new Error('Previous version of the object not found');
-        }
-        return db.get(doc._id, { rev: undeletedRevision });
-      });
-    })
-    .then((promises) => Promise.all(promises));
+    const result = await db.bulkGet(options);
+    const results = result.results;
+    const data = [];
+    for (let i = 0, len = results.length; i < len; i++) {
+      const item = results[i];
+      const doc = item.docs[0].ok;
+      const revs = doc._revisions;
+      const undeletedRevision = this._findUndeletedRevision(revs, list[i].rev);
+      if (!undeletedRevision) {
+        data[data.length] = { ok: false };
+      } else {
+        data[data.length] = await db.get(doc._id, { rev: undeletedRevision });
+      }
+    }
+    return data;
   }
   /**
    * Finds a next revision after the `deletedRevision` in the revisions history
@@ -712,12 +691,12 @@ class RequestModel extends RequestBaseModel {
     const { type, id, opts } = e.detail;
     if (!id) {
       e.detail.result = Promise.reject(
-        new Error('Request "id" property is missing.'));
+          new Error('Request "id" property is missing.'));
       return;
     }
     if (!type) {
       e.detail.result = Promise.reject(
-        new Error('Request "type" property is missing.'));
+          new Error('Request "type" property is missing.'));
       return;
     }
     let p;
@@ -740,39 +719,35 @@ class RequestModel extends RequestBaseModel {
     }
     e.preventDefault();
     e.stopPropagation();
-
-    const request = e.detail.request;
-    if (!request) {
-      e.detail.result = Promise.reject(
-        new Error('The "request" property is missing.'));
-      return;
-    }
-    if (!e.detail.type) {
-      e.detail.result = Promise.reject(
-        new Error('The "type" property is missing.'));
-      return;
-    }
-    const db = this.getDatabase(e.detail.type);
-    let p;
-    if (request._id && !request._rev) {
-      p = db.get(request._id)
-      .catch((e) => {
-        if (e.status === 404) {
-          // create new
-          return {};
-        }
-        this._handleException(e);
-      });
-    } else {
-      p = Promise.resolve({});
-    }
-    e.detail.result = p
-    .then((result) => {
-      result = Object.assign({}, result, request);
-      return this.update(e.detail.type, result);
-    })
-    .catch((e) => this._handleException(e));
+    const { type, request } = e.detail;
+    e.detail.result = this._saveObjectHanlder(type, request);
   }
+
+  async _saveObjectHanlder(type, request) {
+    if (!type) {
+      throw new Error('The "type" property is missing.');
+    }
+    if (!request) {
+      throw new Error('The "request" property is missing.');
+    }
+    const db = this.getDatabase(type);
+    if (request._id && !request._rev) {
+      try {
+        const dbRequest = await db.get(request._id);
+        request = Object.assign({}, dbRequest, request);
+      } catch (e) {
+        if (e.status !== 404) {
+          this._handleException(e);
+        }
+      }
+    }
+    try {
+      return await this.update(type, request);
+    } catch (e) {
+      this._handleException(e);
+    }
+  }
+
   /**
    * Handler for `request-objects-changed` event. Updates requests in bulk operation.
    * @param {CustomEvent} e
@@ -787,12 +762,12 @@ class RequestModel extends RequestBaseModel {
     const { requests, type } = e.detail;
     if (!requests) {
       e.detail.result = Promise.reject(
-        new Error('The "requests" property is missing.'));
+          new Error('The "requests" property is missing.'));
       return;
     }
     if (!type) {
       e.detail.result = Promise.reject(
-        new Error('The "type" property is missing.'));
+          new Error('The "type" property is missing.'));
       return;
     }
     e.detail.result = this.updateBulk(type, requests);
@@ -814,7 +789,7 @@ class RequestModel extends RequestBaseModel {
 
     if (!e.detail.type) {
       e.detail.result = Promise.reject(
-        new Error('Request "type" property is missing.'));
+          new Error('Request "type" property is missing.'));
       return;
     }
 
@@ -836,44 +811,49 @@ class RequestModel extends RequestBaseModel {
     }
     e.preventDefault();
     e.stopPropagation();
-
-    if (!e.detail.type) {
-      e.detail.result = Promise.reject(
-        new Error('Request "type" property is missing.'));
-      return;
-    }
-
-    if (!e.detail.items) {
-      e.detail.result = Promise.reject(
-        new Error('The "items" property is missing.'));
-      return;
-    }
-    const db = this.getDatabase(e.detail.type);
-    let removed = [];
-    e.detail.result = db.allDocs({
-      keys: e.detail.items
-    })
-    .then((res) => this._filterExistingItems(res))
-    .then((res) => {
-      removed = res;
-      return Promise.all(res.map((i) => db.remove(i.id, i.value.rev)));
-    })
-    .then((result) => {
-      const data = {};
-      result.forEach((item) => {
-        if (item.ok) {
-          const detail = {
-            id: item.id,
-            rev: item.rev,
-            oldRev: this._findOldRef(removed, item.id)
-          };
-          data[item.id] = item.rev;
-          this._fireUpdated('request-object-deleted', detail);
-        }
-      });
-      return data;
-    });
+    const { type, items } = e.detail;
+    e.detail.result = this.bulkDelete(type, items);
   }
+  /**
+   * Removes documents in a bulk operation.
+   *
+   * @param {String} type Database type
+   * @param {Array<String>} items List of keys to remove
+   * @return {Promise}
+   */
+  async bulkDelete(type, items) {
+    if (!type) {
+      throw new Error('Request "type" property is missing.');
+    }
+    if (!items) {
+      throw new Error('The "items" property is missing.');
+    }
+    const db = this.getDatabase(type);
+    const response = await db.allDocs({
+      keys: items
+    })
+    const removed = this._filterExistingItems(response);
+    const data = {};
+    for (const item of removed) {
+      try {
+        const result = await db.remove(item.id, item.value.rev);
+        if (!result.ok) {
+          continue;
+        }
+        const detail = {
+          id: result.id,
+          rev: result.rev,
+          oldRev: this._findOldRef(removed, result.id)
+        };
+        data[result.id] = result.rev;
+        this._fireUpdated('request-object-deleted', detail);
+      } catch(e) {
+        continue;
+      }
+    }
+    return data;
+  }
+
   /**
    * handlers `request-objects-undeleted` event to restore deleted items
    * @param {CustomEvent} e
@@ -885,18 +865,8 @@ class RequestModel extends RequestBaseModel {
     e.preventDefault();
     e.stopPropagation();
 
-    if (!e.detail.type) {
-      e.detail.result = Promise.reject(
-        new Error('Request "type" property is missing.'));
-      return;
-    }
-
-    if (!e.detail.items) {
-      e.detail.result = Promise.reject(
-        new Error('The "items" property is missing.'));
-      return;
-    }
-    e.detail.result = this.revertRemove(e.detail.type, e.detail.items)
+    const { type, items } = e.detail;
+    e.detail.result = this.revertRemove(type, items)
     .catch((e) => this._handleException(e));
   }
   /**
@@ -907,7 +877,6 @@ class RequestModel extends RequestBaseModel {
   _filterExistingItems(result) {
     result = result.rows.filter((item) => {
       if (item.error) {
-        console.warn(item);
         return false;
       }
       return true;
@@ -954,8 +923,6 @@ class RequestModel extends RequestBaseModel {
     });
     this.dispatchEvent(e);
     if (!e.defaultPrevented) {
-      console.warn('Unable to export request to Google Drive.');
-      console.warn('The google-drive-data-save was not handled.');
       return Promise.reject(new Error('Drive export module not found'));
     }
     return e.detail.result
@@ -987,18 +954,6 @@ class RequestModel extends RequestBaseModel {
     e.preventDefault();
     e.stopPropagation();
     const { type, queryOptions } = e.detail;
-    if (!type) {
-      e.detail.result = Promise.reject(new Error(
-        'The "type" parameter is required.'
-      ));
-      return;
-    }
-    if (!queryOptions) {
-      e.detail.result = Promise.reject(new Error(
-        'The "queryOptions" parameter is required.'
-      ));
-      return;
-    }
     e.detail.result = this.list(type, queryOptions)
     .catch((e) => this._handleException(e));
   }
@@ -1012,19 +967,23 @@ class RequestModel extends RequestBaseModel {
    * @param {Object} queryOptions PouchDB query options.
    * @return {Promise} List of PouchDB documents for the query.
    */
-  list(type, queryOptions) {
+  async list(type, queryOptions) {
+    if (!type) {
+      throw new Error('The "type" parameter is required.');
+    }
+    if (!queryOptions) {
+      throw new Error('The "queryOptions" parameter is required.');
+    }
     const db = this.getDatabase(type);
-    return db.allDocs(queryOptions)
-    .then((response) => {
-      if (response.rows) {
-        for (let i = 0, len = response.rows.length; i < len; i++) {
-          if (response.rows[i] && response.rows[i].doc) {
-            response.rows[i].doc = this.normalizeRequest(response.rows[i].doc);
-          }
+    const response = await db.allDocs(queryOptions);
+    if (response.rows) {
+      for (let i = 0, len = response.rows.length; i < len; i++) {
+        if (response.rows[i] && response.rows[i].doc) {
+          response.rows[i].doc = this.normalizeRequest(response.rows[i].doc);
         }
       }
-      return response;
-    });
+    }
+    return response;
   }
   /**
    * A handler for the `request-query` custom event. Queries the datastore for
@@ -1039,12 +998,6 @@ class RequestModel extends RequestBaseModel {
     }
     e.preventDefault();
     e.stopPropagation();
-
-    if (!e.detail.q) {
-      e.detail.result = Promise.reject(
-        new Error('The "q" property is missing.'));
-      return;
-    }
     e.detail.result = this.query(e.detail.q, e.detail.type, e.detail.detailed);
   }
   /**
@@ -1059,13 +1012,14 @@ class RequestModel extends RequestBaseModel {
    * search on the index. When false it only uses filer like query + '*'.
    * @return {Promise<Array<Object>>} Promise resolved to the list of requests.
    */
-  query(q, type, detailed) {
-    return this.queryUrlData(q, type, detailed)
-    .then((urlSearechResults) => {
-      const ignore = urlSearechResults.map((item) => item._id);
-      return this.queryPouchDb(q, type, ignore)
-      .then((result) => urlSearechResults.concat(result));
-    });
+  async query(q, type, detailed) {
+    if (!q) {
+      throw new Error('The "q" property is missing.');
+    }
+    const urlSearechResults = await this.queryUrlData(q, type, detailed);
+    const ignore = urlSearechResults.map((item) => item._id);
+    const result = await this.queryPouchDb(q, type, ignore);
+    return urlSearechResults.concat(result);
   }
 
   /**
@@ -1078,7 +1032,7 @@ class RequestModel extends RequestBaseModel {
    * search on the index. When false it only uses filer like query + '*'.
    * @return {Promise<Array<Object>>} Promise resolved to the list of requests.
    */
-  queryUrlData(q, type, detailed) {
+  async queryUrlData(q, type, detailed) {
     const e = new CustomEvent('url-index-query', {
       composed: true,
       cancelable: true,
@@ -1091,56 +1045,49 @@ class RequestModel extends RequestBaseModel {
     });
     this.dispatchEvent(e);
     if (!e.defaultPrevented) {
-      console.warn('URL index model not found.');
-      return Promise.resolve([]);
+      return [];
     }
-    return e.detail.result
-    .then((results) => {
-      const keys = Object.keys(results);
-      if (!keys.length) {
-        return keys;
+    const data = await e.detail.result;
+    const keys = Object.keys(data);
+    if (!keys.length) {
+      return keys; // ampty array
+    }
+    const savedKeys = [];
+    const historyKeys = [];
+    for (let i = 0, len = keys.length; i < len; i++) {
+      if (data[keys[i]] === 'history' || data[keys[i]] === 'history-requests') {
+        historyKeys[historyKeys.length] = keys[i];
+      } else if (data[keys[i]] === 'saved' || data[keys[i]] === 'saved-requests') {
+        savedKeys[savedKeys.length] = keys[i];
       }
-      const savedKeys = [];
-      const historyKeys = [];
-      for (let i = 0, len = keys.length; i < len; i++) {
-        if (results[keys[i]] === 'history' || results[keys[i]] === 'history-requests') {
-          historyKeys[historyKeys.length] = keys[i];
-        } else if (results[keys[i]] === 'saved' || results[keys[i]] === 'saved-requests') {
-          savedKeys[savedKeys.length] = keys[i];
+    }
+
+    const responses = [];
+    if (savedKeys.length) {
+      responses[responses.length] = await this.savedDb.allDocs({
+        keys: savedKeys,
+        include_docs: true
+      });
+    }
+
+    if (historyKeys.length) {
+      responses[responses.length] = await this.historyDb.allDocs({
+        keys: historyKeys,
+        include_docs: true
+      });
+    }
+
+    const result = [];
+    for (let i = 0, iLen = responses.length; i < iLen; i++) {
+      const response = responses[i];
+      for (let j = 0, jLen = response.rows.length; j < jLen; j++) {
+        if (response.rows[j].error) {
+          continue;
         }
+        result[result.length] = response.rows[j].doc;
       }
-      const p = [];
-      if (savedKeys.length) {
-        p[p.length] = this.savedDb.allDocs({
-          keys: savedKeys,
-          // jscs:disable
-          include_docs: true
-          // jscs:enable
-        });
-      }
-      if (historyKeys.length) {
-        p[p.length] = this.historyDb.allDocs({
-          keys: historyKeys,
-          // jscs:disable
-          include_docs: true
-          // jscs:enable
-        });
-      }
-      return Promise.all(p);
-    })
-    .then((results) => {
-      const data = [];
-      for (let i = 0, iLen = results.length; i < iLen; i++) {
-        const response = results[i];
-        for (let j = 0, jLen = response.rows.length; j < jLen; j++) {
-          if (response.rows[j].error) {
-            continue;
-          }
-          data[data.length] = response.rows[j].doc;
-        }
-      }
-      return data;
-    });
+    }
+    return result;
   }
   /**
    * Performs a query on the request and/or history data store.
@@ -1153,18 +1100,19 @@ class RequestModel extends RequestBaseModel {
    * @param {?Array<String>} ignore List of IDs to ignore.
    * @return {Promise<Array<Object>>} Promise resolved to the list of requests.
    */
-  queryPouchDb(q, type, ignore) {
+  async queryPouchDb(q, type, ignore) {
     if (!q) {
-      return Promise.reject(new Error('The "q" parameter is required.'));
+      throw new Error('The "q" parameter is required.');
     }
-    if (type === 'history') {
-      return this.queryHistory(q, ignore);
+    let r1 = [];
+    let r2 = [];
+    if (type !== 'saved') {
+      r1 = await this.queryHistory(q, ignore);
     }
-    if (type === 'saved') {
-      return this.querySaved(q, ignore);
+    if (type !== 'history') {
+      r2 = await this.querySaved(q, ignore);
     }
-    return Promise.all([this.queryHistory(q, ignore), this.querySaved(q, ignore)])
-    .then((results) => results[0].concat(results[1]));
+    return r1.concat(r2);
   }
   /**
    * List of fields to index in the history store.
@@ -1197,8 +1145,8 @@ class RequestModel extends RequestBaseModel {
    * @param {?Array<String>} ignore List of IDs to ignore.
    * @return {Promise<Array<Object>>} Promise resolved to the list of requests.
    */
-  querySaved(q, ignore) {
-    return this._queryStore(q, ignore, this.savedDb, this.savedIndexes);
+  async querySaved(q, ignore) {
+    return await this._queryStore(q, ignore, this.savedDb, this.savedIndexes);
   }
   /**
    * See `query()` function for description.
@@ -1208,32 +1156,30 @@ class RequestModel extends RequestBaseModel {
    * @param {Array<String>} indexes List of fields to query
    * @return {Promise<Array<Object>>} A promise resolved to list of PouchDB docs.
    */
-  _queryStore(q, ignore, db, indexes) {
+  async _queryStore(q, ignore, db, indexes) {
     if (!q) {
-      return Promise.reject(new Error('The "q" argument is required.'));
+      throw new Error('The "q" argument is required.');
     }
     if (ignore !== undefined && !(ignore instanceof Array)) {
-      return Promise.reject(new TypeError('The "ignore" argument is not an array.'));
+      throw new TypeError('The "ignore" argument is not an array.');
     }
     q = String(q).toLowerCase();
-    return db.search({
+    const data = await db.search({
       query: q,
       fields: indexes,
       // jscs:disable
       include_docs: true,
       // jscs:enable
       mm: (100 / q.split(' ').length)
-    })
-    .then((data) => {
-      const rows = data.rows || [];
-      const result = [];
-      for (let i = rows.length - 1; i >= 0; i--) {
-        if (!(ignore && ignore.indexOf(rows[i].id) !== -1)) {
-          result[result.length] = rows[i].doc;
-        }
-      }
-      return result;
     });
+    const rows = data.rows || [];
+    const result = [];
+    for (let i = rows.length - 1; i >= 0; i--) {
+      if (!(ignore && ignore.indexOf(rows[i].id) !== -1)) {
+        result[result.length] = rows[i].doc;
+      }
+    }
+    return result;
   }
   /**
    * Performs data inding using PouchDB api.
@@ -1242,10 +1188,10 @@ class RequestModel extends RequestBaseModel {
    * @param {String} type Data type - saved or history.
    * @return {Promise}
    */
-  indexData(type) {
+  async indexData(type) {
     const db = type === 'history' ? this.historyDb : this.savedDb;
     const fields = type === 'history' ? this.historyIndexes : this.savedIndexes;
-    return db.search({
+    return await db.search({
       fields,
       build: true
     });
@@ -1261,11 +1207,6 @@ class RequestModel extends RequestBaseModel {
     }
     e.preventDefault();
     e.stopPropagation();
-
-    if (!e.detail.id) {
-      e.detail.result = Promise.reject(new Error('Project id is not set.'));
-      return;
-    }
     e.detail.result = this.readProjectRequests(e.detail.id, e.detail.opts);
   }
   /**
@@ -1275,31 +1216,31 @@ class RequestModel extends RequestBaseModel {
    * is supported
    * @return {Promise}
    */
-  readProjectRequests(id, opts) {
-    return this.readProject(id)
-    .then((project) => {
-      if (project.requests) {
-        return this.readBulk('saved', project.requests, opts);
-      }
-      return this.readProjectRequestsLegacy(id, opts);
-    });
+  async readProjectRequests(id, opts) {
+    if (!id) {
+      throw new Error('Project id is not set.');
+    }
+    const project = await this.readProject(id)
+    if (project.requests) {
+      return await this.readBulk('saved', project.requests, opts);
+    }
+    return await this.readProjectRequestsLegacy(id, opts);
   }
   /**
    * Reads requests data related to the project from a legacy system.
    * @param {String} id Project id
    * @return {Promise}
    */
-  readProjectRequestsLegacy(id) {
+  async readProjectRequestsLegacy(id) {
     const db = this.getDatabase('saved');
-    return db.allDocs()
-    .then((response) => {
-      return response.rows.filter((item) => item.id.indexOf(id) !== -1);
-    })
-    .then((response) => Promise.all(response.map((item) => db.get(item.id))))
-    .then((requests) => {
-      requests.sort(this.sortRequestProjectOrder);
-      return requests;
-    });
+    const docsResponse = await db.allDocs()
+    const items = docsResponse.rows.filter((item) => item.id.indexOf(id) !== -1);
+    const requests = [];
+    for (const item of items) {
+      requests[requests.length] = await db.get(item.id);
+    }
+    requests.sort(this.sortRequestProjectOrder);
+    return requests;
   }
   /**
    * Sorts requests list by `projectOrder` property
