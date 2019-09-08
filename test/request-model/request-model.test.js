@@ -1,7 +1,7 @@
 import { fixture, assert } from '@open-wc/testing';
 import { DataGenerator } from '@advanced-rest-client/arc-data-generator/arc-data-generator.js';
 import { PayloadProcessor } from '@advanced-rest-client/arc-electron-payload-processor/payload-processor-esm.js';
-import sinon from 'sinon/pkg/sinon-esm.js';
+import * as sinon from 'sinon/pkg/sinon-esm.js';
 import '../../request-model.js';
 
 describe('<request-model>', () => {
@@ -382,7 +382,7 @@ describe('<request-model>', () => {
       });
 
       it('Fires request-object-deleted custom event', function() {
-        let spy = sinon.spy();
+        const spy = sinon.spy();
         element.addEventListener('request-object-deleted', spy);
         return element.remove(databaseType, dataObj._id, dataObj._rev)
           .then(() => {
@@ -403,6 +403,67 @@ describe('<request-model>', () => {
             assert.notEqual(eventData.rev, dataObj._rev);
             assert.equal(eventData.type, databaseType);
           });
+      });
+    });
+
+    describe('bulkDelete()', () => {
+      afterEach(async () => {
+        await DataGenerator.destroySavedRequestData();
+      });
+
+      let element;
+      let dataObj;
+      beforeEach(async () => {
+        element = await basicFixture();
+        const doc = {
+          name: 'test-1',
+          url: 'http://domain.com',
+          method: 'GET'
+        };
+        dataObj = await element.update(databaseType, doc);
+      });
+
+      it('throws when no type', async () => {
+        let called = false;
+        try {
+          await element.bulkDelete();
+        } catch (_) {
+          called = true;
+        }
+        assert.isTrue(called);
+      });
+
+      it('throws when no items', async () => {
+        let called = false;
+        try {
+          await element.bulkDelete('saved');
+        } catch (_) {
+          called = true;
+        }
+        assert.isTrue(called);
+      });
+
+      it('removes documents', async () => {
+        await element.bulkDelete('saved', [dataObj._id]);
+        const db = element.getDatabase('saved');
+        try {
+          await db.get(dataObj._id);
+          assert('Should not have object in the data store');
+        } catch (_) {
+          // ..
+        }
+      });
+
+      it('returns id and rev', async () => {
+        const result = await element.bulkDelete('saved', [dataObj._id]);
+        assert.include(result[dataObj._id], '2-');
+      });
+
+      it('ignores misssing items', async () => {
+        const spy = sinon.spy();
+        element.addEventListener('request-object-deleted', spy);
+        await element.bulkDelete('saved', [dataObj._id, 'missing']);
+        assert.isTrue(spy.calledOnce);
       });
     });
 
@@ -961,8 +1022,10 @@ describe('<request-model>', () => {
       };
       const result = await db.put(doc);
       undeletedRev = result.rev;
+      /* eslint-disable-next-line require-atomic-updates */
       doc._rev = undeletedRev;
       const delReq = await db.remove(doc);
+      /* eslint-disable-next-line require-atomic-updates */
       doc._rev = delReq.rev;
     });
 
@@ -987,8 +1050,10 @@ describe('<request-model>', () => {
         _id: 'test-id-deleted'
       };
       const result = await db.put(doc);
+      /* eslint-disable-next-line require-atomic-updates */
       doc._rev = result.rev;
       const delReq = await db.remove(doc);
+      /* eslint-disable-next-line require-atomic-updates */
       doc._rev = delReq.rev;
     });
 
