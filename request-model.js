@@ -642,6 +642,10 @@ class RequestModel extends RequestBaseModel {
     for (let i = 0, len = results.length; i < len; i++) {
       const item = results[i];
       const doc = item.docs[0].ok;
+      if (!doc) {
+        data[data.length] = { ok: false };
+        continue;
+      }
       const revs = doc._revisions;
       const undeletedRevision = this._findUndeletedRevision(revs, list[i].rev);
       if (!undeletedRevision) {

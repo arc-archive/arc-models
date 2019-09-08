@@ -1061,6 +1061,26 @@ describe('<request-model>', () => {
       return DataGenerator.destroySavedRequestData();
     });
 
+    it('throws when no type', async () => {
+      let called = false;
+      try {
+        await element.revertRemove();
+      } catch (_) {
+        called = true;
+      }
+      assert.isTrue(called);
+    });
+
+    it('throws when no items', async () => {
+      let called = false;
+      try {
+        await element.revertRemove('saved');
+      } catch (_) {
+        called = true;
+      }
+      assert.isTrue(called);
+    });
+
     it('Restores deleted items', async () => {
       const result = await element.revertRemove('saved', [doc]);
       const updatedRev = result[0].doc._rev;
@@ -1079,6 +1099,13 @@ describe('<request-model>', () => {
       assert.typeOf(spy.args[0][0].detail.oldRev, 'string');
       assert.typeOf(spy.args[0][0].detail.oldId, 'string');
       assert.equal(spy.args[0][0].detail.type, 'saved');
+    });
+
+    it('ignores misssing items', async () => {
+      const spy = sinon.spy();
+      element.addEventListener('request-object-changed', spy);
+      await element.revertRemove('saved', [doc, { _id: 'none', _rev: '2-none' }]);
+      assert.isTrue(spy.calledOnce);
     });
   });
 });
