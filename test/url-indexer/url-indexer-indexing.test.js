@@ -1,4 +1,5 @@
-import { fixture, assert } from '@open-wc/testing';
+import { fixture, assert, aTimeout } from '@open-wc/testing';
+import { DbHelper } from './db-helper.js';
 import '../../url-indexer.js';
 
 describe('<url-indexer> - Indexing test', function() {
@@ -189,6 +190,21 @@ describe('<url-indexer> - Indexing test', function() {
           assert.lengthOf(result, 11);
         });
       });
+
+      it('Indexes via event', async () => {
+        document.body.dispatchEvent(new CustomEvent('url-index-update', {
+          bubbles: true,
+          cancelable: true,
+          detail: {
+            data: requests
+          }
+        }));
+        // should be enough?
+        await aTimeout(200);
+        const db = await element.openSearchStore();
+        const result = await allIndexes(db);
+        assert.lengthOf(result, 11);
+      });
     });
 
     const INDEX_STORE_NAME = 'request-index';
@@ -347,6 +363,97 @@ describe('<url-indexer> - Indexing test', function() {
           assert.lengthOf(data, 14, 'Has 14 stored elements');
         });
       });
+    });
+  });
+
+  describe('reindexSaved()', () => {
+    const FULL_URL = 'https://domain.com/api?a=b&c=d';
+    const REQUEST_ID = 'test-id';
+    const REQUEST_TYPE = 'saved';
+
+    before(async () => {
+      /* global PouchDB */
+      let db = new PouchDB('saved-requests');
+      await db.destroy();
+      db = new PouchDB('saved-requests');
+      await db.put({
+        _id: REQUEST_ID,
+        url: FULL_URL,
+        type: REQUEST_TYPE
+      });
+    });
+
+    let element;
+    beforeEach(async () => {
+      element = await basicFixture();
+    });
+
+    afterEach(() => DbHelper.clearData());
+
+    it('reindexes saved requests', async () => {
+      await element.reindexSaved();
+      const result = await DbHelper.readAllIndexes();
+      assert.lengthOf(result, 8);
+    });
+
+    it('reindexes via reindex()', async () => {
+      await element.reindex('saved');
+      const result = await DbHelper.readAllIndexes();
+      assert.lengthOf(result, 8);
+    });
+  });
+
+  describe('reindexHistory()', () => {
+    const FULL_URL = 'https://domain.com/api?a=b&c=d';
+    const REQUEST_ID = 'test-id';
+    const REQUEST_TYPE = 'history';
+
+    before(async () => {
+      let db = new PouchDB('history-requests');
+      await db.destroy();
+      db = new PouchDB('history-requests');
+      await db.put({
+        _id: REQUEST_ID,
+        url: FULL_URL,
+        type: REQUEST_TYPE
+      });
+    });
+
+    let element;
+    beforeEach(async () => {
+      element = await basicFixture();
+    });
+
+    afterEach(() => DbHelper.clearData());
+
+    it('reindexes history requests', async () => {
+      await element.reindexHistory();
+      const result = await DbHelper.readAllIndexes();
+      assert.lengthOf(result, 8);
+    });
+
+    it('reindexes via reindex()', async () => {
+      await element.reindex('history');
+      const result = await DbHelper.readAllIndexes();
+      assert.lengthOf(result, 8);
+    });
+  });
+
+  describe('reindex()', () => {
+    // this tests were performed above so this only tests for error
+    let element;
+    beforeEach(async () => {
+      element = await basicFixture();
+    });
+
+    it('rejects when unknown type', async () => {
+      let message;
+      try {
+        await element.reindex('other');
+      } catch (e) {
+        message = e.message;
+      }
+      assert.equal(message, 'Unknown type');
     });
   });
 });

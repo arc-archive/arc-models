@@ -275,7 +275,7 @@ class UrlIndexer extends HTMLElement {
 
   _deleteModelHandler(e) {
     let store = e.detail.datastore;
-    if (typeof store !== Array) {
+    if (!Array.isArray(store)) {
       store = [store];
     }
     let p;
@@ -283,13 +283,13 @@ class UrlIndexer extends HTMLElement {
       p = this.deleteIndexedType('saved');
     } else if (store.indexOf('history-requests') !== -1 || store.indexOf('history') !== -1) {
       p = this.deleteIndexedType('history');
-    } else if (store.indexOf('all')) {
+    } else if (store.indexOf('all') !== -1) {
       p = this.clearIndexedData();
     }
     if (!p) {
       return;
     }
-    p.catch((cause) => {});
+    return p.catch((cause) => {});
   }
 
   //
@@ -902,65 +902,41 @@ class UrlIndexer extends HTMLElement {
     }
   }
 
-  reindex(type) {
+  async reindex(type) {
     if (type === 'history') {
-      return this.reindexHistory();
+      return await this.reindexHistory();
     } else if (type === 'saved') {
-      return this.reindexSaved();
+      return await this.reindexSaved();
     } else {
-      return Promise.reject(new Error('Unknown type.'));
+      throw new Error('Unknown type');
     }
   }
 
-  reindexSaved() {
-    /* global PouchDB */
-    const pdb = new PouchDB('saved-requests');
-    return pdb
-      .allDocs({
-        // jscs:disable
-        include_docs: true
-        // jscs:enable
-      })
-      .then((response) => {
-        const rows = response.rows;
-        if (!rows.length) {
-          return;
-        }
-        const data = rows.map((item) => {
-          const doc = item.doc;
-          return {
-            id: doc._id,
-            url: doc.url,
-            type: 'saved'
-          };
-        });
-        return this.index(data);
-      });
+  async reindexSaved() {
+    return await this._renindex('saved');
   }
 
-  reindexHistory() {
-    const pdb = new PouchDB('history-requests');
-    return pdb
-      .allDocs({
-        // jscs:disable
-        include_docs: true
-        // jscs:enable
-      })
-      .then((response) => {
-        const rows = response.rows;
-        if (!rows.length) {
-          return;
-        }
-        const data = rows.map((item) => {
-          const doc = item.doc;
-          return {
-            id: doc._id,
-            url: doc.url,
-            type: 'history'
-          };
-        });
-        return this.index(data);
-      });
+  async reindexHistory() {
+    return await this._renindex('history');
+  }
+
+  async _renindex(type) {
+    /* global PouchDB */
+    const pdb = new PouchDB(`${type}-requests`);
+    const response = await pdb.allDocs({ include_docs: true });
+    const rows = response.rows;
+    if (!rows.length) {
+      return;
+    }
+    const data = rows.map((item) => {
+      const doc = item.doc;
+      return {
+        id: doc._id,
+        url: doc.url,
+        type: type
+      };
+    });
+    return this.index(data);
   }
 }
 window.customElements.define('url-indexer', UrlIndexer);

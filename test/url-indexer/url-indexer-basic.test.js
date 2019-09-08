@@ -620,4 +620,26 @@ describe('<url-indexer>', function() {
       });
     });
   });
+
+  describe('_normalizeType()', () => {
+    let element;
+    before(async () => {
+      element = await basicFixture();
+    });
+
+    it('returns saved for saved-requests', () => {
+      const result = element._normalizeType('saved-requests');
+      assert.equal(result, 'saved');
+    });
+
+    it('returns history for history-requests', () => {
+      const result = element._normalizeType('history-requests');
+      assert.equal(result, 'history');
+    });
+
+    it('returns passed item', () => {
+      const result = element._normalizeType('history');
+      assert.equal(result, 'history');
+    });
+  });
 });

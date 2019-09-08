@@ -1,4 +1,4 @@
-import { fixture, assert } from '@open-wc/testing';
+import { fixture, assert, aTimeout } from '@open-wc/testing';
 import { DbHelper } from './db-helper.js';
 import '../../url-indexer.js';
 
@@ -95,6 +95,131 @@ describe('<url-indexer> - Delete test', function() {
       .then((data) => {
         assert.lengthOf(data, 0);
       });
+    });
+  });
+
+  describe('_deleteModelHandler()', () => {
+    let element;
+    beforeEach(async () => {
+      element = await basicFixture();
+      await element.index([{
+          url: 'https://domain.com/',
+          id: 'r1',
+          type: 'saved'
+        }, {
+          url: 'https://domain.com/',
+          id: 'r2',
+          type: 'history'
+        }]);
+    });
+
+    afterEach(() => DbHelper.clearData());
+
+
+    it('clears saved via saved-requests type', async () => {
+      await element._deleteModelHandler({
+        detail: {
+          datastore: ['saved-requests']
+        }
+      });
+      const data = await DbHelper.readAllIndexes();
+      assert.lengthOf(data, 3);
+    });
+
+    it('clears saved via saved type', async () => {
+      await element._deleteModelHandler({
+        detail: {
+          datastore: ['saved']
+        }
+      });
+      const data = await DbHelper.readAllIndexes();
+      assert.lengthOf(data, 3);
+    });
+
+    it('clears history via history-requests type', async () => {
+      await element._deleteModelHandler({
+        detail: {
+          datastore: ['history-requests']
+        }
+      });
+      const data = await DbHelper.readAllIndexes();
+      assert.lengthOf(data, 3);
+    });
+
+    it('clears saved via history type', async () => {
+      await element._deleteModelHandler({
+        detail: {
+          datastore: ['history']
+        }
+      });
+      const data = await DbHelper.readAllIndexes();
+      assert.lengthOf(data, 3);
+    });
+
+    it('clears all requests', async () => {
+      await element._deleteModelHandler({
+        detail: {
+          datastore: 'all'
+        }
+      });
+      const data = await DbHelper.readAllIndexes();
+      assert.lengthOf(data, 0);
+    });
+
+    it('ignores other data stores', async () => {
+      await element._deleteModelHandler({
+        detail: {
+          datastore: 'other'
+        }
+      });
+      const data = await DbHelper.readAllIndexes();
+      assert.lengthOf(data, 6);
+    });
+  });
+
+  describe('_requestDeleteHandler()', () => {
+    let element;
+    beforeEach(async () => {
+      element = await basicFixture();
+      await element.index([{
+          url: 'https://domain.com/',
+          id: 'r1',
+          type: 'saved'
+        }, {
+          url: 'https://domain.com/',
+          id: 'r2',
+          type: 'history'
+        }]);
+    });
+
+    afterEach(() => DbHelper.clearData());
+
+    it('deletes request by id', async () => {
+      document.body.dispatchEvent(new CustomEvent('request-object-deleted', {
+        bubbles: true,
+        cancelable: false,
+        detail: {
+          id: 'r1'
+        }
+      }));
+      // should be enough?
+      await aTimeout(200);
+      const data = await DbHelper.readAllIndexes();
+      assert.lengthOf(data, 3);
+    });
+
+    it('ignores cancelable events', async () => {
+      document.body.dispatchEvent(new CustomEvent('request-object-deleted', {
+        bubbles: true,
+        cancelable: true,
+        detail: {
+          id: 'r1'
+        }
+      }));
+      // should be enough?
+      await aTimeout(200);
+      const data = await DbHelper.readAllIndexes();
+      assert.lengthOf(data, 6);
     });
   });
 });
