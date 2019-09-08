@@ -1,5 +1,5 @@
 import { fixture, assert } from '@open-wc/testing';
-import {DbHelper} from './db-helper.js';
+import { DbHelper } from './db-helper.js';
 import '../../url-indexer.js';
 
 describe('<url-indexer> - Delete test', function() {

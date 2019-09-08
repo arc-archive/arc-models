@@ -158,7 +158,7 @@ class UrlIndexer extends HTMLElement {
     if (e.defaultPrevented) {
       return;
     }
-    const {data} = e.detail;
+    const { data } = e.detail;
     e.detail.result = this.index(data);
   }
 
@@ -180,9 +180,12 @@ class UrlIndexer extends HTMLElement {
 
   _normalizeType(type) {
     switch (type) {
-      case 'saved-requests': return 'saved';
-      case 'history-requests': return 'history';
-      default: return type;
+      case 'saved-requests':
+        return 'saved';
+      case 'history-requests':
+        return 'history';
+      default:
+        return type;
     }
   }
 
@@ -226,8 +229,7 @@ class UrlIndexer extends HTMLElement {
       const data = this.__indexRequestQueue;
       this.__indexRequestQueue = undefined;
       if (data && data.length) {
-        this.index(data)
-        .catch((cause) => console.warn(cause));
+        this.index(data).catch((cause) => {});
       }
     }, 25);
   }
@@ -266,8 +268,7 @@ class UrlIndexer extends HTMLElement {
       const data = this.__deleteRequestQueue;
       this.__deleteRequestQueue = undefined;
       if (data && data.length) {
-        this.deleteIndexedData(data)
-        .catch((cause) => console.warn(cause));
+        this.deleteIndexedData(data).catch((cause) => {});
       }
     }, 25);
   }
@@ -288,8 +289,7 @@ class UrlIndexer extends HTMLElement {
     if (!p) {
       return;
     }
-    p.then(() => console.info('URL index cleared'))
-    .catch((cause) => console.warn(cause));
+    p.catch((cause) => {});
   }
 
   //
@@ -323,11 +323,11 @@ class UrlIndexer extends HTMLElement {
   createSchema(e) {
     // DO NOT CALL `this` HERE
     const db = e.target.result;
-    const store = db.createObjectStore('urls', {keyPath: 'id'});
-    store.createIndex('url', 'url', {unique: false});
-    store.createIndex('requestId', 'requestId', {unique: false});
-    store.createIndex('fullUrl', 'fullUrl', {unique: false});
-    store.createIndex('type', 'type', {unique: false});
+    const store = db.createObjectStore('urls', { keyPath: 'id' });
+    store.createIndex('url', 'url', { unique: false });
+    store.createIndex('requestId', 'requestId', { unique: false });
+    store.createIndex('fullUrl', 'fullUrl', { unique: false });
+    store.createIndex('type', 'type', { unique: false });
   }
 
   /**
@@ -345,23 +345,23 @@ class UrlIndexer extends HTMLElement {
     let toRemove;
     let db;
     return this.openSearchStore()
-    .then((instance) => {
-      db = instance;
-      return this._getIndexedDataAll(db, requests.map((i) => i.id));
-    })
-    .then((result) => {
-      const data = this._processIndexedRequests(requests, result);
-      toRemove = data.remove;
-      if (data.index.length) {
-        return this._storeIndexes(db, data.index);
-      }
-    })
-    .then(() => {
-      if (toRemove.length) {
-        return this._removeRedundantIndexes(db, toRemove);
-      }
-    })
-    .then(() => this._notifyIndexFinished());
+      .then((instance) => {
+        db = instance;
+        return this._getIndexedDataAll(db, requests.map((i) => i.id));
+      })
+      .then((result) => {
+        const data = this._processIndexedRequests(requests, result);
+        toRemove = data.remove;
+        if (data.index.length) {
+          return this._storeIndexes(db, data.index);
+        }
+      })
+      .then(() => {
+        if (toRemove.length) {
+          return this._removeRedundantIndexes(db, toRemove);
+        }
+      })
+      .then(() => this._notifyIndexFinished());
   }
 
   _processIndexedRequests(requests, map) {
@@ -381,10 +381,12 @@ class UrlIndexer extends HTMLElement {
   }
 
   _notifyIndexFinished() {
-    this.dispatchEvent(new CustomEvent('request-indexing-finished', {
-      bubbles: true,
-      composed: true
-    }));
+    this.dispatchEvent(
+      new CustomEvent('request-indexing-finished', {
+        bubbles: true,
+        composed: true
+      })
+    );
   }
 
   /**
@@ -395,22 +397,22 @@ class UrlIndexer extends HTMLElement {
   deleteIndexedData(ids) {
     let database;
     return this.openSearchStore()
-    .then((db) => {
-      database = db;
-      return this._getIndexedDataAll(db, ids);
-    })
-    .then((map) => {
-      let items = [];
-      Object.keys(map).forEach((rid) => {
-        const list = map[rid];
-        if (list.length) {
-          items = items.concat(list);
+      .then((db) => {
+        database = db;
+        return this._getIndexedDataAll(db, ids);
+      })
+      .then((map) => {
+        let items = [];
+        Object.keys(map).forEach((rid) => {
+          const list = map[rid];
+          if (list.length) {
+            items = items.concat(list);
+          }
+        });
+        if (items.length) {
+          return this._removeRedundantIndexes(database, items);
         }
       });
-      if (items.length) {
-        return this._removeRedundantIndexes(database, items);
-      }
-    });
   }
 
   /**
@@ -419,14 +421,13 @@ class UrlIndexer extends HTMLElement {
    * @return {Promise}
    */
   deleteIndexedType(type) {
-    return this.openSearchStore()
-    .then((db) => {
+    return this.openSearchStore().then((db) => {
       const tx = db.transaction('urls', 'readwrite');
       return new Promise((resolve, reject) => {
         tx.oncomplete = () => resolve();
-        tx.onerror = (e) => {
-          console.warn('Unable to clear index by type.', e);
-          reject();
+        tx.onerror = () => {
+          // console.warn('Unable to clear index by type.', e);
+          reject(new Error('Transaction error'));
         };
         const store = tx.objectStore('urls');
         const keyRange = window.IDBKeyRange.only(type);
@@ -449,8 +450,7 @@ class UrlIndexer extends HTMLElement {
    * @return {Promise}
    */
   clearIndexedData() {
-    return this.openSearchStore()
-    .then((db) => {
+    return this.openSearchStore().then((db) => {
       return new Promise((resolve, reject) => {
         const tx = db.transaction('urls', 'readwrite');
         const store = tx.objectStore('urls');
@@ -488,7 +488,7 @@ class UrlIndexer extends HTMLElement {
       const store = tx.objectStore('urls');
       const result = {};
       tx.onerror = () => {
-        console.warn('Transaction error: _getIndexedDataAll');
+        // console.warn('Transaction error: _getIndexedDataAll');
         resolve(result);
       };
       tx.oncomplete = () => {
@@ -523,7 +523,7 @@ class UrlIndexer extends HTMLElement {
    */
   _prepareRequestIndexData(request, indexed) {
     const result = [];
-    const {id, url} = request;
+    const { id, url } = request;
     const type = this._normalizeType(request.type);
     let parser;
     try {
@@ -576,8 +576,7 @@ class UrlIndexer extends HTMLElement {
    */
   _createIndexIfMissing(url, id, type, indexed) {
     const lowerUrl = url.toLowerCase();
-    const index = indexed.findIndex((item) =>
-      item.url.toLowerCase() === lowerUrl);
+    const index = indexed.findIndex((item) => item.url.toLowerCase() === lowerUrl);
     if (index !== -1) {
       indexed.splice(index, 1);
       return;
@@ -600,8 +599,7 @@ class UrlIndexer extends HTMLElement {
    * already exists.
    */
   _getUrlObject(request, indexed) {
-    return this._createIndexIfMissing(request.url, request.id,
-      request.type, indexed);
+    return this._createIndexIfMissing(request.url, request.id, request.type, indexed);
   }
   /**
    * Creates an index object for authority part of the url,
@@ -731,8 +729,7 @@ class UrlIndexer extends HTMLElement {
    */
   query(query, opts) {
     opts = opts || {};
-    return this.openSearchStore()
-    .then((db) => {
+    return this.openSearchStore().then((db) => {
       const type = this._normalizeType(opts.type);
       if (opts.detailed) {
         return this._searchIndexOf(db, query, type);
@@ -754,7 +751,7 @@ class UrlIndexer extends HTMLElement {
    * @return {Promise}
    */
   _searchIndexOf(db, q, type) {
-    console.debug('Performing search using "indexof" algorithm');
+    // console.debug('Performing search using "indexof" algorithm');
     const lowerNeedle = q.toLowerCase();
     return new Promise((resolve) => {
       // performance.mark('search-key-scan-2-start');
@@ -762,7 +759,7 @@ class UrlIndexer extends HTMLElement {
       const store = tx.objectStore('urls');
       const results = {};
       tx.onerror = () => {
-        console.warn('Transaction error');
+        // console.warn('Transaction error');
         resolve(results);
       };
       tx.oncomplete = () => {
@@ -813,7 +810,7 @@ class UrlIndexer extends HTMLElement {
    * @return {Promise}
    */
   _searchCasing(db, q, type) {
-    console.debug('Performing search using "casing" algorithm');
+    // console.debug('Performing search using "casing" algorithm');
     const lowerNeedle = q.toLowerCase();
     return new Promise((resolve) => {
       // performance.mark('search-casing-start');
@@ -821,7 +818,7 @@ class UrlIndexer extends HTMLElement {
       const store = tx.objectStore('urls');
       const results = {};
       tx.onerror = () => {
-        console.warn('Query index transaction error');
+        // console.warn('Query index transaction error');
         resolve(results);
       };
       tx.oncomplete = () => {
@@ -855,8 +852,7 @@ class UrlIndexer extends HTMLElement {
           return;
         }
         const upperNeedle = q.toUpperCase();
-        const nextNeedle = this._nextCasing(keyUrl, keyUrl, upperNeedle,
-          lowerNeedle);
+        const nextNeedle = this._nextCasing(keyUrl, keyUrl, upperNeedle, lowerNeedle);
         if (nextNeedle) {
           cursor.continue(nextNeedle);
         }
@@ -873,10 +869,10 @@ class UrlIndexer extends HTMLElement {
    * @return {String|undefined}
    */
   _nextCasing(key, lowerKey, upperNeedle, lowerNeedle) {
-    let length = Math.min(key.length, lowerNeedle.length);
+    const length = Math.min(key.length, lowerNeedle.length);
     let llp = -1;
     for (let i = 0; i < length; ++i) {
-      let lwrKeyChar = lowerKey[i];
+      const lwrKeyChar = lowerKey[i];
       if (lwrKeyChar === lowerNeedle[i]) {
         continue;
       }
@@ -888,8 +884,7 @@ class UrlIndexer extends HTMLElement {
           return key.substr(0, i) + lowerNeedle[i] + upperNeedle.substr(i + 1);
         }
         if (llp >= 0) {
-          return key.substr(0, llp) + lowerKey[llp] +
-            upperNeedle.substr(llp + 1);
+          return key.substr(0, llp) + lowerKey[llp] + upperNeedle.substr(llp + 1);
         }
         return;
       }
@@ -902,8 +897,7 @@ class UrlIndexer extends HTMLElement {
       if (llp < 0) {
         return;
       } else {
-        return key.substr(0, llp) + lowerNeedle[llp] +
-          upperNeedle.substr(llp + 1);
+        return key.substr(0, llp) + lowerNeedle[llp] + upperNeedle.substr(llp + 1);
       }
     }
   }
@@ -921,50 +915,52 @@ class UrlIndexer extends HTMLElement {
   reindexSaved() {
     /* global PouchDB */
     const pdb = new PouchDB('saved-requests');
-    return pdb.allDocs({
-      // jscs:disable
-      include_docs: true
-      // jscs:enable
-    })
-    .then((response) => {
-      const rows = response.rows;
-      if (!rows.length) {
-        return;
-      }
-      const data = rows.map((item) => {
-        const doc = item.doc;
-        return {
-          id: doc._id,
-          url: doc.url,
-          type: 'saved'
-        };
+    return pdb
+      .allDocs({
+        // jscs:disable
+        include_docs: true
+        // jscs:enable
+      })
+      .then((response) => {
+        const rows = response.rows;
+        if (!rows.length) {
+          return;
+        }
+        const data = rows.map((item) => {
+          const doc = item.doc;
+          return {
+            id: doc._id,
+            url: doc.url,
+            type: 'saved'
+          };
+        });
+        return this.index(data);
       });
-      return this.index(data);
-    });
   }
 
   reindexHistory() {
     const pdb = new PouchDB('history-requests');
-    return pdb.allDocs({
-      // jscs:disable
-      include_docs: true
-      // jscs:enable
-    })
-    .then((response) => {
-      const rows = response.rows;
-      if (!rows.length) {
-        return;
-      }
-      const data = rows.map((item) => {
-        const doc = item.doc;
-        return {
-          id: doc._id,
-          url: doc.url,
-          type: 'history'
-        };
+    return pdb
+      .allDocs({
+        // jscs:disable
+        include_docs: true
+        // jscs:enable
+      })
+      .then((response) => {
+        const rows = response.rows;
+        if (!rows.length) {
+          return;
+        }
+        const data = rows.map((item) => {
+          const doc = item.doc;
+          return {
+            id: doc._id,
+            url: doc.url,
+            type: 'history'
+          };
+        });
+        return this.index(data);
       });
-      return this.index(data);
-    });
   }
 }
 window.customElements.define('url-indexer', UrlIndexer);
