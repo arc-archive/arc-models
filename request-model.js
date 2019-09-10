@@ -12,6 +12,7 @@ the License.
 */
 import { RequestBaseModel } from './request-base-model.js';
 import { PayloadProcessor } from '@advanced-rest-client/arc-electron-payload-processor/payload-processor-esm.js';
+/* eslint-disable require-atomic-updates */
 /**
  * Event based access to saved and history request datastore.
  *
@@ -199,32 +200,41 @@ class RequestModel extends RequestBaseModel {
     e.preventDefault();
     e.stopPropagation();
     const { request, projects, options } = e.detail;
+    e.detail.result = this.saveRequestProject(request, projects, options);
+  }
+  /**
+   * Saves requests with project data.
+   * This is actual implementation of `save-request` events.
+   *
+   * @param {Object} request Request object to store.
+   * @param {?Array<String>} projects List of project names to create with this request
+   * and attach it to the request object.
+   * @param {?Object} options Save request options. Currently only `isDrive`
+   * is supported
+   * @return {Promise} A promise resolved to updated request object
+   */
+  async saveRequestProject(request, projects, options) {
     if (!request._id) {
       request._id = this.uuid.generate();
     }
-    let p;
+    let projectIds;
     if (projects && projects.length) {
-      p = this._createProjects(projects, request._id);
-    } else {
-      p = Promise.resolve();
+      projectIds = await this.createRequestProjects(projects, request._id);
     }
-    e.detail.result = p
-    .then((projectIds) => {
-      if (!request.projects) {
-        request.projects = [];
+    if (!request.projects) {
+      request.projects = [];
+    }
+    if (request.legacyProject) {
+      if (request.projects.indexOf(request.legacyProject) === -1) {
+        request.projects.push(request.legacyProject);
       }
-      if (request.legacyProject) {
-        if (request.projects.indexOf(request.legacyProject) === -1) {
-          request.projects.push(request.legacyProject);
-        }
-        delete request.legacyProject;
-      }
-      if (projectIds) {
-        request.projects = request.projects.concat(projectIds);
-      }
-      request.type = 'saved';
-      return this.saveRequest(request, options);
-    });
+      delete request.legacyProject;
+    }
+    if (projectIds) {
+      request.projects = request.projects.concat(projectIds);
+    }
+    request.type = 'saved';
+    return await this.saveRequest(request, options);
   }
   /**
    * Create projects from project names.
@@ -234,7 +244,7 @@ class RequestModel extends RequestBaseModel {
    * @param {?String} requestId Request ID to add to the projects.
    * @return {Promise<Array<String>>} Promise resolved to list of project IDs
    */
-  _createProjects(names, requestId) {
+  async createRequestProjects(names, requestId) {
     const requests = [];
     if (requestId) {
       requests.push(requestId);
@@ -247,25 +257,23 @@ class RequestModel extends RequestBaseModel {
         name
       };
     });
-    return this.projectDb.bulkDocs(projects)
-    .then((response) => {
-      const result = [];
-      for (let i = 0, len = response.length; i < len; i++) {
-        const r = response[i];
-        if (r.error) {
-          this._handleException(r, true);
-          continue;
-        }
-        const project = projects[i];
-        project._rev = r.rev;
-        project._id = r.id;
-        this._fireUpdated('project-object-changed', {
-          project: project
-        });
-        result[result.length] = r.id;
+    const response = await this.projectDb.bulkDocs(projects);
+    const result = [];
+    for (let i = 0, len = response.length; i < len; i++) {
+      const r = response[i];
+      if (r.error) {
+        this._handleException(r, true);
+        continue;
       }
-      return result;
-    });
+      const project = projects[i];
+      project._rev = r.rev;
+      project._id = r.id;
+      this._fireUpdated('project-object-changed', {
+        project: project
+      });
+      result[result.length] = r.id;
+    }
+    return result;
   }
   /**
    * Handler for `save-history` object. It computes payload to savable state
@@ -281,7 +289,16 @@ class RequestModel extends RequestBaseModel {
     }
     e.preventDefault();
     e.stopPropagation();
-    const request = e.detail.request;
+    const { request } = e.detail;
+    e.detail.result = this.saveHistory(request);
+  }
+  /**
+   * Stores a history obvject in the data store, taking care of `_rev`
+   * property read.
+   * @param {Object} request The request object to store
+   * @return {Promise} A promise resolved to the updated request object.
+   */
+  async saveHistory(request) {
     if (!request._id) {
       const d = new Date();
       d.setHours(0, 0, 0, 0);
@@ -292,20 +309,21 @@ class RequestModel extends RequestBaseModel {
     }
     request.type = 'history';
     const db = this.getDatabase(request.type);
-    e.detail.result = db.get(request._id)
-    .catch((e) => {
-      if (e.status === 404) {
+    let doc;
+    try {
+      doc = await db.get(request._id);
+    } catch (e) {
+      if (e.status !== 404) {
+        this._handleException(e);
         return;
       }
-      this._handleException(e);
-    })
-    .then((dbRequest) => {
-      if (dbRequest) {
-        request._rev = dbRequest._rev;
-      }
-      return this.saveRequest(request);
-    });
+    }
+    if (doc) {
+      request._rev = doc._rev;
+    }
+    return await this.saveRequest(request);
   }
+
   /**
    * Saves a request into a data store.
    * It handles payload to string conversion, handles types, and syncs request

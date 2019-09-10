@@ -1,6 +1,6 @@
 import { fixture, assert } from '@open-wc/testing';
 import { DataGenerator } from '@advanced-rest-client/arc-data-generator/arc-data-generator.js';
-import sinon from 'sinon/pkg/sinon-esm.js';
+import * as sinon from 'sinon/pkg/sinon-esm.js';
 import '../../request-model.js';
 
 describe('<request-model> - Save request', () => {
@@ -425,7 +425,7 @@ describe('<request-model> - Save request', () => {
       });
     });
 
-    describe('_createProjects()', function() {
+    describe('createRequestProjects()', function() {
       let element;
       const names = ['a', 'b', 'c'];
       const requestId = 'test-id';
@@ -439,7 +439,7 @@ describe('<request-model> - Save request', () => {
       afterEach(() => databaseCleanup());
 
       it('Creates a list of projects from names', function() {
-        return element._createProjects(names)
+        return element.createRequestProjects(names)
         .then(() => DataGenerator.getDatastoreProjectsData())
         .then((list) => {
           assert.lengthOf(list, 3, 'Has 3 items');
@@ -450,7 +450,7 @@ describe('<request-model> - Save request', () => {
       });
 
       it('Adds a request id to the project', function() {
-        return element._createProjects(names, requestId)
+        return element.createRequestProjects(names, requestId)
         .then(() => DataGenerator.getDatastoreProjectsData())
         .then((list) => {
           assert.lengthOf(list, 3, 'Has 3 items');
@@ -470,7 +470,7 @@ describe('<request-model> - Save request', () => {
         clearSaved = true;
         // clearProjects = true;
         element = await basicFixture();
-        return element._createProjects(['a', 'b', 'c'], createProjectRequestId)
+        return element.createRequestProjects(['a', 'b', 'c'], createProjectRequestId)
         .then((data) => {
           projects = data;
         });
