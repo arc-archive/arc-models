@@ -11,7 +11,7 @@ WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
 License for the specific language governing permissions and limitations under
 the License.
 */
-import {RequestBaseModel} from './request-base-model.js';
+import { RequestBaseModel } from './request-base-model.js';
 /**
  * Events based access to projects datastore.
  *
@@ -169,7 +169,6 @@ import {RequestBaseModel} from './request-base-model.js';
  * }
  * ```
  *
- * @polymer
  * @customElement
  * @memberof LogicElements
  * @extends RequestBaseModel
@@ -219,11 +218,6 @@ class ProjectModel extends RequestBaseModel {
       return;
     }
     this._cancelEvent(e);
-    if (!e.detail.id) {
-      e.detail.result = Promise.reject(
-        new Error('Project "id" property must be set.'));
-      return;
-    }
     e.detail.result = this.readProject(e.detail.id, e.detail.rev)
     .catch((e) => this._handleException(e));
   }
@@ -236,11 +230,7 @@ class ProjectModel extends RequestBaseModel {
       return;
     }
     this._cancelEvent(e);
-    const {projects} = e.detail;
-    if (!projects || !projects.length) {
-      e.detail.result = Promise.reject(new Error('The "projects" property is required'));
-      return;
-    }
+    const { projects } = e.detail;
     e.detail.result = this.updateBulk(projects);
   }
   /**
@@ -275,10 +265,13 @@ class ProjectModel extends RequestBaseModel {
    * @param {Array<Object>} projects List of requests to update.
    * @return {Promise}
    */
-  updateBulk(projects) {
+  async updateBulk(projects) {
+    if (!projects || !projects.length) {
+      throw new Error('The "projects" property is required');
+    }
     this._normalizeProjects(projects);
-    return this.projectDb.bulkDocs(projects)
-    .then((response) => this._processUpdateBulkResponse(projects, response));
+    const response = await this.projectDb.bulkDocs(projects)
+    return this._processUpdateBulkResponse(projects, response);
   }
   /**
    * Processes datastore response after calling `updateBulk()` function.
@@ -293,7 +286,7 @@ class ProjectModel extends RequestBaseModel {
       const project = projects[i];
       if (r.error) {
         this._handleException(r, true);
-        result.push(Object.assign({error: true}, project));
+        result.push(Object.assign({ error: true }, project));
         continue;
       }
       const oldRev = project._rev;
@@ -317,17 +310,15 @@ class ProjectModel extends RequestBaseModel {
    * response to specific projects
    * @return {Promise} A promise resolved to a list of projects.
    */
-  listProjects(ids) {
+  async listProjects(ids) {
     const opts = {
-      // jscs:disable
       include_docs: true
-      // jscs:enable
     };
     if (ids && ids.length) {
       opts.keys = ids;
     }
-    return this.projectDb.allDocs(opts)
-    .then((result) => result.rows.map((item) => item.doc));
+    const result = await this.projectDb.allDocs(opts)
+    return result.rows.map((item) => item.doc);
   }
   /**
    * Handles object save / update
@@ -338,34 +329,33 @@ class ProjectModel extends RequestBaseModel {
       return;
     }
     this._cancelEvent(e);
+    const { project } = e.detail;
+    e.detail.result = this._saveHandler(project);
+  }
 
-    const project = e.detail.project;
+  async _saveHandler(project) {
     if (!project || !project._id) {
-      e.detail.result = Promise.reject(
-        new Error('The "project" property is missing'));
-      return;
+      throw new Error('The "project" property is missing');
     }
     const db = this.projectDb;
-    let p;
     if (!project._rev) {
-      p = db.get(project._id)
-      .catch((e) => {
-        if (e.status === 404) {
-          // create new
-          return {};
+      try {
+        const doc = await db.get(project._id);
+        project = Object.assign({}, doc, project);
+      } catch (e) {
+        if (e.status !== 404) {
+          this._handleException(e);
+          return;
         }
-        this._handleException(e);
-      });
-    } else {
-      p = Promise.resolve({});
+      }
     }
-    e.detail.result = p
-    .then((result) => {
-      result = Object.assign({}, result, project);
-      return this.updateProject(result);
-    })
-    .catch((e) => this._handleException(e));
+    try {
+      return await this.updateProject(project);
+    } catch (e) {
+      this._handleException(e)
+    }
   }
+
   /**
    * Deletes the object from the datastore.
    * @param {CustomEvent} e
@@ -376,12 +366,8 @@ class ProjectModel extends RequestBaseModel {
     }
     this._cancelEvent(e);
 
-    const id = e.detail.id;
-    if (!id) {
-      e.detail.result = Promise.reject(new Error('Missing "id" property.'));
-      return;
-    }
-    e.detail.result = this.removeProject(id, e.detail.rev)
+    const { id, rev } = e.detail;
+    e.detail.result = this.removeProject(id, rev)
     .catch((e) => this._handleException(e));
   }
   /**

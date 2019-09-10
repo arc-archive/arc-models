@@ -11,10 +11,11 @@ WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
 License for the specific language governing permissions and limitations under
 the License.
 */
-import {ArcBaseModel} from './base-model.js';
+import { ArcBaseModel } from './base-model.js';
 import '@advanced-rest-client/pouchdb-quick-search/dist/pouchdb.quick-search.min.js';
 /* global PouchQuickSearch */
 PouchDB.plugin(PouchQuickSearch);
+/* eslint-disable require-atomic-updates */
 /**
  * A base class for Request and Projects` models.
  *
@@ -34,7 +35,6 @@ export class RequestBaseModel extends ArcBaseModel {
    * @return {PouchDB} Reference to legacy projects datastore
    */
   get projectDb() {
-    /* global PouchDB */
     return new PouchDB('legacy-projects');
   }
 
@@ -63,14 +63,10 @@ export class RequestBaseModel extends ArcBaseModel {
    * @param {String} type Either `saved-requests` or `history-requests`
    * @return {Promise}
    */
-  deleteModel(type) {
-    try {
-      const db = this.getDatabase(type);
-      return db.destroy()
-      .then(() => this._notifyModelDestroyed(type));
-    } catch (e) {
-      return Promise.reject(e);
-    }
+  async deleteModel(type) {
+    const db = this.getDatabase(type);
+    await db.destroy();
+    this._notifyModelDestroyed(type);
   }
   /**
    * Reads an entry from the datastore.
@@ -80,12 +76,15 @@ export class RequestBaseModel extends ArcBaseModel {
    * revision.
    * @return {Promise} Promise resolved to a datastore object.
    */
-  readProject(id, rev) {
+  async readProject(id, rev) {
+    if (!id) {
+      throw new Error('Project "id" property must be set.');
+    }
     const opts = {};
     if (rev) {
       opts.rev = rev;
     }
-    return this.projectDb.get(id, opts);
+    return await this.projectDb.get(id, opts);
   }
   /**
    * Updates / saves a project object in the datastore.
@@ -94,18 +93,16 @@ export class RequestBaseModel extends ArcBaseModel {
    * @param {Object} project A project to save / update
    * @return {Promise} Resolved promise to project object with updated `_rev`
    */
-  updateProject(project) {
+  async updateProject(project) {
     project.updated = Date.now();
     const oldRev = project._rev;
-    return this.projectDb.put(project)
-    .then((result) => {
-      project._rev = result.rev;
-      this._fireUpdated('project-object-changed', {
-        project: project,
-        oldRev: oldRev
-      });
-      return project;
+    const result = await this.projectDb.put(project);
+    project._rev = result.rev;
+    this._fireUpdated('project-object-changed', {
+      project: project,
+      oldRev: oldRev
     });
+    return project;
   }
 
   /**
@@ -116,24 +113,21 @@ export class RequestBaseModel extends ArcBaseModel {
    * @param {?String} rev Specific revision to read. Defaults to latest revision.
    * @return {Promise} Promise resolved to a new `_rev` property of deleted object.
    */
-  removeProject(id, rev) {
-    let promise;
-    if (!rev) {
-      promise = this.readProject(id)
-      .then((obj) => rev = obj._rev);
-    } else {
-      promise = Promise.resolve();
+  async removeProject(id, rev) {
+    if (!id) {
+      throw new Error('Missing "id" property.');
     }
-    return promise
-    .then(() => this.projectDb.remove(id, rev))
-    .then((response) => {
-      const detail = {
-        id: id,
-        rev: response.rev,
-        oldRev: rev
-      };
-      this._fireUpdated('project-object-deleted', detail);
-      return response.rev;
-    });
+    if (!rev) {
+      const obj = await this.readProject(id);
+      rev = obj._rev;
+    }
+    const response = await this.projectDb.remove(id, rev);
+    const detail = {
+      id: id,
+      rev: response.rev,
+      oldRev: rev
+    };
+    this._fireUpdated('project-object-deleted', detail);
+    return response.rev;
   }
 }
