@@ -330,10 +330,14 @@ class ProjectModel extends RequestBaseModel {
     }
     this._cancelEvent(e);
     const { project } = e.detail;
-    e.detail.result = this._saveHandler(project);
+    e.detail.result = this.saveProject(project);
   }
-
-  async _saveHandler(project) {
+  /**
+   * Updates project object taking care of `_rew` value read if missing.
+   * @param {Object} project Project object to update.
+   * @return {Promise}
+   */
+  async saveProject(project) {
     if (!project || !project._id) {
       throw new Error('The "project" property is missing');
     }
