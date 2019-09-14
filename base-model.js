@@ -41,9 +41,7 @@ export class ArcBaseModel extends HTMLElement {
     /* global PouchDB */
     const opts = {};
     if (this.revsLimit) {
-      // jscs:disable
       opts.revs_limit = this.revsLimit;
-      // jscs:enable
     }
     return new PouchDB(this.name, opts);
   }
@@ -111,12 +109,12 @@ export class ArcBaseModel extends HTMLElement {
    * @param {?String} rev Specific revision to read. Defaults to latest revision.
    * @return {Promise} Promise resolved to a datastore object.
    */
-  read(id, rev) {
+  async read(id, rev) {
     const opts = {};
     if (rev) {
       opts.rev = rev;
     }
-    return this.db.get(id, opts);
+    return await this.db.get(id, opts);
   }
   /**
    * Computes past mindnight for given timestamp.
@@ -173,7 +171,6 @@ export class ArcBaseModel extends HTMLElement {
         fatal: true
       }
     }));
-    console.warn(this.constructor.name, e);
     if (!noThrow) {
       throw e;
     }
@@ -183,13 +180,9 @@ export class ArcBaseModel extends HTMLElement {
    * Note that `name` property must be set before calling this function.
    * @return {Promise}
    */
-  deleteModel() {
-    try {
-      return this.db.destroy()
-      .then(() => this._notifyModelDestroyed(this.name));
-    } catch (e) {
-      return Promise.reject(e);
-    }
+  async deleteModel() {
+    await this.db.destroy()
+    this._notifyModelDestroyed(this.name);
   }
   /**
    * Notifies the application that the model has been removed and data sestroyed.

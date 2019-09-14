@@ -11,7 +11,8 @@ WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
 License for the specific language governing permissions and limitations under
 the License.
 */
-import {ArcBaseModel} from './base-model.js';
+import { ArcBaseModel } from './base-model.js';
+/* eslint-disable require-atomic-updates */
 /**
  * Model for host rules.
  *
@@ -65,18 +66,28 @@ export class HostRulesModel extends ArcBaseModel {
    * @param {Object} rule A rule object to save / update
    * @return {Promise} Resolved promise to updated object with updated `_rev`
    */
-  update(rule) {
+  async update(rule) {
     rule.updated = Date.now();
+    const db = this.db;
+    if (!rule._rev) {
+      try {
+        const doc = await db.get(rule._id);
+        rule._rev = doc._rev;
+      } catch (e) {
+        if (e.status !== 404) {
+          this._handleException(e);
+          return;
+        }
+      }
+    }
     const oldRev = rule._rev;
-    return this.db.put(rule)
-    .then((result) => {
-      rule._rev = result.rev;
-      this._fireUpdated('host-rules-changed', {
-        rule: rule,
-        oldRev: oldRev
-      });
-      return rule;
+    const result = await this.db.put(rule);
+    rule._rev = result.rev;
+    this._fireUpdated('host-rules-changed', {
+      rule,
+      oldRev
     });
+    return rule;
   }
   /**
    * Updates / saves the host rule object in the datastore.
@@ -85,32 +96,30 @@ export class HostRulesModel extends ArcBaseModel {
    * @param {Array<Object>} rules List of rules to save / update
    * @return {Promise} Resolved promise to the result of Pouch DB operation
    */
-  updateBulk(rules) {
+  async updateBulk(rules) {
     rules.forEach((item) => {
       item.updated = Date.now();
     });
-    return this.db.bulkDocs(rules)
-    .then((response) => {
-      for (let i = 0, len = response.length; i < len; i++) {
-        const r = response[i];
-        if (r.error) {
-          this._handleException(r, true);
-          continue;
-        }
-        const rule = rules[i];
-        const oldRev = rule._rev;
-        rule._rev = r.rev;
-        if (!rule._id) {
-          rule._id = r.id;
-        }
-        const detail = {
-          rule,
-          oldRev: oldRev
-        };
-        this._fireUpdated('host-rules-changed', detail);
+    const response = await this.db.bulkDocs(rules);
+    for (let i = 0, len = response.length; i < len; i++) {
+      const r = response[i];
+      if (r.error) {
+        this._handleException(r, true);
+        continue;
       }
-      return response;
-    });
+      const rule = rules[i];
+      const oldRev = rule._rev;
+      rule._rev = r.rev;
+      if (!rule._id) {
+        rule._id = r.id;
+      }
+      const detail = {
+        rule,
+        oldRev
+      };
+      this._fireUpdated('host-rules-changed', detail);
+    }
+    return response;
   }
 
   /**
@@ -121,45 +130,35 @@ export class HostRulesModel extends ArcBaseModel {
    * @param {?String} rev Specific revision to read. Defaults to latest revision.
    * @return {Promise} Promise resolved to a new `_rev` property of deleted object.
    */
-  remove(id, rev) {
-    let promise;
+  async remove(id, rev) {
     if (!rev) {
-      promise = this.read(id)
-      .then((obj) => rev = obj._rev);
-    } else {
-      promise = Promise.resolve();
+      const obj = await this.read(id);
+      rev = obj._rev;
     }
-    return promise
-    .then(() => this.db.remove(id, rev))
-    .then((response) => {
-      const detail = {
-        id: id,
-        rev: response.rev,
-        oldRev: rev
-      };
-      this._fireUpdated('host-rules-deleted', detail);
-      return response.rev;
-    });
+    const response = await this.db.remove(id, rev);
+    const detail = {
+      id,
+      rev: response.rev,
+      oldRev: rev
+    };
+    this._fireUpdated('host-rules-deleted', detail);
+    return response.rev;
   }
   /**
    * Lists all existing host rules
    *
    * @return {Promise} Promise resolved to list of the host rules
    */
-  list() {
+  async list() {
     const queryOptions = {
-      // jscs:disable
       include_docs: true
-      // jscs:enable
     };
-    return this.db.allDocs(queryOptions)
-    .then((response) => {
-      let data = [];
-      if (response && response.rows.length > 0) {
-        data = response.rows.map((item) => item.doc);
-      }
-      return data;
-    });
+    const response = await this.db.allDocs(queryOptions)
+    let data = [];
+    if (response && response.rows.length > 0) {
+      data = response.rows.map((item) => item.doc);
+    }
+    return data;
   }
   /**
    * Handler for `host-rules-insert` custom event. Creates rules in bulk.
@@ -174,7 +173,7 @@ export class HostRulesModel extends ArcBaseModel {
     }
     e.preventDefault();
     e.stopPropagation();
-    const rules = e.detail.rules;
+    const { rules } = e.detail;
     if (!rules) {
       e.detail.result = Promise.reject(new Error('The "rules" property is missing'));
       return;
@@ -188,31 +187,12 @@ export class HostRulesModel extends ArcBaseModel {
     }
     e.preventDefault();
     e.stopPropagation();
-    const rule = e.detail.rule;
+    const { rule } = e.detail;
     if (!rule || !rule._id) {
       e.detail.result = Promise.reject(new Error('The "rule" property is missing'));
       return;
     }
-    const db = this.db;
-    let p;
-    if (!rule._rev) {
-      p = db.get(rule._id)
-      .catch((e) => {
-        if (e.status === 404) {
-          // create new
-          return {};
-        } else {
-          this._handleException(e);
-        }
-      });
-    } else {
-      p = Promise.resolve({});
-    }
-    e.detail.result = p
-    .then((result) => {
-      result = Object.assign({}, result, rule);
-      return this.update(result);
-    })
+    e.detail.result = this.update(rule)
     .catch((e) => this._handleException(e));
   }
 
@@ -223,7 +203,7 @@ export class HostRulesModel extends ArcBaseModel {
     e.preventDefault();
     e.stopPropagation();
 
-    const id = e.detail.id;
+    const { id } = e.detail;
     if (!id) {
       e.detail.result = Promise.reject(new Error('Missing "id" property.'));
       return;
