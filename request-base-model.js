@@ -12,9 +12,12 @@ License for the specific language governing permissions and limitations under
 the License.
 */
 import { ArcBaseModel } from './base-model.js';
+import 'pouchdb/dist/pouchdb.js';
 import '@advanced-rest-client/pouchdb-quick-search/dist/pouchdb.quick-search.min.js';
 /* global PouchQuickSearch */
-PouchDB.plugin(PouchQuickSearch);
+if (typeof PouchDB !== 'undefined' && typeof PouchQuickSearch !== 'undefined') {
+  PouchDB.plugin(PouchQuickSearch);
+}
 /* eslint-disable require-atomic-updates */
 /**
  * A base class for Request and Projects` models.
