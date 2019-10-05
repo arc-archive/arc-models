@@ -12,13 +12,12 @@ License for the specific language governing permissions and limitations under
 the License.
 */
 
-import './project-model.js';
-import './request-model.js';
-import './url-history-model.js';
-import './websocket-url-history-model.js';
-import './rest-api-model.js';
-import './host-rules-model.js';
-import './variables-model.js';
 import './auth-data-model.js';
 import './host-rules-model.js';
+import './project-model.js';
+import './request-model.js';
+import './rest-api-model.js';
+import './url-history-model.js';
 import './url-indexer.js';
+import './variables-model.js';
+import './websocket-url-history-model.js';

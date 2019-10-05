@@ -11,7 +11,8 @@ WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
 License for the specific language governing permissions and limitations under
 the License.
 */
-import {ArcBaseModel} from './base-model.js';
+import { ArcBaseModel } from './base-model.js';
+/* eslint-disable require-atomic-updates */
 /**
  * Events based access to websockets URL history datastore.
  *
@@ -68,11 +69,6 @@ export class WebsocketUrlHistoryModel extends ArcBaseModel {
     e.preventDefault();
     e.stopPropagation();
 
-    if (!e.detail.url) {
-      e.detail.result = Promise.reject(new Error('The "url" property is missing.'));
-      return;
-    }
-
     e.detail.result = this.read(e.detail.url)
     .catch((e) => {
       if (e.status === 404) {
@@ -97,8 +93,7 @@ export class WebsocketUrlHistoryModel extends ArcBaseModel {
       e.detail.result = Promise.reject(new Error('Missing "_id" property.'));
       return;
     }
-    const obj = Object.assign({}, e.detail.item);
-    e.detail.result = this.update(obj)
+    e.detail.result = this.update(e.detail.item)
     .catch((e) => this._handleException(e));
   }
 
@@ -109,17 +104,16 @@ export class WebsocketUrlHistoryModel extends ArcBaseModel {
    * @param {Object} obj A project to save / update
    * @return {Promise} Resolved promise to project object with updated `_rev`
    */
-  update(obj) {
+  async update(obj) {
+    obj = Object.assign({}, obj);
     const oldRev = obj._rev;
-    return this.db.put(obj)
-    .then((result) => {
-      obj._rev = result.rev;
-      this._fireUpdated('websocket-url-history-changed', {
-        item: obj,
-        oldRev: oldRev
-      });
-      return obj;
+    const result = await this.db.put(obj);
+    obj._rev = result.rev;
+    this._fireUpdated('websocket-url-history-changed', {
+      item: obj,
+      oldRev: oldRev
     });
+    return obj;
   }
 
   _handleQueryHistory(e) {
@@ -139,11 +133,7 @@ export class WebsocketUrlHistoryModel extends ArcBaseModel {
     }
     e.preventDefault();
     e.stopPropagation();
-    const q = e.detail.q;
-    if (q === undefined) {
-      e.detail.result = Promise.reject(new Error('Missing "q" property.'));
-      return;
-    }
+    const { q } = e.detail;
     e.detail.result = this.list(q)
     .catch((e) => this._handleException(e));
   }
@@ -153,23 +143,22 @@ export class WebsocketUrlHistoryModel extends ArcBaseModel {
    * @param {?String} query A partial url to match results.
    * @return {Promise} A promise resolved to a list of PouchDB documents.
    */
-  list(query) {
+  async list(query) {
     const db = this.db;
-    return db.allDocs()
-    .then((response) => {
-      const promises = [];
-      response.rows.forEach((item) => {
-        if (query && item.id.indexOf(query) === -1) {
-          return;
-        }
-        promises.push(db.get(item.id));
-      });
-      return Promise.all(promises);
-    })
-    .then((result) => {
-      result = result.map((item) => this._computeTime(item));
-      return result.sort(this._sortFunction);
-    });
+    const response = await db.allDocs();
+    const { rows } = response;
+    const result = [];
+    for (let i = 0, len = rows.length; i < len; i++) {
+      const item = rows[i];
+      if (query && item.id.indexOf(query) === -1) {
+        continue;
+      }
+      const doc = await db.get(item.id);
+      this._computeTime(doc);
+      result.push(doc);
+    }
+    result.sort(this._sortFunction);
+    return result;
   }
 
   _sortFunction(a, b) {

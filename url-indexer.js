@@ -278,18 +278,31 @@ class UrlIndexer extends HTMLElement {
     if (!Array.isArray(store)) {
       store = [store];
     }
-    let p;
-    if (store.indexOf('saved-requests') !== -1 || store.indexOf('saved') !== -1) {
-      p = this.deleteIndexedType('saved');
-    } else if (store.indexOf('history-requests') !== -1 || store.indexOf('history') !== -1) {
-      p = this.deleteIndexedType('history');
-    } else if (store.indexOf('all') !== -1) {
-      p = this.clearIndexedData();
+    return this._deleteStores(store);
+  }
+
+  async _deleteStores(store) {
+    try {
+      if (store.indexOf('saved-requests') !== -1 || store.indexOf('saved') !== -1) {
+        await this.deleteIndexedType('saved');
+      }
+    } catch (_) {
+      // ...
     }
-    if (!p) {
-      return;
+    try {
+      if (store.indexOf('history-requests') !== -1 || store.indexOf('history') !== -1) {
+        await this.deleteIndexedType('history');
+      }
+    } catch (_) {
+      // ...
     }
-    return p.catch((cause) => {});
+    try {
+      if (store.indexOf('all') !== -1) {
+        await this.clearIndexedData();
+      }
+    } catch (_) {
+      // ...
+    }
   }
 
   //
@@ -341,27 +354,17 @@ class UrlIndexer extends HTMLElement {
    * @param {Array} requests List of requests to index.
    * @return {Promise}
    */
-  index(requests) {
-    let toRemove;
-    let db;
-    return this.openSearchStore()
-      .then((instance) => {
-        db = instance;
-        return this._getIndexedDataAll(db, requests.map((i) => i.id));
-      })
-      .then((result) => {
-        const data = this._processIndexedRequests(requests, result);
-        toRemove = data.remove;
-        if (data.index.length) {
-          return this._storeIndexes(db, data.index);
-        }
-      })
-      .then(() => {
-        if (toRemove.length) {
-          return this._removeRedundantIndexes(db, toRemove);
-        }
-      })
-      .then(() => this._notifyIndexFinished());
+  async index(requests) {
+    const db = await this.openSearchStore();
+    const result = await this._getIndexedDataAll(db, requests.map((i) => i.id));
+    const data = this._processIndexedRequests(requests, result);
+    if (data.index.length) {
+      await this._storeIndexes(db, data.index);
+    }
+    if (data.remove.length) {
+      await this._removeRedundantIndexes(db, data.remove);
+    }
+    this._notifyIndexFinished();
   }
 
   _processIndexedRequests(requests, map) {
@@ -394,25 +397,19 @@ class UrlIndexer extends HTMLElement {
    * @param {Array<String>} ids List of request ids to remove.
    * @return {Promise}
    */
-  deleteIndexedData(ids) {
-    let database;
-    return this.openSearchStore()
-      .then((db) => {
-        database = db;
-        return this._getIndexedDataAll(db, ids);
-      })
-      .then((map) => {
-        let items = [];
-        Object.keys(map).forEach((rid) => {
-          const list = map[rid];
-          if (list.length) {
-            items = items.concat(list);
-          }
-        });
-        if (items.length) {
-          return this._removeRedundantIndexes(database, items);
-        }
-      });
+  async deleteIndexedData(ids) {
+    const db = await this.openSearchStore();
+    const map = await this._getIndexedDataAll(db, ids);
+    let items = [];
+    Object.keys(map).forEach((rid) => {
+      const list = map[rid];
+      if (list.length) {
+        items = items.concat(list);
+      }
+    });
+    if (items.length) {
+      await this._removeRedundantIndexes(db, items);
+    }
   }
 
   /**
@@ -727,16 +724,15 @@ class UrlIndexer extends HTMLElement {
    * search on the index. When false it only uses filer like query + '*'.
    * @return {Promise}
    */
-  query(query, opts) {
+  async query(query, opts) {
     opts = opts || {};
-    return this.openSearchStore().then((db) => {
-      const type = this._normalizeType(opts.type);
-      if (opts.detailed) {
-        return this._searchIndexOf(db, query, type);
-      } else {
-        return this._searchCasing(db, query, type);
-      }
-    });
+    const db = await this.openSearchStore();
+    const type = this._normalizeType(opts.type);
+    if (opts.detailed) {
+      return await this._searchIndexOf(db, query, type);
+    } else {
+      return await this._searchCasing(db, query, type);
+    }
   }
   /**
    * Performance search on the data store using `indexOf` on the primary key.

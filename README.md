@@ -105,7 +105,7 @@ class SampleElement extends PolymerElement {
 customElements.define('sample-element', SampleElement);
 ```
 
-### Development
+## Development
 
 ```sh
 git clone https://github.com/@advanced-rest-client/arc-models

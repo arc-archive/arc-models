@@ -110,6 +110,9 @@ export class ArcBaseModel extends HTMLElement {
    * @return {Promise} Promise resolved to a datastore object.
    */
   async read(id, rev) {
+    if (!id) {
+      throw new Error('Missing identifier argument.');
+    }
     const opts = {};
     if (rev) {
       opts.rev = rev;

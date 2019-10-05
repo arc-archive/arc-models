@@ -1,6 +1,6 @@
 import { fixture, assert } from '@open-wc/testing';
 import { DataGenerator } from '@advanced-rest-client/arc-data-generator/arc-data-generator.js';
-import sinon from 'sinon/pkg/sinon-esm.js';
+import * as sinon from 'sinon/pkg/sinon-esm.js';
 import '../../request-model.js';
 import '../../url-indexer.js';
 import { DbHelper } from '../url-indexer/db-helper.js';
@@ -17,13 +17,6 @@ describe('<request-model> - Event based', () => {
 
   describe('Events API for requests', function() {
     const databaseType = 'saved';
-    // See https://gist.github.com/haroldtreen/5f1055eee5fcf01da3e0e15b8ec86bf6
-    function isError(e) {
-      if (typeof e === 'string') {
-        return Promise.reject(new Error(e));
-      }
-      return Promise.resolve(e);
-    }
 
     describe('request-object-changed', function() {
       after(function() {
@@ -112,16 +105,16 @@ describe('<request-model> - Event based', () => {
         });
       });
 
-      it('Rejects promise when save object is not set', function() {
+      it('Rejects promise when save object is not set', async () => {
         const e = fire();
-        return e.detail.result
-        .then(() => {
-          return Promise.reject('Expected method to reject.');
-        })
-        .catch(isError)
-        .then((err) => {
-          assert.isDefined(err);
-        });
+        let called;
+        try {
+          await e.detail.result;
+        } catch (cause) {
+          assert.typeOf(cause, 'error');
+          called = true;
+        }
+        assert.isTrue(called);
       });
     });
 
@@ -337,7 +330,9 @@ describe('<request-model> - Event based', () => {
         const e = fire('non-existing-id', databaseType);
         try {
           await e.detail.result;
-        } catch (_) {}
+        } catch (_) {
+          // ...
+        }
         assert.isTrue(spy.called);
       });
     });
@@ -404,16 +399,16 @@ describe('<request-model> - Event based', () => {
         });
       });
 
-      it('Rejects promise when no ID', function() {
+      it('Rejects promise when no ID', async () => {
         const e = fire();
-        return e.detail.result
-        .then(() => {
-          return Promise.reject('Expected method to reject.');
-        })
-        .catch(isError)
-        .then((err) => {
-          assert.isDefined(err);
-        });
+        let called;
+        try {
+          await e.detail.result;
+        } catch (cause) {
+          assert.typeOf(cause, 'error');
+          called = true;
+        }
+        assert.isTrue(called);
       });
 
       it('Ignores cancelable events', function() {

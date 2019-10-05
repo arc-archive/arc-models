@@ -139,7 +139,8 @@ declare namespace LogicElements {
      * @param id Request ID
      */
     _deleteIndexDebounce(id: String|null): void;
-    _deleteModelHandler(e: any): void;
+    _deleteModelHandler(e: any): any;
+    _deleteStores(store: any): any;
 
     /**
      * Opens search index data store.
@@ -364,6 +365,7 @@ declare namespace LogicElements {
     reindex(type: any): any;
     reindexSaved(): any;
     reindexHistory(): any;
+    _renindex(type: any): any;
   }
 }
 

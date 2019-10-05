@@ -11,7 +11,7 @@ WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
 License for the specific language governing permissions and limitations under
 the License.
 */
-import {ArcBaseModel} from './base-model.js';
+import { ArcBaseModel } from './base-model.js';
 /**
  * Model for variables
  *
@@ -95,7 +95,7 @@ export class VariablesModel extends ArcBaseModel {
       return;
     }
     this._cancelEvent(e);
-    const {environment} = e.detail;
+    const { environment } = e.detail;
     e.detail.result = this.listEnvironments()
     .then((list) => {
       if (!list) {
@@ -167,7 +167,7 @@ export class VariablesModel extends ArcBaseModel {
       });
     }
     return promise
-    .then((doc) => this.environmentDb[!!(doc._id) ? 'put' : 'post'](doc))
+    .then((doc) => this.environmentDb[doc._id ? 'put' : 'post'](doc))
     .then((result) => {
       if (!result.ok) {
         this._handleException(result);

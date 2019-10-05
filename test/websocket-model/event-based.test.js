@@ -1,8 +1,8 @@
 import { fixture, assert } from '@open-wc/testing';
 import { DataGenerator } from '@advanced-rest-client/arc-data-generator/arc-data-generator.js';
-import sinon from 'sinon/pkg/sinon-esm.js';
+import * as sinon from 'sinon/pkg/sinon-esm.js';
 import '../../websocket-url-history-model.js';
-
+/* eslint-disable require-atomic-updates */
 describe('<websocket-url-history-model> - Events API', function() {
   async function basicFixture() {
     return /** @type {WebsocketUrlHistoryModel} */ (await fixture(
@@ -10,14 +10,6 @@ describe('<websocket-url-history-model> - Events API', function() {
   }
 
   describe('Events API for websocket url history', function() {
-    // See https://gist.github.com/haroldtreen/5f1055eee5fcf01da3e0e15b8ec86bf6
-    function isError(e) {
-      if (typeof e === 'string') {
-        return Promise.reject(new Error(e));
-      }
-      return Promise.resolve(e);
-    }
-
     function fireChanged(item) {
       const e = new CustomEvent('websocket-url-history-changed', {
         detail: {
@@ -126,30 +118,30 @@ describe('<websocket-url-history-model> - Events API', function() {
         });
       });
 
-      it('Rejects promise when save object is not set', function() {
+      it('Rejects promise when save object is not set', async () => {
         const e = fireChanged();
-        return e.detail.result
-        .then(() => {
-          return Promise.reject('Expected method to reject.');
-        })
-        .catch(isError)
-        .then((err) => {
-          assert.isDefined(err);
-        });
+        let called;
+        try {
+          await e.detail.result;
+        } catch (cause) {
+          assert.typeOf(cause, 'error');
+          called = true;
+        }
+        assert.isTrue(called);
       });
 
-      it('Rejects promise when save object has no id', function() {
+      it('Rejects promise when save object has no id', async () => {
         const cp = Object.assign({}, dataObj);
         cp._id = undefined;
         const e = fireChanged(cp);
-        return e.detail.result
-        .then(() => {
-          return Promise.reject('Expected method to reject.');
-        })
-        .catch(isError)
-        .then((err) => {
-          assert.isDefined(err);
-        });
+        let called;
+        try {
+          await e.detail.result;
+        } catch (cause) {
+          assert.typeOf(cause, 'error');
+          called = true;
+        }
+        assert.isTrue(called);
       });
 
       it('Handles exceptions', () => {
@@ -270,16 +262,16 @@ describe('<websocket-url-history-model> - Events API', function() {
         });
       });
 
-      it('Rejects promise when no ID', function() {
+      it('Rejects promise when no ID', async () => {
         const e = fire();
-        return e.detail.result
-        .then(() => {
-          return Promise.reject('Expected method to reject.');
-        })
-        .catch(isError)
-        .then((err) => {
-          assert.isDefined(err);
-        });
+        let called;
+        try {
+          await e.detail.result;
+        } catch (cause) {
+          assert.typeOf(cause, 'error');
+          called = true;
+        }
+        assert.isTrue(called);
       });
 
       it('Returns undefined when no object', function() {
@@ -405,16 +397,11 @@ describe('<websocket-url-history-model> - Events API', function() {
         });
       });
 
-      it('Rejects when query is not set', function() {
+      it('Returns all items when no query', async () => {
         const e = fire();
-        let called = false;
-        return e.detail.result
-        .catch(() => {
-          called = true;
-        })
-        .then(() => {
-          assert.isTrue(called);
-        });
+        const result = await e.detail.result;
+        assert.typeOf(result, 'array', 'Result is an array');
+        assert.lengthOf(result, 1, 'Length is OK');
       });
 
       it('Handles exceptions', () => {

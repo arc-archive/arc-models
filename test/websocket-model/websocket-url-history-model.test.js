@@ -3,7 +3,7 @@ import '../../websocket-url-history-model.js';
 
 describe('<websocket-url-history-model>', function() {
   async function basicFixture() {
-    return /** @type {WebsocketUrlHistoryModel} */ (await fixture('<websocket-url-history-model></websocket-url-history-model>'));
+    return (await fixture('<websocket-url-history-model></websocket-url-history-model>'));
   }
 
   describe('_sortFunction()', function() {

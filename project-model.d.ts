@@ -233,6 +233,13 @@ declare namespace LogicElements {
     _handleObjectSave(e: CustomEvent|null): void;
 
     /**
+     * Updates project object taking care of `_rew` value read if missing.
+     *
+     * @param project Project object to update.
+     */
+    saveProject(project: object|null): Promise<any>|null;
+
+    /**
      * Deletes the object from the datastore.
      */
     _handleObjectDelete(e: CustomEvent|null): void;

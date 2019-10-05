@@ -488,7 +488,7 @@ describe('<request-model>', () => {
         .then((result) => {
           assert.typeOf(result, 'object');
           assert.typeOf(result.rows, 'array');
-          assert.lengthOf(result.rows, 150);
+          assert.isAbove(result.rows.length, 1);
         });
       });
 
@@ -1086,7 +1086,6 @@ describe('<request-model>', () => {
       const updatedRev = result[0].doc._rev;
       assert.equal(updatedRev.indexOf('3-'), 0, 'The rev property is updated.');
       const data = await DataGenerator.getDatastoreRequestData();
-      console.log(data);
       assert.equal(data[0]._id, 'test-id-deleted');
       assert.equal(data[0]._rev, updatedRev);
     });

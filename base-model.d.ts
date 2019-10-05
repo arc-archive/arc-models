@@ -19,12 +19,13 @@ export {ArcBaseModel};
  */
 declare class ArcBaseModel extends
   EventsTargetMixin(
-  Object) {
+  HTMLElement) {
 
   /**
    * Note, the element does not include PouchDB to the document!
    */
   readonly db: PouchDB|null;
+  eventsTarget: any;
 
   /**
    * Useful to generate uuid string.
@@ -37,9 +38,19 @@ declare class ArcBaseModel extends
    * @param revsLimit Limit number of revisions on the data store.
    */
   constructor(dbname: String|null, revsLimit: Number|null);
+  connectedCallback(): void;
   disconnectedCallback(): void;
   _attachListeners(node: any): void;
   _detachListeners(node: any): void;
+
+  /**
+   * Removes old handlers (if any) and attaches listeners on new event
+   * event target.
+   *
+   * @param eventsTarget Event target to set handlers on. If not set it
+   * will set handlers on the `window` object.
+   */
+  _eventsTargetChanged(eventsTarget: Node|null): void;
 
   /**
    * Reads an entry from the datastore.
