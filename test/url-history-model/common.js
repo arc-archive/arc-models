@@ -1,5 +1,4 @@
-const UrlHistoryHelper = {};
-
+export const UrlHistoryHelper = {};
 UrlHistoryHelper.fire = function(name, detail, node) {
   const e = new CustomEvent(name, {
     bubbles: true,

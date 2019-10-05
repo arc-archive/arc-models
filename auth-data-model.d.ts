@@ -5,14 +5,16 @@
  *   https://github.com/Polymer/tools/tree/master/packages/gen-typescript-declarations
  *
  * To modify these typings, edit the source file(s):
- *   auth-data-model.html
+ *   auth-data-model.js
  */
 
 
 // tslint:disable:variable-name Describing an API that's defined elsewhere.
 // tslint:disable:no-any describes the API as best we are able today
 
-/// <reference path="base-model.d.ts" />
+import {ArcBaseModel} from './base-model.js';
+
+export {AuthDataModel};
 
 declare namespace LogicElements {
 
@@ -69,6 +71,9 @@ declare namespace LogicElements {
   }
 }
 
-interface HTMLElementTagNameMap {
-  "auth-data-model": LogicElements.AuthDataModel;
+declare global {
+
+  interface HTMLElementTagNameMap {
+    "auth-data-model": LogicElements.AuthDataModel;
+  }
 }

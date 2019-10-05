@@ -5,14 +5,14 @@
  *   https://github.com/Polymer/tools/tree/master/packages/gen-typescript-declarations
  *
  * To modify these typings, edit the source file(s):
- *   project-model.html
+ *   project-model.js
  */
 
 
 // tslint:disable:variable-name Describing an API that's defined elsewhere.
 // tslint:disable:no-any describes the API as best we are able today
 
-/// <reference path="request-base-model.d.ts" />
+import {RequestBaseModel} from './request-base-model.js';
 
 declare namespace LogicElements {
 
@@ -31,14 +31,13 @@ declare namespace LogicElements {
    *
    * Each handled event contains the `result` property on the `detail` object. It
    * contains a `Promise` object with a result of the operation. Also, for update
-   * / delete events the same non-cancelable event is fired.
+   * or delete events the same non-cancelable event is fired.
    *
    * Events handled by this element are cancelled and propagation of the event is
    * stopped.
    *
    * See model description here:
-   * https://github.com/advanced-rest-client/api-components-api/blob/master/docs/
-   * arc-models.md#arcproject
+   * https://github.com/advanced-rest-client/api-components-api/blob/master/docs/arc-models.md#arcproject
    *
    * Supported operations:
    *
@@ -62,7 +61,7 @@ declare namespace LogicElements {
    * ##### Example
    *
    * ```javascript
-   * var event = new CustomEvent('project-read', {
+   * const event = new CustomEvent('project-read', {
    *    detail: { id: 'some-id' },
    *    bubbles: true,
    *    composed: true,
@@ -85,7 +84,7 @@ declare namespace LogicElements {
    * ##### Example
    *
    * ```javascript
-   * var event = new CustomEvent('project-object-changed', {
+   * const event = new CustomEvent('project-object-changed', {
    *    detail: { project: {...} },
    *    bubbles: true,
    *    composed: true,
@@ -111,7 +110,7 @@ declare namespace LogicElements {
    * ##### Example
    *
    * ```javascript
-   * var event = new CustomEvent('project-object-deleted', {
+   * const event = new CustomEvent('project-object-deleted', {
    *    detail: { id: 'some-id' },
    *    bubbles: true,
    *    composed: true,
@@ -137,7 +136,7 @@ declare namespace LogicElements {
    * ##### Example
    *
    * ```javascript
-   * var event = new CustomEvent('project-model-query', {
+   * const event = new CustomEvent('project-model-query', {
    *    detail: {}, // THIS MUST BE SET
    *    bubbles: true,
    *    composed: true,
@@ -160,7 +159,7 @@ declare namespace LogicElements {
    * ##### Example
    *
    * ```javascript
-   * var event = new CustomEvent('project-update-bulk', {
+   * const event = new CustomEvent('project-update-bulk', {
    *    detail: {
    *      projects: [{name: 'my project'}]
    *    },
@@ -234,6 +233,13 @@ declare namespace LogicElements {
     _handleObjectSave(e: CustomEvent|null): void;
 
     /**
+     * Updates project object taking care of `_rew` value read if missing.
+     *
+     * @param project Project object to update.
+     */
+    saveProject(project: object|null): Promise<any>|null;
+
+    /**
      * Deletes the object from the datastore.
      */
     _handleObjectDelete(e: CustomEvent|null): void;
@@ -245,6 +251,9 @@ declare namespace LogicElements {
   }
 }
 
-interface HTMLElementTagNameMap {
-  "project-model": LogicElements.ProjectModel;
+declare global {
+
+  interface HTMLElementTagNameMap {
+    "project-model": LogicElements.ProjectModel;
+  }
 }

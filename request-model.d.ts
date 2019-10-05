@@ -5,16 +5,16 @@
  *   https://github.com/Polymer/tools/tree/master/packages/gen-typescript-declarations
  *
  * To modify these typings, edit the source file(s):
- *   request-model.html
+ *   request-model.js
  */
 
 
 // tslint:disable:variable-name Describing an API that's defined elsewhere.
 // tslint:disable:no-any describes the API as best we are able today
 
-/// <reference path="request-base-model.d.ts" />
-/// <reference path="../app-pouchdb-quick-search/pouchdb-quick-search.d.ts" />
-/// <reference path="../arc-electron-payload-processor/payload-processor.d.ts" />
+import {RequestBaseModel} from './request-base-model.js';
+
+import {PayloadProcessor} from '@advanced-rest-client/arc-electron-payload-processor/payload-processor-esm.js';
 
 declare namespace LogicElements {
 
@@ -49,7 +49,7 @@ declare namespace LogicElements {
    * - projects - Optional, Array of strings, List of project names to create
    * with this request and associate with the request object.
    * - options - Optional, map of additional options. Currently only `isDrive` is
-   * supported. When set `export-google-drive` is dispatched. If the event is not
+   * supported. When set `google-drive-data-save` is dispatched. If the event is not
    * handled by the application the save flow fails.
    *
    * ```javascript
@@ -142,8 +142,6 @@ declare namespace LogicElements {
      * List of fields to index in the saved store.
      */
     readonly savedIndexes: Array<String|null>|null;
-    _workerRequestId: number|null|undefined;
-    _workerPromises: any[]|null|undefined;
 
     /**
      * @param dbname Name of the data store
@@ -187,6 +185,19 @@ declare namespace LogicElements {
     _saveRequestHandler(e: CustomEvent|null): void;
 
     /**
+     * Saves requests with project data.
+     * This is actual implementation of `save-request` events.
+     *
+     * @param request Request object to store.
+     * @param projects List of project names to create with this request
+     * and attach it to the request object.
+     * @param options Save request options. Currently only `isDrive`
+     * is supported
+     * @returns A promise resolved to updated request object
+     */
+    saveRequestProject(request: object|null, projects: Array<String|null>|null, options: object|null): Promise<any>|null;
+
+    /**
      * Create projects from project names.
      * It is used when creating a request with a new project.
      *
@@ -194,7 +205,7 @@ declare namespace LogicElements {
      * @param requestId Request ID to add to the projects.
      * @returns Promise resolved to list of project IDs
      */
-    _createProjects(names: Array<String|null>|null, requestId: String|null): Promise<Array<String|null>|null>;
+    createRequestProjects(names: Array<String|null>|null, requestId: String|null): Promise<Array<String|null>|null>;
 
     /**
      * Handler for `save-history` object. It computes payload to savable state
@@ -203,6 +214,15 @@ declare namespace LogicElements {
      * method. If such ID already exists the object is updated.
      */
     _saveHistoryHandler(e: CustomEvent|null): void;
+
+    /**
+     * Stores a history obvject in the data store, taking care of `_rev`
+     * property read.
+     *
+     * @param request The request object to store
+     * @returns A promise resolved to the updated request object.
+     */
+    saveHistory(request: object|null): Promise<any>|null;
 
     /**
      * Saves a request into a data store.
@@ -307,7 +327,7 @@ declare namespace LogicElements {
      * @returns Revision ID of the object before a change registered in
      * `deletedRevision`
      */
-    _findUndeletedRevision(revs: object|null, deletedRevision: object|null): String|null;
+    _findUndeletedRevision(revs: object|null, deletedRevision: String|null): String|null;
 
     /**
      * Handler for request read event request.
@@ -318,6 +338,7 @@ declare namespace LogicElements {
      * Handles onject save / update
      */
     _handleObjectSave(e: CustomEvent|null): void;
+    _saveObjectHanlder(type: any, request: any): any;
 
     /**
      * Handler for `request-objects-changed` event. Updates requests in bulk operation.
@@ -333,6 +354,14 @@ declare namespace LogicElements {
      * Queries for a list of projects.
      */
     _handleObjectsDelete(e: CustomEvent|null): void;
+
+    /**
+     * Removes documents in a bulk operation.
+     *
+     * @param type Database type
+     * @param items List of keys to remove
+     */
+    bulkDelete(type: String|null, items: Array<String|null>|null): Promise<any>|null;
 
     /**
      * handlers `request-objects-undeleted` event to restore deleted items
@@ -358,8 +387,8 @@ declare namespace LogicElements {
 
     /**
      * Saves the request on Google Drive.
-     * It sends `drive-request-save` event to call a component responsible
-     * for saving the request.
+     * It dispatches `google-drive-data-save` event to call a component responsible
+     * for saving the request on Google Drive.
      *
      * This do nothing if `opts.drive is not set.`
      *
@@ -514,6 +543,9 @@ declare namespace LogicElements {
   }
 }
 
-interface HTMLElementTagNameMap {
-  "request-model": LogicElements.RequestModel;
+declare global {
+
+  interface HTMLElementTagNameMap {
+    "request-model": LogicElements.RequestModel;
+  }
 }
