@@ -184,7 +184,7 @@ export class ArcBaseModel extends HTMLElement {
    * @return {Promise}
    */
   async deleteModel() {
-    await this.db.destroy()
+    await this.db.destroy();
     this._notifyModelDestroyed(this.name);
   }
   /**
