@@ -12,7 +12,7 @@
 // tslint:disable:variable-name Describing an API that's defined elsewhere.
 // tslint:disable:no-any describes the API as best we are able today
 
-import {ArcBaseModel} from './base-model.js';
+import {ArcBaseModel} from './src/ArcBaseModel.js';
 
 export {AuthDataModel};
 

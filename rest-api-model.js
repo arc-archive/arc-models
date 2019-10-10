@@ -11,7 +11,7 @@ WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
 License for the specific language governing permissions and limitations under
 the License.
 */
-import {ArcBaseModel} from './base-model.js';
+import { ArcBaseModel } from './src/ArcBaseModel.js';
 
 /**
  * Database query options for pagination.
@@ -202,7 +202,6 @@ export class RestApiModel extends ArcBaseModel {
           this._fireUpdated('api-index-changed', detail);
           toReturn.push(detail.apiInfo);
         } else {
-          console.warn('Update error', result[i]);
           toReturn.push(docs[i]);
         }
       });
@@ -434,7 +433,7 @@ export class RestApiModel extends ArcBaseModel {
     }
     e.preventDefault();
     e.stopPropagation();
-    const {data, indexId, version} = e.detail;
+    const { data, indexId, version } = e.detail;
     if (!indexId) {
       e.detail.result = Promise.reject(new Error('The "indexId" property is missing.'));
       return;
@@ -481,7 +480,7 @@ export class RestApiModel extends ArcBaseModel {
     }
     e.preventDefault();
     e.stopPropagation();
-    const {id, version} = e.detail;
+    const { id, version } = e.detail;
     if (!id) {
       e.detail.result = Promise.reject(new Error('The "id" property is missing.'));
       return;
@@ -509,7 +508,7 @@ export class RestApiModel extends ArcBaseModel {
     }
     e.preventDefault();
     e.stopPropagation();
-    const {items} = e.detail;
+    const { items } = e.detail;
     if (!items) {
       e.detail.result = Promise.reject(new Error('The "items" property is missing.'));
       return;

@@ -1,10 +1,9 @@
 import { fixture, assert } from '@open-wc/testing';
-import sinon from 'sinon/pkg/sinon-esm.js';
-import { ArcBaseModel } from '../../base-model.js';
-
+import * as sinon from 'sinon/pkg/sinon-esm.js';
+import { ArcBaseModel } from '../../src/ArcBaseModel.js';
+/* eslint-disable require-atomic-updates */
 const STORE_NAME = 'todo-list';
 /**
- * @polymer
  * @customElement
  * @memberof LogicElements
  */
