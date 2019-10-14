@@ -1,5 +1,6 @@
 import { fixture, assert } from '@open-wc/testing';
 import { DataGenerator } from '@advanced-rest-client/arc-data-generator/arc-data-generator.js';
+import * as sinon from 'sinon/pkg/sinon-esm.js';
 import 'chance/dist/chance.min.js';
 import '../../client-certificate-model.js';
 
@@ -353,6 +354,19 @@ describe('<client-certificate-model>', () => {
       });
       document.body.dispatchEvent(e);
       assert.isUndefined(e.detail.result);
+    });
+
+    it('dispatches non-cancelable insert event', async () => {
+      const item = DataGenerator.generateClientCertificate();
+      const spy = sinon.spy();
+      element.addEventListener('client-certificate-insert', spy);
+      const id = await element.insert(item);
+      assert.isTrue(spy.called, 'Event is dispatched');
+      const e = spy.args[0][0];
+      assert.isFalse(e.cancelable, 'event is not cancelable');
+      assert.equal(e.detail._id, id, 'has insert id');
+      assert.typeOf(e.detail._rev, 'string', 'has insert _rev');
+      assert.equal(e.detail.type, item.type, 'has insert type');
     });
   });
 

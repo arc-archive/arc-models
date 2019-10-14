@@ -191,6 +191,10 @@ export class ClientCertificateModel extends ArcBaseModel {
       data.created = Date.now();
     }
     const res = await this.db.post(data);
+    delete data.dataKey;
+    data._id = res.id;
+    data._rev = res.rev;
+    this._fireUpdated('client-certificate-insert', data);
     return res.id;
   }
   /**
