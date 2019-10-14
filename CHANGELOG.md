@@ -303,3 +303,21 @@
 
 
 
+## [3.0.2](https://github.com/advanced-rest-client/arc-models/compare/0.1.17...3.0.2) (2019-10-14)
+
+
+### Bug Fixes
+
+* fixes [#1](https://github.com/advanced-rest-client/arc-models/issues/1) - support for client certificates data store ([d41e25c](https://github.com/advanced-rest-client/arc-models/commit/d41e25c))
+* fixing drive export event ([27722b9](https://github.com/advanced-rest-client/arc-models/commit/27722b9))
+* fixing linter errors ([26ffe22](https://github.com/advanced-rest-client/arc-models/commit/26ffe22))
+* fixing missing undelete object ([9f9765b](https://github.com/advanced-rest-client/arc-models/commit/9f9765b))
+
+
+### Features
+
+* adding certificate insert event dispatch after success ([ba7a08e](https://github.com/advanced-rest-client/arc-models/commit/ba7a08e))
+* making saveProject public ([f646bbe](https://github.com/advanced-rest-client/arc-models/commit/f646bbe))
+
+
+
