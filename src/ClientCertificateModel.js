@@ -237,11 +237,12 @@ export class ClientCertificateModel extends ArcBaseModel {
   }
   /**
    * Converts incomming data to base64 string.
-   * @param {ArrayBuffer|Buffer} ab
+   * @param {Uint8Array} view
    * @return {String} Safe to store string.
    */
-  bufferToBase64(ab) {
-    return btoa(String.fromCharCode(...ab));
+  bufferToBase64(view) {
+    const str = view.reduce((data, byte) => data + String.fromCharCode(byte), '');
+    return btoa(str);
   }
   /**
    * Converts base64 string to Uint8Array.
