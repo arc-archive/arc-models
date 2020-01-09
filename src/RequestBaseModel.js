@@ -11,7 +11,7 @@ WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
 License for the specific language governing permissions and limitations under
 the License.
 */
-import { ArcBaseModel } from './src/ArcBaseModel.js';
+import { ArcBaseModel } from './ArcBaseModel.js';
 import 'pouchdb/dist/pouchdb.js';
 import '@advanced-rest-client/pouchdb-quick-search/dist/pouchdb.quick-search.min.js';
 /* global PouchQuickSearch */
