@@ -21,3 +21,4 @@ import './url-history-model.js';
 import './url-indexer.js';
 import './variables-model.js';
 import './websocket-url-history-model.js';
+import './client-certificate-model.js';

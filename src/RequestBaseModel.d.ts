@@ -5,14 +5,14 @@
  *   https://github.com/Polymer/tools/tree/master/packages/gen-typescript-declarations
  *
  * To modify these typings, edit the source file(s):
- *   request-base-model.js
+ *   src/RequestBaseModel.js
  */
 
 
 // tslint:disable:variable-name Describing an API that's defined elsewhere.
 // tslint:disable:no-any describes the API as best we are able today
 
-import {ArcBaseModel} from './src/ArcBaseModel.js';
+import {ArcBaseModel} from './ArcBaseModel.js';
 
 export {RequestBaseModel};
 

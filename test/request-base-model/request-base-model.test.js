@@ -1,7 +1,7 @@
 import { fixture, assert } from '@open-wc/testing';
-import sinon from 'sinon/pkg/sinon-esm.js';
-import {DataGenerator} from '@advanced-rest-client/arc-data-generator/arc-data-generator.js';
-import {RequestBaseModel} from '../../request-base-model.js';
+import sinon from 'sinon';
+import { DataGenerator } from '@advanced-rest-client/arc-data-generator/arc-data-generator.js';
+import { RequestBaseModel } from '../../src/RequestBaseModel.js';
 
 /**
  * @polymer
