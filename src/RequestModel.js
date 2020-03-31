@@ -1201,7 +1201,7 @@ export class RequestModel extends RequestBaseModel {
     return result;
   }
   /**
-   * Performs data inding using PouchDB api.
+   * Performs data indexing using PouchDB api.
    * This is not the same as URL indexing using `url-indexer`.
    *
    * @param {String} type Data type - saved or history.

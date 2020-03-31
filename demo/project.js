@@ -1,4 +1,4 @@
-import { html, render } from 'lit-html';
+import { html } from 'lit-html';
 import { DataGenerator } from '@advanced-rest-client/arc-data-generator/arc-data-generator.js';
 import { DemoPageBase } from './lib/common.js';
 import '../request-model.js';
@@ -7,76 +7,25 @@ import '../project-model.js';
 export class DemoPage extends DemoPageBase {
   constructor() {
     super();
+    this.componentName = 'arc-models/project-model';
+
+    this.initObservableProperties([
+      'projectData', 'projects', 'results', 'hasResults'
+    ]);
+
     this.genData = this.genData.bind(this);
     this.deleteData = this.deleteData.bind(this);
     this.refreshProjects = this.refreshProjects.bind(this);
     this.getProjectRequests = this.getProjectRequests.bind(this);
     this._selectedProjectHandler = this._selectedProjectHandler.bind(this);
   }
-  get projectData() {
-    return this._projectData;
+
+  get requestModel() {
+    return document.getElementById('rModel');
   }
 
-  set projectData(value) {
-    this._projectData = value;
-    this.render();
-  }
-
-  get projects() {
-    return this._projects;
-  }
-
-  set projects(value) {
-    this._projects = value;
-    this.render();
-  }
-
-  _render() {
-    let { projects, projectData, hasResults, results } = this;
-    if (!projects) {
-      projects = [];
-    }
-    render(html`
-      <header>
-        <h1>Project model demo</h1>
-      </header>
-
-      <request-model id="rModel"></request-model>
-      <project-model id="pModel"></project-model>
-
-      <section class="card centered options">
-        <h2>Data options</h2>
-        <paper-button @click="${this.genData}">Generate data</paper-button>
-        <paper-button @click="${this.deleteData}">Destroy data</paper-button>
-        <paper-button @click="${this.refreshProjects}">Refresh data</paper-button>
-      </section>
-
-      <section class="card centered options">
-        <h2>Select project</h2>
-        <paper-dropdown-menu label="Project name">
-          <paper-listbox slot="dropdown-content" @selected-changed="${this._selectedProjectHandler}">
-          ${projects.map((item) => html`<paper-item>${item.name}</paper-item>`)}
-          </paper-listbox>
-        </paper-dropdown-menu>
-        <paper-button @click="${this.getProjectRequests}">Query requests in project</paper-button>
-      </section>
-
-      ${projectData ? html`<section class="centered card" role="main">
-        <h2>Project details</h2>
-        <p>Name: ${projectData.name}</p>
-        <p>Description: ${projectData.description}</p>
-        <p>Created: ${projectData.created}</p>
-        <p>Updated: ${projectData.updated}</p>
-      </section>` : undefined}
-
-      ${hasResults ? html`<section class="centered card" role="main">
-        <h2>Project requests (${results.length})</h2>
-        ${results.map((item, index) => html`<p>${index}: ${item._id}, ${item.type}</p>`)}
-      </section>` : undefined}
-
-      <paper-toast text="Data is indexed" id="indexOk"></paper-toast>
-      <paper-toast text="Datastore cleared" id="deleteOk"></paper-toast>
-      <paper-toast id="errorToast"></paper-toast>`, document.querySelector('#demo'));
+  get projectModel() {
+    return document.getElementById('pModel');
   }
 
   async genData() {
@@ -85,10 +34,9 @@ export class DemoPage extends DemoPageBase {
       requestsSize: 500
     });
     performance.mark('inserts-start');
-    const rModel = document.getElementById('rModel');
-    const pModel = document.getElementById('pModel');
-    await pModel.updateBulk(data.projects);
-    await rModel.updateBulk('saved', data.requests);
+    const { requestModel, projectModel } = this;
+    await projectModel.updateBulk(data.projects);
+    await requestModel.updateBulk('saved', data.requests);
     await this.refreshProjects();
   }
 
@@ -177,13 +125,95 @@ export class DemoPage extends DemoPageBase {
     toast.text = cause.message;
     toast.opened = true;
   }
+
+  contentTemplate() {
+    return html`
+    <request-model id="rModel"></request-model>
+    <project-model id="pModel"></project-model>
+    <paper-toast text="Data is indexed" id="indexOk"></paper-toast>
+    <paper-toast text="Datastore cleared" id="deleteOk"></paper-toast>
+    <paper-toast id="errorToast"></paper-toast>
+
+    <h2>Arc models / projects model</h2>
+    ${this._demoTemplate()}
+    `;
+  }
+
+  _demoTemplate() {
+    return html`<section class="documentation-section">
+      <h3>Interactive demo</h3>
+      <p>
+        This demo lets you preview the projects model.
+      </p>
+
+      ${this._dataOptsTemplate()}
+      ${this._projectSelectorTemplate()}
+      ${this._projectDetailsTemplate()}
+      ${this._resultsTemplate()}
+
+    </section>`;
+  }
+
+  _dataOptsTemplate() {
+    return html`
+    <section class="card centered options">
+      <h4>Data options</h4>
+      <anypoint-button @click="${this.genData}">Generate data</anypoint-button>
+      <anypoint-button @click="${this.deleteData}">Destroy data</anypoint-button>
+      <anypoint-button @click="${this.refreshProjects}">Refresh data</anypoint-button>
+    </section>`;
+  }
+
+  _projectSelectorTemplate() {
+    const { projects=[] } = this;
+    return html`<section class="card centered options">
+      <h4>Select project</h4>
+      <anypoint-dropdown-menu>
+        <label slot="label">Project name</label>
+        <anypoint-listbox slot="dropdown-content" @selected-changed="${this._selectedProjectHandler}">
+        ${projects.map((item) => html`<anypoint-item>${item.name}</anypoint-item>`)}
+        </anypoint-listbox>
+      </anypoint-dropdown-menu>
+      <anypoint-button @click="${this.getProjectRequests}">Query requests in project</anypoint-button>
+    </section>`;
+  }
+
+  _projectDetailsTemplate() {
+    const { projectData: pd } = this;
+    if (!pd) {
+      return '';
+    }
+    return html`
+    <section class="centered card" role="main">
+      <h4>Project details</h4>
+      <p>Name: ${pd.name}</p>
+      <p>Description: ${pd.description}</p>
+      <p>Created: ${pd.created}</p>
+      <p>Updated: ${pd.updated}</p>
+    </section>
+    `;
+  }
+
+  _resultsTemplate() {
+    if (!this.hasResults) {
+      return '';
+    }
+    const { results } = this;
+    return html`
+    <section class="centered card" role="main">
+      <h4>Project requests (${results.length})</h4>
+      <ol>
+      ${results.map((item) => html`<li>${item._id}, ${item.type}</li>`)}
+      </ol>
+    </section>
+    `;
+  }
 }
 const instance = new DemoPage();
 window._demo = instance;
 instance.render();
+
 window.customElements.whenDefined('request-model')
-    .then(() => {
-      setTimeout(() => {
-        instance.refreshProjects();
-      });
-    });
+.then(() => {
+  setTimeout(() => instance.refreshProjects());
+});

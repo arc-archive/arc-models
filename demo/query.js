@@ -1,4 +1,4 @@
-import { html, render } from 'lit-html';
+import { html } from 'lit-html';
 import { DataGenerator } from '@advanced-rest-client/arc-data-generator/arc-data-generator.js';
 import { DemoPageBase } from './lib/common.js';
 import '../request-model.js';
@@ -8,6 +8,22 @@ import '../url-indexer.js';
 export class DemoPage extends DemoPageBase {
   constructor() {
     super();
+    this.componentName = 'arc-models/request-model';
+
+    this.initObservableProperties([
+      'results', 'q', 'hasResults', 'requestType', 'detailedSearch', 'editRequest',
+      'hasNoFormAssociation'
+    ]);
+    this.q = 'api';
+    this.requestType = 0;
+    this.hasResults = false;
+    this.editRequest = {
+      method: 'GET',
+      url: 'https://178.1.2.5/api/test1',
+      headers: 'Accept: */*',
+      name: ''
+    };
+
     this.generateData = this.generateData.bind(this);
     this.deleteData = this.deleteData.bind(this);
     this.forceIndex = this.forceIndex.bind(this);
@@ -16,74 +32,32 @@ export class DemoPage extends DemoPageBase {
     this._queryInputHandler = this._queryInputHandler.bind(this);
     this._requestTypeHandler = this._requestTypeHandler.bind(this);
     this._detailedHandler = this._detailedHandler.bind(this);
-
-    this.q = 'api';
-    this.requestType = 0;
-    this.hasResults = false;
+    this._saveRequest = this._saveRequest.bind(this);
   }
 
-  get results() {
-    return this._results;
+  get requestModel() {
+    return document.getElementById('rModel');
   }
 
-  set results(value) {
-    this._results = value;
-    this.render();
+  get projectModel() {
+    return document.getElementById('pModel');
   }
 
-  _render() {
-    const { hasResults, results, q } = this;
-    render(html`
-      <header>
-        <h1>Query model demo</h1>
-      </header>
+  get editForm() {
+    return document.getElementById('editForm');
+  }
 
-      <request-model id="rModel"></request-model>
-      <project-model id="pModel"></project-model>
-      <url-indexer id="model" @request-indexing-finished="${this._indexFinished}"></url-indexer>
-
-      <section class="card centered options">
-        <h2>Data options</h2>
-        <paper-button @click="${this.generateData}">Generate data</paper-button>
-        <paper-button @click="${this.deleteData}">Destroy data</paper-button>
-        <paper-button @click="${this.forceIndex}">Force PouchDB index</paper-button>
-      </section>
-
-      <section class="card centered options">
-        <h2>Search options</h2>
-        <paper-dropdown-menu label="Request type">
-          <paper-listbox slot="dropdown-content" @selected-changed="${this._requestTypeHandler}">
-            <paper-item>History and saved</paper-item>
-            <paper-item>History only</paper-item>
-            <paper-item>Saved only</paper-item>
-          </paper-listbox>
-        </paper-dropdown-menu>
-        <div>
-          <paper-checkbox @checked-changed="${this._detailedHandler}">Perform detailed search</paper-checkbox>
-        </div>
-      </section>
-
-      <section class="centered card" role="main">
-        <h2>Search data store</h2>
-        <div class="search-box">
-          <paper-input label="Search term" id="q" name="q" .value="${q}"
-            @input="${this._queryInputHandler}"></paper-input>
-          <paper-button @click="${this.search}">Search</paper-button>
-        </div>
-      </section>
-
-      ${hasResults ? html`<section class="centered card" role="main">
-        <h2>Search Results (${results.length})</h2>
-        ${results.map((item, index) => html`<p>${index}: ${item._id}, ${item.type}</p>`)}
-      </section>` : undefined}
-
-      <paper-toast text="Data is indexed" id="indexOk"></paper-toast>
-      <paper-toast text="Datastore cleared" id="deleteOk"></paper-toast>
-      <paper-toast text="Datastore indexed" id="indexedOk"></paper-toast>`, document.querySelector('#demo'));
+  firstRender() {
+    super.firstRender();
+    const { editForm } = this;
+    if (!editForm.elements.length) {
+      this.hasNoFormAssociation = true;
+    }
   }
 
   async generateData() {
     console.log('Generating data.');
+    performance.mark('inserts-start');
     await this.generateHistory();
     await this.generateSaved();
   }
@@ -94,14 +68,14 @@ export class DemoPage extends DemoPageBase {
   }
 
   async generateHistory() {
+    const { requestModel } = this;
     const data = DataGenerator.generateHistoryRequestsData({
       requestsSize: 100
     });
     console.log('Inserting Requests.');
     performance.mark('requests-inserts-start');
-    const rModel = document.getElementById('rModel');
     try {
-      await rModel.updateBulk('history', data);
+      await requestModel.updateBulk('history', data);
       performance.mark('indexing-start');
       console.log('Data inserted');
       performance.mark('requests-inserts-end');
@@ -114,22 +88,21 @@ export class DemoPage extends DemoPageBase {
   }
 
   async generateSaved() {
+    const { requestModel, projectModel } = this;
     const data = DataGenerator.generateSavedRequestData({
       projectsSize: 25,
       requestsSize: 100
     });
 
-    performance.mark('projects-inserts-start');
-    const rModel = document.getElementById('rModel');
-    const pModel = document.getElementById('pModel');
     console.log('Inserting projects.');
+    performance.mark('projects-inserts-start');
     try {
-      await pModel.updateBulk(data.projects);
+      await projectModel.updateBulk(data.projects);
       performance.mark('projects-inserts-end');
       performance.measure('projects-inserts-end', 'projects-inserts-start');
       console.log('Projects ready. Inserting Requests.');
       performance.mark('requests-inserts-start');
-      await rModel.updateBulk('saved', data.requests);
+      await requestModel.updateBulk('saved', data.requests);
 
       performance.mark('indexing-start');
       console.log('Data inserted');
@@ -159,17 +132,17 @@ export class DemoPage extends DemoPageBase {
   }
 
   _detailedHandler(e) {
-    this.detailedSearch = e.detail.value;
+    this.detailedSearch = e.target.checked;
   }
 
   async forceIndex() {
-    const model = document.getElementById('model');
+    const { requestModel } = this;
     performance.mark('index-history');
-    await model.indexData('history');
+    await requestModel.indexData('history');
     performance.mark('index-history-end');
     performance.measure('index-history-end', 'index-history');
     performance.mark('index-saved');
-    await model.indexData('saved');
+    await requestModel.indexData('saved');
     performance.mark('index-saved-end');
     performance.measure('index-saved-end', 'index-saved');
     this._dumpMeasurements();
@@ -201,6 +174,185 @@ export class DemoPage extends DemoPageBase {
     console.log('Query result', data);
     this.results = data;
     this.hasResults = true;
+  }
+
+  async _saveRequest() {
+    const { editRequest, requestModel, editForm } = this;
+    Array.from(editForm.elements).forEach((item) => {
+      const { name, value } = item;
+      editRequest[name] = value;
+    });
+    const type = editForm.elements[0].value;
+    performance.mark('request-update-start');
+    performance.mark('inserts-start');
+    try {
+      const result = await requestModel.update(type, editRequest);
+      performance.mark('request-update-end');
+      performance.measure('request-update-end', 'request-update-start');
+      performance.mark('indexing-start');
+      this._dumpMeasurements();
+      this.editRequest = { ...result };
+      if (!this.requests) {
+        this.requests = [];
+      }
+      const index = this.requests.findIndex((item) => item._id === result._id);
+      if (index === -1) {
+        this.requests.push(result);
+      } else {
+        this.requests[index] = result;
+      }
+      this.requests = [...this.requests];
+    } catch (e) {
+      console.error(e);
+      this._dumpMeasurements();
+    }
+  }
+
+  contentTemplate() {
+    return html`
+    <request-model id="rModel"></request-model>
+    <project-model id="pModel"></project-model>
+    <url-indexer id="model" @request-indexing-finished="${this._indexFinished}"></url-indexer>
+
+    <paper-toast text="Data is indexed" id="indexOk"></paper-toast>
+    <paper-toast text="Datastore cleared" id="deleteOk"></paper-toast>
+    <paper-toast text="Datastore indexed" id="indexedOk"></paper-toast>
+
+    <h2>Arc models / request model / querying</h2>
+    ${this._demoTemplate()}
+    `;
+  }
+
+  _demoTemplate() {
+    return html`<section class="documentation-section">
+      <h3>Interactive demo</h3>
+      <p>
+        This demo lets you preview the URL indexer model.
+      </p>
+
+      ${this._dataOptsTemplate()}
+      ${this._requestUpdateTemplate()}
+      ${this._searchOptsTemplate()}
+      ${this._searchTemplate()}
+      ${this._resultsTemplate()}
+
+    </section>`;
+  }
+
+  _dataOptsTemplate() {
+    return html`
+    <section class="card centered options">
+      <h4>Data options</h4>
+      <anypoint-button @click="${this.generateData}">Generate data</anypoint-button>
+      <anypoint-button @click="${this.deleteData}">Destroy data</anypoint-button>
+      <anypoint-button @click="${this.forceIndex}">Force PouchDB index</anypoint-button>
+    </section>`;
+  }
+
+  _searchOptsTemplate() {
+    return html`
+    <section class="card centered options">
+      <h4>Search options</h4>
+      <anypoint-dropdown-menu>
+        <label slot="label">Request type</label>
+        <anypoint-listbox
+          slot="dropdown-content"
+          @selected-changed="${this._requestTypeHandler}"
+        >
+          <anypoint-item>History and saved</anypoint-item>
+          <anypoint-item>History only</anypoint-item>
+          <anypoint-item>Saved only</anypoint-item>
+        </anypoint-listbox>
+      </anypoint-dropdown-menu>
+      <div>
+        <anypoint-checkbox
+          @checked-changed="${this._detailedHandler}"
+        >Perform detailed search</anypoint-checkbox>
+      </div>
+    </section>
+    `;
+  }
+
+  _searchTemplate() {
+    const { q } = this;
+    return html`
+    <section class="centered card" role="main">
+      <h4>Search data store</h4>
+      <div class="search-box">
+        <anypoint-input
+          id="q"
+          name="q"
+          .value="${q}"
+          @input="${this._queryInputHandler}"
+        >
+          <label slot="label">Search term</label>
+        </anypoint-input>
+        <anypoint-button @click="${this.search}">Search</anypoint-button>
+      </div>
+    </section>
+    `;
+  }
+
+  _resultsTemplate() {
+    const { hasResults, results } = this;
+    if (!hasResults) {
+      return '';
+    }
+    return html`<section class="centered card" role="main">
+      <h4>Search Results (${results.length})</h4>
+      <ol>
+      ${results.map(this._listItemTemplate)}
+      </ol>
+    </section>`
+  }
+
+  _listItemTemplate(item) {
+    const { _id, name, type } = item;
+    return html`<li>${name ? name : _id}, ${type}</li>`;
+  }
+
+  _requestUpdateTemplate() {
+    const { editRequest: er = {}, hasNoFormAssociation } = this;
+    if (hasNoFormAssociation) {
+      return html`Editing is disabled due to unsupported browser.`;
+    }
+    return html`
+    <section class="card centered options">
+      <h4>Update request</h4>
+      <form method="post" id="editForm">
+        <anypoint-dropdown-menu name="type">
+          <label slot="label">Request type</label>
+          <anypoint-listbox
+            slot="dropdown-content"
+            selected="history"
+            attrforselected="value"
+            id="editorType"
+          >
+            <anypoint-item label="history" value="history">history</anypoint-item>
+            <anypoint-item label="saved" value="saved">saved</anypoint-item>
+          </anypoint-listbox>
+        </anypoint-dropdown-menu>
+
+        <anypoint-input name="method" value="${er.method || ''}">
+          <label slot="label">Method</label>
+        </anypoint-input>
+        <anypoint-input name="url" value="${er.url || ''}">
+          <label slot="label">URL</label>
+        </anypoint-input>
+        <anypoint-input name="headers" value="${er.headers || ''}">
+          <label slot="label">Headers</label>
+        </anypoint-input>
+        <anypoint-input name="name" value="${er.name || ''}">
+          <label slot="label">Name</label>
+        </anypoint-input>
+
+        ${er._id ? html`
+          <p>ID: ${er._id}</p>
+          <p>Rev: ${er._rev}</p>` : ''}
+        <anypoint-button @click="${this._saveRequest}">Save</anypoint-button>
+      </form>
+    </section>
+    `;
   }
 }
 const instance = new DemoPage();
