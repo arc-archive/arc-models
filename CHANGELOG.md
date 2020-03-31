@@ -533,3 +533,43 @@
  [3be09b3](https://github.com/advanced-rest-client/arc-models/commit/3be09b3ebf7b7594f53eb2755b1d8c24e370955e) by Pawel Psztyc
 
 
+<a name="3.1.1"></a>
+## [3.1.1](https://github.com/advanced-rest-client/arc-models/compare/3.0.2...3.1.1) (2020-03-31)
+
+### Build
+
+* bumping version [ed58f5d](https://github.com/advanced-rest-client/arc-models/commit/ed58f5d287bb121f4608a00475430bc0f8b55dd4) by Pawel
+* bumping version [cab2be1](https://github.com/advanced-rest-client/arc-models/commit/cab2be1e48495fe57dc2a2e7dd9bec69b98f611e) by Pawel Psztyc
+
+
+### Continuous integration
+
+* fixing travis configuration [b224f37](https://github.com/advanced-rest-client/arc-models/commit/b224f37f0abad0c8252682af75fd21110f7a3860) by Pawel
+
+
+### Update
+
+* updating demo page [9689a3b](https://github.com/advanced-rest-client/arc-models/commit/9689a3bd036a30c854901e6e2d27652a32d347f1) by Pawel
+* removing git add from lint-staged config [4472060](https://github.com/advanced-rest-client/arc-models/commit/4472060cc2c2f102e18cb1cba44de8d788de77be) by Pawel
+* upgrading dependencies [561c2c0](https://github.com/advanced-rest-client/arc-models/commit/561c2c0911398c6ec1aeec908b692d0e1b7ac77a) by Pawel
+* [ci skip] automated merge master->stage. syncing main branches [8b89d74](https://github.com/advanced-rest-client/arc-models/commit/8b89d74b45a4fceb7dd9e17e33dbc10639d65672) by Ci agent
+* updating dependencies [2407683](https://github.com/advanced-rest-client/arc-models/commit/2407683b9bebd9efb1efa7aa0ca11e855d924638) by Pawel Psztyc
+
+
+### Bug Fixes
+
+* fixing large data transformation in certs model [4b5acf5](https://github.com/advanced-rest-client/arc-models/commit/4b5acf536dfb8571c26d5e4be62631305b7891cf) by Pawel
+
+
+### Refactor
+
+* moving implementation to src/ folder [2f4f21a](https://github.com/advanced-rest-client/arc-models/commit/2f4f21adccd2329a9ccbe307748830f29b0ee408) by Pawel Psztyc
+
+
+### Testing
+
+* adding tests for advanced-rest-client/arc-electron#183 [6fdd77c](https://github.com/advanced-rest-client/arc-models/commit/6fdd77c6c099d41c7925a0816ef879a6486cf0a9) by Pawel
+* removing other browsers from tests as this only works in chrome [e596400](https://github.com/advanced-rest-client/arc-models/commit/e596400e629a0fece07274644cdf9684101faed1) by Pawel Psztyc
+* updating test configuration for SL [22873cc](https://github.com/advanced-rest-client/arc-models/commit/22873ccd123b16ea145143e98fa9cc0a9ab03af9) by Pawel Psztyc
+
+
