@@ -12,6 +12,16 @@ License for the specific language governing permissions and limitations under
 the License.
 */
 import { ArcBaseModel } from './ArcBaseModel.js';
+import { cancelEvent } from './Utils.js';
+
+/* eslint-disable class-methods-use-this */
+/* eslint-disable no-param-reassign */
+
+/** @typedef {import('./VariablesModel').ARCEnvironment} ARCEnvironment */
+/** @typedef {import('./VariablesModel').ARCVariable} ARCVariable */
+/** @typedef {import('./VariablesModel').DeleteEnvironmentResult} DeleteEnvironmentResult */
+/** @typedef {import('./VariablesModel').DeleteVariableResult} DeleteVariableResult */
+
 /**
  * Model for variables
  *
@@ -29,9 +39,6 @@ import { ArcBaseModel } from './ArcBaseModel.js';
  * Each event must be cancelable or it will be ignored.
  * The insert, change and delete events dispatches non cancelable update/delete
  * events. Application should listen for this events to update it's state.
- *
- * @customElement
- * @memberof LogicElements
  */
 export class VariablesModel extends ArcBaseModel {
   constructor() {
@@ -60,7 +67,10 @@ export class VariablesModel extends ArcBaseModel {
     node.removeEventListener('environment-read', this._envReadHandler);
     node.removeEventListener('environment-updated', this._envUpdateHandler);
     node.removeEventListener('environment-deleted', this._envDeleteHandler);
-    node.removeEventListener('environment-list-variables', this._varListHandler);
+    node.removeEventListener(
+      'environment-list-variables',
+      this._varListHandler
+    );
     node.removeEventListener('environment-list', this._envListHandler);
     node.removeEventListener('variable-updated', this._varUpdateHandler);
     node.removeEventListener('variable-deleted', this._varDeleteHandler);
@@ -76,6 +86,7 @@ export class VariablesModel extends ArcBaseModel {
     /* global PouchDB */
     return new PouchDB('variables-environments');
   }
+
   /**
    * Handler to the variables database.
    *
@@ -84,6 +95,7 @@ export class VariablesModel extends ArcBaseModel {
   get variableDb() {
     return new PouchDB('variables');
   }
+
   /**
    * Handler for `environment-read` custom event.
    * Reads environment onject info by it's name.
@@ -93,16 +105,24 @@ export class VariablesModel extends ArcBaseModel {
     if (this._eventCancelled(e)) {
       return;
     }
-    this._cancelEvent(e);
+    cancelEvent(e);
     const { environment } = e.detail;
-    e.detail.result = this.listEnvironments()
-    .then((list) => {
-      if (!list) {
-        return;
-      }
-      return list.find((item) => item.name === environment);
-    });
+    e.detail.result = this.readEnvironment(environment);
   }
+
+  /**
+   * Reads the environment data.
+   * @param {string} environment Environment name to read
+   * @return {Promise<ARCEnvironment>}
+   */
+  async readEnvironment(environment) {
+    const list = await this.listEnvironments();
+    if (!list) {
+      return undefined;
+    }
+    return list.find((item) => item.name === environment);
+  }
+
   /**
    * A handler for the `environment-updated` custom event.
    * Updates the environment in the data store.
@@ -110,13 +130,13 @@ export class VariablesModel extends ArcBaseModel {
    * The `environment-updated` custom event should be cancellable or the event
    * won't be handled at all.
    *
-   @param {CustomEvent} e
+   * @param {CustomEvent} e
    */
   _envUpdateHandler(e) {
     if (this._eventCancelled(e)) {
       return;
     }
-    this._cancelEvent(e);
+    cancelEvent(e);
     e.detail.result = this.updateEnvironment(e.detail.value);
   }
 
@@ -126,72 +146,62 @@ export class VariablesModel extends ArcBaseModel {
    * If the `value` doesn't contains the `_id` property a new environment is
    * created. The `_rev` property is always updated to the latest value.
    *
-   * @param {Object} data A PouchDB object to be stored. It should contain the
+   * @param {ARCEnvironment} data A PouchDB object to be stored. It should contain the
    * `_id` property if the object is about to be updated. If the `_id` doesn't
    * exists a new object is created.
-   * @return {Promise}
+   * @return {Promise<ARCEnvironment>}
    */
-  updateEnvironment(data) {
+  async updateEnvironment(data) {
     if (!data.name) {
-      const error = new Error('Can\'t create an environment without the name.');
+      const error = new Error("Can't create an environment without the name.");
       return Promise.reject(error);
     }
     if (!data.created) {
       data.created = Date.now();
     }
-    if (data.created instanceof Date) {
-      data.created = data.created.getTime();
+    const { created } = data;
+    if (created instanceof Date) {
+      const typed = /** @type Date */ (created);
+      data.created = typed.getTime();
     }
-    let promise;
+
     let oldName;
-    if (!data._id) {
-      // creates new environment
-      promise = Promise.resolve(data);
-    } else {
-      promise = this.environmentDb.get(data._id)
-      .then((doc) => {
+    if (data._id) {
+      try {
+        const doc = await this.environmentDb.get(data._id);
         if (data.name !== doc.name) {
           oldName = doc.name;
-          doc.name = data.name;
         }
         data._rev = doc._rev;
-        return data;
-      })
-      .catch((error) => {
-        if (error.status === 404) {
+      } catch (e) {
+        if (e.status === 404) {
           delete data._id;
-          return data;
+          delete data._rev;
+        } else {
+          this._handleException(e);
         }
-        this._handleException(error);
-      });
+      }
     }
-    return promise
-    .then((doc) => this.environmentDb[doc._id ? 'put' : 'post'](doc))
-    .then((result) => {
+    try {
+      const result = await this.environmentDb[data._id ? 'put' : 'post'](data);
       if (!result.ok) {
         this._handleException(result);
       }
       data._id = result.id;
       data._rev = result.rev;
       if (oldName) {
-        return this.__updateEnvironmentName(oldName, data)
-        .then(() => {
-          this._fireUpdated('environment-updated', {
-            value: Object.assign({}, data)
-          });
-          return data;
-        });
+        await this._updateEnvironmentName(oldName, data);
       }
       this._fireUpdated('environment-updated', {
-        value: Object.assign({}, data)
+        value: { ...data },
       });
       return data;
-    })
-    .catch((cause) => {
+    } catch (cause) {
       this._handleException(cause);
       throw new Error(cause.message);
-    });
+    }
   }
+
   /**
    * A special case when the name of the environment changes.
    * It updates any related to this environment variables.
@@ -199,19 +209,20 @@ export class VariablesModel extends ArcBaseModel {
    * If this is current environment it also changes its name.
    *
    * @param {String} oldName Name of the environment befoe the change
-   * @param {String} data Updated data store entry
-   * @return {Promise}
+   * @param {ARCEnvironment} data Updated data store entry
+   * @return {Promise<void>}
    */
-  __updateEnvironmentName(oldName, data) {
-    return this.listVariables(oldName)
-    .then((variables) => {
-      if (!variables || !variables.length) {
-        return;
-      }
-      variables.forEach((item) => item.environment = data.name);
-      return this.variableDb.bulkDocs(variables);
+  async _updateEnvironmentName(oldName, data) {
+    const variables = await this.listVariables(oldName);
+    if (!variables || !variables.length) {
+      return;
+    }
+    variables.forEach((item) => {
+      item.environment = data.name;
     });
+    await this.variableDb.bulkDocs(variables);
   }
+
   /**
    * A handler for the `environment-deleted` custom event.
    * Deletes a variable in the data store.
@@ -228,9 +239,10 @@ export class VariablesModel extends ArcBaseModel {
     if (this._eventCancelled(e)) {
       return;
     }
-    this._cancelEvent(e);
+    cancelEvent(e);
     e.detail.result = this.deleteEnvironment(e.detail.id);
   }
+
   /**
    * Deletes an environment from the data store.
    *
@@ -243,80 +255,74 @@ export class VariablesModel extends ArcBaseModel {
    * `environments-list-changed` event is fired alongside the `environment-deleted`
    * event.
    *
-   * @param {Object} id The PouchDB `_id` property of the object to delete.
-   * @return {Promise}
+   * @param {string} id `_id` property of the object to delete.
+   * @return {Promise<DeleteEnvironmentResult|null>} Null when the document cannot be found
    */
-  deleteEnvironment(id) {
+  async deleteEnvironment(id) {
     if (!id) {
-      const error = new Error('Can\'t delete an environment without its id');
-      return Promise.reject(error);
+      throw new Error("Can't delete an environment without its id");
     }
-    let environment;
     const db = this.environmentDb;
-    return db.get(id)
-    .then((doc) => {
-      environment = doc.name;
-      return db.remove(doc);
-    })
-    .then((result) => {
+    try {
+      const doc = await db.get(id);
+      const environment = doc.name;
+      const result = await db.remove(doc);
       if (!result.ok) {
         this._handleException(result);
       }
+      await this._deleteEnvironmentVariables(environment);
       const detail = {
         id: result.id,
-        rev: result.rev
+        rev: result.rev,
       };
-      return this._deleteEnvironmentVariables(environment)
-      .then(() => detail);
-    })
-    .then((detail) => {
       this._fireUpdated('environment-deleted', detail);
       return detail;
-    })
-    .catch((error) => {
-      if (error.status === 404) {
-        return;
+    } catch (e) {
+      if (e.status === 404) {
+        return null;
       }
-      this._handleException(error);
-    });
+      this._handleException(e);
+    }
+    return null;
   }
+
   /**
    * To be called after the environment has been deleted. It clears variables
    * for the environment.
    *
-   * @param {String} environment The environment name.
-   * @return {Promise}
+   * @param {string} environment The environment name.
+   * @return {Promise<void>}
    */
-  _deleteEnvironmentVariables(environment) {
+  async _deleteEnvironmentVariables(environment) {
     if (!environment) {
-      return Promise.resolve();
+      return;
     }
     environment = environment.toLowerCase();
     if (environment === 'default') {
-      return Promise.resolve();
+      return;
     }
-    return this.listVariables(environment)
-    .then((variables) => {
+
+    try {
+      const variables = await this.listVariables(environment);
       // It is possible to not have a result here.
       if (!variables || !variables.length) {
         return;
       }
-      variables.forEach((doc) => doc._deleted = true);
-      return this.variableDb.bulkDocs(variables)
-      .then((result) => {
-        result.forEach((item) => {
-          if (item.error) {
-            this._handleException(item, true);
-          }
-        });
+      variables.forEach((doc) => {
+        // @ts-ignore
+        doc._deleted = true;
       });
-    })
-    // This will not fire `variable-deleted` event because it doesn't make
-    // sense. UIs and managers should relay on `environment-deleted` event.
-    .catch((error) => {
+      const result = await this.variableDb.bulkDocs(variables);
+      result.forEach((item) => {
+        if (item.error) {
+          this._handleException(item, true);
+        }
+      });
+    } catch (error) {
       this._handleException(error);
-    });
+    }
   }
+
   /**
    * A handler for the `environment-list` custom event.
    * Adds a `value` propety of the event `detail` object with the array of the
@@ -337,22 +343,20 @@ export class VariablesModel extends ArcBaseModel {
     if (this._eventCancelled(e)) {
       return;
     }
-    this._cancelEvent(e);
+    cancelEvent(e);
     e.detail.result = this.listEnvironments();
   }
+
   /**
    * Lists all user defined environments.
    *
-   * @return {Promise} Resolved promise with the list of environments.
+   * @return {Promise<ARCEnvironment[]>} Resolved promise with the list of environments.
    */
-  listEnvironments() {
-    return this.environmentDb.allDocs({
-      // jscs:disable
-      include_docs: true
-      // jscs:enable
-    })
-    .then((docs) => docs.rows.map((i) => i.doc));
+  async listEnvironments() {
+    const docs = await this.environmentDb.allDocs({ include_docs: true });
+    return docs.rows.map((i) => i.doc);
   }
+
   /**
    * A handler for the `variable-list` custom event.
    *
@@ -366,33 +370,33 @@ export class VariablesModel extends ArcBaseModel {
     if (this._eventCancelled(e)) {
       return;
     }
-    this._cancelEvent(e);
+    cancelEvent(e);
     e.detail.result = this.listVariables(e.detail.environment);
   }
+
   /**
    * Refreshes list of variables for the `environment`.
    *
-   * @param {?String} environment Name of the environment to get the variables
-   * from. If not set then `default` fill be used.
-   * @return {Promise} Resolved promise with the list of variables for the
+   * @param {string} environment Name of the environment to get the variables
+   * from.
+   *
+   * @return {Promise<ARCVariable[]>} Resolved promise with the list of variables for the
    * environment.
    */
-  listVariables(environment) {
-    environment = environment.toLowerCase();
-    return this.variableDb.allDocs({
-      // jscs:disable
-      include_docs: true
-      // jscs:enable
-    })
-    .then((docs) => {
-      return docs.rows.filter((item) => {
-        if (!item.doc.environment) {
-          return false;
-        }
-        return item.doc.environment.toLowerCase() === environment;
-      })
-      .map((item) => item.doc);
+  async listVariables(environment) {
+    const q = environment.toLowerCase();
+    const docs = await this.variableDb.allDocs({ include_docs: true });
+    const result = [];
+    docs.rows.forEach((item) => {
+      const { doc } = item;
+      if (!doc.environment) {
+        return;
+      }
+      if (doc.environment.toLowerCase() === q) {
+        result.push(doc);
+      }
     });
+    return result;
   }
 
   /**
@@ -407,9 +411,10 @@ export class VariablesModel extends ArcBaseModel {
     if (this._eventCancelled(e)) {
       return;
     }
-    this._cancelEvent(e);
+    cancelEvent(e);
     e.detail.result = this.updateVariable(e.detail.value);
   }
+
   /**
    * Updates a variable value.
    *
@@ -421,54 +426,43 @@ export class VariablesModel extends ArcBaseModel {
    * can't be cancelled so other managers that are present in the DOM will not
    * update the value again.
    *
-   * @param {Object} data A PouchDB object to be stored. It should contain the
+   * @param {ARCVariable} data A PouchDB object to be stored. It should contain the
    * `_id` property if the object is about to be updated. If the `_id` doesn't
    * exists a new object is created.
-   * @return {Promise}
+   * @return {Promise<ARCVariable>} Updated variable
    */
-  updateVariable(data) {
+  async updateVariable(data) {
     if (!data.variable) {
-      const m = 'Can\'t create a variable without the variable property';
-      const error = new Error(m);
-      return Promise.reject(error);
+      const m = "Can't create a variable without the variable property";
+      throw new Error(m);
     }
     const db = this.variableDb;
-    let promise;
-    if (!data._id) {
-      // creates new variable
-      promise = Promise.resolve(data);
-    } else {
-      promise = db.get(data._id)
-      .then(function(doc) {
+    if (data._id) {
+      try {
+        const doc = await db.get(data._id);
         data._rev = doc._rev;
-        return data;
-      })
-      .catch((error) => {
-        if (error.status === 404) {
-          return data;
+      } catch (e) {
+        if (e.status !== 404) {
+          this._handleException(e);
         }
-        this._handleException(error);
-      });
-    }
-    return promise
-    .then((doc) => db[doc._id ? 'put' : 'post'](doc))
-    .then((result) => {
-      if (!result.ok) {
-        this._handleException(result);
       }
-      data._id = result.id;
-      data._rev = result.rev;
-      this._fireUpdated('variable-updated', {
-        value: Object.assign({}, data)
-      });
-      return data;
+    }
+    const result = await db[data._id ? 'put' : 'post'](data);
+    if (!result.ok) {
+      this._handleException(result);
+    }
+    data._id = result.id;
+    data._rev = result.rev;
+    this._fireUpdated('variable-updated', {
+      value: { ...data },
     });
+    return data;
   }
 
   /**
    * Deletes a variable from the data store.
    *
-   * @param {Event} e Optional. If it is called from the event handler, this
+   * @param {CustomEvent} e Optional. If it is called from the event handler, this
    * is the event object. If initial validation fails then it will set `error`
    * property on the `detail` object.
    */
@@ -476,7 +470,7 @@ export class VariablesModel extends ArcBaseModel {
     if (this._eventCancelled(e)) {
       return;
     }
-    this._cancelEvent(e);
+    cancelEvent(e);
     e.detail.result = this.deleteVariable(e.detail.id);
   }
 
@@ -492,65 +486,62 @@ export class VariablesModel extends ArcBaseModel {
    * `variables-list-changed` event is fired alongside the `variable-deleted`
    * event.
    *
-   * @param {Object} id The PouchDB `_id` property of the object to delete.
-   * @return {Promise}
+   * @param {string} id The PouchDB `_id` property of the object to delete.
+   * @return {Promise<DeleteVariableResult>}
    */
-  deleteVariable(id) {
+  async deleteVariable(id) {
     if (!id) {
-      const error = new Error('Can\'t delete a variable without its id');
-      return Promise.reject(error);
+      throw new Error("Can't delete a variable without its id");
     }
     const db = this.variableDb;
-    return db.get(id)
-    .then((doc) => db.remove(doc))
-    .then((result) => {
+    try {
+      const doc = await db.get(id);
+      const result = await db.remove(doc);
       if (!result.ok) {
         this._handleException(result);
       }
       const detail = {
         id: result.id,
-        rev: result.rev
+        rev: result.rev,
       };
       this._fireUpdated('variable-deleted', detail);
       return detail;
-    })
-    .catch((error) => {
-      if (error.status === 404) {
-        return;
+    } catch (e) {
+      if (e.status !== 404) {
+        this._handleException(e);
       }
-      this._handleException(error);
-    });
+    }
+    // this is for linter only
+    return null;
   }
+
   /**
    * Handler for `destroy-model` custom event.
    * Deletes saved or history data when scheduled for deletion.
    * @param {CustomEvent} e
    */
   _deleteModelHandler(e) {
-    const models = e.detail.models;
+    const { models } = e.detail;
     if (!models || !models.length) {
       return;
     }
     if (models.indexOf('variables') === -1) {
       return;
     }
-    const p = [
-      this._delVariablesModel(),
-      this._delEnvironmentsModel(),
-    ];
+    const p = [this._delVariablesModel(), this._delEnvironmentsModel()];
     if (!e.detail.result) {
       e.detail.result = [];
     }
     e.detail.result = e.detail.result.concat(p);
   }
 
-  _delVariablesModel() {
-    return this.variableDb.destroy()
-    .then(() => this._notifyModelDestroyed('variables'));
+  async _delVariablesModel() {
+    await this.variableDb.destroy();
+    this._notifyModelDestroyed('variables');
   }
 
-  _delEnvironmentsModel() {
-    return this.environmentDb.destroy()
-    .then(() => this._notifyModelDestroyed('variables-environments'));
+  async _delEnvironmentsModel() {
+    await this.environmentDb.destroy();
+    this._notifyModelDestroyed('variables-environments');
   }
 }

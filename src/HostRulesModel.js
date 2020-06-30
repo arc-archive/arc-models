@@ -13,6 +13,13 @@ the License.
 */
 import { ArcBaseModel } from './ArcBaseModel.js';
 /* eslint-disable require-atomic-updates */
+/* eslint-disable no-plusplus */
+/* eslint-disable no-continue */
+/* eslint-disable no-param-reassign */
+
+/** @typedef {import('./HostRulesModel').ARCHostRule} ARCHostRule */
+/** @typedef {import('./HostRulesModel').ARCHostRuleCreate} ARCHostRuleCreate */
+
 /**
  * Model for host rules.
  *
@@ -27,9 +34,6 @@ import { ArcBaseModel } from './ArcBaseModel.js';
  * Each event must be cancelable or it will be ignored.
  * The insert, change and delete events dispatches non cancelable update/delete
  * events. Application should listen for this events to update it's state.
- *
- * @customElement
- * @memberof LogicElements
  */
 export class HostRulesModel extends ArcBaseModel {
   constructor() {
@@ -58,16 +62,18 @@ export class HostRulesModel extends ArcBaseModel {
     node.removeEventListener('host-rules-list', this._listHandler);
     node.removeEventListener('host-rules-clear', this._clearHandler);
   }
+
   /**
    * Updates / saves the host rule object in the datastore.
    * This function fires `host-rules-changed` event.
    *
-   * @param {Object} rule A rule object to save / update
-   * @return {Promise} Resolved promise to updated object with updated `_rev`
+   * @param {ARCHostRule} info A rule object to save / update
+   * @return {Promise<ARCHostRule>} Resolved promise to updated object with updated `_rev`
    */
-  async update(rule) {
+  async update(info) {
+    const rule = { ...info };
     rule.updated = Date.now();
-    const db = this.db;
+    const { db } = this;
     if (!rule._rev) {
       try {
         const doc = await db.get(rule._id);
@@ -75,7 +81,6 @@ export class HostRulesModel extends ArcBaseModel {
       } catch (e) {
         if (e.status !== 404) {
           this._handleException(e);
-          return;
         }
       }
     }
@@ -84,26 +89,28 @@ export class HostRulesModel extends ArcBaseModel {
     rule._rev = result.rev;
     this._fireUpdated('host-rules-changed', {
       rule,
-      oldRev
+      oldRev,
     });
     return rule;
   }
+
   /**
    * Updates / saves the host rule object in the datastore.
    * This function fires `host-rules-changed` event.
    *
-   * @param {Array<Object>} rules List of rules to save / update
-   * @return {Promise} Resolved promise to the result of Pouch DB operation
+   * @param {ARCHostRule[]} items List of rules to save / update
+   * @return {Promise<(PouchDB.Core.Response|PouchDB.Core.Error)[]>} Resolved promise to the result of Pouch DB operation
    */
-  async updateBulk(rules) {
-    rules.forEach((item) => {
-      item.updated = Date.now();
+  async updateBulk(items) {
+    const rules = items.map((item) => {
+      return { ...item, updated: Date.now() };
     });
     const response = await this.db.bulkDocs(rules);
     for (let i = 0, len = response.length; i < len; i++) {
       const r = response[i];
-      if (r.error) {
-        this._handleException(r, true);
+      const typedError = /** @type PouchDB.Core.Error */ (r);
+      if (typedError.error) {
+        this._handleException(typedError, true);
         continue;
       }
       const rule = rules[i];
@@ -114,7 +121,7 @@ export class HostRulesModel extends ArcBaseModel {
       }
       const detail = {
         rule,
-        oldRev
+        oldRev,
       };
       this._fireUpdated('host-rules-changed', detail);
     }
@@ -125,40 +132,42 @@ export class HostRulesModel extends ArcBaseModel {
    * Removed an object from the datastore.
    * This function fires `host-rules-deleted` event.
    *
-   * @param {String} id The ID of the datastore entry.
-   * @param {?String} rev Specific revision to read. Defaults to latest revision.
-   * @return {Promise} Promise resolved to a new `_rev` property of deleted object.
+   * @param {string} id The ID of the datastore entry.
+   * @param {string?} rev Specific revision to read. Defaults to latest revision.
+   * @return {Promise<string>} Promise resolved to a new `_rev` property of deleted object.
    */
-  async remove(id, rev) {
+  async delete(id, rev) {
     if (!rev) {
-      const obj = await this.read(id);
+      const obj = /** @type ARCHostRule */ (await this.read(id));
       rev = obj._rev;
     }
     const response = await this.db.remove(id, rev);
     const detail = {
       id,
       rev: response.rev,
-      oldRev: rev
+      oldRev: rev,
     };
     this._fireUpdated('host-rules-deleted', detail);
     return response.rev;
   }
+
   /**
    * Lists all existing host rules
    *
-   * @return {Promise} Promise resolved to list of the host rules
+   * @return {Promise<ARCHostRule[]>} Promise resolved to list of the host rules
    */
   async list() {
     const queryOptions = {
-      include_docs: true
+      include_docs: true,
     };
-    const response = await this.db.allDocs(queryOptions)
+    const response = await this.db.allDocs(queryOptions);
     let data = [];
     if (response && response.rows.length > 0) {
       data = response.rows.map((item) => item.doc);
     }
     return data;
   }
+
   /**
    * Handler for `host-rules-insert` custom event. Creates rules in bulk.
    * It sets `result` property on event detail object with a result of calling
@@ -174,7 +183,9 @@ export class HostRulesModel extends ArcBaseModel {
     e.stopPropagation();
     const { rules } = e.detail;
     if (!rules) {
-      e.detail.result = Promise.reject(new Error('The "rules" property is missing'));
+      e.detail.result = Promise.reject(
+        new Error('The "rules" property is missing')
+      );
       return;
     }
     e.detail.result = this.updateBulk(rules);
@@ -188,11 +199,14 @@ export class HostRulesModel extends ArcBaseModel {
     e.stopPropagation();
     const { rule } = e.detail;
     if (!rule || !rule._id) {
-      e.detail.result = Promise.reject(new Error('The "rule" property is missing'));
+      e.detail.result = Promise.reject(
+        new Error('The "rule" property is missing')
+      );
       return;
     }
-    e.detail.result = this.update(rule)
-    .catch((e) => this._handleException(e));
+    e.detail.result = this.update(rule).catch((ex) =>
+      this._handleException(ex)
+    );
   }
 
   _deletedHandler(e) {
@@ -202,14 +216,15 @@ export class HostRulesModel extends ArcBaseModel {
     e.preventDefault();
     e.stopPropagation();
 
-    const { id } = e.detail;
+    const { id, rev } = e.detail;
     if (!id) {
       e.detail.result = Promise.reject(new Error('Missing "id" property.'));
       return;
     }
 
-    e.detail.result = this.remove(id, e.detail.rev)
-    .catch((e) => this._handleException(e));
+    e.detail.result = this.delete(id, rev).catch((ex) =>
+      this._handleException(ex)
+    );
   }
 
   _listHandler(e) {
@@ -218,8 +233,7 @@ export class HostRulesModel extends ArcBaseModel {
     }
     e.preventDefault();
     e.stopPropagation();
-    e.detail.result = this.list()
-    .catch((e) => this._handleException(e));
+    e.detail.result = this.list().catch((ex) => this._handleException(ex));
   }
 
   _clearHandler(e) {
@@ -228,8 +242,7 @@ export class HostRulesModel extends ArcBaseModel {
     }
     e.preventDefault();
     e.stopPropagation();
-    e.detail.result = this.db.destroy()
-    .then(() => {
+    e.detail.result = this.db.destroy().then(() => {
       this._fireUpdated('host-rules-clear');
     });
   }

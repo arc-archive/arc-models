@@ -11,8 +11,22 @@ License for the specific language governing permissions and limitations under
 the License.
 */
 import { PayloadProcessor } from '@advanced-rest-client/arc-electron-payload-processor/payload-processor-esm.js';
+import { v4 } from '@advanced-rest-client/uuid-generator';
 import { RequestBaseModel } from './RequestBaseModel.js';
+
 /* eslint-disable require-atomic-updates */
+/* eslint-disable class-methods-use-this */
+/* eslint-disable no-continue */
+/* eslint-disable no-plusplus */
+/* eslint-disable no-await-in-loop */
+
+/** @typedef {import('./RequestTypes').ARCSavedRequest} ARCSavedRequest */
+/** @typedef {import('./RequestTypes').ARCHistoryRequest} ARCHistoryRequest */
+/** @typedef {import('./RequestTypes').SaveARCRequestOptions} SaveARCRequestOptions */
+/** @typedef {import('./RequestTypes').ARCProject} ARCProject */
+/** @typedef {import('./RequestTypes').ARCRequestRestoreOptions} ARCRequestRestoreOptions */
+/** @typedef {import('./types').Entity} Entity */
+
 /**
  * Event based access to saved and history request datastore.
  *
@@ -125,12 +139,24 @@ import { RequestBaseModel } from './RequestBaseModel.js';
  * searches in both data stores.
  * - `detailed` - Optional, Boolean. If set it uses slower algorithm but performs full
  * search on the index. When false it only uses filer like query + '*'.
- *
- * @customElement
- * @memberof LogicElements
- * @extends RequestBaseModel
  */
 export class RequestModel extends RequestBaseModel {
+  /**
+   * List of fields to index in the history store.
+   * @return {Array<String>}
+   */
+  get historyIndexes() {
+    return ['headers', 'payload', 'method'];
+  }
+
+  /**
+   * List of fields to index in the saved store.
+   * @return {Array<String>}
+   */
+  get savedIndexes() {
+    return ['headers', 'payload', 'method', 'description', 'name'];
+  }
+
   /**
    * @constructor
    */
@@ -146,11 +172,14 @@ export class RequestModel extends RequestBaseModel {
     this._saveHistoryHandler = this._saveHistoryHandler.bind(this);
     this._handleQuery = this._handleQuery.bind(this);
     this._handleList = this._handleList.bind(this);
-    this._listProjectRequestsHandler = this._listProjectRequestsHandler.bind(this);
+    this._listProjectRequestsHandler = this._listProjectRequestsHandler.bind(
+      this
+    );
   }
+
   /**
    * Adds event listeners.
-   * @param {HTMLElement} node
+   * @param {EventTarget} node
    */
   _attachListeners(node) {
     node.addEventListener('save-request', this._saveRequestHandler);
@@ -163,29 +192,44 @@ export class RequestModel extends RequestBaseModel {
     node.addEventListener('request-objects-undeleted', this._handleUndelete);
     node.addEventListener('request-query', this._handleQuery);
     node.addEventListener('request-list', this._handleList);
-    node.addEventListener('request-project-list', this._listProjectRequestsHandler);
+    node.addEventListener(
+      'request-project-list',
+      this._listProjectRequestsHandler
+    );
     node.addEventListener('destroy-model', this._deleteModelHandler);
   }
+
   /**
    * Removes event listeners.
-   * @param {HTMLElement} node
+   * @param {EventTarget} node
    */
   _detachListeners(node) {
     node.removeEventListener('save-request', this._saveRequestHandler);
     node.removeEventListener('save-history', this._saveHistoryHandler);
     node.removeEventListener('request-object-read', this._handleRead);
     node.removeEventListener('request-object-changed', this._handleObjectSave);
-    node.removeEventListener('request-objects-changed', this._handleObjectsSave);
-    node.removeEventListener('request-object-deleted',
-        this._handleObjectDelete);
-    node.removeEventListener('request-objects-deleted',
-        this._handleObjectsDelete);
+    node.removeEventListener(
+      'request-objects-changed',
+      this._handleObjectsSave
+    );
+    node.removeEventListener(
+      'request-object-deleted',
+      this._handleObjectDelete
+    );
+    node.removeEventListener(
+      'request-objects-deleted',
+      this._handleObjectsDelete
+    );
     node.removeEventListener('request-objects-undeleted', this._handleUndelete);
     node.removeEventListener('request-query', this._handleQuery);
     node.removeEventListener('request-list', this._handleList);
-    node.removeEventListener('request-project-list', this._listProjectRequestsHandler);
+    node.removeEventListener(
+      'request-project-list',
+      this._listProjectRequestsHandler
+    );
     node.removeEventListener('destroy-model', this._deleteModelHandler);
   }
+
   /**
    * A handler for `save-request-data` custom event. It's special event to
    * save / update request data dispatched by the request editor.
@@ -201,47 +245,54 @@ export class RequestModel extends RequestBaseModel {
     const { request, projects, options } = e.detail;
     e.detail.result = this.saveRequestProject(request, projects, options);
   }
+
   /**
    * Saves requests with project data.
    * This is actual implementation of `save-request` events.
    *
-   * @param {Object} request Request object to store.
-   * @param {?Array<String>} projects List of project names to create with this request
+   * @param {ARCSavedRequest|ARCHistoryRequest} request Request object to store.
+   * @param {string[]=} projects List of project names to create with this request
    * and attach it to the request object.
-   * @param {?Object} options Save request options. Currently only `isDrive`
+   * @param {SaveARCRequestOptions=} options Save request options. Currently only `isDrive`
    * is supported
-   * @return {Promise} A promise resolved to updated request object
+   * @return {Promise<ARCSavedRequest>} A promise resolved to updated request object
    */
   async saveRequestProject(request, projects, options) {
-    if (!request._id) {
-      request._id = this.uuid.generate();
+    const typed = /** @type ARCSavedRequest */ ({ ...request });
+    if (!typed._id) {
+      typed._id = v4();
     }
     let projectIds;
     if (projects && projects.length) {
-      projectIds = await this.createRequestProjects(projects, request._id);
+      projectIds = await this.createRequestProjects(projects, typed._id);
     }
-    if (!request.projects) {
-      request.projects = [];
+    if (!typed.projects) {
+      typed.projects = [];
     }
-    if (request.legacyProject) {
-      if (request.projects.indexOf(request.legacyProject) === -1) {
-        request.projects.push(request.legacyProject);
+    // @ts-ignore
+    if (typed.legacyProject) {
+      // @ts-ignore
+      if (typed.projects.indexOf(typed.legacyProject) === -1) {
+        // @ts-ignore
+        typed.projects.push(typed.legacyProject);
       }
-      delete request.legacyProject;
+      // @ts-ignore
+      delete typed.legacyProject;
     }
     if (projectIds) {
-      request.projects = request.projects.concat(projectIds);
+      typed.projects = typed.projects.concat(projectIds);
     }
-    request.type = 'saved';
-    return await this.saveRequest(request, options);
+    typed.type = 'saved';
+    return this.saveRequest(typed, options);
   }
+
   /**
    * Create projects from project names.
    * It is used when creating a request with a new project.
    *
-   * @param {Array<String>} names Names of projects
-   * @param {?String} requestId Request ID to add to the projects.
-   * @return {Promise<Array<String>>} Promise resolved to list of project IDs
+   * @param {string[]} names Names of projects
+   * @param {string=} requestId Request ID to add to the projects.
+   * @return {Promise<string[]>} Promise resolved to list of project IDs
    */
   async createRequestProjects(names, requestId) {
     const requests = [];
@@ -253,27 +304,29 @@ export class RequestModel extends RequestBaseModel {
         updated: Date.now(),
         order: 0,
         requests,
-        name
+        name,
       };
     });
     const response = await this.projectDb.bulkDocs(projects);
     const result = [];
     for (let i = 0, len = response.length; i < len; i++) {
       const r = response[i];
-      if (r.error) {
-        this._handleException(r, true);
+      const typedError = /** @type PouchDB.Core.Error */ (r);
+      if (typedError.error) {
+        this._handleException(typedError, true);
         continue;
       }
-      const project = projects[i];
+      const project = /** @type ARCProject */ (projects[i]);
       project._rev = r.rev;
       project._id = r.id;
       this._fireUpdated('project-object-changed', {
-        project: project
+        project,
       });
       result[result.length] = r.id;
     }
     return result;
   }
+
   /**
    * Handler for `save-history` object. It computes payload to savable state
    * and saves history object.
@@ -291,20 +344,20 @@ export class RequestModel extends RequestBaseModel {
     const { request } = e.detail;
     e.detail.result = this.saveHistory(request);
   }
+
   /**
    * Stores a history obvject in the data store, taking care of `_rev`
    * property read.
-   * @param {Object} request The request object to store
-   * @return {Promise} A promise resolved to the updated request object.
+   * @param {ARCHistoryRequest} request The request object to store
+   * @return {Promise<ARCHistoryRequest>} A promise resolved to the updated request object.
    */
   async saveHistory(request) {
     if (!request._id) {
       const d = new Date();
       d.setHours(0, 0, 0, 0);
-      let id = d.getTime();
-      id += '/' + encodeURIComponent(request.url);
-      id += '/' + request.method;
-      request._id = id;
+      const time = d.getTime();
+      const encUrl = encodeURIComponent(request.url);
+      request._id = `${time}/${encUrl}/${request.method}`;
     }
     request.type = 'history';
     const db = this.getDatabase(request.type);
@@ -314,13 +367,13 @@ export class RequestModel extends RequestBaseModel {
     } catch (e) {
       if (e.status !== 404) {
         this._handleException(e);
-        return;
+        return undefined;
       }
     }
     if (doc) {
       request._rev = doc._rev;
     }
-    return await this.saveRequest(request);
+    return this.saveRequest(request);
   }
 
   /**
@@ -329,43 +382,46 @@ export class RequestModel extends RequestBaseModel {
    * with projects. Use `update()` method only if you are storing already
    * prepared request object to the store.
    *
-   * @param {Object} request ArcRequest object
-   * @param {Object} opts Save request object. Currently only `isDrive`
+   * @param {ARCHistoryRequest|ARCSavedRequest} request ArcRequest object
+   * @param {SaveARCRequestOptions=} opts Save request object. Currently only `isDrive`
    * is supported
    * @return {Promise} A promise resilved to updated request object.
    */
-  async saveRequest(request, opts) {
-    opts = opts || {};
-    if (!request.type) {
-      if (request.name) {
-        request.type = 'saved';
+  async saveRequest(request, opts = {}) {
+    let typed = /** @type ARCSavedRequest */ (request);
+    if (!typed.type) {
+      if (typed.name) {
+        typed.type = 'saved';
       } else {
-        request.type = 'history';
+        typed.type = 'history';
       }
-    } else if (request.type === 'drive' || request.type === 'google-drive') {
-      request.type = 'saved';
+    } else if (typed.type === 'drive' || typed.type === 'google-drive') {
+      typed.type = 'saved';
     }
-    if (!request._id) {
-      request._id = this.uuid.generate();
+    if (!typed._id) {
+      typed._id = v4();
     }
     try {
-      let item = Object.assign({}, request);
-      item = await PayloadProcessor.payloadToString(item);
-      item = await this._saveGoogleDrive(item, opts);
-      item = await this.update(item.type, item);
-      await this._syncProjects(item._id, item.projects);
-      return item;
+      typed = await PayloadProcessor.payloadToString(typed);
+      typed = /** @type ARCSavedRequest */ (await this._saveGoogleDrive(typed, opts));
+      typed = await this.update(typed.type, typed);
+      if (typed.type === 'saved') {
+        await this._syncProjects(typed._id, typed.projects);
+      }
+      return typed;
     } catch (e) {
-      this._handleException(e)
+      this._handleException(e);
+      return undefined;
     }
   }
+
   /**
-   * Sunchronizes project requests to ensure each project contains this
-   * `requestId` on their list of requests.
+   * Synchronizes project requests to ensure each project contains this
+   * `requestId` on its list of requests.
    *
-   * @param {String} requestId Request ID
-   * @param {?Array<String>} projects List of request projects.
-   * @return {Promise}
+   * @param {string} requestId Request ID
+   * @param {string[]} projects List of request projects.
+   * @return {Promise<void>}
    */
   async _syncProjects(requestId, projects) {
     if (!projects || !projects.length) {
@@ -374,13 +430,13 @@ export class RequestModel extends RequestBaseModel {
     const db = this.projectDb;
     const update = [];
     const queryResponse = await db.allDocs({
-      include_docs: true
-    })
+      include_docs: true,
+    });
 
-    const rows = queryResponse.rows;
+    const { rows } = queryResponse;
     for (let i = 0, len = rows.length; i < len; i++) {
       const project = rows[i];
-      const doc = project.doc;
+      const { doc } = project;
       if (projects.indexOf(project.id) === -1) {
         const index = doc.requests ? doc.requests.indexOf(requestId) : -1;
         if (index !== -1) {
@@ -403,31 +459,38 @@ export class RequestModel extends RequestBaseModel {
     const response = await db.bulkDocs(update);
     for (let i = 0, len = response.length; i < len; i++) {
       const r = response[i];
-      if (r.error) {
+      const typedError = /** @type PouchDB.Core.Error */ (r);
+      if (typedError.error) {
         this._handleException(r, true);
         continue;
       }
       const project = update[i];
       project._rev = r.rev;
       this._fireUpdated('project-object-changed', {
-        project: project
+        project,
       });
     }
   }
+
   /**
    * Normalizes request object to whatever the app is currently using.
-   * @param {Object} request
-   * @return {Object}
+   *
+   * @param {ARCHistoryRequest|ARCSavedRequest} request
+   * @return {ARCHistoryRequest|ARCSavedRequest}
    */
   normalizeRequest(request) {
     if (!request) {
-      return;
+      return request;
     }
+    // @ts-ignore
     if (request.legacyProject) {
-      if (!request.projects) {
-        request.projects = [];
+      const saved = /** @type ARCSavedRequest */ (request);
+      if (!saved.projects) {
+        saved.projects = [];
       }
-      request.projects[request.projects.length] = request.legacyProject;
+      // @ts-ignore
+      saved.projects[saved.projects.length] = saved.legacyProject;
+      // @ts-ignore
       delete request.legacyProject;
     }
     const skipKeys = ['_id', '_rev'];
@@ -448,105 +511,108 @@ export class RequestModel extends RequestBaseModel {
   /**
    * Reads an entry from the datastore.
    *
-   * @param {String} type Request type: `saved-requests` or `history-requests`
-   * @param {String} id The ID of the datastore entry.
-   * @param {?String} rev Specific revision to read. Defaults to
+   * @param {string} type Request type: `saved-requests` or `history-requests`
+   * @param {string} id The ID of the datastore entry.
+   * @param {string=} rev Specific revision to read. Defaults to
    * latest revision.
-   * @param {?Object} opts Additional options. Currently only `restorePayload`
-   * is supported
-   * @return {Promise} Promise resolved to a project object.
+   * @param {ARCRequestRestoreOptions=} opts Restoration options.
+   * @return {Promise<ARCHistoryRequest|ARCSavedRequest>} Promise resolved to a request object.
    */
-  async read(type, id, rev, opts) {
+  async read(type, id, rev, opts = {}) {
     const conf = {};
     if (rev) {
       conf.rev = rev;
     }
     const db = this.getDatabase(type);
-    let request = await db.get(id, conf)
-    if (opts && opts.restorePayload) {
+    let request = await db.get(id, conf);
+    if (opts.restorePayload) {
       request = PayloadProcessor.restorePayload(request);
     }
     return this.normalizeRequest(request);
   }
+
   /**
    * The same as `read()` but for a list of requests.
    * @param {String} type Requests type to restore.
-   * @param {Array<String>} keys Request ids
-   * @param {?Object} opts Additional options. Currently only `restorePayload`
-   * is supported
-   * @return {Promise}
+   * @param {string[]=} keys Request ids
+   * @param {ARCRequestRestoreOptions=} opts Restoration options.
+   * @return {Promise<ARCHistoryRequest[]|ARCSavedRequest[]>}
    */
   async readBulk(type, keys, opts) {
     const db = this.getDatabase(type);
     const response = await db.allDocs({
       include_docs: true,
-      keys
+      keys,
     });
     const requests = [];
     response.rows.forEach((item) => {
-      const request = item.doc;
+      let request = item.doc;
       if (!request) {
         return;
       }
       if (opts && opts.restorePayload) {
-        PayloadProcessor.restorePayload(request);
+        request = PayloadProcessor.restorePayload(request);
       }
       requests[requests.length] = request;
     });
     return requests;
   }
+
   /**
    * Updates / saves the request object in the datastore.
-   * This function fires `request-object-changed` event.
+   * This function dispatches `request-object-changed` event.
    *
    * If any of `name`, `method`, `url` or `legacyProject` properties change
    * then the old object is deleted and new is created with new ID.
    *
-   * @param {String} type Request type: `saved-requests` or `history-requests`
-   * @param {Object} request An object to save / update
+   * @param {string} type Request type: `saved-requests` or `history-requests`
+   * @param {ARCHistoryRequest|ARCSavedRequest} request An object to save / update
    * @return {Promise} Resolved promise to request object with updated `_rev`
    */
   async update(type, request) {
     const db = this.getDatabase(type);
     const oldRev = request._rev;
     if (!request._id) {
-      request._id = this.uuid.generate();
+      request._id = v4();
     }
     request.updated = Date.now();
-    let copy = Object.assign({}, request);
+    let copy = { ...request };
     copy = this.normalizeRequest(copy);
     const result = await db.put(copy);
     /* eslint-disable-next-line require-atomic-updates */
     request._rev = result.rev;
     const detail = {
-      request: request,
-      oldRev: oldRev,
+      request,
+      oldRev,
       // oldId will be removed
       oldId: request._id,
-      type: type
+      type,
     };
     this._fireUpdated('request-object-changed', detail);
     return request;
   }
+
   /**
    * Updates more than one request in a bulk.
-   * @param {String} type Request type: `saved-requests` or `history-requests`
-   * @param {Array<Object>} requests List of requests to update.
-   * @return {Array} List of PouchDB responses to each insert
+   * @param {string} type Request type: `saved-requests` or `history-requests`
+   * @param {(ARCHistoryRequest|ARCSavedRequest)[]} requests List of requests to update.
+   * @return {Promise<(PouchDB.Core.Response|PouchDB.Core.Error)[]>} List of PouchDB responses to each insert
    */
   async updateBulk(type, requests) {
+    const items = [...requests];
     const db = this.getDatabase(type);
-    for (let i = 0; i < requests.length; i++) {
-      requests[i] = this.normalizeRequest(requests[i]);
+    for (let i = 0; i < items.length; i++) {
+      items[i] = this.normalizeRequest(items[i]);
     }
-    const response = await db.bulkDocs(requests);
+    const response = await db.bulkDocs(items);
     for (let i = 0, len = response.length; i < len; i++) {
       const r = response[i];
-      if (r.error) {
-        this._handleException(r, true);
+      const typedError = /** @type PouchDB.Core.Error */ (r);
+      if (typedError.error) {
+        this._handleException(typedError, true);
         continue;
       }
-      const request = requests[i];
+      const request = items[i];
       const oldRev = request._rev;
       request._rev = r.rev;
       if (!request._id) {
@@ -554,50 +620,53 @@ export class RequestModel extends RequestBaseModel {
       }
       const detail = {
         request,
-        oldRev: oldRev,
+        oldRev,
         oldId: request._id,
-        type: type
+        type,
       };
       this._fireUpdated('request-object-changed', detail);
     }
     return response;
   }
+
   /**
    * Removed an object from the datastore.
    * This function fires `request-object-deleted` event.
    *
-   * @param {String} type Request type: `saved-requests` or `history-requests`
-   * @param {String} id The ID of the datastore entry.
-   * @param {?String} rev Specific revision to read. Defaults to
+   * @param {string} type Request type: `saved-requests` or `history-requests`
+   * @param {string} id The ID of the datastore entry.
+   * @param {string=} rev Specific revision to read. Defaults to
    * latest revision.
-   * @return {Promise} Promise resolved to a new `_rev` property of deleted
+   * @return {Promise<string>} Promise resolved to a new `_rev` property of deleted
    * object.
    */
-  async remove(type, id, rev) {
-    if (!rev) {
+  async delete(type, id, rev) {
+    let winningRev = rev;
+    if (!winningRev) {
       const obj = await this.read(type, id);
-      rev = obj._rev;
+      winningRev = obj._rev;
     }
     const db = this.getDatabase(type);
-    const response = await db.remove(id, rev);
+    const response = await db.remove(id, winningRev);
     const detail = {
-      id: id,
+      id,
       rev: response.rev,
-      oldRev: rev,
-      type: type
+      oldRev: winningRev,
+      type,
     };
     this._fireUpdated('request-object-deleted', detail);
     return response.rev;
   }
+
   /**
    * Reverts deleted items.
    * This function fires `request-object-changed` event for each restored
    * request.
    *
-   * @param {String} type Request type: `saved-requests` or `history-requests`
-   * @param {Array} items List of request objects. Required properties are
+   * @param {string} type Request type: `saved-requests` or `history-requests`
+   * @param {Entity[]} items List of request objects. Required properties are
    * `_id` and `_rev`.
-   * @return {Promise} Resolved promise with restored objects. Objects have
+   * @return {Promise<(ARCHistoryRequest|ARCSavedRequest)[]>} Resolved promise with restored objects. Objects have
    * updated `_rev` property.
    */
   async revertRemove(type, items) {
@@ -612,6 +681,7 @@ export class RequestModel extends RequestBaseModel {
     const restored = await this._findNotDeleted(db, items);
     for (let i = restored.length - 1; i >= 0; i--) {
       const item = restored[i];
+      // @ts-ignore
       if (item.ok === false) {
         items.splice(i, 1);
         restored.splice(i, 1);
@@ -622,43 +692,45 @@ export class RequestModel extends RequestBaseModel {
     const updated = await db.bulkDocs(restored);
     const query = {
       keys: updated.map((item) => item.id),
-      include_docs: true
-    }
+      include_docs: true,
+    };
     const result = await db.allDocs(query);
     result.rows.forEach((request, i) => {
       const detail = {
         request: request.doc,
         oldRev: items[i]._rev,
         oldId: request.id,
-        type
+        type,
       };
       this._fireUpdated('request-object-changed', detail);
     });
-    return result.rows;
+    return result.rows.map((item) => item.doc);
   }
+
   /**
    * Finds last not deleted revision of a document.
-   * @param {Object} db PouchDB instance
-   * @param {Array} items List of documents to process
-   * @return {Promise<Array>} Last not deleted version of each document.
+   * @param {PouchDB.Database} db PouchDB instance
+   * @param {Entity[]} items List of documents to process
+   * @return {Promise<(ARCHistoryRequest|ARCSavedRequest)[]>} Last not deleted version of each document.
    */
   async _findNotDeleted(db, items) {
     const list = items.map((item) => {
       return {
         id: item._id,
-        rev: item._rev
+        rev: item._rev,
       };
     });
     const options = {
       docs: list,
-      revs: true
+      revs: true,
     };
     const result = await db.bulkGet(options);
-    const results = result.results;
+    const { results } = result;
     const data = [];
     for (let i = 0, len = results.length; i < len; i++) {
       const item = results[i];
-      const doc = item.docs[0].ok;
+      // @ts-ignore
+      const doc = /** @type PouchDB.Core.GetMeta */ (item.docs[0].ok);
       if (!doc) {
         data[data.length] = { ok: false };
         continue;
@@ -668,27 +740,29 @@ export class RequestModel extends RequestBaseModel {
       if (!undeletedRevision) {
         data[data.length] = { ok: false };
       } else {
+        // @ts-ignore
         data[data.length] = await db.get(doc._id, { rev: undeletedRevision });
       }
     }
     return data;
   }
+
   /**
    * Finds a next revision after the `deletedRevision` in the revisions history
    * which is the one that reverts any changes made after it.
    *
-   * @param {Object} revs PouchDB revision history object
-   * @param {String} deletedRevision Revision of deleted object (after delete).
-   * @return {String} Revision ID of the object before a change registered in
+   * @param {object} revs PouchDB revision history object
+   * @param {string} deletedRevision Revision of deleted object (after delete).
+   * @return {string|null} Revision ID of the object before a change registered in
    * `deletedRevision`
    */
   _findUndeletedRevision(revs, deletedRevision) {
     // find a revision matching deleted item's updated rev
     let index = revs.start;
-    const ids = revs.ids;
+    const { ids } = revs;
     let found = false;
     for (let i = 0, len = ids.length; i < len; i++) {
-      const revision = index + '-' + ids[i];
+      const revision = `${index}-${ids[i]}`;
       if (found) {
         return revision;
       }
@@ -698,7 +772,9 @@ export class RequestModel extends RequestBaseModel {
       }
       index--;
     }
+    return null;
   }
+
   /**
    * Handler for request read event request.
    * @param {CustomEvent} e
@@ -712,12 +788,14 @@ export class RequestModel extends RequestBaseModel {
     const { type, id, opts } = e.detail;
     if (!id) {
       e.detail.result = Promise.reject(
-          new Error('Request "id" property is missing.'));
+        new Error('Request "id" property is missing.')
+      );
       return;
     }
     if (!type) {
       e.detail.result = Promise.reject(
-          new Error('Request "type" property is missing.'));
+        new Error('Request "type" property is missing.')
+      );
       return;
     }
     let p;
@@ -726,9 +804,9 @@ export class RequestModel extends RequestBaseModel {
     } else {
       p = this.read(type, id, e.detail.rev, opts);
     }
-    e.detail.result = p
-    .catch((e) => this._handleException(e));
+    e.detail.result = p.catch((ex) => this._handleException(ex));
   }
+
   /**
    * Handles onject save / update
    *
@@ -752,10 +830,11 @@ export class RequestModel extends RequestBaseModel {
       throw new Error('The "request" property is missing.');
     }
     const db = this.getDatabase(type);
-    if (request._id && !request._rev) {
+    let item = { ...request };
+    if (item._id && !item._rev) {
       try {
-        const dbRequest = await db.get(request._id);
-        request = Object.assign({}, dbRequest, request);
+        const dbRequest = await db.get(item._id);
+        item = { ...dbRequest, ...item };
       } catch (e) {
         if (e.status !== 404) {
           this._handleException(e);
@@ -763,9 +842,10 @@ export class RequestModel extends RequestBaseModel {
       }
     }
     try {
-      return await this.update(type, request);
+      return this.update(type, item);
     } catch (e) {
       this._handleException(e);
+      return undefined;
     }
   }
 
@@ -783,16 +863,19 @@ export class RequestModel extends RequestBaseModel {
     const { requests, type } = e.detail;
     if (!requests) {
       e.detail.result = Promise.reject(
-          new Error('The "requests" property is missing.'));
+        new Error('The "requests" property is missing.')
+      );
       return;
     }
     if (!type) {
       e.detail.result = Promise.reject(
-          new Error('The "type" property is missing.'));
+        new Error('The "type" property is missing.')
+      );
       return;
     }
     e.detail.result = this.updateBulk(type, requests);
   }
+
   /**
    * Deletes the object from the datastore.
    *
@@ -810,7 +893,8 @@ export class RequestModel extends RequestBaseModel {
 
     if (!e.detail.type) {
       e.detail.result = Promise.reject(
-          new Error('Request "type" property is missing.'));
+        new Error('Request "type" property is missing.')
+      );
       return;
     }
 
@@ -819,9 +903,13 @@ export class RequestModel extends RequestBaseModel {
       return;
     }
 
-    e.detail.result = this.remove(e.detail.type, e.detail.id, e.detail.rev)
-    .catch((e) => this._handleException(e));
+    e.detail.result = this.delete(
+      e.detail.type,
+      e.detail.id,
+      e.detail.rev
+    ).catch((ex) => this._handleException(ex));
   }
+
   /**
    * Queries for a list of projects.
    * @param {CustomEvent} e
@@ -835,11 +923,12 @@ export class RequestModel extends RequestBaseModel {
     const { type, items } = e.detail;
     e.detail.result = this.bulkDelete(type, items);
   }
+
   /**
    * Removes documents in a bulk operation.
    *
-   * @param {String} type Database type
-   * @param {Array<String>} items List of keys to remove
+   * @param {string} type Database type
+   * @param {string[]} items List of keys to remove
    * @return {Promise}
    */
   async bulkDelete(type, items) {
@@ -851,8 +940,8 @@ export class RequestModel extends RequestBaseModel {
     }
     const db = this.getDatabase(type);
     const response = await db.allDocs({
-      keys: items
-    })
+      keys: items,
+    });
     const removed = this._filterExistingItems(response);
     const data = {};
     for (const item of removed) {
@@ -864,11 +953,11 @@ export class RequestModel extends RequestBaseModel {
         const detail = {
           id: result.id,
           rev: result.rev,
-          oldRev: this._findOldRef(removed, result.id)
+          oldRev: this._findOldRef(removed, result.id),
         };
         data[result.id] = result.rev;
         this._fireUpdated('request-object-deleted', detail);
-      } catch(e) {
+      } catch (e) {
         continue;
       }
     }
@@ -887,33 +976,37 @@ export class RequestModel extends RequestBaseModel {
     e.stopPropagation();
 
     const { type, items } = e.detail;
-    e.detail.result = this.revertRemove(type, items)
-    .catch((e) => this._handleException(e));
+    e.detail.result = this.revertRemove(type, items).catch((ex) =>
+      this._handleException(ex)
+    );
   }
+
   /**
    * Filters query results to return only successfuly read data.
-   * @param {Object} result PouchDB query result
-   * @return {Array} List of request that has been read.
+   * @param {PouchDB.Core.AllDocsResponse} result PouchDB query result
+   * @return {object[]} List of request that has been read.
    */
   _filterExistingItems(result) {
-    result = result.rows.filter((item) => {
+    return result.rows.filter((item) => {
+      // @ts-ignore
       if (item.error) {
         return false;
       }
       return true;
     });
-    return result;
   }
+
   /**
    * Finds a `_rev` for a doc.
-   * @param {Array} docs List of PouchDB documents to search for `_rev`
-   * @param {String} id Document ID
-   * @return {String} Associated `_rev`
+   * @param {object[]} docs List of PouchDB documents to search for `_rev`
+   * @param {string} id Document ID
+   * @return {string} Associated `_rev`
    */
   _findOldRef(docs, id) {
     const result = docs.find((item) => item._id === id);
     return result ? result._rev : undefined;
   }
+
   /**
    * Saves the request on Google Drive.
    * It dispatches `google-drive-data-save` event to call a component responsible
@@ -921,26 +1014,28 @@ export class RequestModel extends RequestBaseModel {
    *
    * This do nothing if `opts.drive is not set.`
    *
-   * @param {Object} data Data to save
-   * @param {Object} opts Save request options. See `saveRequest` for more info.
-   * @return {Promise} Resolved promise to updated object.
+   * @param {ARCHistoryRequest|ARCSavedRequest} data Data to save
+   * @param {SaveARCRequestOptions} opts Save request options.
+   * @return {Promise<ARCHistoryRequest|ARCSavedRequest>} Resolved promise to updated object.
    */
   async _saveGoogleDrive(data, opts) {
     if (!opts.isDrive) {
-      return Promise.resolve(data);
+      return data;
     }
-    const copy = Object.assign({}, data);
+    const copy = { ...data };
     const e = new CustomEvent('google-drive-data-save', {
       bubbles: true,
       cancelable: true,
       composed: true,
       detail: {
+        result: undefined,
         content: copy,
-        file: copy.name + '.arc',
+        // @ts-ignore
+        file: `${copy.name || 'arc-request'}.arc`,
         options: {
           contentType: 'application/restclient+data',
-        }
-      }
+        },
+      },
     });
     this.dispatchEvent(e);
     if (!e.defaultPrevented) {
@@ -949,10 +1044,11 @@ export class RequestModel extends RequestBaseModel {
     const insertResult = await e.detail.result;
     const driveId = insertResult.id;
     if (driveId) {
-      data.driveId = driveId;
+      copy.driveId = driveId;
     }
-    return data;
+    return copy;
   }
+
   /**
    * Handler for `request-list` custom event.
    * The `result` property will contain a result of calling `list()` function.
@@ -973,9 +1069,11 @@ export class RequestModel extends RequestBaseModel {
     e.preventDefault();
     e.stopPropagation();
     const { type, queryOptions } = e.detail;
-    e.detail.result = this.list(type, queryOptions)
-    .catch((e) => this._handleException(e));
+    e.detail.result = this.list(type, queryOptions).catch((ex) =>
+      this._handleException(ex)
+    );
   }
+
   /**
    * Performs a query for the request data.
    *
@@ -983,7 +1081,7 @@ export class RequestModel extends RequestBaseModel {
    * data from the datastore for given query options.
    *
    * @param {String} type Datastore type
-   * @param {Object} queryOptions PouchDB query options.
+   * @param {PouchDB.Core.AllDocsOptions} queryOptions PouchDB query options.
    * @return {Promise} List of PouchDB documents for the query.
    */
   async list(type, queryOptions) {
@@ -1004,6 +1102,7 @@ export class RequestModel extends RequestBaseModel {
     }
     return response;
   }
+
   /**
    * A handler for the `request-query` custom event. Queries the datastore for
    * request data.
@@ -1019,15 +1118,16 @@ export class RequestModel extends RequestBaseModel {
     e.stopPropagation();
     e.detail.result = this.query(e.detail.q, e.detail.type, e.detail.detailed);
   }
+
   /**
    * Queries both URL and PouchDb data.
    *
    * It calls, in order, `queryUrlData()` and `queryPouchDb()` functions.
    *
-   * @param {String} q User query
-   * @param {?String} type Optional, type of the requests to search for.
+   * @param {string} q User query
+   * @param {string=} type Optional, type of the requests to search for.
    * By default it returns all data.
-   * @param {?Boolean} detailed If set it uses slower algorithm but performs full
+   * @param {boolean=} detailed If set it uses slower algorithm but performs full
    * search on the index. When false it only uses filer like query + '*'.
    * @return {Promise<Array<Object>>} Promise resolved to the list of requests.
    */
@@ -1045,11 +1145,11 @@ export class RequestModel extends RequestBaseModel {
    * Performs a query on the URL index data.
    *
    * @param {String} q User query
-   * @param {?String} type Optional, type of the requests to search for.
+   * @param {string=} type Optional, type of the requests to search for.
    * By default it returns all data.
-   * @param {?Boolean} detailed If set it uses slower algorithm but performs full
+   * @param {boolean=} detailed If set it uses slower algorithm but performs full
    * search on the index. When false it only uses filer like query + '*'.
-   * @return {Promise<Array<Object>>} Promise resolved to the list of requests.
+   * @return {Promise<(ARCHistoryRequest|ARCSavedRequest)[]>} Promise resolved to the list of requests.
    */
   async queryUrlData(q, type, detailed) {
     const e = new CustomEvent('url-index-query', {
@@ -1059,8 +1159,9 @@ export class RequestModel extends RequestBaseModel {
       detail: {
         q,
         type,
-        detailed
-      }
+        detailed,
+        result: undefined,
+      },
     });
     this.dispatchEvent(e);
     if (!e.defaultPrevented) {
@@ -1069,14 +1170,17 @@ export class RequestModel extends RequestBaseModel {
     const data = await e.detail.result;
     const keys = Object.keys(data);
     if (!keys.length) {
-      return keys; // ampty array
+      return [];
     }
     const savedKeys = [];
     const historyKeys = [];
     for (let i = 0, len = keys.length; i < len; i++) {
       if (data[keys[i]] === 'history' || data[keys[i]] === 'history-requests') {
         historyKeys[historyKeys.length] = keys[i];
-      } else if (data[keys[i]] === 'saved' || data[keys[i]] === 'saved-requests') {
+      } else if (
+        data[keys[i]] === 'saved' ||
+        data[keys[i]] === 'saved-requests'
+      ) {
         savedKeys[savedKeys.length] = keys[i];
       }
     }
@@ -1085,14 +1189,14 @@ export class RequestModel extends RequestBaseModel {
     if (savedKeys.length) {
       responses[responses.length] = await this.savedDb.allDocs({
         keys: savedKeys,
-        include_docs: true
+        include_docs: true,
       });
     }
 
     if (historyKeys.length) {
       responses[responses.length] = await this.historyDb.allDocs({
         keys: historyKeys,
-        include_docs: true
+        include_docs: true,
       });
     }
 
@@ -1100,6 +1204,7 @@ export class RequestModel extends RequestBaseModel {
     for (let i = 0, iLen = responses.length; i < iLen; i++) {
       const response = responses[i];
       for (let j = 0, jLen = response.rows.length; j < jLen; j++) {
+        // @ts-ignore
         if (response.rows[j].error) {
           continue;
         }
@@ -1108,16 +1213,17 @@ export class RequestModel extends RequestBaseModel {
     }
     return result;
   }
+
   /**
    * Performs a query on the request and/or history data store.
    * It uses PouchDB `query` function on built indexes.
    * Note, it does not query for URL data.
    *
-   * @param {String} q User query
-   * @param {?String} type Optional, type of the requests to search for.
+   * @param {string} q User query
+   * @param {string=} type Type of the requests to search for.
    * By default it returns all data for both history and saved.
-   * @param {?Array<String>} ignore List of IDs to ignore.
-   * @return {Promise<Array<Object>>} Promise resolved to the list of requests.
+   * @param {string[]=} ignore List of IDs to ignore.
+   * @return {Promise<(ARCHistoryRequest|ARCSavedRequest)[]>} Promise resolved to the list of requests.
    */
   async queryPouchDb(q, type, ignore) {
     if (!q) {
@@ -1133,47 +1239,36 @@ export class RequestModel extends RequestBaseModel {
     }
     return r1.concat(r2);
   }
-  /**
-   * List of fields to index in the history store.
-   * @return {Array<String>}
-   */
-  get historyIndexes() {
-    return ['headers', 'payload', 'method'];
-  }
-  /**
-   * List of fields to index in the saved store.
-   * @return {Array<String>}
-   */
-  get savedIndexes() {
-    return ['headers', 'payload', 'method', 'description', 'name'];
-  }
+
   /**
    * Queries history store using PouchDB quick search plugin (full text search).
    *
-   * @param {String} q User query
-   * @param {?Array<String>} ignore List of IDs to ignore.
-   * @return {Promise<Array<Object>>} Promise resolved to the list of requests.
+   * @param {string} q User query
+   * @param {string[]} ignore List of IDs to ignore.
+   * @return {Promise<(ARCHistoryRequest|ARCSavedRequest)[]>} Promise resolved to the list of requests.
    */
   queryHistory(q, ignore) {
     return this._queryStore(q, ignore, this.historyDb, this.historyIndexes);
   }
+
   /**
    * Queries Saved store using PouchDB quick search plugin (full text search).
    *
-   * @param {String} q User query
-   * @param {?Array<String>} ignore List of IDs to ignore.
-   * @return {Promise<Array<Object>>} Promise resolved to the list of requests.
+   * @param {string} q User query
+   * @param {string[]=} ignore List of IDs to ignore.
+   * @return {Promise<(ARCHistoryRequest|ARCSavedRequest)[]>} Promise resolved to the list of requests.
    */
   async querySaved(q, ignore) {
-    return await this._queryStore(q, ignore, this.savedDb, this.savedIndexes);
+    return this._queryStore(q, ignore, this.savedDb, this.savedIndexes);
   }
+
   /**
    * See `query()` function for description.
-   * @param {String} q User query
-   * @param {?Array<String>} ignore List of IDs to ignore.
-   * @param {Object} db A handler to the data store.
-   * @param {Array<String>} indexes List of fields to query
-   * @return {Promise<Array<Object>>} A promise resolved to list of PouchDB docs.
+   * @param {string} q User query
+   * @param {string[]} ignore List of IDs to ignore.
+   * @param {PouchDB.Database} db A handler to the data store.
+   * @param {string[]} indexes List of fields to query
+   * @return {Promise<(ARCHistoryRequest|ARCSavedRequest)[]>} A promise resolved to list of PouchDB docs.
    */
   async _queryStore(q, ignore, db, indexes) {
     if (!q) {
@@ -1182,14 +1277,15 @@ export class RequestModel extends RequestBaseModel {
     if (ignore !== undefined && !(ignore instanceof Array)) {
       throw new TypeError('The "ignore" argument is not an array.');
     }
-    q = String(q).toLowerCase();
+    const query = String(q).toLowerCase();
+    // @ts-ignore
     const data = await db.search({
-      query: q,
+      query,
       fields: indexes,
       // jscs:disable
       include_docs: true,
       // jscs:enable
-      mm: (100 / q.split(' ').length)
+      mm: 100 / q.split(' ').length,
     });
     const rows = data.rows || [];
     const result = [];
@@ -1200,21 +1296,24 @@ export class RequestModel extends RequestBaseModel {
     }
     return result;
   }
+
   /**
    * Performs data indexing using PouchDB api.
    * This is not the same as URL indexing using `url-indexer`.
    *
-   * @param {String} type Data type - saved or history.
-   * @return {Promise}
+   * @param {string} type Data type - saved or history.
+   * @return {Promise<void>}
    */
   async indexData(type) {
     const db = type === 'history' ? this.historyDb : this.savedDb;
     const fields = type === 'history' ? this.historyIndexes : this.savedIndexes;
-    return await db.search({
+    // @ts-ignore
+    return db.search({
       fields,
-      build: true
+      build: true,
     });
   }
+
   /**
    * Handler for `request-project-list` event to query for list of requests in
    * a project.
@@ -1228,32 +1327,35 @@ export class RequestModel extends RequestBaseModel {
     e.stopPropagation();
     e.detail.result = this.readProjectRequests(e.detail.id, e.detail.opts);
   }
+
   /**
    * Reads list of requests associated with a project
-   * @param {String} id Project id
-   * @param {Object} opts Additional options. Currently only `restorePayload`
-   * is supported
-   * @return {Promise}
+   * @param {string} id Project id
+   * @param {ARCRequestRestoreOptions=} opts Request query options.
+   * @return {Promise<(ARCHistoryRequest|ARCSavedRequest)[]>}
    */
   async readProjectRequests(id, opts) {
     if (!id) {
       throw new Error('Project id is not set.');
     }
-    const project = await this.readProject(id)
+    const project = await this.readProject(id);
     if (project.requests) {
-      return await this.readBulk('saved', project.requests, opts);
+      return this.readBulk('saved', project.requests, opts);
     }
-    return await this.readProjectRequestsLegacy(id, opts);
+    return this.readProjectRequestsLegacy(id);
   }
+
   /**
    * Reads requests data related to the project from a legacy system.
    * @param {String} id Project id
-   * @return {Promise}
+   * @return {Promise<(ARCHistoryRequest|ARCSavedRequest)[]>}
    */
   async readProjectRequestsLegacy(id) {
     const db = this.getDatabase('saved');
-    const docsResponse = await db.allDocs()
-    const items = docsResponse.rows.filter((item) => item.id.indexOf(id) !== -1);
+    const docsResponse = await db.allDocs();
+    const items = docsResponse.rows.filter(
+      (item) => item.id.indexOf(id) !== -1
+    );
     const requests = [];
     for (const item of items) {
       requests[requests.length] = await db.get(item.id);
@@ -1261,12 +1363,13 @@ export class RequestModel extends RequestBaseModel {
     requests.sort(this.sortRequestProjectOrder);
     return requests;
   }
+
   /**
    * Sorts requests list by `projectOrder` property
    *
-   * @param {Object} a
-   * @param {Object} b
-   * @return {Number}
+   * @param {object} a
+   * @param {object} b
+   * @return {number}
    */
   sortRequestProjectOrder(a, b) {
     if (a.projectOrder > b.projectOrder) {
@@ -1283,13 +1386,14 @@ export class RequestModel extends RequestBaseModel {
     }
     return 0;
   }
+
   /**
    * Handler for `destroy-model` custom event.
    * Deletes saved or history data when scheduled for deletion.
    * @param {CustomEvent} e
    */
   _deleteModelHandler(e) {
-    const models = e.detail.models;
+    const { models } = e.detail;
     if (!models || !models.length) {
       return;
     }
@@ -1301,20 +1405,30 @@ export class RequestModel extends RequestBaseModel {
       e.detail.result = e.detail.result.concat(promises);
     }
   }
+
   /**
    * Deletes all data of selected type.
-   * @param {Array<String>|String} models Database type or list of types.
-   * @return {Array<Promise>} List of promises. Might be empty array.
+   * @param {string|string[]} models Database type or list of types.
+   * @return {Promise<void>[]} List of promises. Might be empty array.
    */
   deleteDataModel(models) {
-    if (!(models instanceof Array)) {
-      models = [models];
+    let items = models;
+    if (!Array.isArray(items)) {
+      items = [items];
     }
     const p = [];
-    if (models.indexOf('saved-requests') !== -1 || models.indexOf('saved') !== -1 || models.indexOf('all') !== -1) {
+    if (
+      items.indexOf('saved-requests') !== -1 ||
+      items.indexOf('saved') !== -1 ||
+      items.indexOf('all') !== -1
+    ) {
       p[p.length] = this.deleteModel('saved');
     }
-    if (models.indexOf('history-requests') !== -1 || models.indexOf('history') !== -1 || models.indexOf('all') !== -1) {
+    if (
+      items.indexOf('history-requests') !== -1 ||
+      items.indexOf('history') !== -1 ||
+      items.indexOf('all') !== -1
+    ) {
       p[p.length] = this.deleteModel('history');
     }
     return p;

@@ -1,10 +1,10 @@
 /* eslint-disable import/no-extraneous-dependencies */
 const merge = require('deepmerge');
-const slSettings = require('@advanced-rest-client/testing-karma-sl/sl-settings.js');
+const { slSettings } = require('@advanced-rest-client/testing-karma-sl');
 const createBaseConfig = require('./karma.conf.js');
 
 module.exports = (config) => {
-  const slConfig = merge(slSettings(config), {
+  const slConfig = merge(slSettings(), {
     sauceLabs: {
       testName: 'arc-models',
     },

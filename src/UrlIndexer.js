@@ -11,7 +11,47 @@ WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
 License for the specific language governing permissions and limitations under
 the License.
 */
-import '@advanced-rest-client/uuid-generator/uuid-generator.js';
+import { v4 } from '@advanced-rest-client/uuid-generator';
+
+/** @typedef {import('./UrlIndexer').IndexableRequest} IndexableRequest */
+/** @typedef {import('./UrlIndexer').IndexableRequestInternal} IndexableRequestInternal */
+/** @typedef {import('./UrlIndexer').IndexableRequestMap} IndexableRequestMap */
+/** @typedef {import('./UrlIndexer').ProcessedQueryResults} ProcessedQueryResults */
+/** @typedef {import('./UrlIndexer').IndexQueryOptions} IndexQueryOptions */
+/** @typedef {import('./UrlIndexer').IndexQueryResult} IndexQueryResult */
+
+/* eslint-disable class-methods-use-this */
+/* eslint-disable no-plusplus */
+/* eslint-disable no-continue */
+
+export function normalizeType(type) {
+  switch (type) {
+    case 'saved-requests':
+      return 'saved';
+    case 'history-requests':
+      return 'history';
+    default:
+      return type;
+  }
+}
+
+export const STORE_NAME = 'request-index';
+export const STORE_VERSION = 1;
+
+/**
+ * Creates a database schema when is newly created.
+ * @param {Event} e Database create request event
+ */
+export function createSchema(e) {
+  const evTarget = /** @type IDBOpenDBRequest */ (e.target);
+  const db = evTarget.result;
+  const store = db.createObjectStore('urls', { keyPath: 'id' });
+  store.createIndex('url', 'url', { unique: false });
+  store.createIndex('requestId', 'requestId', { unique: false });
+  store.createIndex('fullUrl', 'fullUrl', { unique: false });
+  store.createIndex('type', 'type', { unique: false });
+}
+
 /**
  * An element responsible for indexing and querying for URL data.
  *
@@ -99,29 +139,8 @@ import '@advanced-rest-client/uuid-generator/uuid-generator.js';
  * .then((result) => {});
  * ```
  * See query method for description of parameters.
- *
- * @customElement
- * @memberof LogicElements
  */
 export class UrlIndexer extends HTMLElement {
-  /**
-   * @return {Element} Instance of `uuid-generator`
-   */
-  get uuid() {
-    if (this._uuid) {
-      return this._uuid;
-    }
-    this._uuid = document.createElement('uuid-generator');
-    return this._uuid;
-  }
-
-  get indexStoreName() {
-    return 'request-index';
-  }
-
-  get indexStoreVersion() {
-    return 1;
-  }
   /**
    * @constructor
    */
@@ -137,19 +156,28 @@ export class UrlIndexer extends HTMLElement {
   connectedCallback() {
     window.addEventListener('url-index-update', this._indexUpdateHandler);
     window.addEventListener('url-index-query', this._indexQueryHandler);
-    window.addEventListener('request-object-changed', this._requestChangeHandler);
-    window.addEventListener('request-object-deleted', this._requestDeleteHandler);
+    window.addEventListener(
+      'request-object-changed',
+      this._requestChangeHandler
+    );
+    window.addEventListener(
+      'request-object-deleted',
+      this._requestDeleteHandler
+    );
     window.addEventListener('datastore-destroyed', this._deleteModelHandler);
   }
 
   disconnectedCallback() {
-    if (this._uuid) {
-      delete this._uuid;
-    }
     window.removeEventListener('url-index-update', this._indexUpdateHandler);
     window.removeEventListener('url-index-query', this._indexQueryHandler);
-    window.removeEventListener('request-object-changed', this._requestChangeHandler);
-    window.removeEventListener('request-object-deleted', this._requestDeleteHandler);
+    window.removeEventListener(
+      'request-object-changed',
+      this._requestChangeHandler
+    );
+    window.removeEventListener(
+      'request-object-deleted',
+      this._requestDeleteHandler
+    );
     window.removeEventListener('datastore-destroyed', this._deleteModelHandler);
   }
 
@@ -169,7 +197,7 @@ export class UrlIndexer extends HTMLElement {
     const query = e.detail.q;
     const opts = {};
     if (e.detail.type) {
-      opts.type = this._normalizeType(e.detail.type);
+      opts.type = normalizeType(e.detail.type);
     }
     if (e.detail.detailed) {
       opts.detailed = e.detail.detailed;
@@ -177,33 +205,23 @@ export class UrlIndexer extends HTMLElement {
     e.detail.result = this.query(query, opts);
   }
 
-  _normalizeType(type) {
-    switch (type) {
-      case 'saved-requests':
-        return 'saved';
-      case 'history-requests':
-        return 'history';
-      default:
-        return type;
-    }
-  }
-
   _requestChangeHandler(e) {
     if (e.cancelable) {
       return;
     }
     const r = e.detail.request;
-    const type = this._normalizeType(r.type);
+    const type = normalizeType(r.type);
     this._indexDebounce(r._id, r.url, type);
   }
+
   /**
    * Calles index function with debouncer.
    * The debouncer runs the queue after 25 ms. Bulk operations should be called
    * onece unless there's a lot of data to process.
    *
-   * @param {String} id Request ID
-   * @param {String} url Request URL
-   * @param {String} type Request type (saved or history)
+   * @param {string} id Request ID
+   * @param {string} url Request URL
+   * @param {string} type Request type (saved or history)
    */
   _indexDebounce(id, url, type) {
     if (!this.__indexRequestQueue) {
@@ -221,17 +239,26 @@ export class UrlIndexer extends HTMLElement {
     this.__indexRequestQueue.push({
       id,
       url,
-      type
+      type,
     });
     this.__indexDebounce = setTimeout(() => {
       this.__indexDebounce = undefined;
       const data = this.__indexRequestQueue;
       this.__indexRequestQueue = undefined;
       if (data && data.length) {
-        this.index(data).catch((cause) => {});
+        this.__quietTndex(data);
       }
     }, 25);
   }
+
+  async __quietTndex(data) {
+    try {
+      await this.index(data);
+    } catch (e) {
+      // ...
+    }
+  }
+
   /**
    * Handler for `request-object-deleted` custom event.
    * It expects `id` property to be set on event detail object.
@@ -244,6 +271,7 @@ export class UrlIndexer extends HTMLElement {
     }
     this._deleteIndexDebounce(e.detail.id);
   }
+
   /**
    * Calles deleteIndexedData function with debouncer.
    * The debouncer runs the queue after 25 ms. Bulk operations should be called
@@ -267,9 +295,17 @@ export class UrlIndexer extends HTMLElement {
       const data = this.__deleteRequestQueue;
       this.__deleteRequestQueue = undefined;
       if (data && data.length) {
-        this.deleteIndexedData(data).catch((cause) => {});
+        this.__quietIndexData(data);
       }
     }, 25);
+  }
+
+  async __quietIndexData(data) {
+    try {
+      await this.deleteIndexedData(data);
+    } catch (e) {
+      // ...
+    }
   }
 
   _deleteModelHandler(e) {
@@ -280,16 +316,27 @@ export class UrlIndexer extends HTMLElement {
     return this._deleteStores(store);
   }
 
+  /**
+   * Removes indexed data from select stores.
+   * @param {string[]} store A stores that being destroyed in the app.
+   * @return {Promise<void>}
+   */
   async _deleteStores(store) {
     try {
-      if (store.indexOf('saved-requests') !== -1 || store.indexOf('saved') !== -1) {
+      if (
+        store.indexOf('saved-requests') !== -1 ||
+        store.indexOf('saved') !== -1
+      ) {
         await this.deleteIndexedType('saved');
       }
     } catch (_) {
       // ...
     }
     try {
-      if (store.indexOf('history-requests') !== -1 || store.indexOf('history') !== -1) {
+      if (
+        store.indexOf('history-requests') !== -1 ||
+        store.indexOf('history') !== -1
+      ) {
         await this.deleteIndexedType('history');
       }
     } catch (_) {
@@ -310,36 +357,25 @@ export class UrlIndexer extends HTMLElement {
 
   /**
    * Opens search index data store.
-   * @return {Promise}
+   * @return {Promise<IDBDatabase>}
    */
   openSearchStore() {
     if (this.__db) {
       return Promise.resolve(this.__db);
     }
     return new Promise((resolve, reject) => {
-      const request = window.indexedDB.open(this.indexStoreName, this.indexStoreVersion);
+      const request = window.indexedDB.open(STORE_NAME, STORE_VERSION);
       request.onsuccess = (e) => {
-        this.__db = e.target.result;
-        resolve(e.target.result);
+        const evTarget = /** @type IDBOpenDBRequest */ (e.target);
+        const { result } = evTarget;
+        this.__db = result;
+        resolve(result);
       };
-      request.onerror = function() {
+      request.onerror = () => {
         reject(new Error('Unable to open the store'));
       };
-      request.onupgradeneeded = this.createSchema;
+      request.onupgradeneeded = createSchema;
     });
-  }
-  /**
-   * Creates a database schema when is newly created.
-   * @param {Event} e Database create request event
-   */
-  createSchema(e) {
-    // DO NOT CALL `this` HERE
-    const db = e.target.result;
-    const store = db.createObjectStore('urls', { keyPath: 'id' });
-    store.createIndex('url', 'url', { unique: false });
-    store.createIndex('requestId', 'requestId', { unique: false });
-    store.createIndex('fullUrl', 'fullUrl', { unique: false });
-    store.createIndex('type', 'type', { unique: false });
   }
 
   /**
@@ -350,12 +386,15 @@ export class UrlIndexer extends HTMLElement {
    * - `type` - store name or identifier (returned by the query)
    * - `url` - the URL to index
    *
-   * @param {Array} requests List of requests to index.
-   * @return {Promise}
+   * @param {IndexableRequest[]} requests List of requests to index.
+   * @return {Promise<void>}
    */
   async index(requests) {
     const db = await this.openSearchStore();
-    const result = await this._getIndexedDataAll(db, requests.map((i) => i.id));
+    const result = await this._getIndexedDataAll(
+      db,
+      requests.map((i) => i.id)
+    );
     const data = this._processIndexedRequests(requests, result);
     if (data.index.length) {
       await this._storeIndexes(db, data.index);
@@ -366,19 +405,25 @@ export class UrlIndexer extends HTMLElement {
     this._notifyIndexFinished();
   }
 
+  /**
+   *
+   * @param {IndexableRequest[]} requests List of requests to index.
+   * @param {IndexableRequestMap} map
+   * @return {ProcessedQueryResults}
+   */
   _processIndexedRequests(requests, map) {
     const toIndex = [];
     const toRemove = [];
-    for (let i = 0, len = requests.length; i < len; i++) {
-      const request = requests[i];
+    requests.forEach((request) => {
       const indexed = map[request.id] || [];
       const indexes = this._prepareRequestIndexData(request, indexed);
       toIndex.splice(toIndex.length, 0, ...indexes);
       toRemove.splice(toRemove.length, 0, ...indexed);
-    }
+    });
+
     return {
       index: toIndex,
-      remove: toRemove
+      remove: toRemove,
     };
   }
 
@@ -386,15 +431,15 @@ export class UrlIndexer extends HTMLElement {
     this.dispatchEvent(
       new CustomEvent('request-indexing-finished', {
         bubbles: true,
-        composed: true
+        composed: true,
       })
     );
   }
 
   /**
    * Removes indexed data for given requests.
-   * @param {Array<String>} ids List of request ids to remove.
-   * @return {Promise}
+   * @param {string[]} ids List of request ids to remove.
+   * @return {Promise<void>}
    */
   async deleteIndexedData(ids) {
     const db = await this.openSearchStore();
@@ -414,58 +459,58 @@ export class UrlIndexer extends HTMLElement {
   /**
    * Removes indexed data for given `type`.
    * @param {String} type `history` or `saved`
-   * @return {Promise}
+   * @return {Promise<void>}
    */
-  deleteIndexedType(type) {
-    return this.openSearchStore().then((db) => {
-      const tx = db.transaction('urls', 'readwrite');
-      return new Promise((resolve, reject) => {
-        tx.oncomplete = () => resolve();
-        tx.onerror = () => {
-          // console.warn('Unable to clear index by type.', e);
-          reject(new Error('Transaction error'));
-        };
-        const store = tx.objectStore('urls');
-        const keyRange = window.IDBKeyRange.only(type);
-        const index = store.index('type');
-        const request = index.openKeyCursor(keyRange);
-        request.onsuccess = (e) => {
-          const cursor = e.target.result;
-          if (!cursor) {
-            return;
-          }
-          store.delete(cursor.primaryKey);
-          cursor.continue();
-        };
-      });
+  async deleteIndexedType(type) {
+    const db = await this.openSearchStore();
+    const tx = db.transaction('urls', 'readwrite');
+    return new Promise((resolve, reject) => {
+      tx.oncomplete = () => resolve();
+      tx.onerror = () => {
+        // console.warn('Unable to clear index by type.', e);
+        reject(new Error('Transaction error'));
+      };
+      const store = tx.objectStore('urls');
+      const keyRange = IDBKeyRange.only(type);
+      const index = store.index('type');
+      const request = index.openKeyCursor(keyRange);
+      request.onsuccess = (e) => {
+        const rq = /** @type IDBRequest<IDBCursor> */ (e.target);
+        const cursor = rq.result;
+        if (!cursor) {
+          return;
+        }
+        store.delete(cursor.primaryKey);
+        cursor.continue();
+      };
     });
   }
+
   /**
    * Removes all indexed data.
    *
-   * @return {Promise}
+   * @return {Promise<void>}
    */
-  clearIndexedData() {
-    return this.openSearchStore().then((db) => {
-      return new Promise((resolve, reject) => {
-        const tx = db.transaction('urls', 'readwrite');
-        const store = tx.objectStore('urls');
-        const results = [];
-        tx.onerror = () => {
-          reject(results);
-        };
-        tx.oncomplete = () => {
-          resolve(results);
-        };
-        store.clear();
-      });
+  async clearIndexedData() {
+    const db = await this.openSearchStore();
+    return new Promise((resolve, reject) => {
+      const tx = db.transaction('urls', 'readwrite');
+      const store = tx.objectStore('urls');
+      tx.onerror = () => {
+        reject(new Error('Unable to clear URL indexed data'));
+      };
+      tx.oncomplete = () => {
+        resolve();
+      };
+      store.clear();
     });
   }
+
   /**
    * Retreives index data for requests.
-   * @param {Object} db Database reference
-   * @param {Array<String>} ids List of request ids
-   * @return {Promise<Object>} A map where keys are request IDs and values are
+   * @param {IDBDatabase} db Database reference
+   * @param {string[]} ids List of request ids
+   * @return {Promise<IndexableRequestMap>} A map where keys are request IDs and values are
    * an array of index data.
    * ```
    * {
@@ -482,45 +527,52 @@ export class UrlIndexer extends HTMLElement {
     return new Promise((resolve) => {
       const tx = db.transaction('urls', 'readonly');
       const store = tx.objectStore('urls');
-      const result = {};
+      const result = /** @type IndexableRequestMap */ ({});
       tx.onerror = () => {
-        // console.warn('Transaction error: _getIndexedDataAll');
         resolve(result);
       };
       tx.oncomplete = () => {
         resolve(result);
       };
+      /**
+       * @param {string} id
+       * @param {Event} e
+       */
       function processResult(id, e) {
-        const cursor = e.target.result;
-        if (cursor) {
-          const record = cursor.value;
-          if (record) {
-            if (!(id in result)) {
-              result[id] = [];
-            }
-            result[id][result[id].length] = record;
-          }
-          cursor.continue();
+        const request = /** @type IDBRequest<IDBCursorWithValue> */ (e.target);
+        const cursor = /** @type IDBCursorWithValue */ (request.result);
+        if (!cursor) {
+          return;
         }
+        const record = cursor.value;
+        if (record) {
+          if (!(id in result)) {
+            result[id] = [];
+          }
+          result[id][
+            result[id].length
+          ] = /* @type IndexableRequestInternal */ record;
+        }
+        cursor.continue();
       }
       const index = store.index('requestId');
-      for (let i = 0, len = ids.length; i < len; i++) {
-        const id = ids[i];
+      ids.forEach((id) => {
         const request = index.openCursor(id);
         request.onsuccess = processResult.bind(this, id);
-      }
+      });
     });
   }
+
   /**
    * Prepares a list of objects to put into the indexeddb to index the request.
-   * @param {Object} request Request object with `id` and `url` properties
-   * @param {Array<Object>} indexed List of already indexed properties
-   * @return {Array<Object>} A list of objects to store
+   * @param {IndexableRequest} request Request object with `id` and `url` properties
+   * @param {IndexableRequestInternal[]} indexed List of already indexed properties
+   * @return {IndexableRequestInternal[]} A list of objects to store
    */
   _prepareRequestIndexData(request, indexed) {
     const result = [];
     const { id, url } = request;
-    const type = this._normalizeType(request.type);
+    const type = normalizeType(request.type);
     let parser;
     try {
       parser = new URL(url);
@@ -545,116 +597,130 @@ export class UrlIndexer extends HTMLElement {
 
     const qs = this._getQueryString(parser, id, type, indexed);
     if (qs) {
-      result.push(qs);
+      result[result.length] = qs;
     }
 
     this._appendQueryParams(parser, id, type, indexed, result);
     return result;
   }
+
   /**
    * Generates ID for URL index object
-   * @param {String} url URL to search for. It should be lower case
-   * @param {String} type Request type
-   * @return {String}
+   * @param {string} url URL to search for. It should be lower case
+   * @param {string} type Request type
+   * @return {string}
    */
   _generateId(url, type) {
-    return url + '::' + type + '::' + this.uuid.generate();
+    return `${url}::${type}::${v4()}`;
   }
+
   /**
    * Creates an index datastore object if it doesn't exists in the list
    * of indexed items.
-   * @param {String} url URL to search for.
-   * @param {String} id Request ID
-   * @param {String} type Request type
-   * @param {Array<Object>} indexed Already indexed data.
-   * @return {Object|undefined} Index object to store or `undefined` if already
+   * @param {string} url URL to search for.
+   * @param {string} id Request ID
+   * @param {string} type Request type
+   * @param {IndexableRequestInternal[]} indexed Already indexed data.
+   * @return {IndexableRequestInternal|undefined} Index object to store or `undefined` if already
    * indexed.
    */
   _createIndexIfMissing(url, id, type, indexed) {
     const lowerUrl = url.toLowerCase();
-    const index = indexed.findIndex((item) => item.url.toLowerCase() === lowerUrl);
+    const index = indexed.findIndex(
+      (item) => item.url.toLowerCase() === lowerUrl
+    );
     if (index !== -1) {
       indexed.splice(index, 1);
-      return;
+      return undefined;
     }
     return {
       id: this._generateId(lowerUrl, type),
       url,
       requestId: id,
       type,
-      fullUrl: 0
+      fullUrl: 0,
     };
   }
+
   /**
    * Creates an index object for the whole url, if it doesn't exists in already
    * indexed data.
    *
-   * @param {Object} request The request object to index
-   * @param {Array<Object>} indexed Already indexed data.
-   * @return {Object|undefined} Object to store or `undefined` if the object
+   * @param {IndexableRequest} request The request object to index
+   * @param {IndexableRequestInternal[]} indexed Already indexed data.
+   * @return {IndexableRequestInternal|undefined} Object to store or `undefined` if the object
    * already exists.
    */
   _getUrlObject(request, indexed) {
-    return this._createIndexIfMissing(request.url, request.id, request.type, indexed);
+    return this._createIndexIfMissing(
+      request.url,
+      request.id,
+      request.type,
+      indexed
+    );
   }
+
   /**
    * Creates an index object for authority part of the url,
    * if it doesn't exists in already indexed data.
    *
    * @param {URL} parser Instance of URL object
-   * @param {String} id Request ID
-   * @param {String} type Request type
-   * @param {Array<Object>} indexed Already indexed data.
-   * @return {Object|undefined} Object to store or `undefined` if the object
+   * @param {string} id Request ID
+   * @param {string} type Request type
+   * @param {IndexableRequestInternal[]} indexed Already indexed data.
+   * @return {IndexableRequestInternal|undefined} Object to store or `undefined` if the object
    * already exists.
    */
   _getAuthorityPath(parser, id, type, indexed) {
     const url = parser.host + parser.pathname + parser.search;
     return this._createIndexIfMissing(url, id, type, indexed);
   }
+
   /**
    * Creates an index object for path part of the url,
    * if it doesn't exists in already indexed data.
    *
    * @param {URL} parser Instance of URL object
-   * @param {String} id Request ID
-   * @param {String} type Request type
-   * @param {Array<Object>} indexed Already indexed data.
-   * @return {Object|undefined} Object to store or `undefined` if the object
+   * @param {string} id Request ID
+   * @param {string} type Request type
+   * @param {IndexableRequestInternal[]} indexed Already indexed data.
+   * @return {IndexableRequestInternal|undefined} Object to store or `undefined` if the object
    * already exists.
    */
   _getPathQuery(parser, id, type, indexed) {
     const url = parser.pathname + parser.search;
     return this._createIndexIfMissing(url, id, type, indexed);
   }
+
   /**
    * Creates an index object for query string of the url,
    * if it doesn't exists in already indexed data.
    *
    * @param {URL} parser Instance of URL object
-   * @param {String} id Request ID
-   * @param {String} type Request type
-   * @param {Array<Object>} indexed Already indexed data.
-   * @return {Object|undefined} Object to store or `undefined` if the object
+   * @param {string} id Request ID
+   * @param {string} type Request type
+   * @param {IndexableRequestInternal[]} indexed Already indexed data.
+   * @return {IndexableRequestInternal|undefined} Object to store or `undefined` if the object
    * already exists.
    */
   _getQueryString(parser, id, type, indexed) {
     let url = parser.search;
     if (!url || url === '?') {
-      return;
+      return undefined;
     }
     url = url.substr(1);
     return this._createIndexIfMissing(url, id, type, indexed);
   }
+
   /**
    * Creates an index object for each query parameter of the url,
    * if it doesn't exists in already indexed data.
    *
    * @param {URL} parser Instance of URL object
-   * @param {String} id Request ID
-   * @param {String} type Request type
-   * @param {Array<Object>} indexed Already indexed data.
-   * @param {Array<Object>} target A list where to put generated data
+   * @param {string} id Request ID
+   * @param {string} type Request type
+   * @param {IndexableRequestInternal[]} indexed Already indexed data.
+   * @param {IndexableRequestInternal[]} target A list where to put generated data
    */
   _appendQueryParams(parser, id, type, indexed, target) {
     parser.searchParams.forEach((value, name) => {
@@ -669,70 +735,69 @@ export class UrlIndexer extends HTMLElement {
       }
     });
   }
+
   /**
    * Stores indexes in the data store.
    *
-   * @param {Object} db
-   * @param {Array<Object>} indexes List of indexes to store.
-   * @return {Promise}
+   * @param {IDBDatabase} db
+   * @param {IndexableRequestInternal[]} indexes List of indexes to store.
+   * @return {Promise<void>}
     window
    */
   _storeIndexes(db, indexes) {
     return new Promise((resolve, reject) => {
       const tx = db.transaction('urls', 'readwrite');
       const store = tx.objectStore('urls');
-      tx.oncomplete = function() {
+      tx.oncomplete = () => {
         resolve();
       };
-      tx.onerror = function(e) {
-        reject(e.target.error);
+      tx.onerror = () => {
+        reject(new Error('Unable to store indexes in the store'));
       };
-      for (let i = 0, len = indexes.length; i < len; i++) {
-        store.add(indexes[i]);
-      }
+      indexes.forEach((item) => {
+        store.add(item);
+      });
     });
   }
+
   /**
    * Removes indexed items that are no longer relevant for the request.
-   * @param {Object} db
-   * @param {Array<Object>} items List of datastore index items.
-   * @return {Promise}
+   * @param {IDBDatabase} db
+   * @param {IndexableRequestInternal[]} items List of datastore index items.
+   * @return {Promise<void>}
    */
   _removeRedundantIndexes(db, items) {
     return new Promise((resolve, reject) => {
       const tx = db.transaction('urls', 'readwrite');
       const store = tx.objectStore('urls');
-      tx.oncomplete = function() {
+      tx.oncomplete = () => {
         resolve();
       };
-      tx.onerror = function(e) {
-        reject(e.target.error);
+      tx.onerror = () => {
+        reject(new Error('Unable to remove redundant indexes from the store'));
       };
-      for (let i = 0, len = items.length; i < len; i++) {
-        store.delete(items[i].id);
-      }
+      items.forEach((item) => {
+        store.delete(item.id);
+      });
     });
   }
+
   /**
    * Queries for indexed data.
    *
-   * @param {String} query The query
-   * @param {Object} opts Search options:
-   * - type (string: saved || history): Request type
-   * - detailed (Booelan): If set it uses slower algorithm but performs full
-   * search on the index. When false it only uses filer like query + '*'.
-   * @return {Promise}
+   * @param {string} query The query
+   * @param {IndexQueryOptions=} opts Search options
+   * @return {Promise<IndexQueryResult>}
    */
-  async query(query, opts) {
-    opts = opts || {};
+  async query(query, opts = {}) {
     const db = await this.openSearchStore();
-    const type = this._normalizeType(opts.type);
+    const type = normalizeType(opts.type);
     if (opts.detailed) {
-      return await this._searchIndexOf(db, query, type);
-    } else {
-      return await this._searchCasing(db, query, type);
+      return this._searchIndexOf(db, query, type);
     }
+    return this._searchCasing(db, query, type);
   }
+
   /**
    * Performance search on the data store using `indexOf` on the primary key.
    * This function is slower than `_searchCasing` but much, much faster than
@@ -740,10 +805,10 @@ export class UrlIndexer extends HTMLElement {
    * It allows to perform a search on the part of the url only like:
    * `'*' + q + '*'` while `_searchCasing` only allows `q + '*'` type search.
    *
-   * @param {Object} db Reference to the database
-   * @param {String} q A string to search for
-   * @param {?String} type A type of the request to include into results.
-   * @return {Promise}
+   * @param {IDBDatabase} db Reference to the database
+   * @param {string} q A string to search for
+   * @param {string=} type A type of the request to include into results.
+   * @return {Promise<IndexQueryResult>}
    */
   _searchIndexOf(db, q, type) {
     // console.debug('Performing search using "indexof" algorithm');
@@ -752,7 +817,7 @@ export class UrlIndexer extends HTMLElement {
       // performance.mark('search-key-scan-2-start');
       const tx = db.transaction('urls', 'readonly');
       const store = tx.objectStore('urls');
-      const results = {};
+      const results = /** @type IndexQueryResult */ ({});
       tx.onerror = () => {
         // console.warn('Transaction error');
         resolve(results);
@@ -763,11 +828,12 @@ export class UrlIndexer extends HTMLElement {
         //  'search-key-scan-2-start');
         resolve(results);
       };
-      const keyRange = window.IDBKeyRange.only(1);
+      const keyRange = IDBKeyRange.only(1);
       const index = store.index('fullUrl');
       const request = index.openCursor(keyRange);
       request.onsuccess = (e) => {
-        const cursor = e.target.result;
+        const rq = /** @type IDBRequest<IDBCursorWithValue> */ (e.target);
+        const cursor = /** @type IDBCursorWithValue */ (rq.result);
         if (!cursor) {
           return;
         }
@@ -791,6 +857,7 @@ export class UrlIndexer extends HTMLElement {
       };
     });
   }
+
   /**
    * Uses (in most parts) algorithm described at
    * https://www.codeproject.com/Articles/744986/How-to-do-some-magic-with-indexedDB
@@ -799,10 +866,10 @@ export class UrlIndexer extends HTMLElement {
    * This is much faster than `_searchIndexOf` function. However may not find
    * some results. For ARC it's a default search function.
    *
-   * @param {Object} db Reference to the database
-   * @param {String} q A string to search for
-   * @param {?String} type A type of the request to include into results.
-   * @return {Promise}
+   * @param {IDBDatabase} db Reference to the database
+   * @param {string} q A string to search for
+   * @param {string=} type A type of the request to include into results.
+   * @return {Promise<IndexQueryResult>}
    */
   _searchCasing(db, q, type) {
     // console.debug('Performing search using "casing" algorithm');
@@ -811,7 +878,7 @@ export class UrlIndexer extends HTMLElement {
       // performance.mark('search-casing-start');
       const tx = db.transaction('urls', 'readonly');
       const store = tx.objectStore('urls');
-      const results = {};
+      const results = /** @type IndexQueryResult */ ({});
       tx.onerror = () => {
         // console.warn('Query index transaction error');
         resolve(results);
@@ -824,7 +891,8 @@ export class UrlIndexer extends HTMLElement {
       };
       const request = store.openCursor();
       request.onsuccess = (e) => {
-        const cursor = e.target.result;
+        const rq = /** @type IDBRequest<IDBCursorWithValue> */ (e.target);
+        const cursor = /** @type IDBCursorWithValue */ (rq.result);
         if (!cursor) {
           return;
         }
@@ -837,8 +905,9 @@ export class UrlIndexer extends HTMLElement {
           cursor.continue();
           return;
         }
-        const key = cursor.key;
-        const keyUrl = key.substr(0, key.indexOf('::'));
+        const { key } = cursor;
+        const typedKey = String(key);
+        const keyUrl = typedKey.substr(0, typedKey.indexOf('::'));
         if (keyUrl.indexOf(lowerNeedle) !== -1) {
           if (!results[record.requestId]) {
             results[record.requestId] = record.type;
@@ -847,21 +916,27 @@ export class UrlIndexer extends HTMLElement {
           return;
         }
         const upperNeedle = q.toUpperCase();
-        const nextNeedle = this._nextCasing(keyUrl, keyUrl, upperNeedle, lowerNeedle);
+        const nextNeedle = this._nextCasing(
+          keyUrl,
+          keyUrl,
+          upperNeedle,
+          lowerNeedle
+        );
         if (nextNeedle) {
           cursor.continue(nextNeedle);
         }
       };
     });
   }
+
   /**
    * https://www.codeproject.com/Articles/744986/How-to-do-some-magic-with-indexedDB
    * Distributed under Apache 2 license
-   * @param {String} key [description]
-   * @param {String} lowerKey [description]
-   * @param {String} upperNeedle [description]
-   * @param {String} lowerNeedle [description]
-   * @return {String|undefined}
+   * @param {string} key [description]
+   * @param {string} lowerKey [description]
+   * @param {string} upperNeedle [description]
+   * @param {string} lowerNeedle [description]
+   * @return {string|undefined}
    */
   _nextCasing(key, lowerKey, upperNeedle, lowerNeedle) {
     const length = Math.min(key.length, lowerNeedle.length);
@@ -879,9 +954,11 @@ export class UrlIndexer extends HTMLElement {
           return key.substr(0, i) + lowerNeedle[i] + upperNeedle.substr(i + 1);
         }
         if (llp >= 0) {
-          return key.substr(0, llp) + lowerKey[llp] + upperNeedle.substr(llp + 1);
+          return (
+            key.substr(0, llp) + lowerKey[llp] + upperNeedle.substr(llp + 1)
+          );
         }
-        return;
+        return undefined;
       }
       if (key[i] < lwrKeyChar) {
         llp = i;
@@ -890,47 +967,67 @@ export class UrlIndexer extends HTMLElement {
         return key + upperNeedle.substr(key.length);
       }
       if (llp < 0) {
-        return;
-      } else {
-        return key.substr(0, llp) + lowerNeedle[llp] + upperNeedle.substr(llp + 1);
+        return undefined;
       }
+      return (
+        key.substr(0, llp) + lowerNeedle[llp] + upperNeedle.substr(llp + 1)
+      );
     }
+    return undefined;
   }
 
+  /**
+   * Reindexes a request by the type.
+   * @param {string} type Either `saved` or `history`
+   * @return {Promise<void>}
+   */
   async reindex(type) {
     if (type === 'history') {
-      return await this.reindexHistory();
-    } else if (type === 'saved') {
-      return await this.reindexSaved();
-    } else {
-      throw new Error('Unknown type');
+      return this.reindexHistory();
     }
+    if (type === 'saved') {
+      return this.reindexSaved();
+    }
+    throw new Error('Unknown type');
   }
 
+  /**
+   * Reindexes saved requests
+   * @return {Promise<void>}
+   */
   async reindexSaved() {
-    return await this._renindex('saved');
+    return this._renindex('saved');
   }
 
+  /**
+   * Reindexes history requests
+   * @return {Promise<void>}
+   */
   async reindexHistory() {
-    return await this._renindex('history');
+    return this._renindex('history');
   }
 
+  /**
+   * Reindexes a request by the type.
+   * @param {string} type Either `saved` or `history`
+   * @return {Promise<void>}
+   */
   async _renindex(type) {
     /* global PouchDB */
     const pdb = new PouchDB(`${type}-requests`);
     const response = await pdb.allDocs({ include_docs: true });
-    const rows = response.rows;
+    const { rows } = response;
     if (!rows.length) {
       return;
     }
     const data = rows.map((item) => {
-      const doc = item.doc;
+      const { doc } = item;
       return {
         id: doc._id,
         url: doc.url,
-        type: type
+        type,
       };
     });
-    return this.index(data);
+    await this.index(data);
   }
 }

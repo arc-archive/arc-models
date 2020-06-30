@@ -11,8 +11,9 @@ WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
 License for the specific language governing permissions and limitations under
 the License.
 */
-import '@advanced-rest-client/uuid-generator/uuid-generator.js';
+// import { v4 } from '@advanced-rest-client/uuid-generator';
 import 'pouchdb/dist/pouchdb.js';
+
 /**
  * A base class for all models.
  *
@@ -20,8 +21,8 @@ import 'pouchdb/dist/pouchdb.js';
  */
 export class ArcBaseModel extends HTMLElement {
   /**
-   * @param {String} dbname Name of the data store
-   * @param {Number} revsLimit Limit number of revisions on the data store.
+   * @param {string=} dbname Name of the data store
+   * @param {number=} revsLimit Limit number of revisions on the data store.
    */
   constructor(dbname, revsLimit) {
     super();
@@ -32,7 +33,7 @@ export class ArcBaseModel extends HTMLElement {
 
   /**
    * Note, the element does not include PouchDB to the document!
-   * @return {PouchDB} A PouchDB instance.
+   * @return {PouchDB.Database} A PouchDB instance.
    */
   get db() {
     if (!this.name) {
@@ -53,19 +54,6 @@ export class ArcBaseModel extends HTMLElement {
   get eventsTarget() {
     return this._oldEventsTarget || window;
   }
-  /**
-   * Useful to generate uuid string.
-   * Use it as `this.uuid.generate()`.
-   *
-   * @return {Element} Reference to `uuid-generator` element.
-   */
-  get uuid() {
-    if (this._uuid) {
-      return this._uuid;
-    }
-    this._uuid = document.createElement('uuid-generator');
-    return this._uuid;
-  }
 
   connectedCallback() {
     if (!this._oldEventsTarget) {
@@ -74,16 +62,19 @@ export class ArcBaseModel extends HTMLElement {
   }
 
   disconnectedCallback() {
-    if (this._uuid) {
-      delete this._uuid;
-    }
     this._detachListeners(this.eventsTarget);
   }
 
+  /**
+   * @param {EventTarget} node
+   */
   _attachListeners(node) {
     node.addEventListener('destroy-model', this._deleteModelHandler);
   }
 
+  /**
+   * @param {EventTarget} node
+   */
   _detachListeners(node) {
     node.removeEventListener('destroy-model', this._deleteModelHandler);
   }
@@ -92,7 +83,7 @@ export class ArcBaseModel extends HTMLElement {
    * Removes old handlers (if any) and attaches listeners on new event
    * event target.
    *
-   * @param {?Node} eventsTarget Event target to set handlers on. If not set it
+   * @param {EventTarget} eventsTarget Event target to set handlers on. If not set it
    * will set handlers on the `window` object.
    */
   _eventsTargetChanged(eventsTarget) {
@@ -102,12 +93,14 @@ export class ArcBaseModel extends HTMLElement {
     this._oldEventsTarget = eventsTarget || window;
     this._attachListeners(this._oldEventsTarget);
   }
+
   /**
    * Reads an entry from the datastore.
    *
-   * @param {String} id The ID of the datastore entry.
-   * @param {?String} rev Specific revision to read. Defaults to latest revision.
-   * @return {Promise} Promise resolved to a datastore object.
+   * @template T
+   * @param {string} id The ID of the datastore entry.
+   * @param {string=} rev Specific revision to read. Defaults to latest revision.
+   * @return {Promise<T>} Promise resolved to a datastore object.
    */
   async read(id, rev) {
     if (!id) {
@@ -117,29 +110,14 @@ export class ArcBaseModel extends HTMLElement {
     if (rev) {
       opts.rev = rev;
     }
-    return await this.db.get(id, opts);
+    return this.db.get(id, opts);
   }
-  /**
-   * Computes past mindnight for given timestamp.
-   *
-   * @param {Number} time Timestamp
-   * @return {Number} Time reduced to midnight.
-   */
-  _computeMidnight(time) {
-    if (!time || isNaN(time)) {
-      time = Date.now();
-    } else {
-      time = Number(time);
-    }
-    const day = new Date(time);
-    day.setHours(0, 0, 0, 0);
-    return day.getTime();
-  }
+
   /**
    * Dispatches non-cancelable change event.
    *
-   * @param {String} type Event type
-   * @param {Object} detail A detail object to dispatch.
+   * @param {string} type Event type
+   * @param {object} detail A detail object to dispatch.
    * @return {CustomEvent} Created and dispatched event.
    */
   _fireUpdated(type, detail) {
@@ -147,15 +125,16 @@ export class ArcBaseModel extends HTMLElement {
       cancelable: false,
       composed: true,
       bubbles: true,
-      detail: detail
+      detail,
     });
     this.dispatchEvent(e);
     return e;
   }
+
   /**
    * Handles any exception in the model in a unified way.
-   * @param {Error|Object} e An error object
-   * @param {?Boolean} noThrow If set the function will not throw error.
+   * @param {Error|object} e An error object
+   * @param {boolean=} noThrow If set the function will not throw error.
    * This allow to do the logic without stopping program.
    */
   _handleException(e, noThrow) {
@@ -165,31 +144,35 @@ export class ArcBaseModel extends HTMLElement {
     } else {
       message = JSON.stringify(e);
     }
-    this.dispatchEvent(new CustomEvent('send-analytics', {
-      bubbles: true,
-      composed: true,
-      detail: {
-        type: 'exception',
-        description: message,
-        fatal: true
-      }
-    }));
+    this.dispatchEvent(
+      new CustomEvent('send-analytics', {
+        bubbles: true,
+        composed: true,
+        detail: {
+          type: 'exception',
+          description: message,
+          fatal: true,
+        },
+      })
+    );
     if (!noThrow) {
       throw e;
     }
   }
+
   /**
    * Deletes current datastore.
    * Note that `name` property must be set before calling this function.
-   * @return {Promise}
+   * @return {Promise<void>}
    */
   async deleteModel() {
     await this.db.destroy();
     this._notifyModelDestroyed(this.name);
   }
+
   /**
    * Notifies the application that the model has been removed and data sestroyed.
-   * @param {String} type Database name.
+   * @param {string} type Database name.
    * @return {CustomEvent} Dispatched event
    */
   _notifyModelDestroyed(type) {
@@ -197,19 +180,20 @@ export class ArcBaseModel extends HTMLElement {
       bubbles: true,
       composed: true,
       detail: {
-        datastore: type
-      }
+        datastore: type,
+      },
     });
     this.dispatchEvent(e);
     return e;
   }
+
   /**
    * Handler for `destroy-model` custom event.
    * Deletes current data when scheduled for deletion.
    * @param {CustomEvent} e
    */
   _deleteModelHandler(e) {
-    const models = e.detail.models;
+    const { models } = e.detail;
     if (!models || !models.length || !this.name) {
       return;
     }
@@ -217,14 +201,15 @@ export class ArcBaseModel extends HTMLElement {
       if (!e.detail.result) {
         e.detail.result = [];
       }
-      e.detail.result.push(this.deleteModel(this.name));
+      e.detail.result.push(this.deleteModel());
     }
   }
+
   /**
    * Checks if event can be processed giving it's cancelation status or if
    * it was dispatched by current element.
    * @param {Event|CustomEvent} e  Event to test
-   * @return {Boolean} True if event is already cancelled or dispatched by self.
+   * @return {boolean} True if event is already cancelled or dispatched by self.
    */
   _eventCancelled(e) {
     if (e.defaultPrevented) {
@@ -237,13 +222,5 @@ export class ArcBaseModel extends HTMLElement {
       return true;
     }
     return false;
-  }
-  /**
-   * Helper method to cancel the event and stop it's propagation.
-   * @param {Event|CustomEvent} e Event to cancel
-   */
-  _cancelEvent(e) {
-    e.preventDefault();
-    e.stopPropagation();
   }
 }

@@ -12,7 +12,33 @@ License for the specific language governing permissions and limitations under
 the License.
 */
 import { ArcBaseModel } from './ArcBaseModel.js';
-/* eslint-disable require-atomic-updates */
+import { computeTime } from './Utils.js';
+
+/** @typedef {import('./WebsocketUrlHistoryModel').ARCWebsocketUrlHistory} ARCWebsocketUrlHistory */
+
+/* eslint-disable no-plusplus */
+/* eslint-disable no-continue */
+/* eslint-disable no-await-in-loop */
+
+export function sortFunction(a, b) {
+  const aTime = a._time;
+  const bTime = b._time;
+  if (aTime > bTime) {
+    return 1;
+  }
+  if (aTime < bTime) {
+    return -1;
+  }
+  const aCnt = a.cnt;
+  const bCnt = b.cnt;
+  if (aCnt > bCnt) {
+    return 1;
+  }
+  if (aCnt < bCnt) {
+    return -1;
+  }
+  return 0;
+}
 /**
  * Events based access to websockets URL history datastore.
  *
@@ -32,9 +58,6 @@ import { ArcBaseModel } from './ArcBaseModel.js';
  *
  * Events handled by this element are cancelled and propagation of the event is
  * stopped.
- *
- * @customElement
- * @memberof LogicElements
  */
 export class WebsocketUrlHistoryModel extends ArcBaseModel {
   constructor() {
@@ -50,16 +73,26 @@ export class WebsocketUrlHistoryModel extends ArcBaseModel {
     node.addEventListener('websocket-url-history-changed', this._handleChange);
     node.addEventListener('websocket-url-history-read', this._handleRead);
     node.addEventListener('websocket-url-history-query', this._handleQuery);
-    node.addEventListener('websocket-url-history-list', this._handleQueryHistory);
+    node.addEventListener(
+      'websocket-url-history-list',
+      this._handleQueryHistory
+    );
   }
 
   _detachListeners(node) {
     super._detachListeners(node);
-    node.removeEventListener('websocket-url-history-changed', this._handleChange);
+    node.removeEventListener(
+      'websocket-url-history-changed',
+      this._handleChange
+    );
     node.removeEventListener('websocket-url-history-read', this._handleRead);
     node.removeEventListener('websocket-url-history-query', this._handleQuery);
-    node.removeEventListener('websocket-url-history-list', this._handleQueryHistory);
+    node.removeEventListener(
+      'websocket-url-history-list',
+      this._handleQueryHistory
+    );
   }
+
   // Handles the read object event
   _handleRead(e) {
     if (this._eventCancelled(e)) {
@@ -68,12 +101,11 @@ export class WebsocketUrlHistoryModel extends ArcBaseModel {
     e.preventDefault();
     e.stopPropagation();
 
-    e.detail.result = this.read(e.detail.url)
-    .catch((e) => {
-      if (e.status === 404) {
-        return undefined;
+    e.detail.result = this.read(e.detail.url).catch((ev) => {
+      if (ev.status === 404) {
+        return;
       }
-      this._handleException(e);
+      this._handleException(ev);
     });
   }
 
@@ -92,27 +124,28 @@ export class WebsocketUrlHistoryModel extends ArcBaseModel {
       e.detail.result = Promise.reject(new Error('Missing "_id" property.'));
       return;
     }
-    e.detail.result = this.update(e.detail.item)
-    .catch((e) => this._handleException(e));
+    e.detail.result = this.update(e.detail.item).catch((ev) =>
+      this._handleException(ev)
+    );
   }
 
   /**
    * Updates / saves the object in the datastore.
    * This function fires `websocket-url-history-changed` event.
    *
-   * @param {Object} obj A project to save / update
-   * @return {Promise} Resolved promise to project object with updated `_rev`
+   * @param {ARCWebsocketUrlHistory} obj A project to save / update
+   * @return {Promise<ARCWebsocketUrlHistory>} Resolved promise to project object with updated `_rev`
    */
   async update(obj) {
-    obj = Object.assign({}, obj);
-    const oldRev = obj._rev;
-    const result = await this.db.put(obj);
-    obj._rev = result.rev;
+    const item = { ...obj };
+    const oldRev = item._rev;
+    const result = await this.db.put(item);
+    item._rev = result.rev;
     this._fireUpdated('websocket-url-history-changed', {
-      item: obj,
-      oldRev: oldRev
+      item,
+      oldRev,
     });
-    return obj;
+    return item;
   }
 
   _handleQueryHistory(e) {
@@ -122,8 +155,7 @@ export class WebsocketUrlHistoryModel extends ArcBaseModel {
     e.preventDefault();
     e.stopPropagation();
 
-    e.detail.result = this.list()
-    .catch((e) => this._handleException(e));
+    e.detail.result = this.list().catch((ev) => this._handleException(ev));
   }
 
   _handleQuery(e) {
@@ -133,17 +165,17 @@ export class WebsocketUrlHistoryModel extends ArcBaseModel {
     e.preventDefault();
     e.stopPropagation();
     const { q } = e.detail;
-    e.detail.result = this.list(q)
-    .catch((e) => this._handleException(e));
+    e.detail.result = this.list(q).catch((ev) => this._handleException(ev));
   }
+
   /**
    * Lists websocket history objects.
    *
-   * @param {?String} query A partial url to match results.
-   * @return {Promise} A promise resolved to a list of PouchDB documents.
+   * @param {string=} query A partial url to match results.
+   * @return {Promise<ARCWebsocketUrlHistory[]>} A promise resolved to a list of PouchDB documents.
    */
   async list(query) {
-    const db = this.db;
+    const { db } = this;
     const response = await db.allDocs();
     const { rows } = response;
     const result = [];
@@ -152,40 +184,11 @@ export class WebsocketUrlHistoryModel extends ArcBaseModel {
       if (query && item.id.indexOf(query) === -1) {
         continue;
       }
-      const doc = await db.get(item.id);
-      this._computeTime(doc);
+      let doc = await db.get(item.id);
+      doc = computeTime(doc);
       result.push(doc);
     }
-    result.sort(this._sortFunction);
+    result.sort(sortFunction);
     return result;
-  }
-
-  _sortFunction(a, b) {
-    const aTime = a._time;
-    const bTime = b._time;
-    if (aTime > bTime) {
-      return 1;
-    }
-    if (aTime < bTime) {
-      return -1;
-    }
-    const aCnt = a.cnt;
-    const bCnt = b.cnt;
-    if (aCnt > bCnt) {
-      return 1;
-    }
-    if (aCnt < bCnt) {
-      return -1;
-    }
-    return 0;
-  }
-  /**
-   * Computes time for timestamp's day, month and year and time set to 0.
-   * @param {Object} item Database entry item.
-   * @return {Object} The same database item with `_time` property.
-   */
-  _computeTime(item) {
-    item._time = this._computeMidnight(item.time);
-    return item;
   }
 }

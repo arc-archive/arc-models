@@ -12,6 +12,14 @@ License for the specific language governing permissions and limitations under
 the License.
 */
 import { RequestBaseModel } from './RequestBaseModel.js';
+import { cancelEvent } from './Utils.js';
+
+/* eslint-disable class-methods-use-this */
+/* eslint-disable no-continue */
+/* eslint-disable no-plusplus */
+
+/** @typedef {import('./RequestTypes').ARCProject} ARCProject */
+
 /**
  * Events based access to projects datastore.
  *
@@ -168,10 +176,6 @@ import { RequestBaseModel } from './RequestBaseModel.js';
  *    event.detail.result.then(list => console.log(list));
  * }
  * ```
- *
- * @customElement
- * @memberof LogicElements
- * @extends RequestBaseModel
  */
 export class ProjectModel extends RequestBaseModel {
   /**
@@ -185,8 +189,9 @@ export class ProjectModel extends RequestBaseModel {
     this._queryHandler = this._queryHandler.bind(this);
     this._createBulkHandler = this._createBulkHandler.bind(this);
   }
+
   /**
-   * @param {HTMLElement} node
+   * @param {EventTarget} node
    */
   _attachListeners(node) {
     super._attachListeners(node);
@@ -196,15 +201,18 @@ export class ProjectModel extends RequestBaseModel {
     node.addEventListener('project-model-query', this._queryHandler);
     node.addEventListener('project-update-bulk', this._createBulkHandler);
   }
+
   /**
-   * @param {HTMLElement} node
+   * @param {EventTarget} node
    */
   _detachListeners(node) {
     super._detachListeners(node);
     node.removeEventListener('project-read', this._handleRead);
     node.removeEventListener('project-object-changed', this._handleObjectSave);
-    node.removeEventListener('project-object-deleted',
-      this._handleObjectDelete);
+    node.removeEventListener(
+      'project-object-deleted',
+      this._handleObjectDelete
+    );
     node.removeEventListener('project-model-query', this._queryHandler);
     node.removeEventListener('project-update-bulk', this._createBulkHandler);
   }
@@ -217,10 +225,12 @@ export class ProjectModel extends RequestBaseModel {
     if (this._eventCancelled(e)) {
       return;
     }
-    this._cancelEvent(e);
-    e.detail.result = this.readProject(e.detail.id, e.detail.rev)
-    .catch((e) => this._handleException(e));
+    cancelEvent(e);
+    e.detail.result = this.readProject(e.detail.id, e.detail.rev).catch((ev) =>
+      this._handleException(ev)
+    );
   }
+
   /**
    * Handler for `project-update-bulk` custom event.
    * @param {CustomEvent} e
@@ -229,64 +239,70 @@ export class ProjectModel extends RequestBaseModel {
     if (this._eventCancelled(e)) {
       return;
     }
-    this._cancelEvent(e);
+    cancelEvent(e);
     const { projects } = e.detail;
     e.detail.result = this.updateBulk(projects);
   }
+
   /**
    * Normalizes projects list to common model.
    * It updates `updated` property to current time.
    * If an item is not an object then it is removed.
    *
-   * @param {Array<Object>} projects List of projects.
-   * @return {Array<Object>}
+   * @param {ARCProject[]} projects List of projects.
+   * @return {ARCProject[]}
    */
   _normalizeProjects(projects) {
-    for (let i = projects.length - 1; i >= 0; i--) {
-      let item = projects[i];
+    const items = [...projects];
+    for (let i = items.length - 1; i >= 0; i--) {
+      let item = items[i];
       if (!item || typeof item !== 'object') {
-        projects.splice(i, 1);
+        items.splice(i, 1);
         continue;
       }
-      item = Object.assign({}, {
+      item = {
         order: 0,
-        requests: []
-      }, item);
+        requests: [],
+        ...item,
+      };
       item.updated = Date.now();
       if (!item.created) {
         item.created = item.updated;
       }
-      projects[i] = item;
+      items[i] = item;
     }
-    return projects;
+    return items;
   }
+
   /**
    * Updates more than one project in a bulk request.
-   * @param {Array<Object>} projects List of requests to update.
-   * @return {Promise}
+   * @param {ARCProject[]} projects List of requests to update.
+   * @return {Promise<ARCProject[]>}
    */
   async updateBulk(projects) {
     if (!projects || !projects.length) {
       throw new Error('The "projects" property is required');
     }
-    this._normalizeProjects(projects);
-    const response = await this.projectDb.bulkDocs(projects)
-    return this._processUpdateBulkResponse(projects, response);
+    const items = this._normalizeProjects(projects);
+    const response = await this.projectDb.bulkDocs(items);
+    return this._processUpdateBulkResponse(items, response);
   }
+
   /**
    * Processes datastore response after calling `updateBulk()` function.
-   * @param {Array<Object>} projects List of requests to update.
-   * @param {Array<Object>} response PouchDB response
-   * @return {Array<Object>} List of projects with updated `_id` and `_rew`
+   * @param {ARCProject[]} projects List of requests to update.
+   * @param {Array<PouchDB.Core.Response|PouchDB.Core.Error>} response PouchDB response
+   * @return {ARCProject[]} List of projects with updated `_id` and `_rew`
    */
   _processUpdateBulkResponse(projects, response) {
     const result = [];
     for (let i = 0, len = response.length; i < len; i++) {
       const r = response[i];
       const project = projects[i];
-      if (r.error) {
-        this._handleException(r, true);
-        result.push(Object.assign({ error: true }, project));
+      const typedError = /** @type PouchDB.Core.Error */ (r);
+      if (typedError.error) {
+        this._handleException(typedError, true);
+        result.push({ error: true, ...project });
         continue;
       }
       const oldRev = project._rev;
@@ -296,30 +312,32 @@ export class ProjectModel extends RequestBaseModel {
       }
       const detail = {
         project,
-        oldRev: oldRev
+        oldRev,
       };
       this._fireUpdated('project-object-changed', detail);
       result.push(project);
     }
     return result;
   }
+
   /**
    * Lists all project objects.
    *
-   * @param {?Array<String>} ids Optional, list of project IDs to limit the
+   * @param {string[]=} ids Optional, list of project IDs to limit the
    * response to specific projects
-   * @return {Promise} A promise resolved to a list of projects.
+   * @return {Promise<ARCProject[]>} A promise resolved to a list of projects.
    */
   async listProjects(ids) {
     const opts = {
-      include_docs: true
+      include_docs: true,
     };
     if (ids && ids.length) {
       opts.keys = ids;
     }
-    const result = await this.projectDb.allDocs(opts)
+    const result = await this.projectDb.allDocs(opts);
     return result.rows.map((item) => item.doc);
   }
+
   /**
    * Handles object save / update
    * @param {CustomEvent} e
@@ -328,35 +346,39 @@ export class ProjectModel extends RequestBaseModel {
     if (this._eventCancelled(e)) {
       return;
     }
-    this._cancelEvent(e);
+    cancelEvent(e);
     const { project } = e.detail;
     e.detail.result = this.saveProject(project);
   }
+
   /**
    * Updates project object taking care of `_rew` value read if missing.
-   * @param {Object} project Project object to update.
-   * @return {Promise}
+   *
+   * @param {ARCProject} project Project object to update.
+   * @return {Promise<ARCProject>}
    */
   async saveProject(project) {
     if (!project || !project._id) {
       throw new Error('The "project" property is missing');
     }
     const db = this.projectDb;
-    if (!project._rev) {
+    let item = { ...project };
+    if (!item._rev) {
       try {
-        const doc = await db.get(project._id);
-        project = Object.assign({}, doc, project);
+        const doc = await db.get(item._id);
+        item = { ...doc, ...item };
       } catch (e) {
         if (e.status !== 404) {
           this._handleException(e);
-          return;
+          return undefined;
         }
       }
     }
     try {
-      return await this.updateProject(project);
+      return this.updateProject(item);
     } catch (e) {
-      this._handleException(e)
+      this._handleException(e);
+      return undefined;
     }
   }
 
@@ -368,12 +390,14 @@ export class ProjectModel extends RequestBaseModel {
     if (this._eventCancelled(e)) {
       return;
     }
-    this._cancelEvent(e);
+    cancelEvent(e);
 
     const { id, rev } = e.detail;
-    e.detail.result = this.removeProject(id, rev)
-    .catch((e) => this._handleException(e));
+    e.detail.result = this.removeProject(id, rev).catch((ev) =>
+      this._handleException(ev)
+    );
   }
+
   /**
    * Queries for a list of projects.
    * @param {CustomEvent} e
@@ -382,10 +406,11 @@ export class ProjectModel extends RequestBaseModel {
     if (this._eventCancelled(e)) {
       return;
     }
-    this._cancelEvent(e);
+    cancelEvent(e);
     if (!e.detail) {
       throw new Error(
-        'The `detail` object must be set prior sending the event');
+        'The `detail` object must be set prior sending the event'
+      );
     }
     e.detail.result = this.listProjects(e.detail.keys);
   }

@@ -1,31 +1,43 @@
 import { fixture, assert } from '@open-wc/testing';
-import { DataGenerator } from '@advanced-rest-client/arc-data-generator/arc-data-generator.js';
-import * as sinon from 'sinon/pkg/sinon-esm.js';
+import { DataGenerator } from '@advanced-rest-client/arc-data-generator';
+import * as sinon from 'sinon';
 import '../../websocket-url-history-model.js';
+
 /* eslint-disable require-atomic-updates */
-describe('<websocket-url-history-model> - Events API', function() {
+/* eslint-disable no-param-reassign */
+/* eslint-disable no-unused-vars */
+
+/** @typedef {import('../../src/WebsocketUrlHistoryModel').WebsocketUrlHistoryModel} WebsocketUrlHistoryModel */
+
+describe('<websocket-url-history-model> - Events API', () => {
+  const generator = new DataGenerator();
+  /**
+   * @return {Promise<WebsocketUrlHistoryModel>}
+   */
   async function basicFixture() {
-    return /** @type {WebsocketUrlHistoryModel} */ (await fixture(
-      '<websocket-url-history-model></websocket-url-history-model>'));
+    return fixture(
+      '<websocket-url-history-model></websocket-url-history-model>'
+    );
   }
 
-  describe('Events API for websocket url history', function() {
+  describe('Events API for websocket url history', () => {
     function fireChanged(item) {
       const e = new CustomEvent('websocket-url-history-changed', {
         detail: {
-          item: item
+          item,
+          result: undefined,
         },
         bubbles: true,
         composed: true,
-        cancelable: true
+        cancelable: true,
       });
       document.body.dispatchEvent(e);
       return e;
     }
 
-    describe('websocket-url-history-changed', function() {
-      afterEach(function() {
-        return DataGenerator.destroyWebsocketsData();
+    describe('websocket-url-history-changed', () => {
+      afterEach(() => {
+        return generator.destroyWebsocketsData();
       });
 
       let element;
@@ -35,7 +47,7 @@ describe('<websocket-url-history-model> - Events API', function() {
         dataObj = {
           _id: 'http://domain.com',
           cnt: 1,
-          time: Date.now()
+          time: Date.now(),
         };
       });
 
@@ -43,8 +55,9 @@ describe('<websocket-url-history-model> - Events API', function() {
         const e = {
           cancelable: false,
           detail: {
-            item: dataObj
-          }
+            item: dataObj,
+            result: undefined,
+          },
         };
         element._handleChange(e);
         assert.isUndefined(e.detail.result);
@@ -55,8 +68,9 @@ describe('<websocket-url-history-model> - Events API', function() {
           cancelable: true,
           defaultPrevented: true,
           detail: {
-            item: dataObj
-          }
+            item: dataObj,
+            result: undefined,
+          },
         };
         element._handleChange(e);
         assert.isUndefined(e.detail.result);
@@ -65,33 +79,33 @@ describe('<websocket-url-history-model> - Events API', function() {
       it('Ignores self dispatched events', () => {
         const e = {
           cancelable: true,
-          composedPath: function() {
+          composedPath: () => {
             return [element];
           },
           detail: {
-            item: dataObj
-          }
+            item: dataObj,
+            result: undefined,
+          },
         };
         element._handleChange(e);
         assert.isUndefined(e.detail.result);
       });
 
-      it('Event is canceled', function() {
+      it('Event is canceled', () => {
         const e = fireChanged(dataObj);
         assert.isTrue(e.defaultPrevented);
         return e.detail.result;
       });
 
-      it('Event detail contains "result" as promise', function() {
+      it('Event detail contains "result" as promise', () => {
         const e = fireChanged(dataObj);
         assert.typeOf(e.detail.result, 'promise');
         return e.detail.result;
       });
 
-      it('Creates a new object in the datastore', function() {
+      it('Creates a new object in the datastore', () => {
         const e = fireChanged(dataObj);
-        return e.detail.result
-        .then((result) => {
+        return e.detail.result.then((result) => {
           assert.typeOf(result._rev, 'string', '_rev is set');
           assert.typeOf(result._id, 'string', '_id is set');
           assert.equal(result.cnt, dataObj.cnt, 'cnt is set');
@@ -99,23 +113,23 @@ describe('<websocket-url-history-model> - Events API', function() {
         });
       });
 
-      it('Updates created object', function() {
+      it('Updates created object', () => {
         let originalRev;
         let originalId;
         const e = fireChanged(dataObj);
         return e.detail.result
-        .then((result) => {
-          originalRev = result._rev;
-          originalId = result._id;
-          result.cnt = 2;
-          const e = fireChanged(result);
-          return e.detail.result;
-        })
-        .then((result) => {
-          assert.notEqual(result._rev, originalRev, '_rev is regenerated');
-          assert.equal(result._id, originalId, '_id is the same');
-          assert.equal(result.cnt, 2, 'Name is set');
-        });
+          .then((result) => {
+            originalRev = result._rev;
+            originalId = result._id;
+            result.cnt = 2;
+            const ev = fireChanged(result);
+            return ev.detail.result;
+          })
+          .then((result) => {
+            assert.notEqual(result._rev, originalRev, '_rev is regenerated');
+            assert.equal(result._id, originalId, '_id is the same');
+            assert.equal(result.cnt, 2, 'Name is set');
+          });
       });
 
       it('Rejects promise when save object is not set', async () => {
@@ -131,7 +145,7 @@ describe('<websocket-url-history-model> - Events API', function() {
       });
 
       it('Rejects promise when save object has no id', async () => {
-        const cp = Object.assign({}, dataObj);
+        const cp = { ...dataObj };
         cp._id = undefined;
         const e = fireChanged(cp);
         let called;
@@ -151,8 +165,8 @@ describe('<websocket-url-history-model> - Events API', function() {
           preventDefault: () => {},
           stopPropagation: () => {},
           detail: {
-            item: dataObj
-          }
+            item: dataObj,
+          },
         };
         element.update = () => {
           return Promise.reject(new Error('test'));
@@ -160,20 +174,20 @@ describe('<websocket-url-history-model> - Events API', function() {
         let called = false;
         element._handleChange(e);
         return e.detail.result
-        .catch((cause) => {
-          if (cause.message === 'test') {
-            called = true;
-          }
-        })
-        .then(() => {
-          assert.isTrue(called);
-        });
+          .catch((cause) => {
+            if (cause.message === 'test') {
+              called = true;
+            }
+          })
+          .then(() => {
+            assert.isTrue(called);
+          });
       });
     });
 
-    describe('websocket-url-history-read', function() {
-      afterEach(function() {
-        return DataGenerator.destroyWebsocketsData();
+    describe('websocket-url-history-read', () => {
+      afterEach(() => {
+        return generator.destroyWebsocketsData();
       });
 
       let element;
@@ -183,7 +197,7 @@ describe('<websocket-url-history-model> - Events API', function() {
         dataObj = {
           _id: 'http://domain.com',
           cnt: 1,
-          time: Date.now()
+          time: Date.now(),
         };
         const e = fireChanged(dataObj);
         dataObj = await e.detail.result;
@@ -192,72 +206,72 @@ describe('<websocket-url-history-model> - Events API', function() {
       function fire(id) {
         const e = new CustomEvent('websocket-url-history-read', {
           detail: {
-            url: id
+            url: id,
+            result: undefined,
           },
           bubbles: true,
           composed: true,
-          cancelable: true
+          cancelable: true,
         });
         document.body.dispatchEvent(e);
         return e;
       }
 
       it('Ignores non-cancellable event', async () => {
-        const element = await basicFixture();
+        const el = await basicFixture();
         const e = {
           cancelable: false,
           detail: {
-            url: dataObj._id
-          }
+            url: dataObj._id,
+          },
         };
-        element._handleRead(e);
+        el._handleRead(e);
         assert.isUndefined(e.detail.result);
       });
 
       it('Ignores cancelled event', async () => {
-        const element = await basicFixture();
+        const el = await basicFixture();
         const e = {
           cancelable: true,
           defaultPrevented: true,
           detail: {
-            url: dataObj._id
-          }
+            url: dataObj._id,
+          },
         };
-        element._handleRead(e);
+        el._handleRead(e);
         assert.isUndefined(e.detail.result);
       });
 
       it('Ignores self dispatched events', async () => {
-        const element = await basicFixture();
+        const el = await basicFixture();
         const e = {
           cancelable: true,
-          composedPath: function() {
-            return [element];
+          composedPath: () => {
+            return [el];
           },
           detail: {
-            url: dataObj._id
-          }
+            url: dataObj._id,
+          },
         };
-        element._handleRead(e);
+        el._handleRead(e);
         assert.isUndefined(e.detail.result);
       });
 
-      it('Event is canceled', function() {
+      it('Event is canceled', () => {
         const e = fire(dataObj._id);
         assert.isTrue(e.defaultPrevented);
         return e.detail.result;
       });
 
-      it('Event detail contains "result" as promise', function() {
+      it('Event detail contains "result" as promise', () => {
         const e = fire(dataObj._id);
         assert.typeOf(e.detail.result, 'promise');
         return e.detail.result;
       });
 
-      it('Reads an object', function() {
+      it('Reads an object', () => {
         const e = fire(dataObj._id);
-        return e.detail.result
-        .then((result) => {
+        return e.detail.result.then((result) => {
           assert.equal(result._id, dataObj._id);
         });
       });
@@ -274,10 +288,9 @@ describe('<websocket-url-history-model> - Events API', function() {
         assert.isTrue(called);
       });
 
-      it('Returns undefined when no object', function() {
+      it('Returns undefined when no object', () => {
         const e = fire('test-id-non-existing');
-        return e.detail.result
-        .then((result) => {
+        return e.detail.result.then((result) => {
           assert.isUndefined(result);
         });
       });
@@ -289,20 +302,20 @@ describe('<websocket-url-history-model> - Events API', function() {
         const e = fire('test-id-non-existing');
         let called = false;
         return e.detail.result
-        .catch((cause) => {
-          if (cause.message === 'test') {
-            called = true;
-          }
-        })
-        .then(() => {
-          assert.isTrue(called);
-        });
+          .catch((cause) => {
+            if (cause.message === 'test') {
+              called = true;
+            }
+          })
+          .then(() => {
+            assert.isTrue(called);
+          });
       });
     });
 
-    describe('websocket-url-history-query', function() {
-      afterEach(function() {
-        return DataGenerator.destroyWebsocketsData();
+    describe('websocket-url-history-query', () => {
+      afterEach(() => {
+        return generator.destroyWebsocketsData();
       });
 
       let element;
@@ -312,7 +325,7 @@ describe('<websocket-url-history-model> - Events API', function() {
         dataObj = {
           _id: 'http://domain.com',
           cnt: 1,
-          time: Date.now()
+          time: Date.now(),
         };
         const e = fireChanged(dataObj);
         dataObj = await e.detail.result;
@@ -321,11 +334,12 @@ describe('<websocket-url-history-model> - Events API', function() {
       function fire(q) {
         const e = new CustomEvent('websocket-url-history-query', {
           detail: {
-            q
+            q,
+            result: undefined,
           },
           bubbles: true,
           composed: true,
-          cancelable: true
+          cancelable: true,
         });
         document.body.dispatchEvent(e);
         return e;
@@ -335,8 +349,8 @@ describe('<websocket-url-history-model> - Events API', function() {
         const e = {
           cancelable: false,
           detail: {
-            q: 'test'
-          }
+            q: 'test',
+          },
         };
         element._handleQuery(e);
         assert.isUndefined(e.detail.result);
@@ -347,8 +361,8 @@ describe('<websocket-url-history-model> - Events API', function() {
           cancelable: true,
           defaultPrevented: true,
           detail: {
-            q: 'test'
-          }
+            q: 'test',
+          },
         };
         element._handleQuery(e);
         assert.isUndefined(e.detail.result);
@@ -357,42 +371,40 @@ describe('<websocket-url-history-model> - Events API', function() {
       it('Ignores self dispatched events', () => {
         const e = {
           cancelable: true,
-          composedPath: function() {
+          composedPath: () => {
             return [element];
           },
           detail: {
-            q: 'test'
-          }
+            q: 'test',
+          },
         };
         element._handleQuery(e);
         assert.isUndefined(e.detail.result);
       });
 
-      it('Event is canceled', function() {
+      it('Event is canceled', () => {
         const e = fire('http');
         assert.isTrue(e.defaultPrevented);
         return e.detail.result;
       });
 
-      it('Event detail contains "result" as promise', function() {
+      it('Event detail contains "result" as promise', () => {
         const e = fire('http');
         assert.typeOf(e.detail.result, 'promise');
         return e.detail.result;
       });
 
-      it('Returns a list of results', function() {
+      it('Returns a list of results', () => {
         const e = fire('http');
-        return e.detail.result
-        .then((result) => {
+        return e.detail.result.then((result) => {
           assert.typeOf(result, 'array', 'Result is an array');
           assert.lengthOf(result, 1, 'Length is OK');
         });
       });
 
-      it('Returned items contains _time property', function() {
+      it('Returned items contains _time property', () => {
         const e = fire('http');
-        return e.detail.result
-        .then((result) => {
+        return e.detail.result.then((result) => {
           assert.typeOf(result[0]._time, 'number', '_time is a number');
         });
       });
@@ -411,20 +423,20 @@ describe('<websocket-url-history-model> - Events API', function() {
         const e = fire('test-id-non-existing');
         let called = false;
         return e.detail.result
-        .catch((cause) => {
-          if (cause.message === 'test') {
-            called = true;
-          }
-        })
-        .then(() => {
-          assert.isTrue(called);
-        });
+          .catch((cause) => {
+            if (cause.message === 'test') {
+              called = true;
+            }
+          })
+          .then(() => {
+            assert.isTrue(called);
+          });
       });
     });
 
-    describe('websocket-url-history-list', function() {
-      afterEach(function() {
-        return DataGenerator.destroyWebsocketsData();
+    describe('websocket-url-history-list', () => {
+      afterEach(() => {
+        return generator.destroyWebsocketsData();
       });
 
       let element;
@@ -434,7 +446,7 @@ describe('<websocket-url-history-model> - Events API', function() {
         dataObj = {
           _id: 'http://domain.com',
           cnt: 1,
-          time: Date.now()
+          time: Date.now(),
         };
         const e = fireChanged(dataObj);
         dataObj = await e.detail.result;
@@ -442,10 +454,12 @@ describe('<websocket-url-history-model> - Events API', function() {
 
       function fire() {
         const e = new CustomEvent('websocket-url-history-list', {
-          detail: {},
+          detail: {
+            result: undefined,
+          },
           bubbles: true,
           composed: true,
-          cancelable: true
+          cancelable: true,
         });
         document.body.dispatchEvent(e);
         return e;
@@ -454,7 +468,7 @@ describe('<websocket-url-history-model> - Events API', function() {
       it('Ignores non-cancellable event', () => {
         const e = {
           cancelable: false,
-          detail: {}
+          detail: {},
         };
         element._handleQueryHistory(e);
         assert.isUndefined(e.detail.result);
@@ -464,7 +478,7 @@ describe('<websocket-url-history-model> - Events API', function() {
         const e = {
           cancelable: true,
           defaultPrevented: true,
-          detail: {}
+          detail: {},
         };
         element._handleQueryHistory(e);
         assert.isUndefined(e.detail.result);
@@ -473,40 +487,38 @@ describe('<websocket-url-history-model> - Events API', function() {
       it('Ignores self dispatched events', () => {
         const e = {
           cancelable: true,
-          composedPath: function() {
+          composedPath: () => {
             return [element];
           },
-          detail: {}
+          detail: {},
         };
         element._handleQueryHistory(e);
         assert.isUndefined(e.detail.result);
       });
 
-      it('Event is canceled', function() {
+      it('Event is canceled', () => {
         const e = fire();
         assert.isTrue(e.defaultPrevented);
         return e.detail.result;
       });
 
-      it('Event detail contains "result" as promise', function() {
+      it('Event detail contains "result" as promise', () => {
         const e = fire();
         assert.typeOf(e.detail.result, 'promise');
         return e.detail.result;
       });
 
-      it('Returns a list of history objects', function() {
+      it('Returns a list of history objects', () => {
         const e = fire();
-        return e.detail.result
-        .then((result) => {
+        return e.detail.result.then((result) => {
           assert.typeOf(result, 'array', 'Result is an array');
           assert.lengthOf(result, 1, 'Length is OK');
         });
       });
 
-      it('Returned items contains _time property', function() {
+      it('Returned items contains _time property', () => {
         const e = fire();
-        return e.detail.result
-        .then((result) => {
+        return e.detail.result.then((result) => {
           assert.typeOf(result[0]._time, 'number', '_time is a number');
         });
       });
@@ -518,14 +530,14 @@ describe('<websocket-url-history-model> - Events API', function() {
         const e = fire();
         let called = false;
         return e.detail.result
-        .catch((cause) => {
-          if (cause.message === 'test') {
-            called = true;
-          }
-        })
-        .then(() => {
-          assert.isTrue(called);
-        });
+          .catch((cause) => {
+            if (cause.message === 'test') {
+              called = true;
+            }
+          })
+          .then(() => {
+            assert.isTrue(called);
+          });
       });
     });
 
@@ -533,9 +545,10 @@ describe('<websocket-url-history-model> - Events API', function() {
       function fire(models) {
         const e = new CustomEvent('destroy-model', {
           detail: {
-            models
+            models,
+            result: undefined,
           },
-          bubbles: true
+          bubbles: true,
         });
         document.body.dispatchEvent(e);
         return e;
@@ -553,8 +566,7 @@ describe('<websocket-url-history-model> - Events API', function() {
         const element = await basicFixture();
         const spy = sinon.spy(element, 'deleteModel');
         const e = fire(['websocket-url-history']);
-        assert.isTrue(spy.called);
-        assert.equal(spy.args[0][0], 'websocket-url-history');
+        assert.isTrue(spy.called, 'called the function');
         await Promise.all(e.detail.result);
       });
     });

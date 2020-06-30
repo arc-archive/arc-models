@@ -13,6 +13,15 @@ the License.
 */
 import { ArcBaseModel } from './ArcBaseModel.js';
 
+/* eslint-disable class-methods-use-this */
+/* eslint-disable no-param-reassign */
+/* eslint-disable no-plusplus */
+
+/** @typedef {import('./RestApiModel').ARCRestApiIndex} ARCRestApiIndex */
+/** @typedef {import('./RestApiModel').ARCRestApi} ARCRestApi */
+/** @typedef {import('./RestApiModel').ApiIndexQueryOptions} ApiIndexQueryOptions */
+/** @typedef {import('./RestApiModel').ApiIndexQueryResult} ApiIndexQueryResult */
+
 /**
  * Database query options for pagination.
  * Override this value to change the query options like limit of the results in one call.
@@ -26,15 +35,11 @@ import { ArcBaseModel } from './ArcBaseModel.js';
 const defaultQueryOptions = {
   limit: 100,
   descending: true,
-  include_docs: true
+  include_docs: true,
 };
 
 /**
  * Events based access to REST APIs datastore.
- *
- * @polymer
- * @customElement
- * @memberof LogicElements
  */
 export class RestApiModel extends ArcBaseModel {
   constructor() {
@@ -55,7 +60,10 @@ export class RestApiModel extends ArcBaseModel {
     node.addEventListener('api-index-read', this._readIndexHandler);
     node.addEventListener('api-index-changed', this._indexChangeHandler);
     node.addEventListener('api-index-list', this._indexListHandler);
-    node.addEventListener('api-index-changed-batch', this._indexesUpdatedHandler);
+    node.addEventListener(
+      'api-index-changed-batch',
+      this._indexesUpdatedHandler
+    );
     node.addEventListener('api-data-changed', this._dataUpdateHandler);
     node.addEventListener('api-deleted', this._deletedHandler);
     node.addEventListener('api-version-deleted', this._versionDeletedHandler);
@@ -67,13 +75,20 @@ export class RestApiModel extends ArcBaseModel {
     node.removeEventListener('api-index-read', this._readIndexHandler);
     node.removeEventListener('api-index-changed', this._indexChangeHandler);
     node.removeEventListener('api-data-changed', this._dataUpdateHandler);
-    node.removeEventListener('api-index-changed-batch', this._indexesUpdatedHandler);
+    node.removeEventListener(
+      'api-index-changed-batch',
+      this._indexesUpdatedHandler
+    );
     node.removeEventListener('api-index-list', this._indexListHandler);
     node.removeEventListener('api-deleted', this._deletedHandler);
-    node.removeEventListener('api-version-deleted', this._versionDeletedHandler);
+    node.removeEventListener(
+      'api-version-deleted',
+      this._versionDeletedHandler
+    );
     node.removeEventListener('api-data-read', this._readHandler);
     node.removeEventListener('destroy-model', this._deleteModelHandler);
   }
+
   /**
    * A handler to the datastore. Contains listing data.
    */
@@ -81,6 +96,7 @@ export class RestApiModel extends ArcBaseModel {
     /* global PouchDB */
     return new PouchDB('api-index');
   }
+
   /**
    * A handler to the datastore containing REST API data
    * (AMF model).
@@ -92,9 +108,9 @@ export class RestApiModel extends ArcBaseModel {
   /**
    * Reads an entry from the index datastore.
    *
-   * @param {String} id The ID of the datastore entry.
-   * @param {?String} rev Specific revision to read. Defaults to latest revision.
-   * @return {Promise} Promise resolved to a project object.
+   * @param {string} id The ID of the datastore entry.
+   * @param {string=} rev Specific revision to read. Defaults to latest revision.
+   * @return {Promise<ARCRestApiIndex>} Promise resolved to an index object.
    */
   readIndex(id, rev) {
     const opts = {};
@@ -103,12 +119,13 @@ export class RestApiModel extends ArcBaseModel {
     }
     return this.indexDb.get(id, opts);
   }
+
   /**
    * Reads an entry from the raml data datastore.
    *
-   * @param {String} id The ID of the datastore entry.
-   * @param {?String} rev Specific revision to read. Defaults to latest revision.
-   * @return {Promise} Promise resolved to a project object.
+   * @param {string} id The ID of the datastore entry.
+   * @param {string=} rev Specific revision to read. Defaults to latest revision.
+   * @return {Promise<ARCRestApi>} Promise resolved to a project object.
    */
   readData(id, rev) {
     const opts = {};
@@ -117,83 +134,86 @@ export class RestApiModel extends ArcBaseModel {
     }
     return this.dataDb.get(id, opts);
   }
+
   /**
    * Creates / updates API data object.
    *
-   * @param {String} indexId Id of the index object
-   * @param {String} version Version of the API data
-   * @param {Object} data AMF model to store
-   * @return {Promise} Resolved promise to a document with updated `_rev`
+   * @param {string} indexId Id of the index object
+   * @param {string} version Version of the API data
+   * @param {object} data AMF model to store
+   * @return {Promise<ARCRestApi>} Resolved promise to a document with updated `_rev`
    */
-  updateData(indexId, version, data) {
-    const id = indexId + '|' + version;
+  async updateData(indexId, version, data) {
+    const id = `${indexId}|${version}`;
     let object;
-    return this.readData(id)
-    .catch((reason) => {
+    try {
+      object = await this.readData(id);
+    } catch (reason) {
       if (reason.status === 404) {
-        return {
+        object = {
           indexId,
           version,
-          _id: id
+          _id: id,
+          data: undefined,
         };
+      } else {
+        this._handleException(reason);
       }
-      this._handleException(reason);
-    })
-    .then((result) => {
-      result.data = data;
-      object = result;
-      return this.dataDb.put(result);
-    })
-    .then((result) => {
-      if (!result.ok) {
-        this._handleException(result);
-        return;
-      }
-      object._rev = result.rev;
-      return object;
-    });
+    }
+    object.data = data;
+    const result = await this.dataDb.put(object);
+    if (!result.ok) {
+      this._handleException(result);
+      // this line is for linter only.
+      return undefined;
+    }
+    object._rev = result.rev;
+    return object;
   }
+
   /**
    * Creates / updates API index object.
    * The `_id` property must be already set on the object.
    *
    * This function fires `api-index-changed` custom event on success.
    *
-   * @param {Object} doc PouchDB document.
-   * @return {Promise} Resolved promise to a document with updated `_rev`
+   * @param {ARCRestApiIndex} doc PouchDB document.
+   * @return {Promise<ARCRestApiIndex>} Resolved promise to a document with updated `_rev`
    */
   async updateIndex(doc) {
     const result = await this.indexDb.put(doc);
     if (!result.ok) {
       this._handleException(result);
-      return;
+      // this line is for linter only.
+      return undefined;
     }
     const detail = {
       oldRev: doc._rev,
-      apiInfo: doc
+      apiInfo: doc,
     };
     detail.apiInfo._rev = result.rev;
     this._fireUpdated('api-index-changed', detail);
     return detail.apiInfo;
   }
+
   /**
    * Updates many index objects in one request.
    *
-   * @param {Array<Object>} docs List of PouchDB documents to update.
-   * @return {Promise} Resolved promise to a list of document with updated `_rev`
+   * @param {ARCRestApiIndex[]} docs List of PouchDB documents to update.
+   * @return {Promise<ARCRestApiIndex[]>} Resolved promise to a list of document with updated `_rev`
    */
   async updateIndexBatch(docs) {
-    const copy = [];
-    docs.forEach((item) => {
-      copy.push(Object.assign({}, item));
+    const copy = docs.map((item) => {
+      return { ...item };
     });
     const result = await this.indexDb.bulkDocs(copy);
     const toReturn = [];
     result.forEach((res, i) => {
-      if (res.ok) {
+      const response = /** @type PouchDB.Core.Response */ (res);
+      if (response.ok) {
         const detail = {
           oldRev: docs[i]._rev,
-          apiInfo: docs[i]
+          apiInfo: docs[i],
         };
         detail.apiInfo._rev = result[i].rev;
         this._fireUpdated('api-index-changed', detail);
@@ -204,14 +224,16 @@ export class RestApiModel extends ArcBaseModel {
     });
     return toReturn;
   }
+
   /**
    * Removes all AMF and index data from datastores for given index id.
    *
-   * @param {String} id Index entry ID to delete.
-   * @return {Promise} Promise resolved to a new `_rev` property of deleted object.
+   * @param {string} id Index entry ID to delete.
+   * @return {Promise<string>} Promise resolved to a new `_rev` property of deleted object.
    */
-  async remove(id) {
+  async delete(id) {
     const doc = await this.readIndex(id);
+    // @ts-ignore This is PouchDB's internal property
     doc._deleted = true;
     await this.removeVersions(id, doc.versions);
     const result = await this.indexDb.put(doc);
@@ -219,21 +241,26 @@ export class RestApiModel extends ArcBaseModel {
       throw result;
     }
     const detail = {
-      id
+      id,
+      rev: result.rev,
+      oldRev: doc._rev,
     };
     this._fireUpdated('api-deleted', detail);
+    return result.rev;
   }
+
   /**
-   * Removes information about version from AMD data datastore and from index
+   * Removes information about version from ARC data datastore and from index
    * data.
-   * @param {String} id Index object ID
-   * @param {String} version Version to remove.
-   * @return {Promise}
+   *
+   * @param {string} id Index object ID
+   * @param {string} version Version to remove.
+   * @return {Promise<void>}
    */
   async removeVersion(id, version) {
     const doc = await this.readIndex(id);
     const vs = doc.versions;
-    if (!(vs instanceof Array)) {
+    if (!Array.isArray(vs)) {
       return;
     }
     const index = vs.indexOf(version);
@@ -242,7 +269,7 @@ export class RestApiModel extends ArcBaseModel {
     }
     vs.splice(index, 1);
     if (vs.length === 0) {
-      await this.remove(id);
+      await this.delete(id);
       return;
     }
     doc.versions = vs;
@@ -250,55 +277,68 @@ export class RestApiModel extends ArcBaseModel {
       doc.latest = vs[vs.length - 1];
     }
     await this.updateIndex(doc);
-    return await this._removeVersion(id + '|' + version);
+    await this._removeVersion(`${id}|${version}`);
   }
+
   /**
-   * Removes versions of API data in bulk operation.
-   * @param {String} indexId Index object ID
-   * @param {Array<String>} versions List of versions to remove.
-   * @return {Promise}
+   * Removes versions of API data in a bulk operation.
+   *
+   * @param {string} indexId Index object ID
+   * @param {string[]} versions List of versions to remove.
+   * @return {Promise<void>}
    */
   async removeVersions(indexId, versions) {
     if (!indexId || !(versions instanceof Array)) {
       return;
     }
-    const ids = versions.map((v) => indexId + '|' + v);
-    return await this._removeVersions(ids);
+    const ids = versions.map((v) => `${indexId}|${v}`);
+    await this._removeVersions(ids);
   }
 
-  _removeVersions(ids) {
-    const id = ids.shift();
+  /**
+   * Removes API versions from the store.
+   * @param {string[]} ids A list of IDs to remove
+   * @return {Promise<void>}
+   */
+  async _removeVersions(ids) {
+    const copy = [...ids];
+    const id = copy.shift();
     if (!id) {
-      return Promise.resolve();
+      return;
     }
-    return this._removeVersion(id)
-    .then(() => this._removeVersions(ids));
+    await this._removeVersion(id);
+    await this._removeVersions(copy);
   }
 
-  _removeVersion(id) {
-    return this.readData(id)
-    .catch((cause) => {
-      if (cause.status === 404) {
-        return;
+  /**
+   * Removes a version from the data store.
+   * @param {string} id Version id
+   * @return {Promise<void>}
+   */
+  async _removeVersion(id) {
+    let doc;
+    try {
+      doc = await this.readData(id);
+    } catch (cause) {
+      if (cause.status !== 404) {
+        this._handleException(cause);
       }
-      this._handleException(cause);
-    })
-    .then((doc) => {
-      if (!doc) {
-        return;
-      }
-      doc._deleted = true;
-      return this.dataDb.put(doc);
-    })
-    .then(() => {
-      const parts = id.split('|');
-      const detail = {
-        id: parts[0],
-        version: parts[1]
-      };
-      this._fireUpdated('api-version-deleted', detail);
-    });
+    }
+    if (!doc) {
+      return;
+    }
+    // @ts-ignore
+    doc._deleted = true;
+    await this.dataDb.put(doc);
+
+    const parts = id.split('|');
+    const detail = {
+      id: parts[0],
+      version: parts[1],
+    };
+    this._fireUpdated('api-version-deleted', detail);
   }
+
   /**
    * Lists index data.
    *
@@ -308,18 +348,16 @@ export class RestApiModel extends ArcBaseModel {
    * to get resutls for a next page. The nextPageToken don't change over
    * subsequent requests.
    *
-   * @param {Object} opts Query options:
-   * - nextPageToken {String} Received from previous query page token.
-   * @return {Promise} A promise resolved to a query result object on success.
+   * @param {ApiIndexQueryOptions=} opts Query options
+   * @return {Promise<ApiIndexQueryResult>} A promise resolved to a query result object on success.
    */
-  async listIndex(opts) {
-    opts = opts || {};
+  async listIndex(opts = {}) {
     let queryOptions;
     if (opts.nextPageToken) {
       queryOptions = this._cachedQueryOptions[opts.nextPageToken];
     }
     if (!queryOptions) {
-      queryOptions = Object.assign({}, defaultQueryOptions);
+      queryOptions = { ...defaultQueryOptions };
     }
     const response = await this.indexDb.allDocs(queryOptions);
     let data = [];
@@ -332,9 +370,10 @@ export class RestApiModel extends ArcBaseModel {
     this._cachedQueryOptions[opts.nextPageToken] = queryOptions;
     return {
       nextPageToken: opts.nextPageToken,
-      items: data
+      items: data,
     };
   }
+
   /**
    * Generates `nextPageToken` as a random string.
    *
@@ -342,12 +381,14 @@ export class RestApiModel extends ArcBaseModel {
    */
   _makeNextPageToken() {
     let text = '';
-    const possible = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+    const possible =
+      'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
     for (let i = 0; i < 32; i++) {
       text += possible.charAt(Math.floor(Math.random() * possible.length));
     }
     return text;
   }
+
   /**
    * A handler for `api-index-changed` custom event.
    *
@@ -360,12 +401,16 @@ export class RestApiModel extends ArcBaseModel {
     e.preventDefault();
     e.stopPropagation();
     if (!e.detail || !e.detail.apiInfo) {
-      e.detail.result = Promise.reject(new Error('The "apiInfo" property is missing.'));
+      e.detail.result = Promise.reject(
+        new Error('The "apiInfo" property is missing.')
+      );
       return;
     }
-    e.detail.result = this.updateIndex(e.detail.apiInfo)
-    .catch((e) => this._handleException(e));
+    e.detail.result = this.updateIndex(e.detail.apiInfo).catch((ex) =>
+      this._handleException(ex)
+    );
   }
+
   /**
    * Handler for the `api-data-read` custom event.
    *
@@ -385,11 +430,14 @@ export class RestApiModel extends ArcBaseModel {
     e.stopPropagation();
 
     if (!e.detail.id) {
-      e.detail.result = Promise.reject(new Error('The "id" property is missing.'));
+      e.detail.result = Promise.reject(
+        new Error('The "id" property is missing.')
+      );
       return;
     }
-    e.detail.result = this.readData(e.detail.id, e.detail.rev)
-    .catch((e) => this._handleException(e));
+    e.detail.result = this.readData(e.detail.id, e.detail.rev).catch((ex) =>
+      this._handleException(ex)
+    );
   }
 
   _readIndexHandler(e) {
@@ -399,17 +447,21 @@ export class RestApiModel extends ArcBaseModel {
     e.preventDefault();
     e.stopPropagation();
     if (!e.detail.baseUri) {
-      e.detail.result = Promise.reject(new Error('The "baseUri" property is missing.'));
+      e.detail.result = Promise.reject(
+        new Error('The "baseUri" property is missing.')
+      );
       return;
     }
-    e.detail.result = this.readIndex(e.detail.baseUri, e.detail.rev)
-    .catch((e) => {
-      if (e.status === 404) {
-        return;
+    e.detail.result = this.readIndex(e.detail.baseUri, e.detail.rev).catch(
+      (ex) => {
+        if (ex.status === 404) {
+          return;
+        }
+        this._handleException(ex);
       }
-      this._handleException(e);
-    });
+    );
   }
+
   /**
    * Handler for the `api-data-changed` custom event.
    *
@@ -423,20 +475,28 @@ export class RestApiModel extends ArcBaseModel {
     e.stopPropagation();
     const { data, indexId, version } = e.detail;
     if (!indexId) {
-      e.detail.result = Promise.reject(new Error('The "indexId" property is missing.'));
+      e.detail.result = Promise.reject(
+        new Error('The "indexId" property is missing.')
+      );
       return;
     }
     if (!version) {
-      e.detail.result = Promise.reject(new Error('The "version" property is missing.'));
+      e.detail.result = Promise.reject(
+        new Error('The "version" property is missing.')
+      );
       return;
     }
     if (!data) {
-      e.detail.result = Promise.reject(new Error('The "data" property is missing.'));
+      e.detail.result = Promise.reject(
+        new Error('The "data" property is missing.')
+      );
       return;
     }
-    e.detail.result = this.updateData(indexId, version, data)
-    .catch((e) => this._handleException(e));
+    e.detail.result = this.updateData(indexId, version, data).catch((ex) =>
+      this._handleException(ex)
+    );
   }
+
   /**
    * Deletes the object from the datastores.
    * It is only handled if the event in cancelable and not cancelled.
@@ -455,11 +515,14 @@ export class RestApiModel extends ArcBaseModel {
     e.preventDefault();
     e.stopPropagation();
     if (!e.detail.id) {
-      e.detail.result = Promise.reject(new Error('The "id" property is missing.'));
+      e.detail.result = Promise.reject(
+        new Error('The "id" property is missing.')
+      );
       return;
     }
-    e.detail.result = this.remove(e.detail.id)
-    .catch((e) => this._handleException(e));
+    e.detail.result = this.delete(e.detail.id).catch((ex) =>
+      this._handleException(ex)
+    );
   }
 
   _versionDeletedHandler(e) {
@@ -470,16 +533,22 @@ export class RestApiModel extends ArcBaseModel {
     e.stopPropagation();
     const { id, version } = e.detail;
     if (!id) {
-      e.detail.result = Promise.reject(new Error('The "id" property is missing.'));
+      e.detail.result = Promise.reject(
+        new Error('The "id" property is missing.')
+      );
       return;
     }
     if (!version) {
-      e.detail.result = Promise.reject(new Error('The "version" property is missing.'));
+      e.detail.result = Promise.reject(
+        new Error('The "version" property is missing.')
+      );
       return;
     }
-    e.detail.result = this.removeVersion(id, version)
-    .catch((e) => this._handleException(e));
+    e.detail.result = this.removeVersion(id, version).catch((ex) =>
+      this._handleException(ex)
+    );
   }
+
   /**
    * Handler for the `api-index-changed-batch` custom event.
    * It requires to have `items` property set to event detail as an array of
@@ -498,17 +567,22 @@ export class RestApiModel extends ArcBaseModel {
     e.stopPropagation();
     const { items } = e.detail;
     if (!items) {
-      e.detail.result = Promise.reject(new Error('The "items" property is missing.'));
+      e.detail.result = Promise.reject(
+        new Error('The "items" property is missing.')
+      );
       return;
     }
     if (!(items instanceof Array)) {
       e.detail.result = Promise.reject(
-        new Error('The "items" property is not an array.'));
+        new Error('The "items" property is not an array.')
+      );
       return;
     }
-    e.detail.result = this.updateIndexBatch(e.detail.items)
-    .catch((e) => this._handleException(e));
+    e.detail.result = this.updateIndexBatch(e.detail.items).catch((ex) =>
+      this._handleException(ex)
+    );
   }
+
   /**
    * Handler for the `api-index-list` custom event.
    *
@@ -520,26 +594,25 @@ export class RestApiModel extends ArcBaseModel {
     }
     e.preventDefault();
     e.stopPropagation();
-    e.detail.result = this.listIndex(e.detail)
-    .catch((e) => this._handleException(e));
+    e.detail.result = this.listIndex(e.detail).catch((ex) =>
+      this._handleException(ex)
+    );
   }
+
   /**
    * Handler for `destroy-model` custom event.
    * Deletes saved or history data when scheduled for deletion.
    * @param {CustomEvent} e
    */
   _deleteModelHandler(e) {
-    const models = e.detail.models;
+    const { models } = e.detail;
     if (!models || !models.length) {
       return;
     }
     if (models.indexOf('rest-apis') === -1) {
       return;
     }
-    const p = Promise.all([
-      this._delIndexModel(),
-      this._delDataModel(),
-    ]);
+    const p = Promise.all([this._delIndexModel(), this._delDataModel()]);
     if (!e.detail.result) {
       e.detail.result = [];
     }
@@ -547,14 +620,14 @@ export class RestApiModel extends ArcBaseModel {
     p.then(() => this._notifyModelDestroyed('rest-apis'));
   }
 
-  _delIndexModel() {
-    return this.indexDb.destroy()
-    .then(() => this._notifyModelDestroyed('api-index'));
+  async _delIndexModel() {
+    await this.indexDb.destroy();
+    this._notifyModelDestroyed('api-index');
   }
 
-  _delDataModel() {
-    return this.dataDb.destroy()
-    .then(() => this._notifyModelDestroyed('api-data'));
+  async _delDataModel() {
+    await this.dataDb.destroy();
+    this._notifyModelDestroyed('api-data');
   }
   /**
    * Fired when index data has been updated.

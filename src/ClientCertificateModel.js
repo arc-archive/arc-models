@@ -13,6 +13,11 @@ the License.
 */
 import { ArcBaseModel } from './ArcBaseModel.js';
 /* eslint-disable require-atomic-updates */
+/* eslint-disable class-methods-use-this */
+/* eslint-disable no-param-reassign */
+/** @typedef {import('./ClientCertificateModel').ARCClientCertificate} ARCClientCertificate */
+/** @typedef {import('./ClientCertificateModel').ARCCertificateIndex} ARCCertificateIndex */
+/** @typedef {import('./ClientCertificateModel').ARCCertificate} ARCCertificate */
 /**
  * Events based access to client-certificates data store.
  *
@@ -49,9 +54,6 @@ import { ArcBaseModel } from './ArcBaseModel.js';
  * The p12 type certificate must be a Buffer. The `get()` method always returns
  * original data type.
  * - `passphrase` {String} - A passphrase to use to unlock the certificate. Optional.
- *
- * @customElement
- * @memberof LogicElements
  */
 export class ClientCertificateModel extends ArcBaseModel {
   constructor() {
@@ -61,14 +63,15 @@ export class ClientCertificateModel extends ArcBaseModel {
     this._deleteHandler = this._deleteHandler.bind(this);
     this._insertHandler = this._insertHandler.bind(this);
   }
+
   /**
-   * @return {Object} A handler to the datastore containing the actual
+   * @return {PouchDB.Database} A handler to the datastore containing the actual
    * certificates contents.
    */
   get dataDb() {
     /* global PouchDB */
     return new PouchDB('client-certificates-data', {
-      revs_limit: 1
+      revs_limit: 1,
     });
   }
 
@@ -87,6 +90,7 @@ export class ClientCertificateModel extends ArcBaseModel {
     node.removeEventListener('client-certificate-delete', this._deleteHandler);
     node.removeEventListener('client-certificate-insert', this._insertHandler);
   }
+
   /**
    * Lists certificates installed in the application.
    *
@@ -96,11 +100,11 @@ export class ClientCertificateModel extends ArcBaseModel {
    * The list data only contain certificate's meta data. Certificate's content
    * and password is kept in different store.
    *
-   * @return {Promise}
+   * @return {Promise<ARCCertificateIndex[]>}
    */
   async list() {
     const response = await this.db.allDocs({
-      include_docs: true
+      include_docs: true,
     });
     const result = response.rows.map((item) => {
       const { doc } = item;
@@ -109,11 +113,12 @@ export class ClientCertificateModel extends ArcBaseModel {
     });
     return result;
   }
+
   /**
    * Reads clioent certificate full structure.
    * Returns certificate's meta data + cert + key.
    * @param {String} id Certificate's datastore id.
-   * @return {Promise} Promise resolved to a certificate object.
+   * @return {Promise<ARCClientCertificate>} Promise resolved to a certificate object.
    */
   async get(id) {
     if (!id) {
@@ -131,6 +136,7 @@ export class ClientCertificateModel extends ArcBaseModel {
     }
     return doc;
   }
+
   /**
    * Safely deletes certificate data from the data store.
    * It marks the certificate as deleted so DB apis won't use this data but
@@ -139,38 +145,39 @@ export class ClientCertificateModel extends ArcBaseModel {
    * Note, this data always stays only on the user's machine so there's no
    * conflict with GDPR.
    *
-   * @param {String} id Certificate's datastore id.
-   * @return {Promise} Promise resolved when both entries are deleted.
+   * @param {string} id Certificate's datastore id.
+   * @return {Promise<void>} Promise resolved when both entries are deleted.
    */
   async delete(id) {
     if (!id) {
       throw new Error('The "id" argument is missing');
     }
-    const db = this.db;
+    const { db } = this;
     const doc = await db.get(id);
     doc._deleted = true;
     await db.put(doc);
     const { dataKey } = doc;
-    const dataDb = this.dataDb;
+    const { dataDb } = this;
     const data = await dataDb.get(dataKey);
     data._deleted = true;
     await dataDb.put(data);
     const detail = {
-      id
+      id,
     };
     this._fireUpdated('client-certificate-delete', detail);
   }
+
   /**
    * Inserts new client certificate object.
    * See class description for data structure.
    *
-   * @param {Object} data Data to insert.
-   * @return {Promise} Unlike other models, rromise resolved to inserted
+   * @param {ARCClientCertificate} cert Data to insert.
+   * @return {Promise<string>} Unlike other models, promise resolved to inserted
    * id. Because this API operates on a single ID without reviews this won't
    * return the final object.
    */
-  async insert(data) {
-    data = Object.assign({}, data);
+  async insert(cert) {
+    const data = { ...cert };
     if (!data.cert) {
       throw new Error('The "cert" property is required.');
     }
@@ -178,7 +185,7 @@ export class ClientCertificateModel extends ArcBaseModel {
       throw new Error('The "type" property is required.');
     }
     const dataDoc = {
-      cert: this.certificateToStore(data.cert)
+      cert: this.certificateToStore(data.cert),
     };
     delete data.cert;
     if (data.key) {
@@ -197,6 +204,7 @@ export class ClientCertificateModel extends ArcBaseModel {
     this._fireUpdated('client-certificate-insert', data);
     return res.id;
   }
+
   /**
    * Prepares certificate object to be stored in the data store.
    * If the `data` property is not string then it assumes buffer (either
@@ -208,45 +216,63 @@ export class ClientCertificateModel extends ArcBaseModel {
    * certificate is already a base62 string. To spare dounble base64 convertion
    * use string data.
    *
-   * @param {Object} cert Certificate definition. See class description.
-   * @return {Object}
+   * @param {ARCCertificate|ARCCertificate[]} cert Certificate definition. See class description.
+   * @return {ARCCertificate|ARCCertificate[]}
    * @throws {Error} When data is not set
    */
   certificateToStore(cert) {
+    if (Array.isArray(cert)) {
+      return /** @type ARCCertificate[] */ (cert.map((info) =>
+        this.certificateToStore(info)
+      ));
+    }
     if (!cert.data) {
       throw new Error('Certificate content not set.');
     }
     if (typeof cert.data !== 'string') {
       cert.type = 'buffer';
-      cert.data = this.bufferToBase64(cert.data);
+      const buff = /** @type Buffer */ (cert.data);
+      cert.data = this.bufferToBase64(buff);
     }
     return cert;
   }
+
   /**
    * Restores certificate object to it's original values after reading it from
    * the data store.
-   * @param {Object} cert Restored certificate definition.
-   * @return {Object}
+   * @param {ARCCertificate|ARCCertificate[]} cert Restored certificate definition.
+   * @return {ARCCertificate|ARCCertificate[]}
    */
   certificateFromStore(cert) {
+    if (Array.isArray(cert)) {
+      return /** @type ARCCertificate[] */ (cert.map((info) =>
+        this.certificateFromStore(info)
+      ));
+    }
     if (cert.type) {
       delete cert.type;
-      cert.data = this.base64ToBuffer(cert.data);
+      const content = /** @type string */ (cert.data);
+      cert.data = this.base64ToBuffer(content);
     }
     return cert;
   }
+
   /**
    * Converts incomming data to base64 string.
-   * @param {Uint8Array} view
-   * @return {String} Safe to store string.
+   * @param {Buffer} view
+   * @return {string} Safe to store string.
    */
   bufferToBase64(view) {
-    const str = view.reduce((data, byte) => data + String.fromCharCode(byte), '');
+    const str = view.reduce(
+      (data, byte) => data + String.fromCharCode(byte),
+      ''
+    );
     return btoa(str);
   }
+
   /**
    * Converts base64 string to Uint8Array.
-   * @param {String} str
+   * @param {string} str
    * @return {Uint8Array} Restored array view.
    */
   base64ToBuffer(str) {
@@ -292,12 +318,13 @@ export class ClientCertificateModel extends ArcBaseModel {
     const { value } = e.detail;
     e.detail.result = this.insert(value);
   }
+
   /**
    * Override's delete model function to include the "data" store.
-   * @return {Promise}
+   * @return {Promise<void>}
    */
   async deleteModel() {
     await this.dataDb.destroy();
     await super.deleteModel();
   }
-};
+}

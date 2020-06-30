@@ -1,27 +1,34 @@
 import { fixture, assert } from '@open-wc/testing';
-import { DataGenerator } from '@advanced-rest-client/arc-data-generator/arc-data-generator.js';
-import * as sinon from 'sinon/pkg/sinon-esm.js';
+import { DataGenerator } from '@advanced-rest-client/arc-data-generator';
+import * as sinon from 'sinon';
 import 'chance/dist/chance.min.js';
 import '../../client-certificate-model.js';
 
+/** @typedef {import('../../src/ClientCertificateModel').ClientCertificateModel} ClientCertificateModel */
+/** @typedef {import('../../src/ClientCertificateModel').ARCCertificate} ARCCertificate */
+
 describe('<client-certificate-model>', () => {
+  const generator = new DataGenerator();
+  /**
+   * @return {Promise<ClientCertificateModel>}
+   */
   async function basicFixture() {
-    return await fixture('<client-certificate-model></client-certificate-model>');
+    return fixture('<client-certificate-model></client-certificate-model>');
   }
 
   describe('list()', () => {
     describe('With data', () => {
       before(async () => {
-        await DataGenerator.insertCertificatesData({
-          size: 5
+        await generator.insertCertificatesData({
+          size: 5,
         });
       });
 
       after(async () => {
-        await DataGenerator.destroyClientCertificates();
+        await generator.destroyClientCertificates();
       });
 
-      let element;
+      let element = /** @type ClientCertificateModel */ (null);
       beforeEach(async () => {
         element = await basicFixture();
       });
@@ -36,6 +43,7 @@ describe('<client-certificate-model>', () => {
 
       it('does not contain dataKey', async () => {
         const result = await element.list();
+        // @ts-ignore
         assert.isUndefined(result[0].dataKey);
       });
 
@@ -43,7 +51,9 @@ describe('<client-certificate-model>', () => {
         const e = new CustomEvent('client-certificate-list', {
           bubbles: true,
           cancelable: true,
-          detail: {}
+          detail: {
+            result: undefined,
+          },
         });
         document.body.dispatchEvent(e);
         const result = await e.detail.result;
@@ -54,7 +64,9 @@ describe('<client-certificate-model>', () => {
         const e = new CustomEvent('client-certificate-list', {
           bubbles: true,
           cancelable: false,
-          detail: {}
+          detail: {
+            result: undefined,
+          },
         });
         document.body.dispatchEvent(e);
         assert.isUndefined(e.detail.result);
@@ -62,7 +74,7 @@ describe('<client-certificate-model>', () => {
     });
 
     describe('Without data', () => {
-      let element;
+      let element = /** @type ClientCertificateModel */ (null);
       beforeEach(async () => {
         element = await basicFixture();
       });
@@ -79,17 +91,17 @@ describe('<client-certificate-model>', () => {
     describe('String data', () => {
       let id;
       before(async () => {
-        const data = await DataGenerator.insertCertificatesData({
-          size: 1
+        const data = await generator.insertCertificatesData({
+          size: 1,
         });
         id = data[0]._id;
       });
 
       after(async () => {
-        await DataGenerator.destroyClientCertificates();
+        await generator.destroyClientCertificates();
       });
 
-      let element;
+      let element = /** @type ClientCertificateModel */ (null);
       beforeEach(async () => {
         element = await basicFixture();
       });
@@ -101,21 +113,24 @@ describe('<client-certificate-model>', () => {
 
       it('has the certificate', async () => {
         const doc = await element.get(id);
-        assert.typeOf(doc.cert, 'object', 'certificate is set');
-        assert.typeOf(doc.cert.data, 'string', 'certificate data is set');
-        assert.typeOf(doc.cert.passphrase, 'string', 'passphrase is set');
+        const certificate = /** @type ARCCertificate */ (doc.cert);
+        assert.typeOf(certificate, 'object', 'certificate is set');
+        assert.typeOf(certificate.data, 'string', 'certificate data is set');
+        assert.typeOf(certificate.passphrase, 'string', 'passphrase is set');
       });
 
       it('has the key', async () => {
         const doc = await element.get(id);
-        assert.typeOf(doc.key, 'object', 'certificate is set');
-        assert.typeOf(doc.key.data, 'string', 'certificate data is set');
-        assert.typeOf(doc.key.passphrase, 'string', 'passphrase is set');
+        const info = /** @type ARCCertificate */ (doc.key);
+        assert.typeOf(info, 'object', 'certificate is set');
+        assert.typeOf(info.data, 'string', 'certificate data is set');
+        assert.typeOf(info.passphrase, 'string', 'passphrase is set');
       });
 
       it('throws when no ID', async () => {
         let err;
         try {
+          // @ts-ignore
           await element.get();
         } catch (e) {
           err = e;
@@ -128,8 +143,9 @@ describe('<client-certificate-model>', () => {
           bubbles: true,
           cancelable: true,
           detail: {
-            id
-          }
+            id,
+            result: undefined,
+          },
         });
         document.body.dispatchEvent(e);
         const result = await e.detail.result;
@@ -141,8 +157,9 @@ describe('<client-certificate-model>', () => {
           bubbles: true,
           cancelable: false,
           detail: {
-            id
-          }
+            id,
+            result: undefined,
+          },
         });
         document.body.dispatchEvent(e);
         assert.isUndefined(e.detail.result);
@@ -152,52 +169,54 @@ describe('<client-certificate-model>', () => {
     describe('Binary data', () => {
       let id;
       before(async () => {
-        const data = await DataGenerator.insertCertificatesData({
+        const data = await generator.insertCertificatesData({
           size: 1,
-          binary: true
+          binary: true,
         });
         id = data[0]._id;
       });
 
       after(async () => {
-        await DataGenerator.destroyClientCertificates();
+        await generator.destroyClientCertificates();
       });
 
-      let element;
+      let element = /** @type ClientCertificateModel */ (null);
       beforeEach(async () => {
         element = await basicFixture();
       });
 
       it('has the certificate', async () => {
         const doc = await element.get(id);
-        assert.typeOf(doc.cert, 'object', 'certificate is set');
-        assert.typeOf(doc.cert.data, 'Uint8Array', 'certificate data is set');
-        assert.typeOf(doc.cert.passphrase, 'string', 'passphrase is set');
+        const info = /** @type ARCCertificate */ (doc.cert);
+        assert.typeOf(info, 'object', 'certificate is set');
+        assert.typeOf(info.data, 'Uint8Array', 'certificate data is set');
+        assert.typeOf(info.passphrase, 'string', 'passphrase is set');
       });
 
       it('has the key', async () => {
         const doc = await element.get(id);
-        assert.typeOf(doc.key, 'object', 'certificate is set');
-        assert.typeOf(doc.key.data, 'Uint8Array', 'certificate data is set');
-        assert.typeOf(doc.key.passphrase, 'string', 'passphrase is set');
+        const info = /** @type ARCCertificate */ (doc.key);
+        assert.typeOf(info, 'object', 'certificate is set');
+        assert.typeOf(info.data, 'Uint8Array', 'certificate data is set');
+        assert.typeOf(info.passphrase, 'string', 'passphrase is set');
       });
     });
 
     describe('No key data', () => {
       let id;
       before(async () => {
-        const data = await DataGenerator.insertCertificatesData({
+        const data = await generator.insertCertificatesData({
           size: 1,
-          noKey: true
+          noKey: true,
         });
         id = data[0]._id;
       });
 
       after(async () => {
-        await DataGenerator.destroyClientCertificates();
+        await generator.destroyClientCertificates();
       });
 
-      let element;
+      let element = /** @type ClientCertificateModel */ (null);
       beforeEach(async () => {
         element = await basicFixture();
       });
@@ -211,17 +230,17 @@ describe('<client-certificate-model>', () => {
 
   describe('delete()', () => {
     let id;
-    let element;
+    let element = /** @type ClientCertificateModel */ (null);
     beforeEach(async () => {
-      const data = await DataGenerator.insertCertificatesData({
-        size: 1
+      const data = await generator.insertCertificatesData({
+        size: 1,
       });
       id = data[0]._id;
       element = await basicFixture();
     });
 
     afterEach(async () => {
-      await DataGenerator.destroyClientCertificates();
+      await generator.destroyClientCertificates();
     });
 
     it('deletes the document', async () => {
@@ -233,7 +252,7 @@ describe('<client-certificate-model>', () => {
     it('throws when no ID', async () => {
       let err;
       try {
-        await element.delete();
+        await element.delete(undefined);
       } catch (e) {
         err = e;
       }
@@ -245,8 +264,9 @@ describe('<client-certificate-model>', () => {
         bubbles: true,
         cancelable: true,
         detail: {
-          id
-        }
+          id,
+          result: undefined,
+        },
       });
       document.body.dispatchEvent(e);
       await e.detail.result;
@@ -259,8 +279,9 @@ describe('<client-certificate-model>', () => {
         bubbles: true,
         cancelable: false,
         detail: {
-          id
-        }
+          id,
+          result: undefined,
+        },
       });
       document.body.dispatchEvent(e);
       assert.isUndefined(e.detail.result);
@@ -268,49 +289,51 @@ describe('<client-certificate-model>', () => {
   });
 
   describe('insert()', () => {
-    let element;
+    let element = /** @type ClientCertificateModel */ (null);
     beforeEach(async () => {
       element = await basicFixture();
     });
 
     afterEach(async () => {
-      await DataGenerator.destroyClientCertificates();
+      await generator.destroyClientCertificates();
     });
 
     it('inserts an item to the "index" store', async () => {
-      const item = DataGenerator.generateClientCertificate();
+      const item = generator.generateClientCertificate();
       await element.insert(item);
       const all = await element.list();
       assert.lengthOf(all, 1);
     });
 
     it('returns ID of the "index" store', async () => {
-      const item = DataGenerator.generateClientCertificate();
+      const item = generator.generateClientCertificate();
       const result = await element.insert(item);
       assert.typeOf(result, 'string');
     });
 
     it('inserts an item to the "data" store', async () => {
-      const item = DataGenerator.generateClientCertificate();
+      const item = generator.generateClientCertificate();
       const id = await element.insert(item);
       const saved = await element.get(id);
       assert.typeOf(saved.cert, 'object');
     });
 
     it('stores binary data', async () => {
-      const item = DataGenerator.generateClientCertificate({
-        binary: true
+      const item = generator.generateClientCertificate({
+        binary: true,
       });
       const id = await element.insert(item);
       const doc = await element.get(id);
-      assert.typeOf(doc.cert, 'object', 'certificate is set');
-      assert.typeOf(doc.cert.data, 'Uint8Array', 'certificate data is set');
-      assert.typeOf(doc.cert.passphrase, 'string', 'passphrase is set');
+      const info = /** @type ARCCertificate */ (doc.cert);
+      assert.typeOf(info, 'object', 'certificate is set');
+      assert.typeOf(info.data, 'Uint8Array', 'certificate data is set');
+      assert.typeOf(info.passphrase, 'string', 'passphrase is set');
     });
 
     it('throws when no cert', async () => {
       let err;
       try {
+        // @ts-ignore
         await element.insert({});
       } catch (e) {
         err = e;
@@ -319,7 +342,7 @@ describe('<client-certificate-model>', () => {
     });
 
     it('throws when no type', async () => {
-      const item = DataGenerator.generateClientCertificate();
+      const item = generator.generateClientCertificate();
       delete item.type;
       let err;
       try {
@@ -335,8 +358,9 @@ describe('<client-certificate-model>', () => {
         bubbles: true,
         cancelable: true,
         detail: {
-          value: DataGenerator.generateClientCertificate()
-        }
+          value: generator.generateClientCertificate(),
+          result: undefined,
+        },
       });
       document.body.dispatchEvent(e);
       await e.detail.result;
@@ -349,15 +373,16 @@ describe('<client-certificate-model>', () => {
         bubbles: true,
         cancelable: false,
         detail: {
-          value: DataGenerator.generateClientCertificate()
-        }
+          value: generator.generateClientCertificate(),
+          result: undefined,
+        },
       });
       document.body.dispatchEvent(e);
       assert.isUndefined(e.detail.result);
     });
 
     it('dispatches non-cancelable insert event', async () => {
-      const item = DataGenerator.generateClientCertificate();
+      const item = generator.generateClientCertificate();
       const spy = sinon.spy();
       element.addEventListener('client-certificate-insert', spy);
       const id = await element.insert(item);
@@ -372,16 +397,16 @@ describe('<client-certificate-model>', () => {
 
   describe('deleteModel()', () => {
     beforeEach(async () => {
-      await DataGenerator.insertCertificatesData({
-        size: 1
+      await generator.insertCertificatesData({
+        size: 1,
       });
     });
 
     afterEach(async () => {
-      await DataGenerator.destroyClientCertificates();
+      await generator.destroyClientCertificates();
     });
 
-    let element;
+    let element = /** @type ClientCertificateModel */ (null);
     beforeEach(async () => {
       element = await basicFixture();
     });
@@ -398,8 +423,8 @@ describe('<client-certificate-model>', () => {
         cancelable: true,
         detail: {
           models: ['client-certificates'],
-          result: []
-        }
+          result: [],
+        },
       });
       document.body.dispatchEvent(e);
       await e.detail.result[0];
@@ -412,8 +437,9 @@ describe('<client-certificate-model>', () => {
         bubbles: true,
         cancelable: true,
         detail: {
-          models: ['saved-request']
-        }
+          models: ['saved-request'],
+          result: undefined,
+        },
       });
       document.body.dispatchEvent(e);
       await e.detail.result;

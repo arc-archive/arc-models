@@ -12,6 +12,39 @@ License for the specific language governing permissions and limitations under
 the License.
 */
 import { ArcBaseModel } from './ArcBaseModel.js';
+/* eslint-disable no-plusplus */
+
+/** @typedef {import('./UrlHistoryModel').ARCUrlHistory} ARCUrlHistory */
+
+/**
+ * A function used to sort query list items. It relays on two properties that
+ * are set by query function on array entries: `_time` which is a timestamp of
+ * the entry and `cnt` which is number of times the URL has been used.
+ *
+ * @param {Object} a
+ * @param {Object} b
+ * @return {number}
+ */
+export function sortFunction(a, b) {
+  const aTime = a._time;
+  const bTime = b._time;
+  if (aTime > bTime) {
+    return 1;
+  }
+  const aCnt = a.cnt;
+  const bCnt = b.cnt;
+  if (aTime === bTime) {
+    if (aCnt > bCnt) {
+      return 1;
+    }
+    if (aCnt < bCnt) {
+      return -1;
+    }
+    return 0;
+  }
+  return -1;
+}
+
 /**
  * An element that saves Request URL in the history and serves list
  * of saved URLs.
@@ -67,10 +100,6 @@ import { ArcBaseModel } from './ArcBaseModel.js';
  *  <url-history-saver></url-history-saver>
  * </body>
  * ```
- *
- * @customElement
- * @polymer
- * @memberof LogicElements
  */
 export class UrlHistoryModel extends ArcBaseModel {
   constructor() {
@@ -90,6 +119,7 @@ export class UrlHistoryModel extends ArcBaseModel {
     node.removeEventListener('url-history-store', this._handleStore);
     node.removeEventListener('url-history-query', this._handleQuery);
   }
+
   /**
    * Handles `url-history-store` custom event and stores an URL in the
    * datastore.
@@ -109,45 +139,53 @@ export class UrlHistoryModel extends ArcBaseModel {
     e.stopPropagation();
     const { value } = e.detail;
     if (!value) {
-      e.detail.result = Promise.reject(new Error('The "value" property is not defined.'));
+      e.detail.result = Promise.reject(
+        new Error('The "value" property is not defined.')
+      );
       return;
     }
     e.detail.result = this.store(value);
   }
+
   /**
    * It creates new entry if the URL wasn't already in the data store or
    * updates a `time` and `cnt` property of existing item.
    *
    * @param {String} url A URL to store in the history store.
-   * @return {Promise} Resolved promise to the insert response of PouchDB
-   * object (`ok`, `id` and `rev` keys)
+   * @return {Promise<PouchDB.Core.Response>} Resolved promise to the insert response of PouchDB
    */
-  store(url) {
-    const db = this.db;
+  async store(url) {
+    const { db } = this;
     const lower = url.toLowerCase();
-    return db.get(lower)
-    .catch((e) => {
-      if (e.status === 404) {
-        return;
+    let doc;
+    try {
+      doc = await db.get(lower);
+    } catch (e) {
+      if (e.status !== 404) {
+        this._handleException(e);
       }
-      return this._handleException(e);
-    })
-    .then((doc) => {
-      if (!doc) {
-        doc = {
-          _id: lower,
-          cnt: 1,
-          time: Date.now(),
-          url: url
-        };
-      } else {
-        doc.cnt++;
-        doc.time = Date.now();
-      }
+    }
+    if (!doc) {
+      doc = {
+        _id: lower,
+        cnt: 1,
+        time: Date.now(),
+        url,
+      };
+    } else {
+      doc.cnt++;
+      doc.time = Date.now();
+    }
+
+    try {
       return db.put(doc);
-    })
-    .catch((cause) => this._handleException(cause));
+    } catch (e) {
+      this._handleException(e);
+      // This is for linter only
+      return undefined;
+    }
   }
+
   /**
    * Handles the `url-history-query` custom event.
    * It cancels the event and prohibiits bubbling. Therefore the event should be
@@ -171,6 +209,7 @@ export class UrlHistoryModel extends ArcBaseModel {
     }
     e.detail.result = this.query(q);
   }
+
   /**
    * Gets a list of maching URLs from the datastore.
    * List elements are carrying the `url` property with the full
@@ -179,64 +218,34 @@ export class UrlHistoryModel extends ArcBaseModel {
    *
    * Additional properties are regular PouchDB properties like `_id` and `_rev`.
    *
-   * @param {String} q A string to search for. It result with entries that url
+   * @param {string} q A string to search for. It result with entries that url
    * contains (not start with!) a `q`.
-   * @return {Promise} Resolved promise to a list of history items.
+   * @return {Promise<ARCUrlHistory[]>} Resolved promise to a list of history items.
    */
-  query(q) {
-    const db = this.db;
-    q = q.toLowerCase();
-    return db.allDocs()
-    .then((response) => {
-      return response.rows.filter(function(item) {
-        return item.id.indexOf(q) !== -1;
+  async query(q) {
+    const { db } = this;
+    const query = q.toLowerCase();
+    try {
+      const response = await db.allDocs();
+      const ps = [];
+      response.rows.forEach((item) => {
+        if (item.id.indexOf(query) !== -1) {
+          ps.push(db.get(item.id));
+        }
       });
-    })
-    .then((matches) => {
-      const ps = matches.map(function(i) {
-        return db.get(i.id);
-      });
-      return Promise.all(ps);
-    })
-    .then((items) => {
-      // That's for sorting function.
-      items = items.map(function(i) {
-        const d = new Date(i.time);
+      const items = await Promise.all(ps);
+      const normalized = items.map((i) => {
+        const item = { ...i };
+        const d = new Date(item.time);
         d.setHours(0, 0, 0, 0);
-        i._time = d.getTime();
-        i.url = i.url || i._id;
-        return i;
+        item._time = d.getTime();
+        item.url = item.url || item._id;
+        return item;
       });
-      return items.sort(this._sortFunction);
-    })
-    .catch((cause) => this._handleException(cause));
-  }
-  /**
-   * A function used to sort query list items. It relays on two properties that
-   * are set by query function on array entries: `_time` which is a timestamp of
-   * the entry and `cnt` which is number of times the URL has been used.
-   *
-   * @param {Object} a
-   * @param {Object} b
-   * @return {Number}
-   */
-  _sortFunction(a, b) {
-    const aTime = a._time;
-    const bTime = b._time;
-    if (aTime > bTime) {
-      return 1;
+      return normalized.sort(sortFunction);
+    } catch (cause) {
+      this._handleException(cause);
+      return null;
     }
-    const aCnt = a.cnt;
-    const bCnt = b.cnt;
-    if (aTime === bTime) {
-      if (aCnt > bCnt) {
-        return 1;
-      }
-      if (aCnt < bCnt) {
-        return -1;
-      }
-      return 0;
-    }
-    return -1;
   }
 }

@@ -2,71 +2,61 @@ import { fixture, assert } from '@open-wc/testing';
 import { UrlHistoryHelper } from './common.js';
 import '../../url-history-model.js';
 
-describe('<url-history-model> - Storing event', function() {
+/** @typedef {import('../../src/UrlHistoryModel').UrlHistoryModel} UrlHistoryModel */
+
+describe('<url-history-model> - Storing event', () => {
+  /**
+   * @return {Promise<UrlHistoryModel>}
+   */
   async function basicFixture() {
-    return /** @type {UrlHistoryModel} */ (await fixture('<url-history-model></url-history-model>'));
+    return fixture('<url-history-model></url-history-model>');
   }
 
-  describe('Storing the data - Event based', function() {
+  describe('Storing the data - Event based', () => {
     let previousInsert;
     const baseUrl = 'https://api.mulesoft.com/endpoint/path?query=parameter';
     const otherUrl = 'https://api.domain.com/endpoint/';
 
-    before(async function() {
-      this.timeout(10000);
-      await UrlHistoryHelper.deleteDatabase();
-    });
-
-    after(function(done) {
-      this.timeout(10000);
-      setTimeout(function() {
-        done();
-      }, 2000);
-    });
+    before(async () => UrlHistoryHelper.deleteDatabase());
 
     beforeEach(async () => {
       await basicFixture();
     });
 
-    it('Stores the URL', function() {
+    it('stores the URL', async () => {
       const e = UrlHistoryHelper.fire('url-history-store', {
-        value: baseUrl
+        value: baseUrl,
       });
-      return e.detail.result
-        .then(function(result) {
-          assert.isTrue(result.ok);
-          previousInsert = result;
-        });
+      const result = await e.detail.result;
+      assert.isTrue(result.ok);
+      previousInsert = result;
     });
 
-    it('Updates existing URL data', function() {
+    it('Updates existing URL data', async () => {
       const e = UrlHistoryHelper.fire('url-history-store', {
-        value: baseUrl
+        value: baseUrl,
       });
-      return e.detail.result
-        .then(function(result) {
-          assert.isTrue(result.ok, 'Operation succeeded');
-          assert.equal(result.id, previousInsert.id, 'Ids matches previous');
-          assert.notEqual(result.rev, previousInsert.rev, 'Rev is different');
-        });
+      const result = await e.detail.result;
+      assert.isTrue(result.ok, 'Operation succeeded');
+      assert.equal(result.id, previousInsert.id, 'Ids matches previous');
+      assert.notEqual(result.rev, previousInsert.rev, 'Rev is different');
     });
 
-    it('Creates another URL data', function() {
+    it('Creates another URL data', async () => {
       const e = UrlHistoryHelper.fire('url-history-store', {
-        value: otherUrl
+        value: otherUrl,
       });
-      return e.detail.result
-        .then(function(result) {
-          assert.isTrue(result.ok, 'Operation succeeded');
-          assert.notEqual(result.id, previousInsert.id, 'IDs are different');
-        });
+      const result = await e.detail.result;
+      assert.isTrue(result.ok, 'Operation succeeded');
+      assert.notEqual(result.id, previousInsert.id, 'IDs are different');
     });
 
-    it('Event is cancelled', function() {
+    it('Event is cancelled', async () => {
       const e = UrlHistoryHelper.fire('url-history-store', {
-        value: baseUrl
+        value: baseUrl,
       });
       assert.isTrue(e.defaultPrevented);
+      await e.detail.result;
     });
 
     it('Rejects when no value', async () => {
@@ -74,8 +64,8 @@ describe('<url-history-model> - Storing event', function() {
       let called = false;
       try {
         await e.detail.result;
-      } catch (e) {
-        assert.equal(e.message, 'The "value" property is not defined.');
+      } catch (error) {
+        assert.equal(error.message, 'The "value" property is not defined.');
         called = true;
       }
       assert.isTrue(called);

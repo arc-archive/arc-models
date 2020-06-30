@@ -1,14 +1,22 @@
 import { fixture, assert } from '@open-wc/testing';
-import sinon from 'sinon/pkg/sinon-esm.js';
-import { DataGenerator } from '@advanced-rest-client/arc-data-generator/arc-data-generator.js';
+import sinon from 'sinon';
+import { DataGenerator } from '@advanced-rest-client/arc-data-generator';
 import 'chance/dist/chance.min.js';
 import '../../rest-api-model.js';
 /* global Chance, PouchDB */
+
+/** @typedef {import('../../src/RestApiModel').RestApiModel} RestApiModel */
+
 describe('<rest-api-model>', () => {
+  const generator = new DataGenerator();
+  /**
+   * @return {Promise<RestApiModel>}
+   */
   async function basicFixture() {
-    return /** @type {RestApiModel} */ (await fixture('<rest-api-model></rest-api-model>'));
+    return fixture('<rest-api-model></rest-api-model>');
   }
 
+  // @ts-ignore
   const chance = new Chance();
   function indexDb() {
     return new PouchDB('api-index');
@@ -19,71 +27,64 @@ describe('<rest-api-model>', () => {
   }
 
   async function clearRestAPi() {
-    await DataGenerator.destroyApiIndexData();
-    await DataGenerator.destroyApiData();
+    await generator.destroyApiIndexData();
+    await generator.destroyApiData();
   }
 
-  describe('Basic API', function() {
-    describe('updateIndex()', function() {
-      before(function() {
+  describe('Basic API', () => {
+    describe('updateIndex()', () => {
+      before(() => {
         return clearRestAPi();
       });
 
-      after(function() {
+      after(() => {
         return clearRestAPi();
       });
 
-      let element;
+      let element = /** @type RestApiModel */ (null);
       let obj;
       beforeEach(async () => {
         element = await basicFixture();
         obj = {
-          _id: 'test-index-id'
+          _id: 'test-index-id',
         };
       });
 
-      it('Creates new object', function() {
-        return element.updateIndex(obj)
-        .then((result) => {
-          assert.typeOf(result._rev, 'string');
-        });
+      it('Creates new object', async () => {
+        const result = await element.updateIndex(obj);
+        assert.typeOf(result._rev, 'string');
       });
 
-      it('Index datastore contains one object', function() {
-        return indexDb().allDocs({
-          // jscs:disable
-          include_docs: true
-          // jscs:enable
-        }).then((result) => {
-          assert.lengthOf(result.rows, 1);
+      it('Index datastore contains one object', async () => {
+        const result = await indexDb().allDocs({
+          include_docs: true,
         });
+        assert.lengthOf(result.rows, 1);
       });
 
-      it('Dispatches api-index-changed event', function() {
+      it('Dispatches api-index-changed event', async () => {
         obj._id = 'other-id';
-        let eventData;
+        let eventData = {};
         element.addEventListener('api-index-changed', function f(e) {
           element.removeEventListener('api-index-changed', f);
           if (e.cancelable) {
             return;
           }
+          // @ts-ignore
           eventData = e.detail;
         });
-        return element.updateIndex(obj)
-        .then(() => {
-          assert.typeOf(eventData, 'object', 'Event was dispatched');
-          assert.typeOf(eventData.apiInfo, 'object', 'Contains apiInfo property');
-          assert.typeOf(eventData.apiInfo._rev, 'string', 'The _rev is set');
-        });
+        await element.updateIndex(obj);
+        assert.typeOf(eventData.apiInfo, 'object', 'Contains apiInfo property');
+        assert.typeOf(eventData.apiInfo._rev, 'string', 'The _rev is set');
       });
     });
 
-    describe('updateData()', function() {
-      after(function() {
+    describe('updateData()', () => {
+      after(() => {
         return clearRestAPi();
       });
 
-      let element;
+      let element = /** @type RestApiModel */ (null);
       const indexId = 'test-index-id';
       const version = 'v1';
       const data = {};
@@ -91,55 +92,48 @@ describe('<rest-api-model>', () => {
         element = await basicFixture();
       });
 
-      it('Creates new object', function() {
-        return element.updateData(indexId, version, data)
-        .then((result) => {
-          assert.typeOf(result, 'object', 'Returns an object');
-          assert.typeOf(result._rev, 'string', 'The _rew is set');
-          assert.equal(result._id, indexId + '|' + version);
-        });
+      it('Creates new object', async () => {
+        const result = await element.updateData(indexId, version, data);
+        assert.typeOf(result, 'object', 'Returns an object');
+        assert.typeOf(result._rev, 'string', 'The _rew is set');
+        assert.equal(result._id, `${indexId}|${version}`);
       });
 
-      it('Index datastore contains one object', function() {
-        return dataDb().allDocs({
-          // jscs:disable
-          include_docs: true
-          // jscs:enable
-        }).then((result) => {
-          assert.lengthOf(result.rows, 1);
+      it('Index datastore contains one object', async () => {
+        const result = await dataDb().allDocs({
+          include_docs: true,
         });
+        assert.lengthOf(result.rows, 1);
       });
     });
 
-    describe('readIndex()', function() {
-      let element;
+    describe('readIndex()', () => {
+      let element = /** @type RestApiModel */ (null);
       let created;
 
       before(async () => {
         element = await basicFixture();
-        let obj = {
-          _id: 'test-index-id'
+        const obj = {
+          _id: 'test-index-id',
+          title: 'test',
+          type: 'RAML 1.0',
+          order: 0,
+          versions: ['abc'],
+          latest: 'abc',
         };
-        return element.updateIndex(obj)
-        .then((doc) => {
-          created = doc;
-        });
+        created = await element.updateIndex(obj);
       });
 
-      after(function() {
-        return clearRestAPi();
-      });
+      after(async () => clearRestAPi());
 
-      it('Reads index data', function() {
-        return element.readIndex(created._id)
-        .then((doc) => {
-          assert.deepEqual(doc, created);
-        });
+      it('Reads index data', async () => {
+        const doc = await element.readIndex(created._id);
+        assert.deepEqual(doc, created);
       });
     });
 
-    describe('readData()', function() {
-      let element;
+    describe('readData()', () => {
+      let element = /** @type RestApiModel */ (null);
       let created;
 
       const indexId = 'test-index-id';
@@ -148,52 +142,61 @@ describe('<rest-api-model>', () => {
 
       before(async () => {
         element = await basicFixture();
-        return element.updateData(indexId, version, data)
-        .then((doc) => {
+        return element.updateData(indexId, version, data).then((doc) => {
           created = doc;
         });
       });
 
-      after(function() {
+      after(() => {
         return clearRestAPi();
       });
 
-      it('Reads index data', function() {
-        return element.readData(indexId + '|' + version)
-        .then((doc) => {
-          assert.deepEqual(doc, created);
-        });
+      it('Reads index data', async () => {
+        const doc = await element.readData(`${indexId}|${version}`);
+        assert.deepEqual(doc, created);
       });
     });
 
     describe('updateIndexBatch()', () => {
-      let element;
-      let items = [{
-        _id: 'test-index-id'
-      }, {
-        _id: 'test-index-other'
-      }];
+      let element = /** @type RestApiModel */ (null);
+      let items = [
+        {
+          _id: 'test-index-id',
+          title: 'test2',
+          type: 'RAML 1.0',
+          order: 0,
+          versions: ['abc'],
+          latest: 'abc',
+        },
+        {
+          _id: 'test-index-other',
+          title: 'test2',
+          type: 'RAML 1.0',
+          order: 0,
+          versions: ['abc'],
+          latest: 'abc',
+        },
+      ];
 
       before(async () => {
         element = await basicFixture();
       });
 
-      after(function() {
+      after(() => {
         return clearRestAPi();
       });
 
-      it('Creates index data', () => {
-        return element.updateIndexBatch(items)
-        .then((result) => {
-          assert.typeOf(result, 'array');
-          assert.lengthOf(result, 2);
-          assert.typeOf(result[0]._rev, 'string');
-          assert.typeOf(result[1]._rev, 'string');
-          items = result;
-        });
+      it('Creates index data', async () => {
+        const result = await element.updateIndexBatch(items);
+        assert.typeOf(result, 'array');
+        assert.lengthOf(result, 2);
+        assert.typeOf(result[0]._rev, 'string');
+        assert.typeOf(result[1]._rev, 'string');
+        // @ts-ignore
+        items = result;
       });
 
-      it('Dispatches api-index-changed event', function() {
+      it('Dispatches api-index-changed event', async () => {
         const eventData = [];
         function clb(e) {
           if (e.cancelable) {
@@ -202,177 +205,159 @@ describe('<rest-api-model>', () => {
           eventData[eventData.length] = e.detail;
         }
         element.addEventListener('api-index-changed', clb);
-        return element.updateIndexBatch(items)
-        .then(() => {
-          element.removeEventListener('api-index-changed', clb);
-          assert.lengthOf(eventData, 2, 'Event dispatched 2 times');
-          assert.typeOf(eventData[0].apiInfo, 'object', 'Contains apiInfo property');
-          assert.typeOf(eventData[0].apiInfo._rev, 'string', 'The _rev is set');
-          assert.typeOf(eventData[1].apiInfo, 'object', 'Contains apiInfo property');
-          assert.typeOf(eventData[1].apiInfo._rev, 'string', 'The _rev is set');
-        });
+        await element.updateIndexBatch(items);
+        element.removeEventListener('api-index-changed', clb);
+        assert.lengthOf(eventData, 2, 'Event dispatched 2 times');
+        assert.typeOf(
+          eventData[0].apiInfo,
+          'object',
+          'Contains apiInfo property'
+        );
+        assert.typeOf(eventData[0].apiInfo._rev, 'string', 'The _rev is set');
+        assert.typeOf(
+          eventData[1].apiInfo,
+          'object',
+          'Contains apiInfo property'
+        );
+        assert.typeOf(eventData[1].apiInfo._rev, 'string', 'The _rev is set');
       });
     });
 
     describe('removeVersion()', () => {
-      let element;
+      let element = /** @type RestApiModel */ (null);
       let id;
       const version = 'v1';
       before(async () => {
         element = await basicFixture();
       });
 
-      afterEach(function() {
+      afterEach(() => {
         return clearRestAPi();
       });
 
-      beforeEach(() => {
-        id = 'test-index-id' + chance.word();
-        return element.updateIndex({
+      beforeEach(async () => {
+        id = `test-index-id${chance.word()}`;
+        await element.updateIndex({
           _id: id,
           versions: [version, 'v2'],
-          latest: version
-        })
-        .then(() => {
-          return element.updateData(id, version, {});
+          latest: version,
+          title: 'test',
+          order: 0,
+          type: 'RAML 1.0',
         });
+        await element.updateData(id, version, {});
       });
 
-      it('Removes version from datastore', () => {
-        return element.removeVersion(id, version)
-        .then(() => {
-          return dataDb().allDocs({
-            // jscs:disable
-            include_docs: true
-            // jscs:enable
-          });
-        })
-        .then((docs) => {
-          assert.lengthOf(docs.rows, 0);
+      it('Removes version from datastore', async () => {
+        await element.removeVersion(id, version);
+        const docs = await dataDb().allDocs({
+          include_docs: true,
         });
+        assert.lengthOf(docs.rows, 0);
       });
 
-      it('Keeps index object when it has a version', () => {
-        return element.removeVersion(id, version)
-        .then(() => {
-          return indexDb().allDocs({
-            // jscs:disable
-            include_docs: true
-            // jscs:enable
-          });
-        })
-        .then((docs) => {
-          assert.lengthOf(docs.rows, 1);
+      it('Keeps index object when it has a version', async () => {
+        await element.removeVersion(id, version);
+        const docs = await indexDb().allDocs({
+          include_docs: true,
         });
+        assert.lengthOf(docs.rows, 1);
       });
 
-      it('Version is removed from index', () => {
-        return element.removeVersion(id, version)
-        .then(() => {
-          return indexDb().allDocs({
-            // jscs:disable
-            include_docs: true
-            // jscs:enable
-          });
-        })
-        .then((docs) => {
-          assert.equal(docs.rows[0].doc.versions[0], 'v2');
+      it('Version is removed from index', async () => {
+        await element.removeVersion(id, version);
+        const docs = await indexDb().allDocs({
+          include_docs: true,
         });
+        assert.equal(docs.rows[0].doc.versions[0], 'v2');
       });
 
-      it('Latest version is not removed version', () => {
-        return element.removeVersion(id, version)
-        .then(() => {
-          return indexDb().allDocs({
-            // jscs:disable
-            include_docs: true
-            // jscs:enable
-          });
-        })
-        .then((docs) => {
-          assert.equal(docs.rows[0].doc.latest, 'v2');
+      it('Latest version is not removed version', async () => {
+        await element.removeVersion(id, version);
+        const docs = await indexDb().allDocs({
+          include_docs: true,
         });
+        assert.equal(docs.rows[0].doc.latest, 'v2');
       });
     });
 
-    describe('remove()', () => {
-      let element;
+    describe('delete()', () => {
+      let element = /** @type RestApiModel */ (null);
       let createdIndex;
       before(async () => {
         element = await basicFixture();
       });
 
-      afterEach(function() {
+      afterEach(() => {
         return clearRestAPi();
       });
 
-      beforeEach(() => {
+      beforeEach(async () => {
         const obj = {
-          _id: 'test-index-id' + chance.word(),
+          _id: `test-index-id${chance.word()}`,
           versions: ['v1'],
-          latest: 'v1'
+          latest: 'v1',
+          title: 'test',
+          order: 0,
+          type: 'RAML 1.0',
         };
-        return element.updateIndex(obj)
-        .then((doc) => {
-          createdIndex = doc;
-          return element.updateData(doc._id, 'v1', {});
-        });
+        createdIndex = await element.updateIndex(obj);
+        await element.updateData(createdIndex._id, 'v1', {});
       });
 
-      it('Removes index object', () => {
-        return element.remove(createdIndex._id)
-        .then(() => {
-          return indexDb().allDocs({
-            // jscs:disable
-            include_docs: true
-            // jscs:enable
-          });
-        })
-        .then((docs) => {
-          assert.lengthOf(docs.rows, 0);
+      it('Removes index object', async () => {
+        await element.delete(createdIndex._id);
+        const docs = await indexDb().allDocs({
+          include_docs: true,
         });
+        assert.lengthOf(docs.rows, 0);
       });
 
-      it('Removes data object', () => {
-        return element.remove(createdIndex._id)
-        .then(() => {
-          return dataDb().allDocs({
-            // jscs:disable
-            include_docs: true
-            // jscs:enable
-          });
-        })
-        .then((docs) => {
-          assert.lengthOf(docs.rows, 0);
+      it('Removes data object', async () => {
+        await element.delete(createdIndex._id);
+        const docs = await dataDb().allDocs({
+          include_docs: true,
         });
+        assert.lengthOf(docs.rows, 0);
       });
 
-      it('Fires api-deleted event', function() {
-        let eventData;
+      it('Fires api-deleted event', async () => {
+        let eventData = {};
         element.addEventListener('api-deleted', function clb(e) {
           element.removeEventListener('api-deleted', clb);
+          // @ts-ignore
           eventData = e.detail;
         });
-        return element.remove(createdIndex._id)
-        .then(() => {
-          assert.typeOf(eventData, 'object', 'Event was fired');
-          assert.equal(eventData.id, createdIndex._id, 'Event detail contains id');
-        });
+        await element.delete(createdIndex._id);
+        assert.equal(
+          eventData.id,
+          createdIndex._id,
+          'Event detail contains id'
+        );
       });
     });
 
-    describe('listIndex()', function() {
-      let element;
+    describe('listIndex()', () => {
+      let element = /** @type RestApiModel */ (null);
 
-      const docs = [{
-        _id: 'test-1',
-        versions: ['v1'],
-        latest: 'v1'
-      }, {
-        _id: 'test-2',
-        versions: ['v1'],
-        latest: 'v1'
-      }];
+      const docs = [
+        {
+          _id: 'test-1',
+          versions: ['v1'],
+          latest: 'v1',
+          title: 'test',
+          order: 0,
+          type: 'RAML 1.0',
+        },
+        {
+          _id: 'test-2',
+          versions: ['v1'],
+          latest: 'v1',
+          title: 'test2',
+          order: 0,
+          type: 'RAML 1.0',
+        },
+      ];
 
       beforeEach(async () => {
         await clearRestAPi();
@@ -382,39 +367,37 @@ describe('<rest-api-model>', () => {
         await element.updateIndexBatch(docs);
       });
 
-      it('Lists index data', function() {
-        return element.listIndex()
-        .then((result) => {
-          assert.typeOf(result, 'object', 'returns an object');
-          assert.typeOf(result.nextPageToken, 'string', 'nextPageToken is set');
-          assert.typeOf(result.items, 'array', 'items is a list');
-          assert.lengthOf(result.items, 2, 'There are two items on the list');
-        });
+      it('Lists index data', async () => {
+        const result = await element.listIndex();
+        assert.typeOf(result, 'object', 'returns an object');
+        assert.typeOf(result.nextPageToken, 'string', 'nextPageToken is set');
+        assert.typeOf(result.items, 'array', 'items is a list');
+        assert.lengthOf(result.items, 2, 'There are two items on the list');
       });
 
-      it('_cachedQueryOptions contains query options for token', function() {
-        return element.listIndex()
-        .then((result) => {
-          const pageData = element._cachedQueryOptions[result.nextPageToken];
-          assert.typeOf(pageData, 'object');
-          assert.equal(pageData.startkey, result.items[result.items.length - 1]._id);
-          assert.equal(pageData.skip, 1);
-        });
+      it('_cachedQueryOptions contains query options for token', async () => {
+        const result = await element.listIndex();
+        const pageData = element._cachedQueryOptions[result.nextPageToken];
+        assert.typeOf(pageData, 'object');
+        assert.equal(
+          pageData.startkey,
+          result.items[result.items.length - 1]._id
+        );
+        assert.equal(pageData.skip, 1);
       });
 
-      it('Call with nextPageToken returns empty result', function() {
-        let nextPageToken;
-        return element.listIndex()
-        .then((result) => {
-          nextPageToken = result.nextPageToken;
-          return element.listIndex({
-            nextPageToken: result.nextPageToken
-          });
-        })
-        .then((result) => {
-          assert.equal(result.nextPageToken, nextPageToken, 'nextPageToken is the same');
-          assert.lengthOf(result.items, 0, 'There is no items on list');
+      it('Call with nextPageToken returns empty result', async () => {
+        const first = await element.listIndex();
+        const { nextPageToken } = first;
+        const second = await element.listIndex({
+          nextPageToken,
         });
+        assert.equal(
+          second.nextPageToken,
+          nextPageToken,
+          'nextPageToken is the same'
+        );
+        assert.lengthOf(second.items, 0, 'There is no items on list');
       });
     });
   });
@@ -423,9 +406,10 @@ describe('<rest-api-model>', () => {
     function fire(models) {
       const e = new CustomEvent('destroy-model', {
         detail: {
-          models
+          models,
+          result: undefined,
         },
-        bubbles: true
+        bubbles: true,
       });
       document.body.dispatchEvent(e);
       return e;
@@ -453,8 +437,7 @@ describe('<rest-api-model>', () => {
       const element = await basicFixture();
       const spy = sinon.spy(element, '_notifyModelDestroyed');
       const e = fire(['rest-apis']);
-      return Promise.all(e.detail.result)
-      .then(() => {
+      return Promise.all(e.detail.result).then(() => {
         assert.equal(spy.callCount, 3);
       });
     });

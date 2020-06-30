@@ -1,44 +1,41 @@
 import { fixture, assert } from '@open-wc/testing';
-import * as sinon from 'sinon/pkg/sinon-esm.js';
+import * as sinon from 'sinon';
 import { ArcBaseModel } from '../../src/ArcBaseModel.js';
-/* eslint-disable require-atomic-updates */
-const STORE_NAME = 'todo-list';
-/**
- * @customElement
- * @memberof LogicElements
- */
-class TestModel extends ArcBaseModel {
-  static get is() {
-    return 'test-model';
-  }
+import { STORE_NAME } from './TestModel.js';
 
-  constructor() {
-    super(STORE_NAME, 2);
-  }
-}
-window.customElements.define(TestModel.is, TestModel);
+/** @typedef {import('./TestModel').TestModel} TestModel */
+
+/* eslint-disable require-atomic-updates */
 
 describe('ArcBaseModel', () => {
   describe('Basics', () => {
     it('Sets store name in contructor', async () => {
-      const element = /** @type {TestModel} */ (await fixture('<test-model></test-model>'));
+      const element = /** @type {TestModel} */ (await fixture(
+        '<test-model></test-model>'
+      ));
       assert.equal(element.name, STORE_NAME);
     });
 
     it('Sets reviews limit in contructor', async () => {
-      const element = /** @type {TestModel} */ (await fixture('<test-model></test-model>'));
+      const element = /** @type {TestModel} */ (await fixture(
+        '<test-model></test-model>'
+      ));
       assert.equal(element.revsLimit, 2);
     });
 
     it('Uses default event target', async () => {
-      const element = /** @type {TestModel} */ (await fixture('<test-model></test-model>'));
+      const element = /** @type {TestModel} */ (await fixture(
+        '<test-model></test-model>'
+      ));
       assert.isTrue(element.eventsTarget === window);
     });
   });
 
-  describe('get db()', function() {
+  describe('get db()', () => {
     it('Throws error when store name is not set', async () => {
-      const element = /** @type {TestModel} */ (await fixture('<test-model></test-model>'));
+      const element = /** @type {TestModel} */ (await fixture(
+        '<test-model></test-model>'
+      ));
       element.name = undefined;
       assert.throws(() => {
         return element.db;
@@ -46,53 +43,27 @@ describe('ArcBaseModel', () => {
     });
 
     it('Returns PouchDB instance', async () => {
-      const element = /** @type {TestModel} */ (await fixture('<test-model></test-model>'));
-      const db = element.db;
+      const element = /** @type {TestModel} */ (await fixture(
+        '<test-model></test-model>'
+      ));
+      const { db } = element;
       assert.equal(db.constructor.name, 'PouchDB');
     });
   });
 
-  describe('get uuid()', function() {
-    it('Returns instamce of uuid-generator', async () => {
-      const element = /** @type {TestModel} */ (await fixture('<test-model></test-model>'));
-      const uuid = element.uuid;
-      assert.equal(uuid.nodeName, 'UUID-GENERATOR');
-    });
-
-    it('Caches element instance', async () => {
-      const element = /** @type {TestModel} */ (await fixture('<test-model></test-model>'));
-      const uuid = element.uuid;
-      assert.ok(uuid.nodeName);
-      assert.isTrue(element._uuid === uuid);
-    });
-
-    it('Returns the same instance', async () => {
-      const element = /** @type {TestModel} */ (await fixture('<test-model></test-model>'));
-      const uuid1 = element.uuid;
-      const uuid2 = element.uuid;
-      assert.isTrue(uuid1 === uuid2);
-    });
-
-    it('Clears cached element when removed from the DOM', async () => {
-      const element = /** @type {TestModel} */ (await fixture('<test-model></test-model>'));
-      const uuid = element.uuid;
-      assert.ok(uuid.nodeName);
-      element.parentNode.removeChild(element);
-      assert.isUndefined(element._uuid);
-    });
-  });
-
-  describe('read()', function() {
+  describe('read()', () => {
     const insert = {
       _id: 'test-id',
-      value: 'test-value'
+      value: 'test-value',
     };
     const updated = 'test-update';
     let rev1;
     let rev2;
     before(async () => {
-      const element = /** @type {TestModel} */ (await fixture('<test-model></test-model>'));
-      const db = element.db;
+      const element = /** @type {TestModel} */ (await fixture(
+        '<test-model></test-model>'
+      ));
+      const { db } = element;
       const result = await db.put(insert);
       rev1 = result.rev;
       insert._rev = rev1;
@@ -103,43 +74,27 @@ describe('ArcBaseModel', () => {
     });
 
     after(async () => {
-      const element = /** @type {TestModel} */ (await fixture('<test-model></test-model>'));
-      const db = element.db;
+      const element = /** @type {TestModel} */ (await fixture(
+        '<test-model></test-model>'
+      ));
+      const { db } = element;
       await db.destroy();
     });
 
     it('Reads latest revision', async () => {
-      const element = /** @type {TestModel} */ (await fixture('<test-model></test-model>'));
+      const element = /** @type {TestModel} */ (await fixture(
+        '<test-model></test-model>'
+      ));
       const doc = await element.read(insert._id);
       assert.equal(doc._rev, rev2);
     });
 
     it('Reads specific revision', async () => {
-      const element = /** @type {TestModel} */ (await fixture('<test-model></test-model>'));
+      const element = /** @type {TestModel} */ (await fixture(
+        '<test-model></test-model>'
+      ));
       const doc = await element.read(insert._id, rev1);
       assert.equal(doc._rev, rev1);
-    });
-  });
-
-  describe('_computeMidnight()', () => {
-    let element;
-    beforeEach(async () => {
-      element = /** @type {TestModel} */ (await fixture('<test-model></test-model>'));
-    });
-
-    it('Returns a number when no argument', () => {
-      const result = element._computeMidnight(Date.now());
-      assert.typeOf(result, 'number');
-    });
-
-    it('Returns a number for valid argument', () => {
-      const result = element._computeMidnight(Date.now());
-      assert.typeOf(result, 'number');
-    });
-
-    it('Returns a number for invalid argument', () => {
-      const result = element._computeMidnight('invalid');
-      assert.typeOf(result, 'number');
     });
   });
 
@@ -149,7 +104,9 @@ describe('ArcBaseModel', () => {
     const eDetail = 'test-detail';
 
     beforeEach(async () => {
-      element = /** @type {TestModel} */ (await fixture('<test-model></test-model>'));
+      element = /** @type {TestModel} */ (await fixture(
+        '<test-model></test-model>'
+      ));
     });
 
     it('Dispatches custom event', () => {
@@ -188,7 +145,9 @@ describe('ArcBaseModel', () => {
   describe('_handleException()', () => {
     let element;
     beforeEach(async () => {
-      element = /** @type {TestModel} */ (await fixture('<test-model></test-model>'));
+      element = /** @type {TestModel} */ (await fixture(
+        '<test-model></test-model>'
+      ));
     });
 
     it('Throws the error', () => {
@@ -202,38 +161,33 @@ describe('ArcBaseModel', () => {
     });
 
     it('Dispatches send-analytics event', () => {
-      let ev;
-      element.addEventListener('send-analytics', function f(e) {
-        element.removeEventListener('send-analytics', f);
-        ev = e;
-      });
+      const spy = sinon.spy();
+      element.addEventListener('send-analytics', spy);
       element._handleException(new Error('test'), true);
-      assert.ok(ev);
+      assert.isTrue(spy.called);
+      const ev = spy.args[0][0];
       assert.isTrue(ev.bubbles, 'Event bubbles');
       assert.isTrue(ev.composed, 'Event is composed');
       assert.isFalse(ev.cancelable, 'Event is not cancelable');
     });
 
     it('send-analytics event has exception details', () => {
-      let detail;
-      element.addEventListener('send-analytics', function f(e) {
-        element.removeEventListener('send-analytics', f);
-        detail = e.detail;
-      });
+      const spy = sinon.spy();
+      element.addEventListener('send-analytics', spy);
       element._handleException(new Error('test'), true);
-      assert.ok(detail);
+      assert.isTrue(spy.called);
+      const { detail } = spy.args[0][0];
       assert.equal(detail.type, 'exception', 'Type is set');
       assert.equal(detail.description, 'test', 'Message is set');
       assert.isTrue(detail.fatal, 'Is fatal exception');
     });
 
     it('Serializes non-error object', () => {
-      let detail;
-      element.addEventListener('send-analytics', function f(e) {
-        element.removeEventListener('send-analytics', f);
-        detail = e.detail;
-      });
+      const spy = sinon.spy();
+      element.addEventListener('send-analytics', spy);
       element._handleException({ test: true }, true);
+      assert.isTrue(spy.called);
+      const { detail } = spy.args[0][0];
       assert.equal(detail.description, '{"test":true}', 'Message is set');
     });
   });
@@ -243,7 +197,9 @@ describe('ArcBaseModel', () => {
     const storeName = 'test-store';
 
     beforeEach(async () => {
-      element = /** @type {TestModel} */ (await fixture('<test-model></test-model>'));
+      element = /** @type {TestModel} */ (await fixture(
+        '<test-model></test-model>'
+      ));
     });
 
     it('Dispatches custom event', () => {
@@ -282,21 +238,21 @@ describe('ArcBaseModel', () => {
   describe('deleteModel()', () => {
     let element;
     beforeEach(async () => {
-      element = /** @type {TestModel} */ (await fixture('<test-model></test-model>'));
+      element = /** @type {TestModel} */ (await fixture(
+        '<test-model></test-model>'
+      ));
     });
 
     it('Deletes model', () => {
-      return element.deleteModel()
-      .then(() => {});
+      return element.deleteModel().then(() => {});
     });
 
     it('Dispatches datastore-destroyed event', async () => {
-      let detail;
-      element.addEventListener('datastore-destroyed', function f(e) {
-        element.removeEventListener('datastore-destroyed', f);
-        detail = e.detail;
-      });
+      const spy = sinon.spy();
+      element.addEventListener('datastore-destroyed', spy);
       await element.deleteModel();
+      assert.isTrue(spy.called);
+      const { detail } = spy.args[0][0];
       assert.equal(detail.datastore, element.name);
     });
 
@@ -314,32 +270,20 @@ describe('ArcBaseModel', () => {
     });
   });
 
-  describe('_cancelEvent()', () => {
-    let element;
-    beforeEach(async () => {
-      element = /** @type {TestModel} */ (await fixture('<test-model></test-model>'));
-    });
-
-    it('Cancels the event', () => {
-      const e = new CustomEvent('test', {
-        cancelable: true
-      });
-      element._cancelEvent(e);
-      assert.isTrue(e.defaultPrevented);
-    });
-  });
-
   describe('_eventCancelled()', () => {
     let element;
     beforeEach(async () => {
-      element = /** @type {TestModel} */ (await fixture('<test-model></test-model>'));
+      element = /** @type {TestModel} */ (await fixture(
+        '<test-model></test-model>'
+      ));
     });
 
     it('Returns true when event is canceled', () => {
       const e = new CustomEvent('test', {
-        cancelable: true
+        cancelable: true,
       });
-      element._cancelEvent(e);
+      e.preventDefault();
+      e.stopPropagation();
       const result = element._eventCancelled(e);
       assert.isTrue(result);
     });
@@ -353,9 +297,9 @@ describe('ArcBaseModel', () => {
     it('Returns true when event is dispatched on current element', () => {
       const e = {
         cancelable: true,
-        composedPath: function() {
+        composedPath() {
           return [element];
-        }
+        },
       };
       const result = element._eventCancelled(e);
       assert.isTrue(result);
@@ -363,7 +307,7 @@ describe('ArcBaseModel', () => {
 
     it('Returns false otherwise', () => {
       const e = new CustomEvent('test', {
-        cancelable: true
+        cancelable: true,
       });
       document.body.dispatchEvent(e);
       const result = element._eventCancelled(e);
@@ -376,8 +320,9 @@ describe('ArcBaseModel', () => {
       const e = new CustomEvent('destroy-model', {
         bubbles: true,
         detail: {
-          models: name
-        }
+          models: name,
+          result: undefined,
+        },
       });
 
       document.body.dispatchEvent(e);
@@ -412,7 +357,7 @@ describe('ArcBaseModel', () => {
     }
 
     constructor() {
-      super();
+      super('test');
       this._testEventHandler = this._testEventHandler.bind(this);
       this._calledCount = 0;
     }
@@ -442,49 +387,53 @@ describe('ArcBaseModel', () => {
   function fire(type, bubbles, node) {
     const event = new CustomEvent(type, {
       cancelable: true,
-      bubbles: bubbles,
-      composed: true
+      bubbles,
+      composed: true,
     });
     (node || document.body).dispatchEvent(event);
     return event;
   }
 
-  describe('Listens on default', function() {
+  describe('Listens on default', () => {
     let element;
     beforeEach(async () => {
-      element = /** @type {TestModel} */ (await fixture('<eventable-element></eventable-element>'));
+      element = /** @type {TestModel} */ (await fixture(
+        '<eventable-element></eventable-element>'
+      ));
     });
 
-    it('Receives an event from bubbling', function() {
+    it('Receives an event from bubbling', () => {
       fire('test-event', true);
       assert.isTrue(element.calledOnce);
     });
 
-    it('Do not receives an event from parent', function() {
+    it('Do not receives an event from parent', () => {
       fire('test-event', false, document.body.parentElement);
       assert.isFalse(element.calledOnce);
     });
   });
 
-  describe('Changes event listener', function() {
+  describe('Changes event listener', () => {
     let element;
     beforeEach(async () => {
-      element = /** @type {TestModel} */ (await fixture('<eventable-element></eventable-element>'));
+      element = /** @type {TestModel} */ (await fixture(
+        '<eventable-element></eventable-element>'
+      ));
     });
 
-    it('Receives on body', function() {
+    it('Receives on body', () => {
       element.eventsTarget = document.body;
       fire('test-event', false, document.body);
       assert.isTrue(element.calledOnce);
     });
 
-    it('Do not receives on parent', function() {
+    it('Do not receives on parent', () => {
       element.eventsTarget = window;
       fire('test-event', false, document.body);
       assert.isFalse(element.called);
     });
 
-    it('Reseives on self', function() {
+    it('Reseives on self', () => {
       element.eventsTarget = element;
       fire('test-event', false, element);
       assert.isTrue(element.calledOnce);

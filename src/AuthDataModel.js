@@ -13,11 +13,48 @@ the License.
 */
 import { ArcBaseModel } from './ArcBaseModel.js';
 
+/** @typedef {import('./AuthDataModel').ARCAuthData} ARCAuthData */
+
 /**
- * Model for host rules.
+ * Removes query parameters and the fragment part from the URL
+ * @param {String} url URL to process
+ * @return {String} Canonical URL.
+ */
+export function normalizeUrl(url) {
+  if (!url) {
+    return '';
+  }
+  try {
+    const u = new URL(url);
+    u.hash = '';
+    u.search = '';
+    let result = u.toString();
+    // polyfill library leaves '?#'
+    result = result.replace('?', '');
+    result = result.replace('#', '');
+    return result;
+  } catch (e) {
+    return url;
+  }
+}
+
+/**
+ * Computes the database key for auth data
  *
- * @customElement
- * @memberof LogicElements
+ * @param {String} method The Authorization method to restore data for.
+ * @param {String=} url The URL of the request
+ * @return {String} Datastore key for auth data
+ */
+export function computeKey(method, url) {
+  let path = `${method}/`;
+  if (url) {
+    path += encodeURIComponent(url);
+  }
+  return path;
+}
+
+/**
+ * Model for authorization data stored in the application.
  */
 export class AuthDataModel extends ArcBaseModel {
   constructor() {
@@ -44,27 +81,31 @@ export class AuthDataModel extends ArcBaseModel {
     }
     e.preventDefault();
     e.stopPropagation();
-    e.detail.result = this.query(e.detail.url, e.detail.authMethod)
-    .catch((e) => this._handleException(e));
+    e.detail.result = this.query(
+      e.detail.url,
+      e.detail.authMethod
+    ).catch((ex) => this._handleException(ex));
   }
+
   /**
    * Queries for a datastore entry. Similar to `read()` but without using `id`
    * but rather the URL.
    *
-   * @param {String} url The URL of the request
-   * @param {String} authMethod The Authorization method to restore data for.
-   * @return {Promise}
+   * @param {string} url The URL of the request
+   * @param {string} authMethod The Authorization method to restore data for.
+   * @return {Promise<ARCAuthData|undefined>}
    */
-  query(url, authMethod) {
-    const parsedUrl = this._normalizeUrl(url);
-    const key = this._computeKey(authMethod, parsedUrl);
-    return this.db.get(key)
-    .catch((cause) => {
+  async query(url, authMethod) {
+    const parsedUrl = normalizeUrl(url);
+    const key = computeKey(authMethod, parsedUrl);
+    try {
+      return await this.db.get(key);
+    } catch (cause) {
       if (cause && cause.status === 404) {
-        return;
+        return undefined;
       }
       throw cause;
-    });
+    }
   }
 
   _updateHandler(e) {
@@ -73,84 +114,47 @@ export class AuthDataModel extends ArcBaseModel {
     }
     e.preventDefault();
     e.stopPropagation();
-    e.detail.result = this.update(e.detail.url, e.detail.authMethod, e.detail.authData)
-    .catch((e) => this._handleException(e));
-  }
-  /**
-   * Creates or updates the auth data in the data store for given method and URl.
-   *
-   * @param {String} url The URL of the request
-   * @param {String} authMethod The Authorization method to restore data for.
-   * @param {Object} authData The authorization data to store. Schema depends on
-   * the `authMethod` property. From model standpoint schema does not matter.
-   * @return {Promise}
-   */
-  update(url, authMethod, authData) {
-    const parsedUrl = this._normalizeUrl(url);
-    const key = this._computeKey(authMethod, parsedUrl);
-    const db = this.db;
-    let stored;
-    return db.get(key)
-    .catch((error) => {
-      if (error && error.status === 404) {
-        return {
-          _id: key
-        };
-      } else {
-        this._handleException(error);
-      }
-    })
-    .then((doc) => {
-      doc = Object.assign(doc, authData);
-      stored = doc;
-      return db.put(doc);
-    })
-    .then((result) => {
-      const detail = stored;
-      detail._rev = result.rev;
-      this.dispatchEvent(new CustomEvent('auth-data-changed', {
-        bubbles: true,
-        composed: true,
-        detail
-      }));
-      return detail;
-    });
+    e.detail.result = this.update(
+      e.detail.url,
+      e.detail.authMethod,
+      e.detail.authData
+    ).catch((ex) => this._handleException(ex));
   }
 
   /**
-   * Removes query parameters and the fragment part from the URL
-   * @param {String} url URL to process
-   * @return {String} Canonical URL.
-   */
-  _normalizeUrl(url) {
-    if (!url) {
-      return '';
-    }
-    try {
-      const u = new URL(url);
-      u.hash = '';
-      u.search = '';
-      let result = u.toString();
-      // polyfill library leaves '?#'
-      result = result.replace('?', '');
-      result = result.replace('#', '');
-      return result;
-    } catch (e) {
-      return url;
-    }
-  }
-  /**
-   * Computes the database key for auth data
+   * Creates or updates the auth data in the data store for given method and URl.
    *
-   * @param {String} method The Authorization method to restore data for.
-   * @param {?String} url The URL of the request
-   * @return {String} Datastore key for auth data
+   * @param {string} url The URL of the request
+   * @param {string} authMethod The Authorization method to restore data for.
+   * @param {object} authData The authorization data to store. Schema depends on
+   * the `authMethod` property. From model standpoint schema does not matter.
+   * @return {Promise<ARCAuthData>}
    */
-  _computeKey(method, url) {
-    let path = method + '/';
-    if (url) {
-      path += encodeURIComponent(url);
+  async update(url, authMethod, authData) {
+    const parsedUrl = normalizeUrl(url);
+    const key = computeKey(authMethod, parsedUrl);
+    const { db } = this;
+    let stored;
+    try {
+      stored = await db.get(key);
+    } catch (error) {
+      if (error.status === 404) {
+        stored = { _id: key };
+      } else {
+        this._handleException(error);
+      }
     }
-    return path;
+    const doc = { ...stored, ...authData };
+    const result = await db.put(doc);
+    const detail = doc;
+    detail._rev = result.rev;
+    this.dispatchEvent(
+      new CustomEvent('auth-data-changed', {
+        bubbles: true,
+        composed: true,
+        detail,
+      })
+    );
+    return detail;
   }
 }

@@ -1,23 +1,31 @@
 import { fixture, assert } from '@open-wc/testing';
-import { DataGenerator } from '@advanced-rest-client/arc-data-generator/arc-data-generator.js';
+import { DataGenerator } from '@advanced-rest-client/arc-data-generator';
 import '../../auth-data-model.js';
 
-describe('Authorization data model - events', function() {
+/** @typedef {import('../../src/AuthDataModel').AuthDataModel} AuthDataModel */
+
+/* eslint-disable no-param-reassign */
+/* eslint-disable no-unused-vars */
+
+describe('Authorization data model - events', () => {
+  const generator = new DataGenerator();
   const url = 'http://domain.com/auth';
   const method = 'x-ntlm';
 
-  describe('"auth-data-query"', function() {
+  describe('"auth-data-query"', () => {
     before(async () => {
-      const element = /** @type {AuthDataModel} */ (await fixture('<auth-data-model></auth-data-model>'));
+      const element = /** @type {AuthDataModel} */ (await fixture(
+        '<auth-data-model></auth-data-model>'
+      ));
       await element.update(url, method, {
         username: 'uname-test',
         password: 'pwd-test',
-        domain: 'some'
+        domain: 'some',
       });
     });
 
     after(async () => {
-      await DataGenerator.destroyAuthData();
+      await generator.destroyAuthData();
     });
 
     it('Cancels the event', async () => {
@@ -27,8 +35,9 @@ describe('Authorization data model - events', function() {
         cancelable: true,
         detail: {
           url,
-          authMethod: method
-        }
+          authMethod: method,
+          result: undefined,
+        },
       });
       document.body.dispatchEvent(e);
       await e.detail.result;
@@ -36,44 +45,56 @@ describe('Authorization data model - events', function() {
     });
 
     it('Ignores non-cancellable event', async () => {
-      const element = /** @type {AuthDataModel} */ (await fixture('<auth-data-model></auth-data-model>'));
+      const element = /** @type {AuthDataModel} */ (await fixture(
+        '<auth-data-model></auth-data-model>'
+      ));
       const e = {
         cancelable: false,
         detail: {
           url,
-          authMethod: method
-        }
+          authMethod: method,
+          result: undefined,
+        },
       };
+      // @ts-ignore
       element._queryHandler(e);
       assert.isUndefined(e.detail.result);
     });
 
     it('Ignores cancelled event', async () => {
-      const element = /** @type {AuthDataModel} */ (await fixture('<auth-data-model></auth-data-model>'));
+      const element = /** @type {AuthDataModel} */ (await fixture(
+        '<auth-data-model></auth-data-model>'
+      ));
       const e = {
         cancelable: true,
         defaultPrevented: true,
         detail: {
           url,
-          authMethod: method
-        }
+          authMethod: method,
+          result: undefined,
+        },
       };
+      // @ts-ignore
       element._queryHandler(e);
       assert.isUndefined(e.detail.result);
     });
 
     it('Ignores self dispatched events', async () => {
-      const element = /** @type {AuthDataModel} */ (await fixture('<auth-data-model></auth-data-model>'));
+      const element = /** @type {AuthDataModel} */ (await fixture(
+        '<auth-data-model></auth-data-model>'
+      ));
       const e = {
         cancelable: true,
-        composedPath: function() {
+        composedPath: () => {
           return [element];
         },
         detail: {
           url,
-          authMethod: method
-        }
+          authMethod: method,
+          result: undefined,
+        },
       };
+      // @ts-ignore
       element._queryHandler(e);
       assert.isUndefined(e.detail.result);
     });
@@ -85,8 +106,9 @@ describe('Authorization data model - events', function() {
         cancelable: true,
         detail: {
           url,
-          authMethod: method
-        }
+          authMethod: method,
+          result: undefined,
+        },
       });
       document.body.dispatchEvent(e);
       const result = await e.detail.result;
@@ -96,7 +118,9 @@ describe('Authorization data model - events', function() {
     });
 
     it('Handles exceptions', async () => {
-      const element = /** @type {AuthDataModel} */ (await fixture('<auth-data-model></auth-data-model>'));
+      const element = /** @type {AuthDataModel} */ (await fixture(
+        '<auth-data-model></auth-data-model>'
+      ));
       const e = {
         cancelable: true,
         composedPath: () => [],
@@ -104,74 +128,86 @@ describe('Authorization data model - events', function() {
         stopPropagation: () => {},
         detail: {
           url,
-          authMethod: method
-        }
+          authMethod: method,
+        },
       };
       element.query = () => {
         return Promise.reject(new Error('test'));
       };
       let called = false;
+      // @ts-ignore
       element._queryHandler(e);
       return e.detail.result
-      .catch((cause) => {
-        if (cause.message === 'test') {
-          called = true;
-        }
-      })
-      .then(() => {
-        assert.isTrue(called);
-      });
+        .catch((cause) => {
+          if (cause.message === 'test') {
+            called = true;
+          }
+        })
+        .then(() => {
+          assert.isTrue(called);
+        });
     });
   });
 
   describe('"auth-data-changed" event', () => {
     const authData = { test: true };
-    after(function() {
-      return DataGenerator.destroyAuthData();
+    after(() => {
+      return generator.destroyAuthData();
     });
 
     it('Ignores non-cancellable event', async () => {
-      const element = /** @type {AuthDataModel} */ (await fixture('<auth-data-model></auth-data-model>'));
+      const element = /** @type {AuthDataModel} */ (await fixture(
+        '<auth-data-model></auth-data-model>'
+      ));
       const e = {
         cancelable: false,
         detail: {
           url,
           authMethod: method,
-          authData
-        }
+          authData,
+        },
       };
+      // @ts-ignore
       element._updateHandler(e);
       assert.isUndefined(e.detail.result);
     });
 
     it('Ignores cancelled event', async () => {
-      const element = /** @type {AuthDataModel} */ (await fixture('<auth-data-model></auth-data-model>'));
+      const element = /** @type {AuthDataModel} */ (await fixture(
+        '<auth-data-model></auth-data-model>'
+      ));
       const e = {
         cancelable: true,
         defaultPrevented: true,
         detail: {
           url,
           authMethod: method,
-          authData
-        }
+          authData,
+          result: undefined,
+        },
       };
+      // @ts-ignore
       element._updateHandler(e);
       assert.isUndefined(e.detail.result);
     });
 
     it('Ignores self dispatched events', async () => {
-      const element = /** @type {AuthDataModel} */ (await fixture('<auth-data-model></auth-data-model>'));
+      const element = /** @type {AuthDataModel} */ (await fixture(
+        '<auth-data-model></auth-data-model>'
+      ));
       const e = {
         cancelable: true,
-        composedPath: function() {
+        composedPath: () => {
           return [element];
         },
         detail: {
           url,
           authMethod: method,
-          authData
-        }
+          authData,
+          result: undefined,
+        },
       };
+      // @ts-ignore
       element._updateHandler(e);
       assert.isUndefined(e.detail.result);
     });
@@ -184,8 +220,9 @@ describe('Authorization data model - events', function() {
         detail: {
           url,
           authMethod: method,
-          authData
-        }
+          authData,
+          result: undefined,
+        },
       });
       document.body.dispatchEvent(e);
       await e.detail.result;
@@ -193,7 +230,9 @@ describe('Authorization data model - events', function() {
     });
 
     it('Handles exceptions', async () => {
-      const element = /** @type {AuthDataModel} */ (await fixture('<auth-data-model></auth-data-model>'));
+      const element = /** @type {AuthDataModel} */ (await fixture(
+        '<auth-data-model></auth-data-model>'
+      ));
       const e = {
         cancelable: true,
         composedPath: () => [],
@@ -202,29 +241,34 @@ describe('Authorization data model - events', function() {
         detail: {
           url,
           authMethod: method,
-          authData
-        }
+          authData,
+          result: undefined,
+        },
       };
       element.update = () => {
         return Promise.reject(new Error('test'));
       };
       let called = false;
+      // @ts-ignore
       element._updateHandler(e);
       return e.detail.result
-      .catch((cause) => {
-        if (cause.message === 'test') {
-          called = true;
-        }
-      })
-      .then(() => {
-        assert.isTrue(called);
-      });
+        .catch((cause) => {
+          if (cause.message === 'test') {
+            called = true;
+          }
+        })
+        .then(() => {
+          assert.isTrue(called);
+        });
     });
 
     it('Calls update function', async () => {
       let args;
-      const element = /** @type {AuthDataModel} */ (await fixture('<auth-data-model></auth-data-model>'));
-      element.update = function(...data) {
+      const element = /** @type {AuthDataModel} */ (await fixture(
+        '<auth-data-model></auth-data-model>'
+      ));
+      // @ts-ignore
+      element.update = (...data) => {
         args = data;
         return Promise.resolve();
       };
@@ -234,12 +278,12 @@ describe('Authorization data model - events', function() {
         detail: {
           url,
           authMethod: method,
-          authData
-        }
+          authData,
+          result: undefined,
+        },
       });
       document.body.dispatchEvent(e);
-      return e.detail.result
-      .then(() => {
+      return e.detail.result.then(() => {
         assert.ok(args);
         assert.equal(args[0], url);
         assert.equal(args[1], method);

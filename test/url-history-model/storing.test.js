@@ -2,61 +2,47 @@ import { fixture, assert } from '@open-wc/testing';
 import { UrlHistoryHelper } from './common.js';
 import '../../url-history-model.js';
 
-describe('<url-history-model> - Storing data', function() {
+/** @typedef {import('../../src/UrlHistoryModel').UrlHistoryModel} UrlHistoryModel */
+
+describe('<url-history-model> - Storing data', () => {
+  /**
+   * @return {Promise<UrlHistoryModel>}
+   */
   async function basicFixture() {
-    return /** @type {UrlHistoryModel} */ (await fixture('<url-history-model></url-history-model>'));
+    return fixture('<url-history-model></url-history-model>');
   }
 
-  describe('Storing the data', function() {
-    let element;
+  describe('Storing the data', () => {
+    let element = /** @type UrlHistoryModel */ (null);
     const baseUrl = 'https://api.mulesoft.com/endpoint/path?query=parameter';
     const otherUrl = 'https://api.domain.com/endpoint/';
-    describe('store()', function() {
+    describe('store()', () => {
       let previousInsert;
 
-      before(function(done) {
-        this.timeout(10000);
-        setTimeout(function() {
-          UrlHistoryHelper.deleteDatabase().then(function() {
-            done();
-          });
-        }, 2000);
-      });
-
-      after(function(done) {
-        this.timeout(10000);
-        setTimeout(function() {
-          done();
-        }, 2000);
+      before(async () => {
+        await UrlHistoryHelper.deleteDatabase();
       });
 
       beforeEach(async () => {
         element = await basicFixture();
       });
 
-      it('Stores the URL', function() {
-        return element.store(baseUrl)
-        .then(function(result) {
-          assert.isTrue(result.ok);
-          previousInsert = result;
-        });
+      it('stores the URL', async () => {
+        previousInsert = await element.store(baseUrl);
+        assert.isTrue(previousInsert.ok);
       });
 
-      it('Updates existing URL data', function() {
-        return element.store(baseUrl)
-        .then(function(result) {
-          assert.isTrue(result.ok, 'Operation succeeded');
-          assert.equal(result.id, previousInsert.id, 'Ids matches previous');
-          assert.notEqual(result.rev, previousInsert.rev, 'Rev is different');
-        });
+      it('updates existing URL data', async () => {
+        const result = await element.store(baseUrl);
+        assert.isTrue(result.ok, 'Operation succeeded');
+        assert.equal(result.id, previousInsert.id, 'Ids matches previous');
+        assert.notEqual(result.rev, previousInsert.rev, 'Rev is different');
       });
 
-      it('Creates another URL data', function() {
-        return element.store(otherUrl)
-        .then(function(result) {
-          assert.isTrue(result.ok, 'Operation succeeded');
-          assert.notEqual(result.id, previousInsert.id, 'IDs are different');
-        });
+      it('Creates another URL data', async () => {
+        const result = await element.store(otherUrl);
+        assert.isTrue(result.ok, 'Operation succeeded');
+        assert.notEqual(result.id, previousInsert.id, 'IDs are different');
       });
     });
   });

@@ -1,6 +1,6 @@
 [![Published on NPM](https://img.shields.io/npm/v/@advanced-rest-client/arc-models.svg)](https://www.npmjs.com/package/@advanced-rest-client/arc-models)
 
-[![Build Status](https://travis-ci.org/advanced-rest-client/arc-models.svg?branch=stage)](https://travis-ci.org/advanced-rest-client/arc-models)
+[![Build Status](https://travis-ci.com/advanced-rest-client/arc-models.svg)](https://travis-ci.com/advanced-rest-client/arc-models)
 
 [![Published on webcomponents.org](https://img.shields.io/badge/webcomponents.org-published-blue.svg)](https://www.webcomponents.org/element/advanced-rest-client/arc-models)
 

@@ -1,40 +1,27 @@
 import { fixture, assert } from '@open-wc/testing';
 import '../../url-indexer.js';
+import {
+  normalizeType,
+  STORE_NAME,
+  STORE_VERSION,
+} from '../../src/UrlIndexer.js';
 
-describe('<url-indexer>', function() {
+/** @typedef {import('../../src/UrlIndexer').UrlIndexer} UrlIndexer */
+
+describe('<url-indexer>', () => {
+  /**
+   * @return {Promise<UrlIndexer>}
+   */
   async function basicFixture() {
-    return /** @type {UrlIndexer} */ (await fixture('<url-indexer></url-indexer>'));
+    return fixture('<url-indexer></url-indexer>');
   }
 
-  describe('URL indexer', function() {
+  describe('URL indexer', () => {
     function noop() {}
     const hasUrlSupport = typeof URL !== 'undefined';
-    describe('UUID generation', () => {
-      let element;
-
-      before(async () => {
-        element = await basicFixture();
-      });
-
-      it('Returns a reference to uuid-generator', () => {
-        const result = element.uuid;
-        assert.equal(result.nodeName, 'UUID-GENERATOR');
-      });
-
-      it('Returns the same element', () => {
-        const result1 = element.uuid;
-        const result2 = element.uuid;
-        assert.isTrue(result1 === result2);
-      });
-
-      it('Generates UUID', () => {
-        const result = element.uuid.generate();
-        assert.typeOf(result, 'string');
-      });
-    });
 
     describe('_generateId()', () => {
-      let element;
+      let element = /** @type UrlIndexer */ (null);
       const type = 'test-type';
       const url = 'test-url';
 
@@ -64,26 +51,21 @@ describe('<url-indexer>', function() {
       });
     });
 
-    describe('Getters', () => {
-      let element;
-      before(async () => {
-        element = await basicFixture();
-      });
-
+    describe('Consts', () => {
       it('indexStoreName is string', () => {
-        assert.typeOf(element.indexStoreName, 'string');
+        assert.typeOf(STORE_NAME, 'string');
       });
 
       it('indexStoreName is store name', () => {
-        assert.equal(element.indexStoreName, 'request-index');
+        assert.equal(STORE_NAME, 'request-index');
       });
 
       it('indexStoreVersion is a number', () => {
-        assert.typeOf(element.indexStoreVersion, 'number');
+        assert.typeOf(STORE_VERSION, 'number');
       });
 
       it('indexStoreVersion is version number', () => {
-        assert.equal(element.indexStoreVersion, 1);
+        assert.equal(STORE_VERSION, 1);
       });
     });
 
@@ -95,6 +77,7 @@ describe('<url-indexer>', function() {
 
       before(async () => {
         element = await basicFixture();
+        // @ts-ignore
         element.index = noop;
       });
 
@@ -203,6 +186,7 @@ describe('<url-indexer>', function() {
       const id = 'test-id';
       before(async () => {
         element = await basicFixture();
+        // @ts-ignore
         element.deleteIndexedData = noop;
       });
 
@@ -292,24 +276,24 @@ describe('<url-indexer>', function() {
       });
     });
 
-    describe('_prepareRequestIndexData()', function() {
-      let element;
+    describe('_prepareRequestIndexData()', () => {
+      let element = /** @type UrlIndexer */ (null);
       let request;
       before(async () => {
         element = await basicFixture();
         request = {
           id: 'test-id',
           url: 'https://domain.com/Api/Path?p1=1&p2=2',
-          type: 'saved'
+          type: 'saved',
         };
       });
 
-      it('Always returns an array', function() {
+      it('Always returns an array', () => {
         const result = element._prepareRequestIndexData(request, []);
         assert.typeOf(result, 'array');
       });
 
-      it('Returns 8 items', function() {
+      it('Returns 8 items', () => {
         if (!hasUrlSupport) {
           return;
         }
@@ -317,21 +301,37 @@ describe('<url-indexer>', function() {
         assert.lengthOf(result, 8);
       });
 
-      it('Skips already indexed items', function() {
+      it('Skips already indexed items', () => {
         if (!hasUrlSupport) {
           return;
         }
-        const result = element._prepareRequestIndexData(request, [{
-          url: 'p1=1&p2=2'
-        }, {
-          url: '/api/path?p1=1&p2=2'
-        }, {
-          url: '/notexist'
-        }]);
+        const result = element._prepareRequestIndexData(request, [
+          {
+            url: 'p1=1&p2=2',
+            fullUrl: 0,
+            requestId: 'test',
+            id: 'test',
+            type: 'saved',
+          },
+          {
+            url: '/api/path?p1=1&p2=2',
+            fullUrl: 0,
+            requestId: 'test',
+            id: 'test',
+            type: 'saved',
+          },
+          {
+            url: '/notexist',
+            fullUrl: 0,
+            requestId: 'test',
+            id: 'test',
+            type: 'saved',
+          },
+        ]);
         assert.lengthOf(result, 6);
       });
 
-      it('Items has required structure', function() {
+      it('Items has required structure', () => {
         if (!hasUrlSupport) {
           return;
         }
@@ -340,24 +340,27 @@ describe('<url-indexer>', function() {
           const item = result[i];
           assert.equal(item.type, 'saved');
           assert.typeOf(item.url, 'string');
-          assert.equal(item.id.indexOf(item.url.toLowerCase() + '::' + item.type), 0);
+          assert.equal(
+            item.id.indexOf(`${item.url.toLowerCase()}::${item.type}`),
+            0
+          );
         }
       });
 
-      it('Returns empty array for invalid URL', function() {
-        const request = {
+      it('Returns empty array for invalid URL', () => {
+        const rq = {
           id: 'test-id',
           url: 'Path?p1=1&p2=2',
-          type: 'saved'
+          type: 'saved',
         };
-        const result = element._prepareRequestIndexData(request, []);
+        const result = element._prepareRequestIndexData(rq, []);
         assert.typeOf(result, 'array');
         assert.lengthOf(result, 0);
       });
     });
 
     describe('_createIndexIfMissing()', () => {
-      let element;
+      let element = /** @type UrlIndexer */ (null);
       const id = 'test-id';
       const url = 'test-url';
       const type = 'test-type';
@@ -398,16 +401,22 @@ describe('<url-indexer>', function() {
       });
 
       it('Returns undefined if the item is already indexed', () => {
-        indexed = [{
-          url
-        }];
+        indexed = [
+          {
+            url,
+            fullUrl: 0,
+            requestId: 'test',
+            id: 'test',
+            type: 'saved',
+          },
+        ];
         const result = element._createIndexIfMissing(url, id, type, indexed);
         assert.isUndefined(result);
       });
     });
 
     describe('_getUrlObject()', () => {
-      let element;
+      let element = /** @type UrlIndexer */ (null);
       const id = 'test-id';
       const url = 'test-url';
       const type = 'test-type';
@@ -419,7 +428,7 @@ describe('<url-indexer>', function() {
         request = {
           id,
           url,
-          type
+          type,
         };
       });
 
@@ -429,25 +438,31 @@ describe('<url-indexer>', function() {
       });
 
       it('Returns undefined if already indexed', () => {
-        indexed = [{
-          url
-        }];
+        indexed = [
+          {
+            url,
+            fullUrl: 0,
+            requestId: 'test',
+            id: 'test',
+            type: 'saved',
+          },
+        ];
         const result = element._getUrlObject(request, indexed);
         assert.isUndefined(result);
       });
     });
 
     describe('_getAuthorityPath()', () => {
-      let element;
+      let element = /** @type UrlIndexer */ (null);
       const id = 'test-id';
-      const url = 'https://domain.com';
+      const requestUrl = 'https://domain.com';
       const type = 'test-type';
       let indexed;
       let parser;
       before(async () => {
         element = await basicFixture();
         indexed = [];
-        parser = new URL(url);
+        parser = new URL(requestUrl);
       });
 
       it('Creates index entity when not indexed', () => {
@@ -462,26 +477,32 @@ describe('<url-indexer>', function() {
         if (!hasUrlSupport) {
           return;
         }
-        const url = element._getAuthorityPath(parser, id, type, indexed).url;
-        indexed = [{
-          url
-        }];
+        const { url } = element._getAuthorityPath(parser, id, type, indexed);
+        indexed = [
+          {
+            url,
+            fullUrl: 0,
+            requestId: 'test',
+            id: 'test',
+            type: 'saved',
+          },
+        ];
         const result = element._getAuthorityPath(parser, id, type, indexed);
         assert.isUndefined(result);
       });
     });
 
     describe('_getPathQuery()', () => {
-      let element;
+      let element = /** @type UrlIndexer */ (null);
       const id = 'test-id';
-      const url = 'https://domain.com?a=b';
+      const requestUrl = 'https://domain.com?a=b';
       const type = 'test-type';
       let indexed;
       let parser;
       before(async () => {
         element = await basicFixture();
         indexed = [];
-        parser = new URL(url);
+        parser = new URL(requestUrl);
       });
 
       it('Creates index entity when not indexed', () => {
@@ -496,26 +517,32 @@ describe('<url-indexer>', function() {
         if (!hasUrlSupport) {
           return;
         }
-        const url = element._getPathQuery(parser, id, type, indexed).url;
-        indexed = [{
-          url
-        }];
+        const { url } = element._getPathQuery(parser, id, type, indexed);
+        indexed = [
+          {
+            url,
+            fullUrl: 0,
+            requestId: 'test',
+            id: 'test',
+            type: 'saved',
+          },
+        ];
         const result = element._getPathQuery(parser, id, type, indexed);
         assert.isUndefined(result);
       });
     });
 
     describe('_getQueryString()', () => {
-      let element;
+      let element = /** @type UrlIndexer */ (null);
       const id = 'test-id';
-      const url = 'https://domain.com?a=b';
+      const requestUrl = 'https://domain.com?a=b';
       const type = 'test-type';
       let indexed;
       let parser;
       before(async () => {
         element = await basicFixture();
         indexed = [];
-        parser = new URL(url);
+        parser = new URL(requestUrl);
       });
 
       it('Creates index entity when not indexed', () => {
@@ -530,19 +557,25 @@ describe('<url-indexer>', function() {
         if (!hasUrlSupport) {
           return;
         }
-        const url = element._getQueryString(parser, id, type, indexed).url;
-        indexed = [{
-          url
-        }];
+        const { url } = element._getQueryString(parser, id, type, indexed);
+        indexed = [
+          {
+            url,
+            fullUrl: 0,
+            requestId: 'test',
+            id: 'test',
+            type: 'saved',
+          },
+        ];
         const result = element._getQueryString(parser, id, type, indexed);
         assert.isUndefined(result);
       });
     });
 
     describe('_appendQueryParams()', () => {
-      let element;
+      let element = /** @type UrlIndexer */ (null);
       const id = 'test-id';
-      const url = 'https://domain.com?a=b';
+      const requestUrl = 'https://domain.com?a=b';
       const type = 'test-type';
       let indexed;
       let parser;
@@ -551,7 +584,7 @@ describe('<url-indexer>', function() {
         element = await basicFixture();
         indexed = [];
         target = [];
-        parser = new URL(url);
+        parser = new URL(requestUrl);
       });
 
       it('Adds index entity when not indexed', () => {
@@ -567,11 +600,22 @@ describe('<url-indexer>', function() {
           return;
         }
         element._appendQueryParams(parser, id, type, indexed, target);
-        indexed = [{
-          url: target[0].url
-        }, {
-          url: target[1].url
-        }];
+        indexed = [
+          {
+            url: target[0].url,
+            fullUrl: 0,
+            requestId: 'test',
+            id: 'test',
+            type: 'saved',
+          },
+          {
+            url: target[1].url,
+            fullUrl: 0,
+            requestId: 'test',
+            id: 'test',
+            type: 'saved',
+          },
+        ];
         target = [];
         element._appendQueryParams(parser, id, type, indexed, target);
         assert.lengthOf(target, 0);
@@ -579,7 +623,7 @@ describe('<url-indexer>', function() {
     });
 
     describe('openSearchStore()', () => {
-      let element;
+      let element = /** @type UrlIndexer */ (null);
       before(async () => {
         element = await basicFixture();
       });
@@ -591,54 +635,42 @@ describe('<url-indexer>', function() {
       //   .then(() => {
       //     element.__db.close();
       //     const request = window.indexedDB.deleteDatabase('request-index');
-      //     request.onerror = function() {
+      //     request.onerror = () => {
       //       done(new Error('Unable to delete database'));
       //     };
-      //     request.onsuccess = function() {
+      //     request.onsuccess = () => {
       //       done();
       //     };
       //   });
       // });
 
-      it('Eventually opens the data store', () => {
-        return element.openSearchStore()
-        .then((db) => {
-          assert.isTrue(db instanceof window.IDBDatabase);
-        });
+      it('eventually opens the data store', async () => {
+        const result = await element.openSearchStore();
+        // @ts-ignore
+        assert.isTrue(result instanceof window.IDBDatabase);
       });
 
-      it('Always returns the same database instance', () => {
-        let db1;
-        return element.openSearchStore()
-        .then((db) => {
-          db1 = db;
-          return element.openSearchStore();
-        })
-        .then((db2) => {
-          assert.isTrue(db1 === db2);
-        });
+      it('always returns the same database instance', async () => {
+        const db1 = await element.openSearchStore();
+        const db2 = await element.openSearchStore();
+        assert.isTrue(db1 === db2);
       });
     });
   });
 
-  describe('_normalizeType()', () => {
-    let element;
-    before(async () => {
-      element = await basicFixture();
-    });
-
+  describe('normalizeType()', () => {
     it('returns saved for saved-requests', () => {
-      const result = element._normalizeType('saved-requests');
+      const result = normalizeType('saved-requests');
       assert.equal(result, 'saved');
     });
 
     it('returns history for history-requests', () => {
-      const result = element._normalizeType('history-requests');
+      const result = normalizeType('history-requests');
       assert.equal(result, 'history');
     });
 
     it('returns passed item', () => {
-      const result = element._normalizeType('history');
+      const result = normalizeType('history');
       assert.equal(result, 'history');
     });
   });
