@@ -573,3 +573,32 @@
 * updating test configuration for SL [22873cc](https://github.com/advanced-rest-client/arc-models/commit/22873ccd123b16ea145143e98fa9cc0a9ab03af9) by Pawel Psztyc
 
 
+<a name="3.2.0"></a>
+## [3.2.0](https://github.com/advanced-rest-client/arc-models/compare/3.1.0...3.2.0) (2020-06-30)
+
+### Build
+
+* bumping version [986a034](https://github.com/advanced-rest-client/arc-models/commit/986a03413b65138559dcaa19a88ab44523eeba07) by Pawel
+* bumping version [ed58f5d](https://github.com/advanced-rest-client/arc-models/commit/ed58f5d287bb121f4608a00475430bc0f8b55dd4) by Pawel
+
+
+### Continuous integration
+
+* fixing travis configuration [b224f37](https://github.com/advanced-rest-client/arc-models/commit/b224f37f0abad0c8252682af75fd21110f7a3860) by Pawel
+
+
+### Update
+
+* adding types declaration [a1ae2fd](https://github.com/advanced-rest-client/arc-models/commit/a1ae2fdc66f85a30475c20c57dda1a2ad739438f) by Pawel
+* [ci skip] automated merge master->stage. syncing main branches [7b8dc4b](https://github.com/advanced-rest-client/arc-models/commit/7b8dc4b51cccf8325c729778816342c78ef91b04) by Ci agent
+* updating demo page [9689a3b](https://github.com/advanced-rest-client/arc-models/commit/9689a3bd036a30c854901e6e2d27652a32d347f1) by Pawel
+* removing git add from lint-staged config [4472060](https://github.com/advanced-rest-client/arc-models/commit/4472060cc2c2f102e18cb1cba44de8d788de77be) by Pawel
+* upgrading dependencies [561c2c0](https://github.com/advanced-rest-client/arc-models/commit/561c2c0911398c6ec1aeec908b692d0e1b7ac77a) by Pawel
+* [ci skip] automated merge master->stage. syncing main branches [8b89d74](https://github.com/advanced-rest-client/arc-models/commit/8b89d74b45a4fceb7dd9e17e33dbc10639d65672) by Ci agent
+
+
+### Testing
+
+* adding tests for advanced-rest-client/arc-electron#183 [6fdd77c](https://github.com/advanced-rest-client/arc-models/commit/6fdd77c6c099d41c7925a0816ef879a6486cf0a9) by Pawel
+
+
