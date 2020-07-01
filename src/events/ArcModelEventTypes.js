@@ -1,14 +1,13 @@
 export const ArcModelEventTypes = {
   Project: {
-    read: 'project-read',
-    update: 'project-object-changed',
-    delete: 'project-object-deleted',
-    query: 'project-model-query',
-    updateBulk: 'project-update-bulk',
+    read: 'modelprojectread',
+    update: 'modelprojectchange',
+    delete: 'modelprojectdelete',
+    query: 'modelprojectquery',
+    updateBulk: 'modelprojectupdatebulk',
     State: {
-      read: 'project-read',
-      update: 'project-object-changed',
-      delete: 'project-object-deleted',
+      update: 'modelstateprojectchange',
+      delete: 'modelstateprojectdelete',
     }
   }
 };
