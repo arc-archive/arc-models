@@ -1,3 +1,11 @@
+import { ARCModelQueryOptions, ARCModelQueryResult } from './types';
+
+export declare interface DefaultQueryOptions extends Object {
+  limit: number;
+  descending: boolean;
+  include_docs: boolean;
+}
+
 /**
  * A base class for all models.
  */
@@ -7,6 +15,7 @@ export declare class ArcBaseModel extends HTMLElement {
    * Note, the element does not include PouchDB to the document!
    */
   readonly db: PouchDB.Database;
+  readonly defaultQueryOptions: DefaultQueryOptions;
   eventsTarget: EventTarget;
   /**
    * Name of the data store
@@ -93,4 +102,27 @@ export declare class ArcBaseModel extends HTMLElement {
    * @returns True if event is already cancelled or dispatched by self.
    */
   _eventCancelled(e: Event|CustomEvent): boolean;
+
+  /**
+   * Decodes passed page token back to the passed parameters object.
+   * @param token The page token value.
+   * @returns Restored page query parameters or null if error
+   */
+  decodePageToken(token: string): object|null;
+
+  /**
+   * Encodes page parameters into a page token.
+   * @param params Parameters to encode
+   * @returns Page token
+   */
+  encodePageToken(params: object): string;
+
+  /**
+   * Lists all project objects.
+   *
+   * @param db Reference to a database
+   * @param opts Query options.
+   * @returns A promise resolved to a list of entities.
+   */
+  listEntities<T>(db: PouchDB.Database, opts?: ARCModelQueryOptions): Promise<ARCModelQueryResult<T>>;
 }

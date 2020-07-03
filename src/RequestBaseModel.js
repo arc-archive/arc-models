@@ -14,6 +14,7 @@ the License.
 import { ArcBaseModel } from './ArcBaseModel.js';
 import 'pouchdb/dist/pouchdb.js';
 import '@advanced-rest-client/pouchdb-quick-search/dist/pouchdb.quick-search.min.js';
+import { ArcModelEvents } from './events/ArcModelEvents.js';
 
 /* global PouchQuickSearch */
 /* eslint-disable class-methods-use-this */
@@ -26,6 +27,7 @@ if (typeof PouchDB !== 'undefined' && typeof PouchQuickSearch !== 'undefined') {
 }
 
 /** @typedef {import('./RequestTypes').ARCProject} ARCProject */
+/** @typedef {import('./types').ARCEntityChangeRecord} ARCEntityChangeRecord */
 
 /**
  * A base class for Request and Projects` models.
@@ -104,8 +106,7 @@ export class RequestBaseModel extends ArcBaseModel {
    * Reads an entry from the datastore.
    *
    * @param {string} id The ID of the datastore entry.
-   * @param {string=} rev Specific revision to read. Defaults to latest
-   * revision.
+   * @param {string=} rev Specific revision to read. Defaults to the latest revision.
    * @return {Promise<ARCProject>} Promise resolved to a datastore object.
    */
   async readProject(id, rev) {
@@ -121,27 +122,30 @@ export class RequestBaseModel extends ArcBaseModel {
 
   /**
    * Updates / saves a project object in the datastore.
-   * This function fires `project-object-changed` event.
    *
    * @param {ARCProject} project A project to save / update
-   * @return {Promise<ARCProject>} Resolved promise to project object with updated `_rev`
+   * @return {Promise<ARCEntityChangeRecord>} Resolved promise to project's change record.
    */
   async updateProject(project) {
     const copy = { ...project };
     copy.updated = Date.now();
     const oldRev = copy._rev;
-    const result = await this.projectDb.put(copy);
-    copy._rev = result.rev;
-    this._fireUpdated('project-object-changed', {
-      project: copy,
-      oldRev,
-    });
-    return copy;
+    const response = await this.projectDb.put(copy);
+    copy._rev = response.rev;
+    const result = {
+      id: copy._id,
+      rev: response.rev,
+      item: copy,
+    }
+    if (oldRev) {
+      result.oldRev = oldRev;
+    }
+    ArcModelEvents.Project.State.update(this, result);
+    return result;
   }
 
   /**
-   * Removed an object from the datastore.
-   * This function fires `project-object-deleted` event.
+   * Removes a project from the datastore.
    *
    * @param {string} id The ID of the datastore entry.
    * @param {string=} rev Specific revision to read. Defaults to latest revision.
@@ -149,7 +153,7 @@ export class RequestBaseModel extends ArcBaseModel {
    */
   async removeProject(id, rev) {
     if (!id) {
-      throw new Error('Missing "id" property.');
+      throw new Error('Missing project "id" property.');
     }
     let winningRev = rev;
     if (!winningRev) {
@@ -157,12 +161,7 @@ export class RequestBaseModel extends ArcBaseModel {
       winningRev = obj._rev;
     }
     const response = await this.projectDb.remove(id, winningRev);
-    const detail = {
-      id,
-      rev: response.rev,
-      oldRev: winningRev,
-    };
-    this._fireUpdated('project-object-deleted', detail);
+    ArcModelEvents.Project.State.delete(this, id, response.rev);
     return response.rev;
   }
 }

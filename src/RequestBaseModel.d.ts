@@ -1,5 +1,6 @@
-import {ArcBaseModel} from './ArcBaseModel';
+import { ArcBaseModel } from './ArcBaseModel';
 import { ARCProject } from './RequestTypes';
+import { ARCEntityChangeRecord } from './types';
 
 /**
  * A base class for Request and Projects` models.
@@ -41,7 +42,7 @@ export declare class RequestBaseModel extends ArcBaseModel {
    * @param project A project to save / update
    * @returns Resolved promise to project object with updated `_rev`
    */
-  updateProject(project: ARCProject): Promise<ARCProject>;
+  updateProject(project: ARCProject): Promise<ARCEntityChangeRecord<ARCProject>>;
 
   /**
    * Removed an object from the datastore.

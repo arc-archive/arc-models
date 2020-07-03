@@ -1,5 +1,4 @@
 interface ProjectStateEvents {
-  read: string;
   update: string;
   delete: string;
 }

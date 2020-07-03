@@ -11,13 +11,15 @@ WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
 License for the specific language governing permissions and limitations under
 the License.
 */
-// import { v4 } from '@advanced-rest-client/uuid-generator';
+
 import 'pouchdb/dist/pouchdb.js';
+/* eslint-disable class-methods-use-this */
+
+/** @typedef {import('./types').ARCModelQueryResult} ARCModelQueryResult */
+/** @typedef {import('./types').ARCModelQueryOptions} ARCModelQueryOptions */
 
 /**
  * A base class for all models.
- *
- * @appliesMixin EventsTargetMixin
  */
 export class ArcBaseModel extends HTMLElement {
   /**
@@ -53,6 +55,24 @@ export class ArcBaseModel extends HTMLElement {
 
   get eventsTarget() {
     return this._oldEventsTarget || window;
+  }
+
+  /**
+   * Database query options for pagination.
+   * Override this value to change the query options like limit of the results in one call.
+   *
+   * This is query options passed to the PouchDB `allDocs` function. Note that it will not
+   * set `include_docs` option. A conviniet shortcut is to set the the `includeDocs` property
+   * and the directive will be added automatically.
+   *
+   * @type {Object}
+   */
+  get defaultQueryOptions() {
+    return {
+      limit: 25,
+      descending: true,
+      include_docs: true,
+    };
   }
 
   connectedCallback() {
@@ -222,5 +242,68 @@ export class ArcBaseModel extends HTMLElement {
       return true;
     }
     return false;
+  }
+
+  /**
+   * Decodes passed page token back to the passed parameters object.
+   * @param {string} token The page token value.
+   * @return {object|null} Restored page query parameters or null if error
+   */
+  decodePageToken(token) {
+    if (!token) {
+      return null;
+    }
+    try {
+      const decoded = atob(token);
+      return JSON.parse(decoded);
+    } catch (e) {
+      return null;
+    }
+  }
+
+  /**
+   * Encodes page parameters into a page token.
+   * @param {object} params Parameters to encode
+   * @return {string} Page token
+   */
+  encodePageToken(params) {
+    const str = JSON.stringify(params);
+    return btoa(str);
+  }
+
+  /**
+   * Lists all project objects.
+   *
+   * @param {PouchDB.Database} db Reference to a database
+   * @param {ARCModelQueryOptions=} opts Query options.
+   * @return {Promise<ARCModelQueryResult>} A promise resolved to a list of entities.
+   */
+  async listEntities(db, opts={}) {
+    const { limit, nextPageToken } = opts;
+    let queryOptions = this.defaultQueryOptions;
+    if (limit) {
+      queryOptions.limit = limit;
+    }
+    if (nextPageToken) {
+      const pageOptions = this.decodePageToken(nextPageToken);
+      if (pageOptions) {
+        queryOptions = { ...queryOptions, ...pageOptions };
+      }
+    }
+    let items = [];
+    let token;
+    const response = await db.allDocs(queryOptions);
+    if (response && response.rows.length > 0) {
+      const params = {
+        startkey: response.rows[response.rows.length - 1].key,
+        skip: 1,
+      }
+      token = this.encodePageToken(params);
+      items = response.rows.map((item) => item.doc);
+    }
+    return {
+      items,
+      nextPageToken: token,
+    }
   }
 }
