@@ -6,7 +6,9 @@ import { ArcModelEventTypes } from '../../src/events/ArcModelEventTypes.js';
 
 /** @typedef {import('../../src/ProjectModel').ProjectModel} ProjectModel */
 /** @typedef {import('../../src/events/ProjectEvents').ARCProjectUpdatedEvent} ARCProjectUpdatedEvent */
+/** @typedef {import('../../src/events/ProjectEvents').ARCProjectDeleteEvent} ARCProjectDeleteEvent */
 /** @typedef {import('../../src/RequestTypes').ARCProject} ARCProject */
+/** @typedef {import('../../src/types').ARCEntityChangeRecord} ARCEntityChangeRecord */
 
 describe('ProjectModel', () => {
   /**
@@ -219,6 +221,59 @@ describe('ProjectModel', () => {
         nextPageToken: result1.nextPageToken,
       });
       assert.isUndefined(result2.nextPageToken);
+    });
+  });
+
+  describe('delete()', () => {
+    let created = /** @type ARCEntityChangeRecord[] */ (null);
+    before(async () => {
+      const model = await basicFixture();
+      const projects = /** @type ARCProject[] */ (generator.generateProjects({ projectsSize: 30 }));
+      created = await model.postBulk(projects);
+    });
+
+    let model = /** @type ProjectModel */ (null);
+    beforeEach(async () => {
+      model = await basicFixture();
+    });
+
+    after(async () => {
+      await generator.destroySavedRequestData();
+    });
+
+    it('deletes an entity', async () => {
+      const [info] = created;
+      const { id } = info;
+      await model.delete(id);
+      let thrown = false;
+      try {
+        await model.get(id);
+      } catch (e) {
+        thrown = true;
+      }
+      assert.isTrue(thrown, 'Has no entity');
+    });
+
+    it('dispatches deleted events', async () => {
+      const info = created[1];
+      const { id } = info;
+      model.delete(id);
+      const { id: deleteId, rev } = /** @type ARCProjectDeleteEvent */ (await oneEvent(model, ArcModelEventTypes.Project.State.delete));
+      assert.equal(deleteId, id);
+      assert.typeOf(rev, 'string');
+    });
+
+    it('deletes an entity with revision', async () => {
+      const info = created[2];
+      const { id, rev } = info;
+      await model.delete(id, rev);
+      let thrown = false;
+      try {
+        await model.get(id);
+      } catch (e) {
+        thrown = true;
+      }
+      assert.isTrue(thrown, 'Has no entity');
     });
   });
 });

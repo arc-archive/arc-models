@@ -9,9 +9,6 @@ import { ARCEntityChangeRecord, ARCModelQueryResult, ARCModelQueryOptions } from
  */
 export declare class ProjectModel extends RequestBaseModel {
   constructor();
-  _attachListeners(node: EventTarget): void;
-  _detachListeners(node: EventTarget): void;
-
   /**
    * Lists all project objects.
    *
@@ -19,13 +16,6 @@ export declare class ProjectModel extends RequestBaseModel {
    * @returns A promise resolved to a list of projects.
    */
   list(opts?: ARCModelQueryOptions): Promise<ARCModelQueryResult<ARCProject>>;
-
-  /**
-   * Updates more than one project in a bulk request.
-   *
-   * @param projects List of requests to update.
-   */
-  postBulk(projects: ARCProject[]): Promise<ARCEntityChangeRecord<ARCProject>[]>;
 
   /**
    * Updates project object taking care of `_rew` value read if missing.
@@ -44,26 +34,22 @@ export declare class ProjectModel extends RequestBaseModel {
   get(id: string, rev?: string): Promise<ARCProject>;
 
   /**
-   * Processes datastore response after calling `updateBulk()` function.
+   * Link to `#removeProject()` for API's consistency
+   *
+   * @param  id The ID of the datastore entry.
+   * @param rev Specific revision to read. Defaults to latest revision.
+   * @returns Promise resolved to a new `_rev` property of deleted object.
+   */
+  delete(id: string, rev?: string): Promise<string>;
+
+  /**
+   * Updates more than one project in a bulk request.
    *
    * @param projects List of requests to update.
-   * @param response PouchDB response
-   * @returns List of projects with updated `_id` and `_rew`
    */
-  _processUpdateBulkResponse(projects: ARCProject[], response: Array<PouchDB.Core.Response|PouchDB.Core.Error>): ARCProject[];
+  postBulk(projects: ARCProject[]): Promise<ARCEntityChangeRecord<ARCProject>[]>;
 
-  /**
-   * Handles object save / update
-   */
-  _handleObjectSave(e: CustomEvent): void;
 
-  /**
-   * Deletes the object from the datastore.
-   */
-  _handleObjectDelete(e: CustomEvent): void;
-
-  /**
-   * Queries for a list of projects.
-   */
-  _queryHandler(e: CustomEvent): void;
+  _attachListeners(node: EventTarget): void;
+  _detachListeners(node: EventTarget): void;
 }

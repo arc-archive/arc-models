@@ -53,6 +53,7 @@ export class ProjectModel extends RequestBaseModel {
     this[updateHandler] = this[updateHandler].bind(this);
     this[deleteHandler] = this[deleteHandler].bind(this);
     this[queryHandler] = this[queryHandler].bind(this);
+    this[updateBulkHandler] = this[updateBulkHandler].bind(this);
   }
 
   /**
@@ -135,7 +136,6 @@ export class ProjectModel extends RequestBaseModel {
    */
   _attachListeners(node) {
     super._attachListeners(node);
-
     node.addEventListener(ArcModelEventTypes.Project.read, this[readHandler]);
     node.addEventListener(ArcModelEventTypes.Project.update, this[updateHandler]);
     node.addEventListener(ArcModelEventTypes.Project.updateBulk, this[updateBulkHandler]);
@@ -148,7 +148,6 @@ export class ProjectModel extends RequestBaseModel {
    */
   _detachListeners(node) {
     super._detachListeners(node);
-
     node.removeEventListener(ArcModelEventTypes.Project.read, this[readHandler]);
     node.removeEventListener(ArcModelEventTypes.Project.update, this[updateHandler]);
     node.removeEventListener(ArcModelEventTypes.Project.updateBulk, this[updateBulkHandler]);
