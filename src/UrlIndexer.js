@@ -12,6 +12,7 @@ License for the specific language governing permissions and limitations under
 the License.
 */
 import { v4 } from '@advanced-rest-client/uuid-generator';
+import { normalizeRequestType } from './Utils.js';
 
 /** @typedef {import('./UrlIndexer').IndexableRequest} IndexableRequest */
 /** @typedef {import('./UrlIndexer').IndexableRequestInternal} IndexableRequestInternal */
@@ -24,16 +25,7 @@ import { v4 } from '@advanced-rest-client/uuid-generator';
 /* eslint-disable no-plusplus */
 /* eslint-disable no-continue */
 
-export function normalizeType(type) {
-  switch (type) {
-    case 'saved-requests':
-      return 'saved';
-    case 'history-requests':
-      return 'history';
-    default:
-      return type;
-  }
-}
+
 
 export const STORE_NAME = 'request-index';
 export const STORE_VERSION = 1;
@@ -197,7 +189,7 @@ export class UrlIndexer extends HTMLElement {
     const query = e.detail.q;
     const opts = {};
     if (e.detail.type) {
-      opts.type = normalizeType(e.detail.type);
+      opts.type = normalizeRequestType(e.detail.type);
     }
     if (e.detail.detailed) {
       opts.detailed = e.detail.detailed;
@@ -210,7 +202,7 @@ export class UrlIndexer extends HTMLElement {
       return;
     }
     const r = e.detail.request;
-    const type = normalizeType(r.type);
+    const type = normalizeRequestType(r.type);
     this._indexDebounce(r._id, r.url, type);
   }
 
@@ -572,7 +564,7 @@ export class UrlIndexer extends HTMLElement {
   _prepareRequestIndexData(request, indexed) {
     const result = [];
     const { id, url } = request;
-    const type = normalizeType(request.type);
+    const type = normalizeRequestType(request.type);
     let parser;
     try {
       parser = new URL(url);
@@ -791,7 +783,7 @@ export class UrlIndexer extends HTMLElement {
    */
   async query(query, opts = {}) {
     const db = await this.openSearchStore();
-    const type = normalizeType(opts.type);
+    const type = normalizeRequestType(opts.type);
     if (opts.detailed) {
       return this._searchIndexOf(db, query, type);
     }

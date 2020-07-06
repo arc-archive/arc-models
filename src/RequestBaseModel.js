@@ -15,6 +15,7 @@ import { ArcBaseModel } from './ArcBaseModel.js';
 import 'pouchdb/dist/pouchdb.js';
 import '@advanced-rest-client/pouchdb-quick-search/dist/pouchdb.quick-search.min.js';
 import { ArcModelEvents } from './events/ArcModelEvents.js';
+import { normalizeRequestType } from './Utils.js';
 
 /* global PouchQuickSearch */
 /* eslint-disable class-methods-use-this */
@@ -58,11 +59,9 @@ export class RequestBaseModel extends ArcBaseModel {
    * @return {PouchDB.Database} PouchDB instance for the datastore.
    */
   getDatabase(type) {
-    switch (type) {
-      case 'saved-requests':
+    switch (normalizeRequestType(type)) {
       case 'saved':
         return this.savedDb;
-      case 'history-requests':
       case 'history':
         return this.historyDb;
       case 'legacy-projects':

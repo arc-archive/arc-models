@@ -13,8 +13,11 @@ the License.
 import { PayloadProcessor } from '@advanced-rest-client/arc-electron-payload-processor/payload-processor-esm.js';
 import { v4 } from '@advanced-rest-client/uuid-generator';
 import { RequestBaseModel } from './RequestBaseModel.js';
+import '../url-indexer.js';
+import { UrlIndexer } from '../index.js';
+import { generateHistoryId, normalizeRequest, cancelEvent } from './Utils.js';
+import { ArcModelEvents } from './events/ArcModelEvents.js';
 
-/* eslint-disable require-atomic-updates */
 /* eslint-disable class-methods-use-this */
 /* eslint-disable no-continue */
 /* eslint-disable no-plusplus */
@@ -26,119 +29,34 @@ import { RequestBaseModel } from './RequestBaseModel.js';
 /** @typedef {import('./RequestTypes').ARCProject} ARCProject */
 /** @typedef {import('./RequestTypes').ARCRequestRestoreOptions} ARCRequestRestoreOptions */
 /** @typedef {import('./types').Entity} Entity */
+/** @typedef {import('./events/RequestEvents').ARCRequestReadEvent} ARCRequestReadEvent */
+/** @typedef {import('./types').ARCEntityChangeRecord} ARCEntityChangeRecord */
+/** @typedef {import('./types').ARCModelQueryResult} ARCModelQueryResult */
+/** @typedef {import('./types').ARCModelQueryOptions} ARCModelQueryOptions */
+
+export const readHandler = Symbol('readHandler');
+export const updateHandler = Symbol('updateHandler');
+export const deleteHandler = Symbol('deleteHandler');
 
 /**
- * Event based access to saved and history request datastore.
+ * A model to access request data in Advanced REST Client.
  *
- * This model creates and updates updates request objects and updates
- * URL index associated with the request.
- * It also supports querying for request data, deleting request data and
- * undeleting it.
+ * Requests are stored as a "history" and "saved" requests. The history
+ * request is stored each time a HTTP request in the application is made.
+ * The "saved" request is a spoecial type that has additional metadata
+ * like name, description, or project ID.
  *
- * ## Events API
+ * This model offers standard CRUD operation on both saved and hostory stores.
+ * Seach function requires passing the "type" parameter which is either `saved`
+ * or `history` which corresponds to the corresponding request type.
  *
- * All events must be marked as cancelable or will be ignore by the model.
- * In ARC ecosystem models dispatch the same event after the object is updated
- * (deleted, created, updated) but the event is not cancelable.
- * Components should only react on non cancelable model events as it means
- * that the change has been commited to the datastore.
+ * ## Querying for data
  *
- * Each handled event is canceled so it's safe to put more than one model in
- * the DOM. Event's detail object will get `result` property with the promise
- * resolved when operation commits.
- *
- * **save-request**
- * This event should be used when dealing with unprocessed request data.
- * Request object may contain Blob or FormData as a payload which would be lost
- * if trying to store it in the data store. This flow handles payload
- * transformation.
- *
- * Detail's parameteres:
- * - request - Required, ArcRequest object
- * - projects - Optional, Array of strings, List of project names to create
- * with this request and associate with the request object.
- * - options - Optional, map of additional options. Currently only `isDrive` is
- * supported. When set `google-drive-data-save` is dispatched. If the event is not
- * handled by the application the save flow fails.
- *
- * ```javascript
- * const e = new CustomEvent('save-request', {
- *  bubbles: true,
- *  composed: true,
- *  cancelable: true,
- *  detail: {
- *    request: {...}
- *    projects: ['Test project'],
- *    options: {
- *      isDrive: true
- *    }
- *  }
- * };
- * this.dispatchEvent(e);
- * ```
- *
- * **request-object-read**
- *
- * Reads the request from the data store.
- *
- * Detail's parameteres:
- *
- * - `id` - Required, String. Request ID
- * - `type` - Required, String. Either `history` or `saved`
- * - `rev` - Optional, String. Specific revision to read
- *
- * **request-object-changed**
- *
- * Should be only used if the payload is not `Blob` or `FormData` and
- * all request properties are set. By default `save-request` event should be
- * used.
- *
- * Detail's parameteres: ArcRequest object.
- * https://github.com/advanced-rest-client/api-components-api/blob/master/docs/
- * arc-models.md#arcrequest
- *
- * **request-object-deleted**
- *
- * Deletes the object from the data store.
- *
- * Detail's parameteres:
- *
- * - `id` - Required, String. Request ID
- * - `type` - Required, String. Either `history` or `saved`
- *
- * **request-objects-deleted**
- *
- * Deletes number of requests in bulk.
- *
- * Detail's parameteres:
- *
- * - `type` - Required, String. Either `history` or `saved`
- * - `items` - Required, Array<String>. List of request IDs to delete.
- *
- * **request-objects-undeleted**
- *
- * Used to restore deleted request data.
- *
- * Detail's parameteres:
- *
- * - `type` - Required, String. Either `history` or `saved`
- * - `items` - Required, Array<Object>. List of requests to restore.
- * Each object must contain `_rev` and `_id`.
- *
- * The `result` property contains result of calling `revertRemove()` function.
- *
- * **request-query**
- *
- * Queries for request data. This flow searches for URL data in a separate index
- * and then performs full text search on the request data store.
- *
- * Detail's parameteres:
- *
- * - `q` - Required, String. User query.
- * - `type` - Optional, String. Either `history` or `saved`. By default it
- * searches in both data stores.
- * - `detailed` - Optional, Boolean. If set it uses slower algorithm but performs full
- * search on the index. When false it only uses filer like query + '*'.
+ * Bother IndexedDB and PouchDB aren't designed for full text queries.
+ * This model works with the `UrlIndexer` that is responsible for indexing the data
+ * to perform a semi-full search operation. When a `detailed` options is set on the query
+ * then it uses slower algorithm but performs full search on the index.
+ * When it is not set it only uses filer like query + '*'.
  */
 export class RequestModel extends RequestBaseModel {
   /**
@@ -162,7 +80,7 @@ export class RequestModel extends RequestBaseModel {
    */
   constructor() {
     super();
-    this._handleRead = this._handleRead.bind(this);
+    this[readHandler] = this[readHandler].bind(this);
     this._handleObjectSave = this._handleObjectSave.bind(this);
     this._handleObjectsSave = this._handleObjectsSave.bind(this);
     this._handleObjectDelete = this._handleObjectDelete.bind(this);
@@ -178,13 +96,397 @@ export class RequestModel extends RequestBaseModel {
   }
 
   /**
+   * Reads a request entity from the datastore.
+   *
+   * @param {string} type Request type: `saved` or `history`
+   * @param {string} id The ID of the datastore entry.
+   * @param {string=} rev Specific revision to read. Defaults to the latest revision.
+   * @param {ARCRequestRestoreOptions=} opts Request options.
+   * @return {Promise<ARCHistoryRequest|ARCSavedRequest>} Promise resolved to a request object.
+   */
+  async get(type, id, rev, opts = {}) {
+    const conf = {};
+    if (rev) {
+      conf.rev = rev;
+    }
+    const db = this.getDatabase(type);
+    let request = await db.get(id, conf);
+    if (opts.restorePayload) {
+      request = PayloadProcessor.restorePayload(request);
+    }
+    return normalizeRequest(request);
+  }
+
+  /**
+   * The same as `get()` but for a list of requests.
+   * Additionally this function ignores non-existing entities. When a requested entity is
+   * not in the store it won't report an error and it will not be added to the list of results.
+   *
+   * @param {String} type Requests type to restore.
+   * @param {string[]=} keys Request ids
+   * @param {ARCRequestRestoreOptions=} opts Restoration options.
+   * @return {Promise<(ARCHistoryRequest|ARCSavedRequest)[]>}
+   */
+  async getBulk(type, keys, opts) {
+    const db = this.getDatabase(type);
+    const response = await db.allDocs({
+      include_docs: true,
+      keys,
+    });
+    const requests = [];
+    response.rows.forEach((item) => {
+      let request = item.doc;
+      if (!request) {
+        return;
+      }
+      if (opts && opts.restorePayload) {
+        request = PayloadProcessor.restorePayload(request);
+      }
+      requests[requests.length] = request;
+    });
+    return requests;
+  }
+
+  /**
+   * Updates / saves the request object in the datastore.
+   *
+   * Note, this method only works on the meta data. When handling request obejct
+   * store action, which includes payload processing and project association, please,
+   * use `saveRequest` or `saveHistory` functions.
+   *
+   * @param {string} type Request type: `saved` or `history`
+   * @param {ARCHistoryRequest|ARCSavedRequest} request An object to save / update
+   * @return {Promise<ARCEntityChangeRecord>} A promise resolved to the change record
+   */
+  async post(type, request) {
+    const db = this.getDatabase(type);
+    const oldRev = request._rev;
+    const copy = normalizeRequest({ ...request });
+    if (!copy._id) {
+      copy._id = v4();
+    }
+    copy.updated = Date.now();
+    const response = await db.put(copy);
+    copy._rev = response.rev;
+    const result = {
+      id: copy._id,
+      rev: response.rev,
+      item: copy,
+    }
+    if (oldRev) {
+      result.oldRev = oldRev;
+    }
+    ArcModelEvents.Request.State.update(this, type, result);
+    return result;
+  }
+
+  /**
+   * Updates more than one request in a bulk.
+   * @param {string} type Request type: `saved-requests` or `history-requests`
+   * @param {(ARCHistoryRequest|ARCSavedRequest)[]} requests List of requests to update.
+   * @return {Promise<ARCEntityChangeRecord[]>} List of PouchDB responses to each insert
+   */
+  async postBulk(type, requests) {
+    const items = [...requests];
+    const db = this.getDatabase(type);
+    for (let i = 0; i < items.length; i++) {
+      items[i] = normalizeRequest(items[i]);
+    }
+    const responses = await db.bulkDocs(items);
+    const result = /** @type ARCEntityChangeRecord[] */ ([]);
+    for (let i = 0, len = responses.length; i < len; i++) {
+      const response = responses[i];
+      const request = items[i];
+      const typedError = /** @type PouchDB.Core.Error */ (response);
+      if (typedError.error) {
+        this._handleException(typedError, true);
+        continue;
+      }
+      const oldRev = request._rev;
+      request._rev = response.rev;
+      if (!request._id) {
+        request._id = response.id;
+      }
+      const record = /** @type ARCEntityChangeRecord */ ({
+        id: request._id,
+        rev: response.rev,
+        item: request,
+      });
+      if (oldRev) {
+        record.oldRev = oldRev;
+      }
+      result.push(record);
+      ArcModelEvents.Request.State.update(this, type, record);
+    }
+    return result;
+  }
+
+  /**
+   * Removed an object from the datastore.
+   * This function fires `request-object-deleted` event.
+   *
+   * @param {string} type Request type: `saved-requests` or `history-requests`
+   * @param {string} id The ID of the datastore entry.
+   * @param {string=} rev Specific revision to read. Defaults to
+   * latest revision.
+   * @return {Promise<string>} Promise resolved to a new `_rev` property of deleted
+   * object.
+   */
+  async delete(type, id, rev) {
+    let winningRev = rev;
+    const obj = await this.get(type, id);
+    if (!winningRev) {
+      winningRev = obj._rev;
+    }
+    const db = this.getDatabase(type);
+    const response = await db.remove(id, winningRev);
+    ArcModelEvents.Request.State.delete(this, type, id, response.rev);
+    const typedObj = /** @type ARCSavedRequest */ (obj);
+    if (typedObj.projects) {
+      await this.removeRequestsFromProjects(typedObj.projects, [id]);
+    }
+    return response.rev;
+  }
+
+  /**
+   * Removes documents in a bulk operation.
+   *
+   * @param {string} type Database type
+   * @param {string[]} items List of keys to remove
+   * @return {Promise<string[]>}
+   */
+  async deleteBulk(type, items) {
+    if (!type) {
+      throw new Error('Request "type" property is missing.');
+    }
+    if (!items) {
+      throw new Error('The "items" property is missing.');
+    }
+    const db = this.getDatabase(type);
+    const response = await db.allDocs({
+      keys: items,
+      include_docs: true,
+    });
+    const result = [];
+    const removedIds = [];
+    let projectIds = [];
+    for (let i = 0, len = response.rows.length; i < len; i++) {
+      const item = response.rows[i];
+      const typedError = /** @type PouchDB.Core.Error */ (item);
+      if (typedError.error) {
+        continue;
+      }
+      // technically it can be a history object but for convenience
+      // I use saved object instead.
+      const requestData = /** ARCSavedRequest */ (item.doc);
+      try {
+        requestData._deleted = true;
+        const updateResult = await db.put(requestData);
+        if (!updateResult.ok) {
+          continue;
+        }
+        removedIds.push(item.id);
+        if (requestData.projects && requestData.projects.length) {
+          projectIds = projectIds.concat(requestData.projects);
+        }
+        ArcModelEvents.Request.State.delete(this, type, item.id, updateResult.rev);
+        result.push(updateResult.rev);
+      } catch (e) {
+        continue;
+      }
+    }
+    await this.removeRequestsFromProjects(projectIds, removedIds);
+    return result;
+  }
+
+  /**
+   * Removes requests reference from projects in a batch operation
+   * @param {string[]} projectIds List of project ids to update
+   * @param {string[]} requestIds List of requests to remove from projects
+   * @return {Promise<void>}
+   */
+  async removeRequestsFromProjects(projectIds, requestIds) {
+    if (!projectIds.length || !requestIds.length) {
+      return;
+    }
+    const db = this.projectDb;
+    const projects = await db.allDocs({
+      keys: projectIds,
+      include_docs: true,
+    });
+    const ps = projects.rows.map((item) => this.removeRequestsFromProject(item.doc, requestIds));
+    await Promise.all(ps);
+  }
+
+  /**
+   * Removes a request reference from a project.
+   * @param {ARCProject} project The project to remove the request from
+   * @param {string[]} requestIds List of requests to remove from project
+   * @return {Promise<void>} Promise resolved when the operation finishes.
+   */
+  async removeRequestsFromProject(project, requestIds) {
+    try {
+      const { requests } = project;
+      if (!requests || !requests.length) {
+        return;
+      }
+      for (let i = requests.length -1; i > -1; i--) {
+        const request = requests[i];
+        for (let j = 0, jLen = requestIds.length; j < jLen; j++) {
+          if (requestIds[j] === request) {
+            requests.splice(i, 1);
+            break;
+          }
+        }
+      }
+      await this.updateProject(project);
+    } catch (_) {
+      // ...
+    }
+  }
+
+  /**
+   * Reverts deleted items.
+   * This function fires `request-object-changed` event for each restored
+   * request.
+   *
+   * @param {string} type Request type: `saved-requests` or `history-requests`
+   * @param {Entity[]} items List of request objects. Required properties are
+   * `_id` and `_rev`.
+   * @return {Promise<(ARCHistoryRequest|ARCSavedRequest)[]>} Resolved promise with restored objects. Objects have
+   * updated `_rev` property.
+   */
+  async revertRemove(type, items) {
+    if (!type) {
+      throw new Error('The "type" argument is missing');
+    }
+    if (!items) {
+      throw new Error('The "items" argument is missing');
+    }
+    const db = this.getDatabase(type);
+    // first get information about previous revision (before delete)
+    const restored = await this._findNotDeleted(db, items);
+    for (let i = restored.length - 1; i >= 0; i--) {
+      const item = restored[i];
+      // @ts-ignore
+      if (item.ok === false) {
+        items.splice(i, 1);
+        restored.splice(i, 1);
+      } else {
+        item._rev = items[i]._rev;
+      }
+    }
+    const updated = await db.bulkDocs(restored);
+    const query = {
+      keys: updated.map((item) => item.id),
+      include_docs: true,
+    };
+    const result = await db.allDocs(query);
+    result.rows.forEach((request, i) => {
+      const record = {
+        id: request.id,
+        rev: request.value.rev,
+        item: request.doc,
+        oldRev: items[i]._rev,
+      }
+      ArcModelEvents.Request.State.update(this, type, record);
+    });
+    return result.rows.map((item) => item.doc);
+  }
+
+  /**
+   * Stores a history object in the data store, taking care of `_rev` property read.
+   *
+   * @param {ARCHistoryRequest} request The request object to store
+   * @return {Promise<ARCHistoryRequest>} A promise resolved to the updated request object.
+   */
+  async saveHistory(request) {
+    const info = { ...request };
+    if (!info._id) {
+      info._id = generateHistoryId(info);
+    }
+    info.type = 'history';
+    const db = this.getDatabase(info.type);
+    let doc;
+    try {
+      doc = await db.get(info._id);
+    } catch (e) {
+      if (e.status !== 404) {
+        this._handleException(e);
+        return undefined;
+      }
+    }
+    if (doc) {
+      info._rev = doc._rev;
+    }
+    return this.saveRequest(info);
+  }
+
+  /**
+   * Saves a request into a data store.
+   * It handles payload to string conversion, handles types, and syncs request
+   * with projects. Use `update()` method only if you are storing already
+   * prepared request object to the store.
+   *
+   * @param {ARCHistoryRequest|ARCSavedRequest} request ArcRequest object
+   * @param {SaveARCRequestOptions=} opts Save request object. Currently only `isDrive`
+   * is supported
+   * @return {Promise<ARCHistoryRequest|ARCSavedRequest>} A promise resilved to updated request object.
+   */
+  async saveRequest(request, opts = {}) {
+    let typed = /** @type ARCSavedRequest */ (request);
+    if (!typed.type) {
+      if (typed.name) {
+        typed.type = 'saved';
+      } else {
+        typed.type = 'history';
+      }
+    } else if (typed.type === 'drive' || typed.type === 'google-drive') {
+      typed.type = 'saved';
+    }
+    if (!typed._id) {
+      typed._id = v4();
+    }
+    try {
+      typed = await PayloadProcessor.payloadToString(typed);
+      typed = /** @type ARCSavedRequest */ (await this._saveGoogleDrive(typed, opts));
+      typed = (await this.post(typed.type, typed)).item;
+      if (typed.type === 'saved') {
+        await this._syncProjects(typed._id, typed.projects);
+      }
+      return typed;
+    } catch (e) {
+      this._handleException(e);
+      return undefined;
+    }
+  }
+
+  /**
+   * Performs a query for the request data.
+   *
+   * This is not the same as searching for a request. This only lists
+   * data from the datastore for given query options.
+   *
+   * @param {String} type Datastore type
+   * @param {ARCModelQueryOptions=} opts Query options.
+   * @return {Promise<ARCModelQueryResult>} A promise resolved to a query result for requests.
+   */
+  async list(type, opts={}) {
+    if (!type) {
+      throw new Error('The "type" parameter is required.');
+    }
+    const db = this.getDatabase(type);
+    return this.listEntities(db, opts);
+  }
+
+  /**
    * Adds event listeners.
    * @param {EventTarget} node
    */
   _attachListeners(node) {
     node.addEventListener('save-request', this._saveRequestHandler);
     node.addEventListener('save-history', this._saveHistoryHandler);
-    node.addEventListener('request-object-read', this._handleRead);
+    node.addEventListener('request-object-read', this[readHandler]);
     node.addEventListener('request-object-changed', this._handleObjectSave);
     node.addEventListener('request-objects-changed', this._handleObjectsSave);
     node.addEventListener('request-object-deleted', this._handleObjectDelete);
@@ -206,7 +508,7 @@ export class RequestModel extends RequestBaseModel {
   _detachListeners(node) {
     node.removeEventListener('save-request', this._saveRequestHandler);
     node.removeEventListener('save-history', this._saveHistoryHandler);
-    node.removeEventListener('request-object-read', this._handleRead);
+    node.removeEventListener('request-object-read', this[readHandler]);
     node.removeEventListener('request-object-changed', this._handleObjectSave);
     node.removeEventListener(
       'request-objects-changed',
@@ -248,7 +550,7 @@ export class RequestModel extends RequestBaseModel {
 
   /**
    * Saves requests with project data.
-   * This is actual implementation of `save-request` events.
+   * This is an actual implementation of `save-request` events.
    *
    * @param {ARCSavedRequest|ARCHistoryRequest} request Request object to store.
    * @param {string[]=} projects List of project names to create with this request
@@ -346,76 +648,6 @@ export class RequestModel extends RequestBaseModel {
   }
 
   /**
-   * Stores a history obvject in the data store, taking care of `_rev`
-   * property read.
-   * @param {ARCHistoryRequest} request The request object to store
-   * @return {Promise<ARCHistoryRequest>} A promise resolved to the updated request object.
-   */
-  async saveHistory(request) {
-    if (!request._id) {
-      const d = new Date();
-      d.setHours(0, 0, 0, 0);
-      const time = d.getTime();
-      const encUrl = encodeURIComponent(request.url);
-      request._id = `${time}/${encUrl}/${request.method}`;
-    }
-    request.type = 'history';
-    const db = this.getDatabase(request.type);
-    let doc;
-    try {
-      doc = await db.get(request._id);
-    } catch (e) {
-      if (e.status !== 404) {
-        this._handleException(e);
-        return undefined;
-      }
-    }
-    if (doc) {
-      request._rev = doc._rev;
-    }
-    return this.saveRequest(request);
-  }
-
-  /**
-   * Saves a request into a data store.
-   * It handles payload to string conversion, handles types, and syncs request
-   * with projects. Use `update()` method only if you are storing already
-   * prepared request object to the store.
-   *
-   * @param {ARCHistoryRequest|ARCSavedRequest} request ArcRequest object
-   * @param {SaveARCRequestOptions=} opts Save request object. Currently only `isDrive`
-   * is supported
-   * @return {Promise} A promise resilved to updated request object.
-   */
-  async saveRequest(request, opts = {}) {
-    let typed = /** @type ARCSavedRequest */ (request);
-    if (!typed.type) {
-      if (typed.name) {
-        typed.type = 'saved';
-      } else {
-        typed.type = 'history';
-      }
-    } else if (typed.type === 'drive' || typed.type === 'google-drive') {
-      typed.type = 'saved';
-    }
-    if (!typed._id) {
-      typed._id = v4();
-    }
-    try {
-      typed = await PayloadProcessor.payloadToString(typed);
-      typed = /** @type ARCSavedRequest */ (await this._saveGoogleDrive(typed, opts));
-      typed = await this.update(typed.type, typed);
-      if (typed.type === 'saved') {
-        await this._syncProjects(typed._id, typed.projects);
-      }
-      return typed;
-    } catch (e) {
-      this._handleException(e);
-      return undefined;
-    }
-  }
-
-  /**
    * Synchronizes project requests to ensure each project contains this
    * `requestId` on its list of requests.
    *
@@ -470,241 +702,6 @@ export class RequestModel extends RequestBaseModel {
         project,
       });
     }
-  }
-
-  /**
-   * Normalizes request object to whatever the app is currently using.
-   *
-   * @param {ARCHistoryRequest|ARCSavedRequest} request
-   * @return {ARCHistoryRequest|ARCSavedRequest}
-   */
-  normalizeRequest(request) {
-    if (!request) {
-      return request;
-    }
-    // @ts-ignore
-    if (request.legacyProject) {
-      const saved = /** @type ARCSavedRequest */ (request);
-      if (!saved.projects) {
-        saved.projects = [];
-      }
-      // @ts-ignore
-      saved.projects[saved.projects.length] = saved.legacyProject;
-      // @ts-ignore
-      delete request.legacyProject;
-    }
-    const skipKeys = ['_id', '_rev'];
-    Object.keys(request).forEach((key) => {
-      if (key[0] === '_' && skipKeys.indexOf(key) === -1) {
-        delete request[key];
-      }
-    });
-    if (!request.updated) {
-      request.updated = Date.now();
-    }
-    if (!request.created) {
-      request.created = Date.now();
-    }
-    return request;
-  }
-
-  /**
-   * Reads an entry from the datastore.
-   *
-   * @param {string} type Request type: `saved-requests` or `history-requests`
-   * @param {string} id The ID of the datastore entry.
-   * @param {string=} rev Specific revision to read. Defaults to
-   * latest revision.
-   * @param {ARCRequestRestoreOptions=} opts Restoration options.
-   * @return {Promise<ARCHistoryRequest|ARCSavedRequest>} Promise resolved to a request object.
-   */
-  async read(type, id, rev, opts = {}) {
-    const conf = {};
-    if (rev) {
-      conf.rev = rev;
-    }
-    const db = this.getDatabase(type);
-    let request = await db.get(id, conf);
-    if (opts.restorePayload) {
-      request = PayloadProcessor.restorePayload(request);
-    }
-    return this.normalizeRequest(request);
-  }
-
-  /**
-   * The same as `read()` but for a list of requests.
-   * @param {String} type Requests type to restore.
-   * @param {string[]=} keys Request ids
-   * @param {ARCRequestRestoreOptions=} opts Restoration options.
-   * @return {Promise<ARCHistoryRequest[]|ARCSavedRequest[]>}
-   */
-  async readBulk(type, keys, opts) {
-    const db = this.getDatabase(type);
-    const response = await db.allDocs({
-      include_docs: true,
-      keys,
-    });
-    const requests = [];
-    response.rows.forEach((item) => {
-      let request = item.doc;
-      if (!request) {
-        return;
-      }
-      if (opts && opts.restorePayload) {
-        request = PayloadProcessor.restorePayload(request);
-      }
-      requests[requests.length] = request;
-    });
-    return requests;
-  }
-
-  /**
-   * Updates / saves the request object in the datastore.
-   * This function dispatches `request-object-changed` event.
-   *
-   * If any of `name`, `method`, `url` or `legacyProject` properties change
-   * then the old object is deleted and new is created with new ID.
-   *
-   * @param {string} type Request type: `saved-requests` or `history-requests`
-   * @param {ARCHistoryRequest|ARCSavedRequest} request An object to save / update
-   * @return {Promise} Resolved promise to request object with updated `_rev`
-   */
-  async update(type, request) {
-    const db = this.getDatabase(type);
-    const oldRev = request._rev;
-    if (!request._id) {
-      request._id = v4();
-    }
-    request.updated = Date.now();
-    let copy = { ...request };
-    copy = this.normalizeRequest(copy);
-    const result = await db.put(copy);
-    /* eslint-disable-next-line require-atomic-updates */
-    request._rev = result.rev;
-    const detail = {
-      request,
-      oldRev,
-      // oldId will be removed
-      oldId: request._id,
-      type,
-    };
-    this._fireUpdated('request-object-changed', detail);
-    return request;
-  }
-
-  /**
-   * Updates more than one request in a bulk.
-   * @param {string} type Request type: `saved-requests` or `history-requests`
-   * @param {(ARCHistoryRequest|ARCSavedRequest)[]} requests List of requests to update.
-   * @return {Promise<(PouchDB.Core.Response|PouchDB.Core.Error)[]>} List of PouchDB responses to each insert
-   */
-  async updateBulk(type, requests) {
-    const items = [...requests];
-    const db = this.getDatabase(type);
-    for (let i = 0; i < items.length; i++) {
-      items[i] = this.normalizeRequest(items[i]);
-    }
-    const response = await db.bulkDocs(items);
-    for (let i = 0, len = response.length; i < len; i++) {
-      const r = response[i];
-      const typedError = /** @type PouchDB.Core.Error */ (r);
-      if (typedError.error) {
-        this._handleException(typedError, true);
-        continue;
-      }
-      const request = items[i];
-      const oldRev = request._rev;
-      request._rev = r.rev;
-      if (!request._id) {
-        request._id = r.id;
-      }
-      const detail = {
-        request,
-        oldRev,
-        oldId: request._id,
-        type,
-      };
-      this._fireUpdated('request-object-changed', detail);
-    }
-    return response;
-  }
-
-  /**
-   * Removed an object from the datastore.
-   * This function fires `request-object-deleted` event.
-   *
-   * @param {string} type Request type: `saved-requests` or `history-requests`
-   * @param {string} id The ID of the datastore entry.
-   * @param {string=} rev Specific revision to read. Defaults to
-   * latest revision.
-   * @return {Promise<string>} Promise resolved to a new `_rev` property of deleted
-   * object.
-   */
-  async delete(type, id, rev) {
-    let winningRev = rev;
-    if (!winningRev) {
-      const obj = await this.read(type, id);
-      winningRev = obj._rev;
-    }
-    const db = this.getDatabase(type);
-    const response = await db.remove(id, winningRev);
-    const detail = {
-      id,
-      rev: response.rev,
-      oldRev: winningRev,
-      type,
-    };
-    this._fireUpdated('request-object-deleted', detail);
-    return response.rev;
-  }
-
-  /**
-   * Reverts deleted items.
-   * This function fires `request-object-changed` event for each restored
-   * request.
-   *
-   * @param {string} type Request type: `saved-requests` or `history-requests`
-   * @param {Entity[]} items List of request objects. Required properties are
-   * `_id` and `_rev`.
-   * @return {Promise<(ARCHistoryRequest|ARCSavedRequest)[]>} Resolved promise with restored objects. Objects have
-   * updated `_rev` property.
-   */
-  async revertRemove(type, items) {
-    if (!type) {
-      throw new Error('The "type" argument is missing');
-    }
-    if (!items) {
-      throw new Error('The "items" argument is missing');
-    }
-    const db = this.getDatabase(type);
-    // first get information about previous revision (before delete)
-    const restored = await this._findNotDeleted(db, items);
-    for (let i = restored.length - 1; i >= 0; i--) {
-      const item = restored[i];
-      // @ts-ignore
-      if (item.ok === false) {
-        items.splice(i, 1);
-        restored.splice(i, 1);
-      } else {
-        item._rev = items[i]._rev;
-      }
-    }
-    const updated = await db.bulkDocs(restored);
-    const query = {
-      keys: updated.map((item) => item.id),
-      include_docs: true,
-    };
-    const result = await db.allDocs(query);
-    result.rows.forEach((request, i) => {
-      const detail = {
-        request: request.doc,
-        oldRev: items[i]._rev,
-        oldId: request.id,
-        type,
-      };
-      this._fireUpdated('request-object-changed', detail);
-    });
-    return result.rows.map((item) => item.doc);
   }
 
   /**
@@ -776,16 +773,15 @@ export class RequestModel extends RequestBaseModel {
   }
 
   /**
-   * Handler for request read event request.
-   * @param {CustomEvent} e
+   * Handler for the request read event.
+   * @param {ARCRequestReadEvent} e
    */
-  _handleRead(e) {
-    if (!e.cancelable || e.composedPath()[0] === this) {
+  [readHandler](e) {
+    if (this._eventCancelled(e)) {
       return;
     }
-    e.preventDefault();
-    e.stopPropagation();
-    const { type, id, opts } = e.detail;
+    cancelEvent(e);
+    const { id, type, opts={} } = e;
     if (!id) {
       e.detail.result = Promise.reject(
         new Error('Request "id" property is missing.')
@@ -798,13 +794,9 @@ export class RequestModel extends RequestBaseModel {
       );
       return;
     }
-    let p;
-    if (id instanceof Array) {
-      p = this.readBulk(type, id, opts);
-    } else {
-      p = this.read(type, id, e.detail.rev, opts);
-    }
-    e.detail.result = p.catch((ex) => this._handleException(ex));
+    const options = { ...opts };
+    delete options.rev;
+    e.detail.result = this.get(type, id, opts.rev, options);
   }
 
   /**
@@ -842,7 +834,7 @@ export class RequestModel extends RequestBaseModel {
       }
     }
     try {
-      return this.update(type, item);
+      return this.post(type, item);
     } catch (e) {
       this._handleException(e);
       return undefined;
@@ -873,7 +865,7 @@ export class RequestModel extends RequestBaseModel {
       );
       return;
     }
-    e.detail.result = this.updateBulk(type, requests);
+    e.detail.result = this.postBulk(type, requests);
   }
 
   /**
@@ -921,47 +913,7 @@ export class RequestModel extends RequestBaseModel {
     e.preventDefault();
     e.stopPropagation();
     const { type, items } = e.detail;
-    e.detail.result = this.bulkDelete(type, items);
-  }
-
-  /**
-   * Removes documents in a bulk operation.
-   *
-   * @param {string} type Database type
-   * @param {string[]} items List of keys to remove
-   * @return {Promise}
-   */
-  async bulkDelete(type, items) {
-    if (!type) {
-      throw new Error('Request "type" property is missing.');
-    }
-    if (!items) {
-      throw new Error('The "items" property is missing.');
-    }
-    const db = this.getDatabase(type);
-    const response = await db.allDocs({
-      keys: items,
-    });
-    const removed = this._filterExistingItems(response);
-    const data = {};
-    for (const item of removed) {
-      try {
-        const result = await db.remove(item.id, item.value.rev);
-        if (!result.ok) {
-          continue;
-        }
-        const detail = {
-          id: result.id,
-          rev: result.rev,
-          oldRev: this._findOldRef(removed, result.id),
-        };
-        data[result.id] = result.rev;
-        this._fireUpdated('request-object-deleted', detail);
-      } catch (e) {
-        continue;
-      }
-    }
-    return data;
+    e.detail.result = this.deleteBulk(type, items);
   }
 
   /**
@@ -979,32 +931,6 @@ export class RequestModel extends RequestBaseModel {
     e.detail.result = this.revertRemove(type, items).catch((ex) =>
       this._handleException(ex)
     );
-  }
-
-  /**
-   * Filters query results to return only successfuly read data.
-   * @param {PouchDB.Core.AllDocsResponse} result PouchDB query result
-   * @return {object[]} List of request that has been read.
-   */
-  _filterExistingItems(result) {
-    return result.rows.filter((item) => {
-      // @ts-ignore
-      if (item.error) {
-        return false;
-      }
-      return true;
-    });
-  }
-
-  /**
-   * Finds a `_rev` for a doc.
-   * @param {object[]} docs List of PouchDB documents to search for `_rev`
-   * @param {string} id Document ID
-   * @return {string} Associated `_rev`
-   */
-  _findOldRef(docs, id) {
-    const result = docs.find((item) => item._id === id);
-    return result ? result._rev : undefined;
   }
 
   /**
@@ -1075,35 +1001,6 @@ export class RequestModel extends RequestBaseModel {
   }
 
   /**
-   * Performs a query for the request data.
-   *
-   * This is not the same as searching for a request. This only lists
-   * data from the datastore for given query options.
-   *
-   * @param {String} type Datastore type
-   * @param {PouchDB.Core.AllDocsOptions} queryOptions PouchDB query options.
-   * @return {Promise} List of PouchDB documents for the query.
-   */
-  async list(type, queryOptions) {
-    if (!type) {
-      throw new Error('The "type" parameter is required.');
-    }
-    if (!queryOptions) {
-      throw new Error('The "queryOptions" parameter is required.');
-    }
-    const db = this.getDatabase(type);
-    const response = await db.allDocs(queryOptions);
-    if (response.rows) {
-      for (let i = 0, len = response.rows.length; i < len; i++) {
-        if (response.rows[i] && response.rows[i].doc) {
-          response.rows[i].doc = this.normalizeRequest(response.rows[i].doc);
-        }
-      }
-    }
-    return response;
-  }
-
-  /**
    * A handler for the `request-query` custom event. Queries the datastore for
    * request data.
    * The event must have `q` property set on the detail object.
@@ -1151,23 +1048,13 @@ export class RequestModel extends RequestBaseModel {
    * search on the index. When false it only uses filer like query + '*'.
    * @return {Promise<(ARCHistoryRequest|ARCSavedRequest)[]>} Promise resolved to the list of requests.
    */
-  async queryUrlData(q, type, detailed) {
-    const e = new CustomEvent('url-index-query', {
-      composed: true,
-      cancelable: true,
-      bubbles: true,
-      detail: {
-        q,
-        type,
-        detailed,
-        result: undefined,
-      },
-    });
-    this.dispatchEvent(e);
-    if (!e.defaultPrevented) {
-      return [];
-    }
-    const data = await e.detail.result;
+  async queryUrlData(q, type, detailed=false) {
+    const indexer = new UrlIndexer();
+    const opts = {
+      type,
+      detailed,
+    };
+    const data = await indexer.query(q, opts);
     const keys = Object.keys(data);
     if (!keys.length) {
       return [];
@@ -1340,7 +1227,7 @@ export class RequestModel extends RequestBaseModel {
     }
     const project = await this.readProject(id);
     if (project.requests) {
-      return this.readBulk('saved', project.requests, opts);
+      return this.getBulk('saved', project.requests, opts);
     }
     return this.readProjectRequestsLegacy(id);
   }
@@ -1433,38 +1320,4 @@ export class RequestModel extends RequestBaseModel {
     }
     return p;
   }
-  /**
-   * Fired when the project entity has been saved / updated in the datastore.
-   *
-   * @event request-object-changed
-   * @param {Object} request Request object with new `_rev`.
-   * @param {String} oldRev Entity old `_rev` property. May be `undefined` when
-   * creating new entity.
-   * @param {String} oldId Entity old `_id` property. May be `undefined` when
-   * creating new entity.
-   * @param {String} type Request object type. Can be either `saved-requests` or
-   * `history-requests`
-   */
-
-  /**
-   * @event request-object-deleted
-   * @param {String} id Removed request ID
-   * @param {String} rev Updated `_rev` property of the object.
-   * @param {String} oldRev Entity old `_rev` property (before delete).
-   * @param {String} type Request object type. Can be either `saved-requests` or
-   * `history-requests`
-   */
-
-  /**
-   * Dispatched when saving request object to the data store and configuration
-   * option says to save request to Google Drive.
-   * This component does not handles the logic responsible for Drive integration.
-   *
-   * Note, The request save flow fails when this event is not handled.
-   *
-   * @event google-drive-data-save
-   * @param {Object} content Data to store in the Drive
-   * @param {Object} options `contentType` property set to `application/restclient+data`
-   * @param {String} file Drive file name
-   */
 }

@@ -31,6 +31,12 @@ export declare interface ARCProject extends Entity {
   error?: boolean;
 }
 
+export declare interface MultipartTransformer {
+  isFile: boolean;
+  name: string;
+  value: string;
+}
+
 /**
  * The definition of the ARC base HTTP request object
  */
@@ -50,7 +56,14 @@ export declare interface HTTPRequest {
   /**
    * The request payload
    */
-  body?: string|File|Buffer|ArrayBuffer|FormData;
+  payload?: string|File|Buffer|ArrayBuffer|FormData;
+  /**
+   * ARCs internal transformation of a native FormData into a struct that
+   * can be stored in the data store. This is used internally by ther model
+   * and when requesting ARC request object this is restored to the original
+   * format.
+   */
+  multipart?: MultipartTransformer[];
 }
 
 /**

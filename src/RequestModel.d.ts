@@ -1,119 +1,26 @@
 import {RequestBaseModel} from './RequestBaseModel';
-import {ARCSavedRequest, ARCHistoryRequest, SaveARCRequestOptions, ARCRequestRestoreOptions} from './RequestTypes';
-import {Entity} from './types';
+import {ARCSavedRequest, ARCHistoryRequest, SaveARCRequestOptions, ARCRequestRestoreOptions, ARCProject} from './RequestTypes';
+import {Entity, ARCEntityChangeRecord, ARCModelQueryResult, ARCModelQueryOptions} from './types';
 
 /**
- * Event based access to saved and history request datastore.
+ * A model to access request data in Advanced REST Client.
  *
- * This model creates and updates updates request objects and updates
- * URL index associated with the request.
- * It also supports querying for request data, deleting request data and
- * undeleting it.
+ * Requests are stored as a "history" and "saved" requests. The history
+ * request is stored each time a HTTP request in the application is made.
+ * The "saved" request is a spoecial type that has additional metadata
+ * like name, description, or project ID.
  *
- * ## Events API
+ * This model offers standard CRUD operation on both saved and hostory stores.
+ * Seach function requires passing the "type" parameter which is either `saved`
+ * or `history` which corresponds to the corresponding request type.
  *
- * All events must be marked as cancelable or will be ignore by the model.
- * In ARC ecosystem models dispatch the same event after the object is updated
- * (deleted, created, updated) but the event is not cancelable.
- * Components should only react on non cancelable model events as it means
- * that the change has been commited to the datastore.
+ * ## Querying for data
  *
- * Each handled event is canceled so it's safe to put more than one model in
- * the DOM. Event's detail object will get `result` property with the promise
- * resolved when operation commits.
- *
- * **save-request**
- * This event should be used when dealing with unprocessed request data.
- * Request object may contain Blob or FormData as a payload which would be lost
- * if trying to store it in the data store. This flow handles payload
- * transformation.
- *
- * Detail's parameteres:
- * - request - Required, ArcRequest object
- * - projects - Optional, Array of strings, List of project names to create
- * with this request and associate with the request object.
- * - options - Optional, map of additional options. Currently only `isDrive` is
- * supported. When set `google-drive-data-save` is dispatched. If the event is not
- * handled by the application the save flow fails.
- *
- * ```javascript
- * const e = new CustomEvent('save-request', {
- *  bubbles: true,
- *  composed: true,
- *  cancelable: true,
- *  detail: {
- *    request: {...}
- *    projects: ['Test project'],
- *    options: {
- *      isDrive: true
- *    }
- *  }
- * };
- * this.dispatchEvent(e);
- * ```
- *
- * **request-object-read**
- *
- * Reads the request from the data store.
- *
- * Detail's parameteres:
- *
- * - `id` - Required, String. Request ID
- * - `type` - Required, String. Either `history` or `saved`
- * - `rev` - Optional, String. Specific revision to read
- *
- * **request-object-changed**
- *
- * Should be only used if the payload is not `Blob` or `FormData` and
- * all request properties are set. By default `save-request` event should be
- * used.
- *
- * Detail's parameteres: ArcRequest object.
- * https://github.com/advanced-rest-client/api-components-api/blob/master/docs/
- * arc-models.md#arcrequest
- *
- * **request-object-deleted**
- *
- * Deletes the object from the data store.
- *
- * Detail's parameteres:
- *
- * - `id` - Required, String. Request ID
- * - `type` - Required, String. Either `history` or `saved`
- *
- * **request-objects-deleted**
- *
- * Deletes number of requests in bulk.
- *
- * Detail's parameteres:
- *
- * - `type` - Required, String. Either `history` or `saved`
- * - `items` - Required, Array<String>. List of request IDs to delete.
- *
- * **request-objects-undeleted**
- *
- * Used to restore deleted request data.
- *
- * Detail's parameteres:
- *
- * - `type` - Required, String. Either `history` or `saved`
- * - `items` - Required, Array<Object>. List of requests to restore.
- * Each object must contain `_rev` and `_id`.
- *
- * The `result` property contains result of calling `revertRemove()` function.
- *
- * **request-query**
- *
- * Queries for request data. This flow searches for URL data in a separate index
- * and then performs full text search on the request data store.
- *
- * Detail's parameteres:
- *
- * - `q` - Required, String. User query.
- * - `type` - Optional, String. Either `history` or `saved`. By default it
- * searches in both data stores.
- * - `detailed` - Optional, Boolean. If set it uses slower algorithm but performs full
- * search on the index. When false it only uses filer like query + '*'.
+ * Bother IndexedDB and PouchDB aren't designed for full text queries.
+ * This model works with the `UrlIndexer` that is responsible for indexing the data
+ * to perform a semi-full search operation. When a `detailed` options is set on the query
+ * then it uses slower algorithm but performs full search on the index.
+ * When it is not set it only uses filer like query + '*'.
  */
 export declare class RequestModel extends RequestBaseModel {
 
@@ -128,6 +35,133 @@ export declare class RequestModel extends RequestBaseModel {
   readonly savedIndexes: string[];
 
   constructor();
+
+  /**
+   * Reads an entry from the datastore.
+   *
+   * @param type Request type: `saved-requests` or `history-requests`
+   * @param id The ID of the datastore entry.
+   * @param rev Specific revision to read. Defaults to
+   * latest revision.
+   * @param opts Restoration options.
+   * @returns Promise resolved to a request object.
+   */
+  get(type: string, id: string, rev?: string, opts?: ARCRequestRestoreOptions): Promise<ARCHistoryRequest|ARCSavedRequest>|null;
+
+  /**
+   * The same as `get()` but for a list of requests.
+   *
+   * @param type Requests type to restore.
+   * @param keys Request ids
+   * @param opts Additional options. Currently only `restorePayload`
+   * is supported
+   */
+  getBulk(type: string, keys: string[], opts?: ARCRequestRestoreOptions): Promise<ARCHistoryRequest[]|ARCSavedRequest[]>;
+
+  /**
+   * Updates / saves the request object in the datastore.
+   * This function dispatches `request-object-changed` event.
+   *
+   * If any of `name`, `method`, `url` or `legacyProject` properties change
+   * then the old object is deleted and new is created with new ID.
+   *
+   * @param type Request type: `saved-requests` or `history-requests`
+   * @param request An object to save / update
+   * @returns A promise resolved to the change record
+   */
+  post(type: string, request: ARCHistoryRequest|ARCSavedRequest): Promise<ARCEntityChangeRecord<ARCHistoryRequest|ARCSavedRequest>>;
+
+  /**
+   * Updates more than one request in a bulk.
+   *
+   * @param type Request type: `saved-requests` or `history-requests`
+   * @param requests List of requests to update.
+   * @returns List of PouchDB responses to each insert
+   */
+  postBulk(type: string, requests: (ARCHistoryRequest|ARCSavedRequest)[]): Promise<ARCEntityChangeRecord<ARCHistoryRequest|ARCSavedRequest>[]>;
+
+  /**
+   * Removed an object from the datastore.
+   * This function fires `request-object-deleted` event.
+   *
+   * @param type Request type: `saved-requests` or `history-requests`
+   * @param id The ID of the datastore entry.
+   * @param rev Specific revision to read. Defaults to
+   * latest revision.
+   * @returns Promise resolved to a new `_rev` property of deleted
+   * object.
+   */
+  delete(type: string, id: string, rev?: string): Promise<string>;
+
+  /**
+   * Removes documents in a bulk operation.
+   *
+   * @param type Database type
+   * @param items List of keys to remove
+   */
+  deleteBulk(type: string, items: string[]): Promise<string[]>;
+
+  /**
+   * Removes requests reference from projects in a batch operation
+   * @param projectIds List of project ids to update
+   * @param requestIds List of requests to remove from projects
+   */
+  removeRequestsFromProjects(projectIds: string[], requestIds: string[]): Promise<void>;
+
+  /**
+   * Removes a request reference from a project.
+   * @param} project The project to remove the request from
+   * @param requestIds List of requests to remove from project
+   * @returns Promise resolved when the operation finishes.
+   */
+  removeRequestsFromProject(project: ARCProject, requestIds: string[]): Promise<void>;
+
+  /**
+   * Reverts deleted items.
+   * This function fires `request-object-changed` event for each restored
+   * request.
+   *
+   * @param type Request type: `saved-requests` or `history-requests`
+   * @param items List of request objects. Required properties are
+   * `_id` and `_rev`.
+   * @returns Resolved promise with restored objects. Objects have
+   * updated `_rev` property.
+   */
+  revertRemove(type: string, items: Entity[]): Promise<(ARCHistoryRequest|ARCSavedRequest)[]>;
+
+  /**
+   * Stores a history obvject in the data store, taking care of `_rev`
+   * property read.
+   *
+   * @param request The request object to store
+   * @returns A promise resolved to the updated request object.
+   */
+  saveHistory(request: ARCHistoryRequest): Promise<ARCHistoryRequest>;
+
+  /**
+   * Saves a request into a data store.
+   * It handles payload to string conversion, handles types, and syncs request
+   * with projects. Use `update()` method only if you are storing already
+   * prepared request object to the store.
+   *
+   * @param request ArcRequest object
+   * @param opts Save request object. Currently only `isDrive`
+   * is supported
+   * @returns A promise resilved to updated request object.
+   */
+  saveRequest(request: ARCHistoryRequest|ARCSavedRequest, opts?: SaveARCRequestOptions): Promise<ARCHistoryRequest|ARCSavedRequest>;
+
+  /**
+   * Performs a query for the request data.
+   *
+   * This is not the same as searching for a request. This only lists
+   * data from the datastore for given query options.
+   *
+   * @param type Datastore type
+   * @param opts Query options.
+   * @returns A promise resolved to a query result for requests.
+   */
+  list(type: string, opts?: ARCModelQueryOptions): Promise<ARCModelQueryResult<ARCHistoryRequest|ARCSavedRequest>>;
 
   /**
    * Adds event listeners.
@@ -177,28 +211,6 @@ export declare class RequestModel extends RequestBaseModel {
   _saveHistoryHandler(e: CustomEvent): void;
 
   /**
-   * Stores a history obvject in the data store, taking care of `_rev`
-   * property read.
-   *
-   * @param request The request object to store
-   * @returns A promise resolved to the updated request object.
-   */
-  saveHistory(request: ARCHistoryRequest): Promise<ARCHistoryRequest>;
-
-  /**
-   * Saves a request into a data store.
-   * It handles payload to string conversion, handles types, and syncs request
-   * with projects. Use `update()` method only if you are storing already
-   * prepared request object to the store.
-   *
-   * @param request ArcRequest object
-   * @param opts Save request object. Currently only `isDrive`
-   * is supported
-   * @returns A promise resilved to updated request object.
-   */
-  saveRequest<T extends ARCHistoryRequest|ARCSavedRequest>(request: T, opts?: SaveARCRequestOptions): Promise<T>;
-
-  /**
    * Synchronizes project requests to ensure each project contains this
    * `requestId` on their list of requests.
    *
@@ -211,76 +223,6 @@ export declare class RequestModel extends RequestBaseModel {
    * Normalizes request object to whatever the app is currently using.
    */
   normalizeRequest(request: ARCSavedRequest): ARCSavedRequest;
-
-  /**
-   * Reads an entry from the datastore.
-   *
-   * @param type Request type: `saved-requests` or `history-requests`
-   * @param id The ID of the datastore entry.
-   * @param rev Specific revision to read. Defaults to
-   * latest revision.
-   * @param opts Restoration options.
-   * @returns Promise resolved to a request object.
-   */
-  read(type: string, id: string, rev?: string, opts?: ARCRequestRestoreOptions): Promise<ARCHistoryRequest|ARCSavedRequest>|null;
-
-  /**
-   * The same as `read()` but for a list of requests.
-   *
-   * @param type Requests type to restore.
-   * @param keys Request ids
-   * @param opts Additional options. Currently only `restorePayload`
-   * is supported
-   */
-  readBulk(type: string, keys: string[], opts?: ARCRequestRestoreOptions): Promise<ARCHistoryRequest[]|ARCSavedRequest[]>;
-
-  /**
-   * Updates / saves the request object in the datastore.
-   * This function dispatches `request-object-changed` event.
-   *
-   * If any of `name`, `method`, `url` or `legacyProject` properties change
-   * then the old object is deleted and new is created with new ID.
-   *
-   * @param type Request type: `saved-requests` or `history-requests`
-   * @param request An object to save / update
-   * @returns Resolved promise to request object with updated `_rev`
-   */
-  update(type: string, request: object|null): Promise<any>|null;
-
-  /**
-   * Updates more than one request in a bulk.
-   *
-   * @param type Request type: `saved-requests` or `history-requests`
-   * @param requests List of requests to update.
-   * @returns List of PouchDB responses to each insert
-   */
-  updateBulk(type: string, requests: (ARCHistoryRequest|ARCSavedRequest)[]): Promise<(PouchDB.Core.Response|PouchDB.Core.Error)[]>;
-
-  /**
-   * Removed an object from the datastore.
-   * This function fires `request-object-deleted` event.
-   *
-   * @param type Request type: `saved-requests` or `history-requests`
-   * @param id The ID of the datastore entry.
-   * @param rev Specific revision to read. Defaults to
-   * latest revision.
-   * @returns Promise resolved to a new `_rev` property of deleted
-   * object.
-   */
-  delete(type: string, id: string, rev?: string): Promise<string>;
-
-  /**
-   * Reverts deleted items.
-   * This function fires `request-object-changed` event for each restored
-   * request.
-   *
-   * @param type Request type: `saved-requests` or `history-requests`
-   * @param items List of request objects. Required properties are
-   * `_id` and `_rev`.
-   * @returns Resolved promise with restored objects. Objects have
-   * updated `_rev` property.
-   */
-  revertRemove(type: String|null, items: Entity[]): Promise<(ARCHistoryRequest|ARCSavedRequest)[]>;
 
   /**
    * Finds last not deleted revision of a document.
@@ -301,11 +243,6 @@ export declare class RequestModel extends RequestBaseModel {
    * `deletedRevision`
    */
   _findUndeletedRevision(revs: object, deletedRevision: string): string|null;
-
-  /**
-   * Handler for request read event request.
-   */
-  _handleRead(e: CustomEvent): void;
 
   /**
    * Handles onject save / update
@@ -329,34 +266,9 @@ export declare class RequestModel extends RequestBaseModel {
   _handleObjectsDelete(e: CustomEvent): void;
 
   /**
-   * Removes documents in a bulk operation.
-   *
-   * @param type Database type
-   * @param items List of keys to remove
-   */
-  bulkDelete(type: string, items: string[]): Promise<object>;
-
-  /**
    * handlers `request-objects-undeleted` event to restore deleted items
    */
   _handleUndelete(e: CustomEvent|null): void;
-
-  /**
-   * Filters query results to return only successfuly read data.
-   *
-   * @param result PouchDB query result
-   * @returns List of request that has been read.
-   */
-  _filterExistingItems(result: PouchDB.Core.AllDocsResponse<any>): object[];
-
-  /**
-   * Finds a `_rev` for a doc.
-   *
-   * @param docs List of PouchDB documents to search for `_rev`
-   * @param id Document ID
-   * @returns Associated `_rev`
-   */
-  _findOldRef(docs: object[], id: string): string;
 
   /**
    * Saves the request on Google Drive.
@@ -383,18 +295,6 @@ export declare class RequestModel extends RequestBaseModel {
    * - `queryOptions` {Object} PouchDB query options.
    */
   _handleList(e: CustomEvent): void;
-
-  /**
-   * Performs a query for the request data.
-   *
-   * This is not the same as searching for a request. This only lists
-   * data from the datastore for given query options.
-   *
-   * @param type Datastore type
-   * @param queryOptions PouchDB query options.
-   * @returns List of PouchDB documents for the query.
-   */
-  list(type: string, queryOptions: PouchDB.Core.AllDocsOptions): Promise<any>|null;
 
   /**
    * A handler for the `request-query` custom event. Queries the datastore for
