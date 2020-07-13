@@ -31,11 +31,22 @@ interface RequestEvents {
   State: RequestStateEvents;
 }
 
+interface UrlIndexerStateEvents {
+  finished: string;
+}
+
+interface UrlIndexerEvents {
+  update: string;
+  query: string;
+  State: UrlIndexerStateEvents;
+}
+
 declare interface ArcModelEventTypes {
   destroy: string;
   destroyed: string;
   Project: ProjectEvents;
   Request: RequestEvents;
+  UrlIndexer: UrlIndexerEvents;
 }
 
 export const ArcModelEventTypes: ArcModelEventTypes;

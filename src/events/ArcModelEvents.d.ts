@@ -14,6 +14,10 @@ import {
   ARCModelListResult,
   DeletedEntity,
 } from '../types';
+import {
+  IndexableRequest,
+  IndexQueryResult,
+} from '../UrlIndexer';
 
 declare interface ProjectStateFunctions {
   /**
@@ -218,6 +222,39 @@ declare interface RequestFunctions {
   State: RequestStateFunctions;
 }
 
+declare interface UrlIndexerStateFunctions {
+  /**
+   * Dispatches an event informing that the indexer has finished the indexing task
+   *
+   * @param target A node on which to dispatch the event.
+   */
+  finished(target: EventTarget): void;
+}
+
+declare interface UrlIndexerFunctions {
+  /**
+   * Dispatches an event handled by the data store to update indexed data.
+   *
+   * @param target A node on which to dispatch the event.
+   * @param requests List of requests to index.
+   * @returns Promise resolved when indexes were updated
+   */
+  update(target: EventTarget, requests: IndexableRequest[]): Promise<void>;
+  /**
+   * Dispatches an event handled by the data store to query for ARC request URL indexed data
+   *
+   * @param target A node on which to dispatch the event.
+   * @param term The search term for the query function
+   * @param requestType The type of the requests to search for.
+   * By default it returns all data.
+   * @param detailed If set it uses slower algorithm but performs full
+   * search on the index. When false it only uses filer like query + '*'.
+   * @returns Promise resolved to list of results
+   */
+  query(target: EventTarget, term: string, requestType?: string, detailed?: boolean): Promise<IndexQueryResult>;
+  State: UrlIndexerStateFunctions;
+}
+
 declare interface ArcModelEvents {
   /**
    * Dispatches an event handled by the data store to destroy a data store.
@@ -236,6 +273,7 @@ declare interface ArcModelEvents {
   destroyed(target: EventTarget, stores: string[]): void;
   Project: ProjectFunctions;
   Request: RequestFunctions;
+  UrlIndexer: UrlIndexerFunctions;
 }
 
 declare const events: ArcModelEvents;

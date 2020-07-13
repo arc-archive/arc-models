@@ -1,7 +1,23 @@
-export declare function normalizeType(type: string): string;
 export declare function createSchema(e: Event): void;
 export declare const STORE_NAME: string;
 export declare const STORE_VERSION: number;
+
+export declare const generateId: symbol;
+export declare const indexDebounce: symbol;
+export declare const indexDebounceValue: symbol;
+export declare const indexRequestQueueValue: symbol;
+export declare const deleteIndexDebounce: symbol;
+export declare const deleteIndexDebounceValue: symbol;
+export declare const deleteRequestQueueValue: symbol;
+export declare const prepareRequestIndexData: symbol;
+export declare const createIndexIfMissing: symbol;
+export declare const getUrlObject: symbol;
+export declare const getAuthorityPath: symbol;
+export declare const getPathQuery: symbol;
+export declare const getQueryString: symbol;
+export declare const appendQueryParams: symbol;
+export declare const storeIndexes: symbol;
+export declare const getIndexedDataAll: symbol;
 
 export declare interface IndexableRequest {
   /**
@@ -147,44 +163,6 @@ export declare class UrlIndexer extends HTMLElement {
   connectedCallback(): void;
   disconnectedCallback(): void;
 
-  _indexUpdateHandler(e: CustomEvent): void;
-  _indexQueryHandler(e: CustomEvent): void;
-  _requestChangeHandler(e: CustomEvent): void;
-
-  /**
-   * Calles index function with debouncer.
-   * The debouncer runs the queue after 25 ms. Bulk operations should be called
-   * onece unless there's a lot of data to process.
-   *
-   * @param id Request ID
-   * @param url Request URL
-   * @param type Request type (saved or history)
-   */
-  _indexDebounce(id: string, url: string, type: string): void;
-
-  /**
-   * Handler for `request-object-deleted` custom event.
-   * It expects `id` property to be set on event detail object.
-   * Cancelable events are ignored.
-   */
-  _requestDeleteHandler(e: CustomEvent): void;
-
-  /**
-   * Calles deleteIndexedData function with debouncer.
-   * The debouncer runs the queue after 25 ms. Bulk operations should be called
-   * onece unless there's a lot of data to process.
-   *
-   * @param id Request ID
-   */
-  _deleteIndexDebounce(id: string): void;
-  _deleteModelHandler(e: CustomEvent): Promise<void>;
-
-  /**
-   * Removes indexed data from select stores.
-   * @param store A stores that being destroyed in the app.
-   */
-  _deleteStores(store: string[]): Promise<void>;
-
   /**
    * Opens search index data store.
    */
@@ -201,9 +179,6 @@ export declare class UrlIndexer extends HTMLElement {
    * @param requests List of requests to index.
    */
   index(requests: IndexableRequest[]): Promise<void>;
-
-  _processIndexedRequests(requests: IndexableRequest[], map: IndexableRequestMap): ProcessedQueryResults;
-  _notifyIndexFinished(): void;
 
   /**
    * Removes indexed data for given requests.
@@ -225,133 +200,6 @@ export declare class UrlIndexer extends HTMLElement {
   clearIndexedData(): Promise<void>;
 
   /**
-   * Retreives index data for requests.
-   *
-   * @param db Database reference
-   * @param ids List of request ids
-   * @returns A map where keys are request IDs and values are
-   * an array of index data.
-   * ```
-   * {
-   *  "[request-id]": [{
-   *    "id": "...",
-   *    "requestId": [request-id],
-   *    "url": "...",
-   *    "type": "..."
-   *   }]
-   * }
-   * ```
-   */
-  _getIndexedDataAll(db: IDBDatabase, ids: string[]): Promise<IndexableRequestMap>;
-
-  /**
-   * Prepares a list of objects to put into the indexeddb to index the request.
-   *
-   * @param request Request object with `id` and `url` properties
-   * @param indexed List of already indexed properties
-   * @returns A list of objects to store
-   */
-  _prepareRequestIndexData(request: IndexableRequest, indexed: IndexableRequestInternal[]): IndexableRequestInternal[];
-
-  /**
-   * Generates ID for URL index object
-   *
-   * @param url URL to search for. It should be lower case
-   * @param type Request type
-   */
-  _generateId(url: string, type: string): string;
-
-  /**
-   * Creates an index datastore object if it doesn't exists in the list
-   * of indexed items.
-   *
-   * @param url URL to search for.
-   * @param id Request ID
-   * @param type Request type
-   * @param indexed Already indexed data.
-   * @returns Index object to store or `undefined` if already
-   * indexed.
-   */
-  _createIndexIfMissing(url: string, id: string, type: string, indexed: IndexableRequestInternal[]): IndexableRequestInternal|undefined;
-
-  /**
-   * Creates an index object for the whole url, if it doesn't exists in already
-   * indexed data.
-   *
-   * @param request The request object to index
-   * @param indexed Already indexed data.
-   * @returns Object to store or `undefined` if the object
-   * already exists.
-   */
-  _getUrlObject(request: IndexableRequest, indexed: IndexableRequestInternal[]): IndexableRequestInternal|undefined;
-
-  /**
-   * Creates an index object for authority part of the url,
-   * if it doesn't exists in already indexed data.
-   *
-   * @param parser Instance of URL object
-   * @param id Request ID
-   * @param type Request type
-   * @param indexed Already indexed data.
-   * @returns Object to store or `undefined` if the object
-   * already exists.
-   */
-  _getAuthorityPath(parser: URL, id: string, type: string, indexed: IndexableRequestInternal[]): IndexableRequestInternal|undefined;
-
-  /**
-   * Creates an index object for path part of the url,
-   * if it doesn't exists in already indexed data.
-   *
-   * @param parser Instance of URL object
-   * @param id Request ID
-   * @param type Request type
-   * @param indexed Already indexed data.
-   * @returns Object to store or `undefined` if the object
-   * already exists.
-   */
-  _getPathQuery(parser: URL, id: string, type: string, indexed: IndexableRequestInternal[]): IndexableRequestInternal|undefined;
-
-  /**
-   * Creates an index object for query string of the url,
-   * if it doesn't exists in already indexed data.
-   *
-   * @param parser Instance of URL object
-   * @param id Request ID
-   * @param type Request type
-   * @param indexed Already indexed data.
-   * @returns Object to store or `undefined` if the object
-   * already exists.
-   */
-  _getQueryString(parser: URL, id: string, type: string, indexed: IndexableRequestInternal[]): IndexableRequestInternal|undefined;
-
-  /**
-   * Creates an index object for each query parameter of the url,
-   * if it doesn't exists in already indexed data.
-   *
-   * @param parser Instance of URL object
-   * @param id Request ID
-   * @param type Request type
-   * @param indexed Already indexed data.
-   * @param target A list where to put generated data
-   */
-  _appendQueryParams(parser: URL, id: string, type: string, indexed: IndexableRequestInternal[], target: IndexableRequestInternal[]): void;
-
-  /**
-   * Stores indexes in the data store.
-   *
-   * @param indexes List of indexes to store.
-   * @returns window
-   */
-  _storeIndexes(db: IDBDatabase, indexes: IndexableRequestInternal[]): Promise<void>;
-
-  /**
-   * Removes indexed items that are no longer relevant for the request.
-   *
-   * @param items List of datastore index items.
-   */
-  _removeRedundantIndexes(db: IDBDatabase, items: IndexableRequestInternal[]): Promise<void>;
-
-  /**
    * Queries for indexed data.
    *
    * @param query The query
@@ -361,44 +209,6 @@ export declare class UrlIndexer extends HTMLElement {
    * search on the index. When false it only uses filer like query + '*'.
    */
   query(query: string, opts?: IndexQueryOptions): Promise<IndexQueryResult>;
-
-  /**
-   * Performance search on the data store using `indexOf` on the primary key.
-   * This function is slower than `_searchCasing` but much, much faster than
-   * other ways to search for this data.
-   * It allows to perform a search on the part of the url only like:
-   * `'*' + q + '*'` while `_searchCasing` only allows `q + '*'` type search.
-   *
-   * @param db Reference to the database
-   * @param q A string to search for
-   * @param type A type of the request to include into results.
-   */
-  _searchIndexOf(db: IDBDatabase, q: string, type: string): Promise<IndexQueryResult>;
-
-  /**
-   * Uses (in most parts) algorithm described at
-   * https://www.codeproject.com/Articles/744986/How-to-do-some-magic-with-indexedDB
-   * Distributed under Apache 2 license
-   *
-   * This is much faster than `_searchIndexOf` function. However may not find
-   * some results. For ARC it's a default search function.
-   *
-   * @param db Reference to the database
-   * @param q A string to search for
-   * @param type A type of the request to include into results.
-   */
-  _searchCasing(db: IDBDatabase, q: string, type: string): Promise<IndexQueryResult>;
-
-  /**
-   * https://www.codeproject.com/Articles/744986/How-to-do-some-magic-with-indexedDB
-   * Distributed under Apache 2 license
-   *
-   * @param key [description]
-   * @param lowerKey [description]
-   * @param upperNeedle [description]
-   * @param lowerNeedle [description]
-   */
-  _nextCasing(key: string, lowerKey: string, upperNeedle: string, lowerNeedle: string): string|undefined;
 
   /**
    * Reindexes a request by the type.
@@ -415,10 +225,4 @@ export declare class UrlIndexer extends HTMLElement {
    * Reindexes history requests
    */
   reindexHistory(): Promise<void>;
-
-  /**
-   * Reindexes a request by the type.
-   * @param type Either `saved` or `history`
-   */
-  _renindex(type: string): Promise<void>;
 }

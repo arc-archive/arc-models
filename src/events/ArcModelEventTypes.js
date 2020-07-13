@@ -31,9 +31,18 @@ export const ArcModelEventTypes = {
       delete: 'modelstaterequestdelete',
     },
   },
+  UrlIndexer: {
+    update: 'modelurlindexerupdate',
+    query: 'modelurlindexerquery',
+    State: {
+      finished: 'modelstateurlindexerfinished'
+    }
+  },
 };
 Object.freeze(ArcModelEventTypes);
 Object.freeze(ArcModelEventTypes.Project);
 Object.freeze(ArcModelEventTypes.Project.State);
 Object.freeze(ArcModelEventTypes.Project);
 Object.freeze(ArcModelEventTypes.Request.State);
+Object.freeze(ArcModelEventTypes.UrlIndexer);
+Object.freeze(ArcModelEventTypes.UrlIndexer.State);

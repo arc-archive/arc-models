@@ -34,8 +34,9 @@ describe('RequestModel', () => {
         requests = data.requests;
       });
 
-      after(() => {
-        return generator.destroySavedRequestData();
+      after(async () => {
+        await generator.destroySavedRequestData();
+        await generator.destroyHistoryData();
       });
 
       let model = /** @type RequestModel */ (null);
@@ -79,8 +80,9 @@ describe('RequestModel', () => {
         requests = await generator.insertHistoryRequestData();
       });
 
-      after(() => {
-        return generator.destroyHistoryData();
+      after(async () => {
+        await generator.destroySavedRequestData();
+        await generator.destroyHistoryData();
       });
 
       let model = /** @type RequestModel */ (null);
@@ -115,8 +117,9 @@ describe('RequestModel', () => {
       requests = await generator.insertHistoryRequestData();
     });
 
-    after(() => {
-      return generator.destroyHistoryData();
+    after(async () => {
+      await generator.destroySavedRequestData();
+      await generator.destroyHistoryData();
     });
 
     let model = /** @type RequestModel */ (null);
@@ -707,8 +710,9 @@ describe('RequestModel', () => {
       return element.postBulk('saved', requests);
     });
 
-    after(() => {
-      return generator.destroySavedRequestData();
+    after(async () => {
+      await generator.destroySavedRequestData();
+      await generator.destroyHistoryData();
     });
 
     let element;
@@ -749,6 +753,7 @@ describe('RequestModel', () => {
 
     after(async () => {
       await generator.destroySavedRequestData();
+      await generator.destroyHistoryData();
     });
 
     let model = /** @type RequestModel */ (null);
@@ -891,6 +896,7 @@ describe('RequestModel', () => {
     });
 
     after(async () => {
+      await generator.destroySavedRequestData();
       await generator.destroyHistoryData();
     });
 
@@ -971,8 +977,9 @@ describe('RequestModel', () => {
       });
     });
 
-    after(() => {
-      return generator.destroyHistoryData();
+    after(async () => {
+      await generator.destroySavedRequestData();
+      await generator.destroyHistoryData();
     });
 
     let model = /** @type RequestModel */ (null);
@@ -1046,6 +1053,7 @@ describe('RequestModel', () => {
     });
 
     after(async () => {
+      await generator.destroySavedRequestData();
       await generator.destroyHistoryData();
     });
 

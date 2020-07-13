@@ -58,13 +58,23 @@ export declare interface ARCModelDeleteEventDetail {
 }
 
 /**
- * Detail definition for an event that has no side results
+ * Detail definition for an event that is a result of destroying a data store
  */
 export declare interface ARCModelDestroyEventDetail {
   /**
    * This property is set by the data store, a promise resolved when operation finish.
    */
   result?: Promise<void>[]|null;
+}
+
+/**
+ * Detail definition for an event that has no side results
+ */
+export declare interface ARCModelVoidResultEventDetail {
+  /**
+   * This property is set by the data store, a promise resolved when the operation finish.
+   */
+  result?: Promise<void>|null;
 }
 
 /**
