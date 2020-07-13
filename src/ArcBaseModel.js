@@ -15,8 +15,8 @@ the License.
 import 'pouchdb/dist/pouchdb.js';
 /* eslint-disable class-methods-use-this */
 
-/** @typedef {import('./types').ARCModelQueryResult} ARCModelQueryResult */
-/** @typedef {import('./types').ARCModelQueryOptions} ARCModelQueryOptions */
+/** @typedef {import('./types').ARCModelListResult} ARCModelListResult */
+/** @typedef {import('./types').ARCModelListOptions} ARCModelListOptions */
 
 /**
  * A base class for all models.
@@ -275,8 +275,8 @@ export class ArcBaseModel extends HTMLElement {
    * Lists all project objects.
    *
    * @param {PouchDB.Database} db Reference to a database
-   * @param {ARCModelQueryOptions=} opts Query options.
-   * @return {Promise<ARCModelQueryResult>} A promise resolved to a list of entities.
+   * @param {ARCModelListOptions=} opts Query options.
+   * @return {Promise<ARCModelListResult>} A promise resolved to a list of entities.
    */
   async listEntities(db, opts={}) {
     const { limit, nextPageToken } = opts;

@@ -1,14 +1,14 @@
 /* eslint-disable max-classes-per-file */
 import { ArcModelEventTypes } from './ArcModelEventTypes.js';
-import { ARCEntityDeletedEvent, ARCEntityQueryEvent } from './BaseEvents.js';
+import { ARCEntityDeletedEvent, ARCEntityListEvent } from './BaseEvents.js';
 
 /** @typedef {import('./BaseEvents').ARCModelReadEventDetail} ARCModelReadEventDetail */
 /** @typedef {import('./BaseEvents').ARCModelUpdateEventDetail} ARCModelUpdateEventDetail */
 /** @typedef {import('./BaseEvents').ARCModelUpdateBulkEventDetail} ARCModelUpdateBulkEventDetail */
 /** @typedef {import('./BaseEvents').ARCModelDeleteEventDetail} ARCModelDeleteEventDetail */
 /** @typedef {import('../types').ARCEntityChangeRecord} ARCEntityChangeRecord */
-/** @typedef {import('../types').ARCModelQueryOptions} ARCModelQueryOptions */
-/** @typedef {import('../types').ARCModelQueryResult} ARCModelQueryResult */
+/** @typedef {import('../types').ARCModelListOptions} ARCModelListOptions */
+/** @typedef {import('../types').ARCModelListResult} ARCModelListResult */
 /** @typedef {import('../RequestTypes').ARCProject} ARCProject */
 
 export const projectValue = Symbol('projectValue');
@@ -180,9 +180,9 @@ export class ARCProjectDeletedEvent extends ARCEntityDeletedEvent {
 /**
  * An event to be dispatched to query for project data in the data store.
  */
-export class ARCProjectQueryEvent extends ARCEntityQueryEvent {
+export class ARCProjectListEvent extends ARCEntityListEvent {
   /**
-   * @param {ARCModelQueryOptions=} opts Query options.
+   * @param {ARCModelListOptions=} opts Query options.
    */
   constructor(opts) {
     super(ArcModelEventTypes.Project.query, opts);
@@ -247,11 +247,11 @@ export async function deleteAction(target, id, rev) {
  * Dispatches an event to list the project data.
  *
  * @param {EventTarget} target A node on which to dispatch the event.
- * @param {ARCModelQueryOptions=} opts Query options.
- * @return {Promise<ARCModelQueryResult>} Project query result.
+ * @param {ARCModelListOptions=} opts Query options.
+ * @return {Promise<ARCModelListResult>} Project query result.
  */
 export async function queryAction(target, opts) {
-  const e = new ARCProjectQueryEvent(opts);
+  const e = new ARCProjectListEvent(opts);
   target.dispatchEvent(e);
   return e.detail.result;
 }

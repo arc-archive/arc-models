@@ -1,4 +1,4 @@
-import { ARCEntityChangeRecord, ARCModelQueryResultDetail, ARCModelQueryOptions } from '../types';
+import { ARCEntityChangeRecord, ARCModelListResultDetail, ARCModelListOptions, DeletedEntity } from '../types';
 /**
  * Detail definition for a read event.
  */
@@ -54,10 +54,31 @@ export declare interface ARCModelDeleteEventDetail {
    * This property is set by the data store, a promise resolved to the
    * new revision of an entity.
    */
-  result?: Promise<string>|null;
+  result?: Promise<DeletedEntity>|null;
 }
 
-export declare class ARCEntityDeletedEvent extends CustomEvent<void> {
+/**
+ * Detail definition for an event that has no side results
+ */
+export declare interface ARCModelDestroyEventDetail {
+  /**
+   * This property is set by the data store, a promise resolved when operation finish.
+   */
+  result?: Promise<void>[]|null;
+}
+
+/**
+ * Detail definition for an entity delete event.
+ */
+export declare interface ARCModelDeleteBulkEventDetail {
+  /**
+   * This property is set by the data store, a promise resolved to the
+   * object containing the id of the deleted item and updated revision.
+   */
+  result?: Promise<DeletedEntity[]>|null;
+}
+
+export declare class ARCEntityDeletedEvent extends Event {
   /**
    * The id of the deleted entity
    */
@@ -74,7 +95,7 @@ export declare class ARCEntityDeletedEvent extends CustomEvent<void> {
   constructor(type: string, id: string, rev: string);
 }
 
-export declare class ARCEntityQueryEvent<T> extends CustomEvent<ARCModelQueryResultDetail<T>> {
+export declare class ARCEntityListEvent<T> extends CustomEvent<ARCModelListResultDetail<T>> {
   /**
    * The number of results per the page.
    */
@@ -88,5 +109,35 @@ export declare class ARCEntityQueryEvent<T> extends CustomEvent<ARCModelQueryRes
    * @param type The event type
    * @param opts Query options.
    */
-  constructor(type: string, opts?: ARCModelQueryOptions);
+  constructor(type: string, opts?: ARCModelListOptions);
+}
+
+/**
+ * An event to be dispatched by the UI to destroy all data in a data
+ * store.
+ */
+export class ARCModelDeleteEvent extends CustomEvent<ARCModelDestroyEventDetail> {
+  /**
+   * The list of stores used to initialize the event.
+   */
+  readonly stores: string[]
+  /**
+   * @param stores A list of store names to delete the data from
+   */
+  constructor(stores: string[]);
+}
+
+/**
+ * An event dispatched by the data store to inform the application that a data model
+ * has been destroyed.
+ */
+export class ARCModelStateDeleteEvent extends Event {
+  /**
+   * @return {string[]} The list of deleted stores used to initialize the event.
+   */
+  readonly stores: string[];
+  /**
+   * @param stores A list of store names that has been destroyed.
+   */
+  constructor(stores: string[]);
 }

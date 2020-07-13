@@ -9,6 +9,17 @@ export declare interface Entity {
   _rev?: string;
 }
 
+export declare interface DeletedEntity {
+  /**
+   * Pouch DB datastore `_id`
+   */
+  id: string;
+  /**
+   * Pouch DB datastore revision of the deleted object
+   */
+  rev: string;
+}
+
 /**
  * An entity change record base definition
  */
@@ -49,7 +60,7 @@ export declare interface ARCRequestEntityChangeRecord<T> extends ARCEntityChange
 /**
  * Base query options for the data store.
  */
-export declare interface ARCModelQueryOptions {
+export declare interface ARCModelListOptions {
   /**
    * The number of results per the page.
    */
@@ -63,7 +74,7 @@ export declare interface ARCModelQueryOptions {
 /**
  * Data store query result object.
  */
-export declare interface ARCModelQueryResult<T> {
+export declare interface ARCModelListResult<T> {
   /**
    * Next page token to be used with pagination.
    * It is not set when the query has not returned any results.
@@ -79,6 +90,6 @@ export declare interface ARCModelQueryResult<T> {
 /**
  * Event detail ovject for data store query result object.
  */
-export declare interface ARCModelQueryResultDetail<T> {
-  result: Promise<ARCModelQueryResult<T>>;
+export declare interface ARCModelListResultDetail<T> {
+  result: Promise<ARCModelListResult<T>>;
 }

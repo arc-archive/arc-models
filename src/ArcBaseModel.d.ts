@@ -1,4 +1,4 @@
-import { ARCModelQueryOptions, ARCModelQueryResult } from './types';
+import { ARCModelListOptions, ARCModelListResult } from './types';
 
 export declare interface DefaultQueryOptions extends Object {
   limit: number;
@@ -124,5 +124,5 @@ export declare class ArcBaseModel extends HTMLElement {
    * @param opts Query options.
    * @returns A promise resolved to a list of entities.
    */
-  listEntities<T>(db: PouchDB.Database, opts?: ARCModelQueryOptions): Promise<ARCModelQueryResult<T>>;
+  listEntities<T>(db: PouchDB.Database, opts?: ARCModelListOptions): Promise<ARCModelListResult<T>>;
 }

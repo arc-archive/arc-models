@@ -23,11 +23,17 @@ interface RequestEvents {
   updateBulk: string;
   store: string;
   delete: string;
+  deleteBulk: string;
+  undeleteBulk: string;
   query: string;
+  list: string;
+  projectlist: string;
   State: RequestStateEvents;
 }
 
 declare interface ArcModelEventTypes {
+  destroy: string;
+  destroyed: string;
   Project: ProjectEvents;
   Request: RequestEvents;
 }

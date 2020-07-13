@@ -1,7 +1,30 @@
 import * as ProjectEvents from './ProjectEvents.js';
 import * as RequestEvents from './RequestEvents.js';
+import * as BaseEvents from './BaseEvents.js';
 
 export const ArcModelEvents = {
+  /**
+   * Dispatches an event handled by the data store to destroy a data store.
+   *
+   * @param {EventTarget} target A node on which to dispatch the event.
+   * @param {string[]} stores A list of store names to affect
+   * @return {Promise<void>[]} List of promises resolved when each store is destroyed
+   */
+  destroy: (target, stores) => {
+    const e = new BaseEvents.ARCModelDeleteEvent(stores);
+    target.dispatchEvent(e);
+    return e.detail.result;
+  },
+  /**
+   * Dispatches an event information the app that a store has been destroyed.
+   *
+   * @param {EventTarget} target A node on which to dispatch the event.
+   * @param {string[]} stores A list of store names that has been deleted.
+   */
+  destroyed: (target, stores) => {
+    const e = new BaseEvents.ARCModelStateDeleteEvent(stores);
+    target.dispatchEvent(e);
+  },
   Project: {
     read: ProjectEvents.readAction,
     update: ProjectEvents.updateAction,
@@ -15,12 +38,16 @@ export const ArcModelEvents = {
   },
   Request: {
     read: RequestEvents.readAction,
-    // readBulk: 'modelrequestreadbulk',
+    readBulk: RequestEvents.readBulkAction,
+    list: RequestEvents.listAction,
     update: RequestEvents.updateAction,
     updateBulk: RequestEvents.updateBulkAction,
     store: RequestEvents.storeAction,
     delete: RequestEvents.deleteAction,
-    // query: 'modelrequestquery',
+    deleteBulk: RequestEvents.deleteBulkAction,
+    undeleteBulk: RequestEvents.undeleteBulkAction,
+    query: RequestEvents.queryAction,
+    projectlist: RequestEvents.listProjectAction,
     State: {
       update: RequestEvents.updatedState,
       delete: RequestEvents.deletedState,

@@ -25,10 +25,10 @@ import { cancelEvent } from './Utils.js';
 /** @typedef {import('./events/ProjectEvents').ARCProjectUpdateEvent} ARCProjectUpdateEvent */
 /** @typedef {import('./events/ProjectEvents').ARCProjectUpdateBulkEvent} ARCProjectUpdateBulkEvent */
 /** @typedef {import('./events/ProjectEvents').ARCProjectDeleteEvent} ARCProjectDeleteEvent */
-/** @typedef {import('./events/ProjectEvents').ARCProjectQueryEvent} ARCProjectQueryEvent */
+/** @typedef {import('./events/ProjectEvents').ARCProjectListEvent} ARCProjectListEvent */
 /** @typedef {import('./types').ARCEntityChangeRecord} ARCEntityChangeRecord */
-/** @typedef {import('./types').ARCModelQueryResult} ARCModelQueryResult */
-/** @typedef {import('./types').ARCModelQueryOptions} ARCModelQueryOptions */
+/** @typedef {import('./types').ARCModelListResult} ARCModelListResult */
+/** @typedef {import('./types').ARCModelListOptions} ARCModelListOptions */
 
 export const readHandler = Symbol('readHandler');
 export const updateHandler = Symbol('updateHandler');
@@ -59,8 +59,8 @@ export class ProjectModel extends RequestBaseModel {
   /**
    * Lists all project objects.
    *
-   * @param {ARCModelQueryOptions=} opts Query options.
-   * @return {Promise<ARCModelQueryResult>} A promise resolved to a list of projects.
+   * @param {ARCModelListOptions=} opts Query options.
+   * @return {Promise<ARCModelListResult>} A promise resolved to a list of projects.
    */
   async list(opts={}) {
     return this.listEntities(this.projectDb, opts);
@@ -276,7 +276,7 @@ export class ProjectModel extends RequestBaseModel {
 
   /**
    * Queries for a list of projects.
-   * @param {ARCProjectQueryEvent} e
+   * @param {ARCProjectListEvent} e
    */
   [queryHandler](e) {
     if (this._eventCancelled(e)) {

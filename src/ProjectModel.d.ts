@@ -1,6 +1,6 @@
 import { RequestBaseModel } from './RequestBaseModel.js';
 import { ARCProject } from './RequestTypes';
-import { ARCEntityChangeRecord, ARCModelQueryResult, ARCModelQueryOptions } from './types';
+import { ARCEntityChangeRecord, ARCModelListResult, ARCModelListOptions } from './types';
 
 /**
  * A model to access projects data in Advanced REST Client.
@@ -15,7 +15,7 @@ export declare class ProjectModel extends RequestBaseModel {
    * @param opts Query options.
    * @returns A promise resolved to a list of projects.
    */
-  list(opts?: ARCModelQueryOptions): Promise<ARCModelQueryResult<ARCProject>>;
+  list(opts?: ARCModelListOptions): Promise<ARCModelListResult<ARCProject>>;
 
   /**
    * Updates project object taking care of `_rew` value read if missing.

@@ -1,31 +1,38 @@
 /* eslint-disable max-classes-per-file */
 import { ArcModelEventTypes } from './ArcModelEventTypes.js';
-import { ARCEntityDeletedEvent } from './BaseEvents.js';
+import { ARCEntityDeletedEvent, ARCEntityListEvent } from './BaseEvents.js';
 
 /** @typedef {import('./RequestEvents').ARCRequestEventRequestOptions} ARCRequestEventRequestOptions */
 /** @typedef {import('../types').ARCEntityChangeRecord} ARCEntityChangeRecord */
+/** @typedef {import('../types').DeletedEntity} DeletedEntity */
 /** @typedef {import('../RequestTypes').ARCSavedRequest} ARCSavedRequest */
 /** @typedef {import('../RequestTypes').ARCHistoryRequest} ARCHistoryRequest */
 /** @typedef {import('../RequestTypes').SaveARCRequestOptions} SaveARCRequestOptions */
+/** @typedef {import('../RequestTypes').ARCRequestRestoreOptions} ARCRequestRestoreOptions */
+/** @typedef {import('../types').ARCModelListOptions} ARCModelListOptions */
+/** @typedef {import('../types').ARCModelListResult} ARCModelListResult */
 
 export const requestValue = Symbol('requestValue');
+export const requestsValue = Symbol('requestsValue');
 export const requestIdValue = Symbol('requestIdValue');
 export const revisionValue = Symbol('revisionValue');
 export const optionsValue = Symbol('optionsValue');
 export const typeValue = Symbol('typeValue');
 export const changeRecordValue = Symbol('changeRecordValue');
 export const projectsValue = Symbol('projectsValue');
+export const detailedValue = Symbol('detailedValue');
+export const termValue = Symbol('termValue');
 
 /**
  * An event to be dispatched to read an ARC request object from the data store.
  */
 export class ARCRequestReadEvent extends CustomEvent {
   /**
-   * @param {string} type Request type. Either `saved` or `history`.
+   * @param {string} requestType Request type. Either `saved` or `history`.
    * @param {string} id Request id
    * @param {ARCRequestEventRequestOptions=} opts ARC request read options.
    */
-  constructor(type, id, opts) {
+  constructor(requestType, id, opts) {
     if (!id) {
       throw new Error('The request ID is missing.');
     }
@@ -36,7 +43,7 @@ export class ARCRequestReadEvent extends CustomEvent {
       detail: {},
     });
     this[requestIdValue] = id;
-    this[typeValue] = type;
+    this[typeValue] = requestType;
     this[optionsValue] = opts;
   }
 
@@ -49,10 +56,59 @@ export class ARCRequestReadEvent extends CustomEvent {
   }
 
   /**
-   * @return {ARCRequestEventRequestOptions|null} ARC request read options.
+   * @return {ARCRequestEventRequestOptions|undefined} ARC request read options.
    */
   get opts() {
-    return this[optionsValue] || null;
+    return this[optionsValue];
+  }
+
+  /**
+   * @return {string} The request type. Either `saved` or `history`.
+   */
+  get requestType() {
+    return this[typeValue];
+  }
+}
+
+/**
+ * An event to be dispatched to read in bulk ARC request objects from the data store.
+ */
+export class ARCRequestReadBulkEvent extends CustomEvent {
+  /**
+   * @param {string} requestType Request type. Either `saved` or `history`.
+   * @param {string[]} ids List of ids to read.
+   * @param {ARCRequestEventRequestOptions=} opts ARC request read options.
+   */
+  constructor(requestType, ids, opts) {
+    if (!Array.isArray(ids)) {
+      throw new Error('The request lists is missing.');
+    }
+    if (!requestType) {
+      throw new Error('The requestType is missing.');
+    }
+    super(ArcModelEventTypes.Request.readBulk, {
+      bubbles: true,
+      composed: true,
+      cancelable: true,
+      detail: {},
+    });
+    this[requestIdValue] = ids;
+    this[typeValue] = requestType;
+    this[optionsValue] = opts;
+  }
+
+  /**
+   * @return {string[]} The list of ids used to initialize this event.
+   */
+  get ids() {
+    return this[requestIdValue];
+  }
+
+  /**
+   * @return {ARCRequestEventRequestOptions|undefined} ARC request read options.
+   */
+  get opts() {
+    return this[optionsValue];
   }
 
   /**
@@ -68,10 +124,16 @@ export class ARCRequestReadEvent extends CustomEvent {
  */
 export class ARCRequestUpdateEvent extends CustomEvent {
   /**
-   * @param {string} type Request type. Either `saved` or `history`.
+   * @param {string} requestType Request type. Either `saved` or `history`.
    * @param {ARCHistoryRequest|ARCSavedRequest} request An ARC request to update.
    */
-  constructor(type, request) {
+  constructor(requestType, request) {
+    if (!requestType) {
+      throw new Error('The requestType is missing.');
+    }
+    if (!request) {
+      throw new Error('The request is missing.');
+    }
     super(ArcModelEventTypes.Request.update, {
       bubbles: true,
       composed: true,
@@ -79,7 +141,7 @@ export class ARCRequestUpdateEvent extends CustomEvent {
       detail: {}
     });
     this[requestValue] = request;
-    this[typeValue] = type;
+    this[typeValue] = requestType;
   }
 
   /**
@@ -104,13 +166,19 @@ export class ARCRequestUpdateEvent extends CustomEvent {
  */
 export class ARCRequestStoreEvent extends CustomEvent {
   /**
-   * @param {string} type Request type. Either `saved` or `history`.
+   * @param {string} requestType Request type. Either `saved` or `history`.
    * @param {ARCHistoryRequest|ARCSavedRequest} request An ARC request to update.
    * @param {string[]=} projects List of project names to create with this request
    * and attach it to the request object. Only relevant for `saved` type.
    * @param {SaveARCRequestOptions=} opts Save request options.  Only relevant for `saved` type.
    */
-  constructor(type, request, projects, opts) {
+  constructor(requestType, request, projects, opts) {
+    if (!requestType) {
+      throw new Error('The requestType is missing.');
+    }
+    if (!request) {
+      throw new Error('The request is missing.');
+    }
     super(ArcModelEventTypes.Request.store, {
       bubbles: true,
       composed: true,
@@ -118,7 +186,7 @@ export class ARCRequestStoreEvent extends CustomEvent {
       detail: {}
     });
     this[requestValue] = request;
-    this[typeValue] = type;
+    this[typeValue] = requestType;
     this[projectsValue] = projects;
     this[optionsValue] = opts;
   }
@@ -138,18 +206,18 @@ export class ARCRequestStoreEvent extends CustomEvent {
   }
 
   /**
-   * @return {SaveARCRequestOptions|null} ARC request store options.
+   * @return {SaveARCRequestOptions|undefined} ARC request store options.
    */
   get opts() {
-    return this[optionsValue] || null;
+    return this[optionsValue];
   }
 
   /**
-   * @return {string[]|null} List of project names to create with this request
+   * @return {string[]|undefined} List of project names to create with this request
    * and attach it to the request object. Only relevant for `saved` type.
    */
   get projects() {
-    return this[projectsValue] || null;
+    return this[projectsValue];
   }
 }
 
@@ -158,10 +226,16 @@ export class ARCRequestStoreEvent extends CustomEvent {
  */
 export class ARCRequestUpdateBulkEvent extends CustomEvent {
   /**
-   * @param {string} type Request type. Either `saved` or `history`.
+   * @param {string} requestType Request type. Either `saved` or `history`.
    * @param {(ARCHistoryRequest|ARCSavedRequest)[]} requests A list of ARC request to update.
    */
-  constructor(type, requests) {
+  constructor(requestType, requests) {
+    if (!requestType) {
+      throw new Error('The requestType is missing.');
+    }
+    if (!requests) {
+      throw new Error('The request is missing.');
+    }
     super(ArcModelEventTypes.Request.updateBulk, {
       bubbles: true,
       composed: true,
@@ -169,7 +243,7 @@ export class ARCRequestUpdateBulkEvent extends CustomEvent {
       detail: {}
     });
     this[requestValue] = requests;
-    this[typeValue] = type;
+    this[typeValue] = requestType;
   }
 
   /**
@@ -192,16 +266,22 @@ export class ARCRequestUpdateBulkEvent extends CustomEvent {
  */
 export class ARCRequestUpdatedEvent extends CustomEvent {
   /**
-   * @param {string} type ARC request type
+   * @param {string} requestType ARC request type
    * @param {ARCEntityChangeRecord} record ARC request change record.
    */
-  constructor(type, record) {
+  constructor(requestType, record) {
+    if (!requestType) {
+      throw new Error('The requestType is missing.');
+    }
+    if (!record) {
+      throw new Error('The record is missing.');
+    }
     super(ArcModelEventTypes.Request.State.update, {
       bubbles: true,
       composed: true,
     });
     this[changeRecordValue] = record;
-    this[typeValue] = type;
+    this[typeValue] = requestType;
   }
 
   /**
@@ -222,13 +302,13 @@ export class ARCRequestUpdatedEvent extends CustomEvent {
 /**
  * An event to be dispatched to delete an ARC request object from the data store.
  */
-export class ARCPRequestDeleteEvent extends CustomEvent {
+export class ARCRequestDeleteEvent extends CustomEvent {
   /**
-   * @param {string} type Request type. Either `saved` or `history`.
+   * @param {string} requestType Request type. Either `saved` or `history`.
    * @param {string} id Request id
    * @param {string=} rev A revision ID to delete
    */
-  constructor(type, id, rev) {
+  constructor(requestType, id, rev) {
     if (!id) {
       throw new Error('The request ID is missing.');
     }
@@ -239,7 +319,7 @@ export class ARCPRequestDeleteEvent extends CustomEvent {
       detail: {},
     });
     this[requestIdValue] = id;
-    this[typeValue] = type;
+    this[typeValue] = requestType;
     this[revisionValue] = rev;
   }
 
@@ -252,10 +332,84 @@ export class ARCPRequestDeleteEvent extends CustomEvent {
   }
 
   /**
-   * @return {string|null} A revision ID to delete
+   * @return {string|undefined} A revision ID to delete
    */
   get rev() {
-    return this[revisionValue] || null;
+    return this[revisionValue];
+  }
+
+  /**
+   * @return {string} The request type. Either `saved` or `history`.
+   */
+  get requestType() {
+    return this[typeValue];
+  }
+}
+
+/**
+ * An event to be dispatched to delete a list of ARC request objects from the data store.
+ */
+export class ARCRequestDeleteBulkEvent extends CustomEvent {
+  /**
+   * @param {string} requestType Request type. Either `saved` or `history`.
+   * @param {string[]} ids List of requests to delete
+   */
+  constructor(requestType, ids) {
+    if (!ids) {
+      throw new Error('The requests list is missing.');
+    }
+    super(ArcModelEventTypes.Request.deleteBulk, {
+      bubbles: true,
+      composed: true,
+      cancelable: true,
+      detail: {},
+    });
+    this[requestIdValue] = ids;
+    this[typeValue] = requestType;
+  }
+
+  /**
+   * @return {string[]} List of requests to delete used to initialize the event.
+   */
+  get ids() {
+    return this[requestIdValue];
+  }
+
+  /**
+   * @return {string} The request type. Either `saved` or `history`.
+   */
+  get requestType() {
+    return this[typeValue];
+  }
+}
+
+/**
+ * An event to be dispatched to undelete a list of ARC request objects from the data store.
+ */
+export class ARCRequestUndeleteBulkEvent extends CustomEvent {
+  /**
+   * @param {string} requestType Request type. Either `saved` or `history`.
+   * @param {DeletedEntity[]} requests List of requests to restore
+   */
+  constructor(requestType, requests) {
+    if (!requests) {
+      throw new Error('The requests list is missing.');
+    }
+    super(ArcModelEventTypes.Request.undeleteBulk, {
+      bubbles: true,
+      composed: true,
+      cancelable: true,
+      detail: {},
+    });
+    this[requestsValue] = requests;
+    this[typeValue] = requestType;
+  }
+
+  /**
+   * @return {DeletedEntity[]} List of requests to restore used to initialize the event.
+   */
+  get requests() {
+    return this[requestsValue];
   }
 
   /**
@@ -269,18 +423,18 @@ export class ARCPRequestDeleteEvent extends CustomEvent {
 /**
  * An event dispatched by the data store when a request object was deleted.
  */
-export class ARCPRequestDeletedEvent extends ARCEntityDeletedEvent {
+export class ARCRequestDeletedEvent extends ARCEntityDeletedEvent {
   /**
-   * @param {string} type Request type. Either `saved` or `history`.
+   * @param {string} requestType Request type. Either `saved` or `history`.
    * @param {string} id Request id
    * @param {string} rev An updated revision ID of the delete object.
    */
-  constructor(type, id, rev) {
+  constructor(requestType, id, rev) {
     if (!id) {
       throw new Error('The request ID is missing.');
     }
     super(ArcModelEventTypes.Request.State.delete, id, rev);
-    this[typeValue] = type;
+    this[typeValue] = requestType;
   }
 
   /**
@@ -292,16 +446,173 @@ export class ARCPRequestDeletedEvent extends ARCEntityDeletedEvent {
 }
 
 /**
+ * An event dispatched by the UI when requesting a list of requests
+ */
+export class ARCRequestListEvent extends ARCEntityListEvent {
+  /**
+   * @param {string} requestType Request type. Either `saved` or `history`.
+   * @param {ARCModelListOptions=} [opts={}] Query options.
+   */
+  constructor(requestType, opts={}) {
+    if (!requestType) {
+      throw new Error('The request type is missing.');
+    }
+    super(ArcModelEventTypes.Request.list, opts);
+    this[typeValue] = requestType;
+  }
+
+  /**
+   * @return {string} The request type. Either `saved` or `history`.
+   */
+  get requestType() {
+    return this[typeValue];
+  }
+}
+
+/**
+ * An event dispatched by the UI when querying the request models for specific data.
+ */
+export class ARCRequestQueryEvent extends CustomEvent {
+  /**
+   * @param {string} term The search term for the query function
+   * @param {string=} requestType The type of the requests to search for.
+   * By default it returns all data.
+   * @param {boolean=} detailed If set it uses slower algorithm but performs full
+   * search on the index. When false it only uses filer like query + '*'.
+   */
+  constructor(term, requestType, detailed) {
+    if (!term) {
+      throw new Error('The term is missing.');
+    }
+    super(ArcModelEventTypes.Request.query, {
+      bubbles: true,
+      composed: true,
+      cancelable: true,
+      detail: {},
+    });
+    this[typeValue] = requestType;
+    this[termValue] = term;
+    this[detailedValue] = detailed;
+  }
+
+  /**
+   * @return {string|undefined} The request type. Either `saved` or `history`.
+   */
+  get requestType() {
+    return this[typeValue];
+  }
+
+  /**
+   * @return {string} The search term for the query function used to initialize the event
+   */
+  get term() {
+    return this[termValue];
+  }
+
+  /**
+   * @return {boolean} If set it uses slower algorithm but performs full
+   * search on the index.
+   */
+  get detailed() {
+    return this[detailedValue] || false;
+  }
+}
+
+/**
+ * An event dispatched by the UI to query for the list of requests in a project.
+ */
+export class ARCRequestListProjectRequestsEvent extends CustomEvent {
+  /**
+   * @param {string} id The project id
+   * @param {ARCRequestRestoreOptions=} opts Request restore options.
+   */
+  constructor(id, opts) {
+    if (!id) {
+      throw new Error('The project id is missing.');
+    }
+    super(ArcModelEventTypes.Request.projectlist, {
+      bubbles: true,
+      composed: true,
+      cancelable: true,
+      detail: {},
+    });
+    this[requestIdValue] = id;
+    this[optionsValue] = opts;
+  }
+
+  /**
+   * The project id
+   * @return {string} The project id used to initialize the event.
+   */
+  get id() {
+    return this[requestIdValue];
+  }
+
+  /**
+   * @return {ARCRequestRestoreOptions|undefined} ARC request read options.
+   */
+  get opts() {
+    return this[optionsValue];
+  }
+}
+
+/**
  * Dispatches an event handled by the data store to read an ARC request metadata.
  *
  * @param {EventTarget} target A node on which to dispatch the event.
- * @param {string} type Request type. Either `saved` or `history`.
+ * @param {string} requestType Request type. Either `saved` or `history`.
  * @param {string} id Request id
  * @param {ARCRequestEventRequestOptions=} opts ARC request read options.
  * @return {Promise<ARCHistoryRequest|ARCSavedRequest>} Promise resolved to an ARC request model.
  */
-export async function readAction(target, type, id, opts) {
-  const e = new ARCRequestReadEvent(type, id, opts);
+export async function readAction(target, requestType, id, opts) {
+  const e = new ARCRequestReadEvent(requestType, id, opts);
+  target.dispatchEvent(e);
+  return e.detail.result;
+}
+
+/**
+ * Dispatches an event handled by the data store to read a list of ARC requests metadata.
+ *
+ * @param {EventTarget} target A node on which to dispatch the event.
+ * @param {string} requestType Request type. Either `saved` or `history`.
+ * @param {string[]} ids List of ids to read
+ * @param {ARCRequestEventRequestOptions=} opts ARC request read options.
+ * @return {Promise<(ARCHistoryRequest|ARCSavedRequest)[]>} Promise resolved to a list of ARC requests.
+ */
+export async function readBulkAction(target, requestType, ids, opts) {
+  const e = new ARCRequestReadBulkEvent(requestType, ids, opts);
+  target.dispatchEvent(e);
+  return e.detail.result;
+}
+
+/**
+ * Dispatches an event handled by the data store to read an ARC request metadata.
+ *
+ * @param {EventTarget} target A node on which to dispatch the event.
+ * @param {string} requestType Request type. Either `saved` or `history`.
+ * @param {ARCModelListOptions=} opts List options.
+ * @return {Promise<ARCModelListResult>} Promise resolved to list of results
+ */
+export async function listAction(target, requestType, opts) {
+  const e = new ARCRequestListEvent(requestType, opts);
+  target.dispatchEvent(e);
+  return e.detail.result;
+}
+
+/**
+ * Dispatches an event handled by the data store to query for ARC request data
+ *
+ * @param {EventTarget} target A node on which to dispatch the event.
+ * @param {string} term The search term for the query function
+ * @param {string=} requestType The type of the requests to search for.
+ * By default it returns all data.
+ * @param {boolean=} detailed If set it uses slower algorithm but performs full
+ * search on the index. When false it only uses filer like query + '*'.
+ * @return {Promise<(ARCHistoryRequest|ARCSavedRequest)[]>} Promise resolved to list of results
+ */
+export async function queryAction(target, term, requestType, detailed) {
+  const e = new ARCRequestQueryEvent(term, requestType, detailed);
   target.dispatchEvent(e);
   return e.detail.result;
 }
@@ -310,12 +621,12 @@ export async function readAction(target, type, id, opts) {
  * Dispatches an event handled by the data store to update an ARC request metadata.
  *
  * @param {EventTarget} target A node on which to dispatch the event.
- * @param {string} type Request type. Either `saved` or `history`.
+ * @param {string} requestType Request type. Either `saved` or `history`.
  * @param {ARCHistoryRequest|ARCSavedRequest} request An ARC request to update.
  * @return {Promise<ARCEntityChangeRecord>} Promise resolved to a change record
  */
-export async function updateAction(target, type, request) {
-  const e = new ARCRequestUpdateEvent(type, request);
+export async function updateAction(target, requestType, request) {
+  const e = new ARCRequestUpdateEvent(requestType, request);
   target.dispatchEvent(e);
   return e.detail.result;
 }
@@ -324,15 +635,15 @@ export async function updateAction(target, type, request) {
  * Dispatches an event handled by the data store to save an ARC request object with metadata`.
  *
  * @param {EventTarget} target A node on which to dispatch the event.
- * @param {string} type Request type. Either `saved` or `history`.
+ * @param {string} requestType Request type. Either `saved` or `history`.
  * @param {ARCHistoryRequest|ARCSavedRequest} request An ARC request to update.
  * @param {string[]=} projects List of project names to create with this request
  * and attach it to the request object. Only relevant for `saved` type.
  * @param {SaveARCRequestOptions=} opts Save request options.  Only relevant for `saved` type.
  * @return {Promise<ARCEntityChangeRecord>} Promise resolved to a change record
  */
-export async function storeAction(target, type, request, projects, opts) {
-  const e = new ARCRequestStoreEvent(type, request, projects, opts);
+export async function storeAction(target, requestType, request, projects, opts) {
+  const e = new ARCRequestStoreEvent(requestType, request, projects, opts);
   target.dispatchEvent(e);
   return e.detail.result;
 }
@@ -341,12 +652,12 @@ export async function storeAction(target, type, request, projects, opts) {
  * Dispatches an event handled by the data store to read an ARC request metadata.
  *
  * @param {EventTarget} target A node on which to dispatch the event.
- * @param {string} type Request type. Either `saved` or `history`.
+ * @param {string} requestType Request type. Either `saved` or `history`.
  * @param {(ARCHistoryRequest|ARCSavedRequest)[]} requests List of ARC request objects to update.
  * @return {Promise<ARCEntityChangeRecord[]>} Promise resolved to a list of change record for each object
  */
-export async function updateBulkAction(target, type, requests) {
-  const e = new ARCRequestUpdateBulkEvent(type, requests);
+export async function updateBulkAction(target, requestType, requests) {
+  const e = new ARCRequestUpdateBulkEvent(requestType, requests);
   target.dispatchEvent(e);
   return e.detail.result;
 }
@@ -355,13 +666,55 @@ export async function updateBulkAction(target, type, requests) {
  * Dispatches an event handled by the data store to delete an ARC request from the store.
  *
  * @param {EventTarget} target A node on which to dispatch the event.
- * @param {string} type Request type. Either `saved` or `history`.
+ * @param {string} requestType Request type. Either `saved` or `history`.
  * @param {string} id Request id
  * @param {string=} rev A revision ID to delete
- * @return {Promise<string>} Promise resolved to a new revision after delete.
+ * @return {Promise<DeletedEntity>} Promise resolved to a new revision after delete.
  */
-export async function deleteAction(target, type, id, rev) {
-  const e = new ARCPRequestDeleteEvent(type, id, rev);
+export async function deleteAction(target, requestType, id, rev) {
+  const e = new ARCRequestDeleteEvent(requestType, id, rev);
+  target.dispatchEvent(e);
+  return e.detail.result;
+}
+
+/**
+ * Dispatches an event handled by the data store to delete an ARC request from the store.
+ *
+ * @param {EventTarget} target A node on which to dispatch the event.
+ * @param {string} requestType Request type. Either `saved` or `history`.
+ * @param {string[]} ids List of ids to delete.
+ * @return {Promise<DeletedEntity[]>} Promise resolved to a a list of deleted revisions
+ */
+export async function deleteBulkAction(target, requestType, ids) {
+  const e = new ARCRequestDeleteBulkEvent(requestType, ids);
+  target.dispatchEvent(e);
+  return e.detail.result;
+}
+
+/**
+ * Dispatches an event handled by the data store to delete an ARC request from the store.
+ *
+ * @param {EventTarget} target A node on which to dispatch the event.
+ * @param {string} requestType Request type. Either `saved` or `history`.
+ * @param {DeletedEntity[]} requests List of requests to restore
+ * @return {Promise<ARCEntityChangeRecord[]>} Promise resolved to a a list of change records
+ */
+export async function undeleteBulkAction(target, requestType, requests) {
+  const e = new ARCRequestUndeleteBulkEvent(requestType, requests);
+  target.dispatchEvent(e);
+  return e.detail.result;
+}
+
+/**
+ * Dispatches an event handled by the data store to list all requests that are association with a project.
+ *
+ * @param {EventTarget} target A node on which to dispatch the event.
+ * @param {string} id The project id
+ * @param {ARCRequestRestoreOptions=} opts ARC request read options.
+ * @return {Promise<(ARCHistoryRequest|ARCSavedRequest)[]>} Promise resolved to a a list of requests
+ */
+export async function listProjectAction(target, id, opts) {
+  const e = new ARCRequestListProjectRequestsEvent(id, opts);
   target.dispatchEvent(e);
   return e.detail.result;
 }
@@ -375,11 +728,11 @@ export async function deleteAction(target, type, id, rev) {
  * Dispatches an event after a request object was updated
  *
  * @param {EventTarget} target A node on which to dispatch the event.
- * @param {string} type ARC request type
+ * @param {string} requestType ARC request type
  * @param {ARCEntityChangeRecord} record Change record
  */
-export function updatedState(target, type, record) {
-  const e = new ARCRequestUpdatedEvent(type, record);
+export function updatedState(target, requestType, record) {
+  const e = new ARCRequestUpdatedEvent(requestType, record);
   target.dispatchEvent(e);
 }
 
@@ -387,11 +740,11 @@ export function updatedState(target, type, record) {
  * Dispatches an event after a request was deleted
  *
  * @param {EventTarget} target A node on which to dispatch the event.
- * @param {string} type ARC request type
+ * @param {string} requestType ARC request type
  * @param {string} id Deleted ARC request ID.
  * @param {string} rev Updated revision of the deleted ARC request entity.
  */
-export function deletedState(target, type, id, rev) {
-  const e = new ARCPRequestDeletedEvent(type, id, rev);
+export function deletedState(target, requestType, id, rev) {
+  const e = new ARCRequestDeletedEvent(requestType, id, rev);
   target.dispatchEvent(e);
 }

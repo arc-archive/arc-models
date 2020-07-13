@@ -15,8 +15,9 @@ import { v4 } from '@advanced-rest-client/uuid-generator';
 import { RequestBaseModel } from './RequestBaseModel.js';
 import '../url-indexer.js';
 import { UrlIndexer } from '../index.js';
-import { generateHistoryId, normalizeRequest, cancelEvent } from './Utils.js';
+import { generateHistoryId, normalizeRequest, cancelEvent, revertDelete } from './Utils.js';
 import { ArcModelEvents } from './events/ArcModelEvents.js';
+import { ArcModelEventTypes } from './events/ArcModelEventTypes.js';
 
 /* eslint-disable class-methods-use-this */
 /* eslint-disable no-continue */
@@ -29,14 +30,40 @@ import { ArcModelEvents } from './events/ArcModelEvents.js';
 /** @typedef {import('./RequestTypes').ARCProject} ARCProject */
 /** @typedef {import('./RequestTypes').ARCRequestRestoreOptions} ARCRequestRestoreOptions */
 /** @typedef {import('./types').Entity} Entity */
+/** @typedef {import('./types').DeletedEntity} DeletedEntity */
 /** @typedef {import('./events/RequestEvents').ARCRequestReadEvent} ARCRequestReadEvent */
+/** @typedef {import('./events/RequestEvents').ARCRequestReadBulkEvent} ARCRequestReadBulkEvent */
+/** @typedef {import('./events/RequestEvents').ARCRequestUpdateEvent} ARCRequestUpdateEvent */
+/** @typedef {import('./events/RequestEvents').ARCRequestUpdateBulkEvent} ARCRequestUpdateBulkEvent */
+/** @typedef {import('./events/RequestEvents').ARCRequestStoreEvent} ARCRequestStoreEvent */
+/** @typedef {import('./events/RequestEvents').ARCRequestDeleteEvent} ARCRequestDeleteEvent */
+/** @typedef {import('./events/RequestEvents').ARCRequestListEvent} ARCRequestListEvent */
+/** @typedef {import('./events/RequestEvents').ARCRequestQueryEvent} ARCRequestQueryEvent */
+/** @typedef {import('./events/RequestEvents').ARCRequestListProjectRequestsEvent} ARCRequestListProjectRequestsEvent */
+/** @typedef {import('./events/RequestEvents').ARCRequestDeleteBulkEvent} ARCRequestDeleteBulkEvent */
+/** @typedef {import('./events/RequestEvents').ARCRequestUndeleteBulkEvent} ARCRequestUndeleteBulkEvent */
+/** @typedef {import('./events/BaseEvents').ARCModelUpdateEventDetail} ARCModelUpdateEventDetail */
+/** @typedef {import('./events/BaseEvents').ARCModelDeleteEvent} ARCModelDeleteEvent */
 /** @typedef {import('./types').ARCEntityChangeRecord} ARCEntityChangeRecord */
-/** @typedef {import('./types').ARCModelQueryResult} ARCModelQueryResult */
-/** @typedef {import('./types').ARCModelQueryOptions} ARCModelQueryOptions */
+/** @typedef {import('./types').ARCModelListResult} ARCModelListResult */
+/** @typedef {import('./types').ARCModelListOptions} ARCModelListOptions */
 
 export const readHandler = Symbol('readHandler');
+export const readBulkHandler = Symbol('readBulkHandler');
 export const updateHandler = Symbol('updateHandler');
+export const updatebulkHandler = Symbol('updatebulkHandler');
 export const deleteHandler = Symbol('deleteHandler');
+export const deleteBulkHandler = Symbol('deleteBulkHandler');
+export const undeleteBulkHandler = Symbol('undeleteBulkHandler');
+export const deletemodelHandler = Symbol('deletemodelHandler');
+export const listHandler = Symbol('listHandler');
+export const queryHandler = Symbol('queryHandler');
+export const projectlistHandler = Symbol('projectlistHandler');
+export const storeHandler = Symbol('storeHandler');
+export const syncProjects = Symbol('syncProjects');
+export const sortRequestProjectOrder = Symbol('sortRequestProjectOrder');
+export const saveGoogleDrive = Symbol('saveGoogleDrive');
+export const queryStore = Symbol('queryStore');
 
 /**
  * A model to access request data in Advanced REST Client.
@@ -61,7 +88,7 @@ export const deleteHandler = Symbol('deleteHandler');
 export class RequestModel extends RequestBaseModel {
   /**
    * List of fields to index in the history store.
-   * @return {Array<String>}
+   * @return {string[]}
    */
   get historyIndexes() {
     return ['headers', 'payload', 'method'];
@@ -69,7 +96,7 @@ export class RequestModel extends RequestBaseModel {
 
   /**
    * List of fields to index in the saved store.
-   * @return {Array<String>}
+   * @return {string[]}
    */
   get savedIndexes() {
     return ['headers', 'payload', 'method', 'description', 'name'];
@@ -81,16 +108,17 @@ export class RequestModel extends RequestBaseModel {
   constructor() {
     super();
     this[readHandler] = this[readHandler].bind(this);
-    this._handleObjectSave = this._handleObjectSave.bind(this);
-    this._handleObjectsSave = this._handleObjectsSave.bind(this);
-    this._handleObjectDelete = this._handleObjectDelete.bind(this);
-    this._handleObjectsDelete = this._handleObjectsDelete.bind(this);
-    this._handleUndelete = this._handleUndelete.bind(this);
-    this._saveRequestHandler = this._saveRequestHandler.bind(this);
-    this._saveHistoryHandler = this._saveHistoryHandler.bind(this);
-    this._handleQuery = this._handleQuery.bind(this);
-    this._handleList = this._handleList.bind(this);
-    this._listProjectRequestsHandler = this._listProjectRequestsHandler.bind(
+    this[readBulkHandler] = this[readBulkHandler].bind(this);
+    this[storeHandler] = this[storeHandler].bind(this);
+    this[updateHandler] = this[updateHandler].bind(this);
+    this[updatebulkHandler] = this[updatebulkHandler].bind(this);
+    this[deleteHandler] = this[deleteHandler].bind(this);
+    this[deleteBulkHandler] = this[deleteBulkHandler].bind(this);
+    this[undeleteBulkHandler] = this[undeleteBulkHandler].bind(this);
+    this[deletemodelHandler] = this[deletemodelHandler].bind(this);
+    this[listHandler] = this[listHandler].bind(this);
+    this[queryHandler] = this[queryHandler].bind(this);
+    this[projectlistHandler] = this[projectlistHandler].bind(
       this
     );
   }
@@ -161,10 +189,22 @@ export class RequestModel extends RequestBaseModel {
   async post(type, request) {
     const db = this.getDatabase(type);
     const oldRev = request._rev;
-    const copy = normalizeRequest({ ...request });
+    let copy = normalizeRequest({ ...request });
     if (!copy._id) {
       copy._id = v4();
     }
+    if (!copy._rev) {
+      try {
+        const dbRequest = await db.get(copy._id);
+        copy = { ...dbRequest, ...copy };
+      } catch (e) {
+        /* istanbul ignore if */
+        if (e.status !== 404) {
+          this._handleException(e);
+        }
+      }
+    }
+
     copy.updated = Date.now();
     const response = await db.put(copy);
     copy._rev = response.rev;
@@ -198,6 +238,7 @@ export class RequestModel extends RequestBaseModel {
       const response = responses[i];
       const request = items[i];
       const typedError = /** @type PouchDB.Core.Error */ (response);
+      /* istanbul ignore if */
       if (typedError.error) {
         this._handleException(typedError, true);
         continue;
@@ -229,7 +270,7 @@ export class RequestModel extends RequestBaseModel {
    * @param {string} id The ID of the datastore entry.
    * @param {string=} rev Specific revision to read. Defaults to
    * latest revision.
-   * @return {Promise<string>} Promise resolved to a new `_rev` property of deleted
+   * @return {Promise<DeletedEntity>} Promise resolved to a new `_rev` property of deleted
    * object.
    */
   async delete(type, id, rev) {
@@ -245,7 +286,10 @@ export class RequestModel extends RequestBaseModel {
     if (typedObj.projects) {
       await this.removeRequestsFromProjects(typedObj.projects, [id]);
     }
-    return response.rev;
+    return {
+      rev: response.rev,
+      id,
+    };
   }
 
   /**
@@ -253,14 +297,14 @@ export class RequestModel extends RequestBaseModel {
    *
    * @param {string} type Database type
    * @param {string[]} items List of keys to remove
-   * @return {Promise<string[]>}
+   * @return {Promise<DeletedEntity[]>}
    */
   async deleteBulk(type, items) {
     if (!type) {
       throw new Error('Request "type" property is missing.');
     }
-    if (!items) {
-      throw new Error('The "items" property is missing.');
+    if (!Array.isArray(items)) {
+      throw new Error('The "items" property is expected to be an array.');
     }
     const db = this.getDatabase(type);
     const response = await db.allDocs({
@@ -282,6 +326,7 @@ export class RequestModel extends RequestBaseModel {
       try {
         requestData._deleted = true;
         const updateResult = await db.put(requestData);
+        /* istanbul ignore if */
         if (!updateResult.ok) {
           continue;
         }
@@ -290,8 +335,12 @@ export class RequestModel extends RequestBaseModel {
           projectIds = projectIds.concat(requestData.projects);
         }
         ArcModelEvents.Request.State.delete(this, type, item.id, updateResult.rev);
-        result.push(updateResult.rev);
+        result.push({
+          rev: updateResult.rev,
+          id: item.id,
+        });
       } catch (e) {
+        /* istanbul ignore next */
         continue;
       }
     }
@@ -301,6 +350,7 @@ export class RequestModel extends RequestBaseModel {
 
   /**
    * Removes requests reference from projects in a batch operation
+   *
    * @param {string[]} projectIds List of project ids to update
    * @param {string[]} requestIds List of requests to remove from projects
    * @return {Promise<void>}
@@ -320,6 +370,7 @@ export class RequestModel extends RequestBaseModel {
 
   /**
    * Removes a request reference from a project.
+   *
    * @param {ARCProject} project The project to remove the request from
    * @param {string[]} requestIds List of requests to remove from project
    * @return {Promise<void>} Promise resolved when the operation finishes.
@@ -346,15 +397,11 @@ export class RequestModel extends RequestBaseModel {
   }
 
   /**
-   * Reverts deleted items.
-   * This function fires `request-object-changed` event for each restored
-   * request.
+   * Reverts deleted items and dispatches state change events for each restored item.
    *
-   * @param {string} type Request type: `saved-requests` or `history-requests`
-   * @param {Entity[]} items List of request objects. Required properties are
-   * `_id` and `_rev`.
-   * @return {Promise<(ARCHistoryRequest|ARCSavedRequest)[]>} Resolved promise with restored objects. Objects have
-   * updated `_rev` property.
+   * @param {string} type Request type: `saved` or `history`
+   * @param {DeletedEntity[]} items List of request to restore.
+   * @return {Promise<ARCEntityChangeRecord[]>} Resolved promise with restored objects.
    */
   async revertRemove(type, items) {
     if (!type) {
@@ -364,41 +411,18 @@ export class RequestModel extends RequestBaseModel {
       throw new Error('The "items" argument is missing');
     }
     const db = this.getDatabase(type);
-    // first get information about previous revision (before delete)
-    const restored = await this._findNotDeleted(db, items);
-    for (let i = restored.length - 1; i >= 0; i--) {
-      const item = restored[i];
-      // @ts-ignore
-      if (item.ok === false) {
-        items.splice(i, 1);
-        restored.splice(i, 1);
-      } else {
-        item._rev = items[i]._rev;
-      }
-    }
-    const updated = await db.bulkDocs(restored);
-    const query = {
-      keys: updated.map((item) => item.id),
-      include_docs: true,
-    };
-    const result = await db.allDocs(query);
-    result.rows.forEach((request, i) => {
-      const record = {
-        id: request.id,
-        rev: request.value.rev,
-        item: request.doc,
-        oldRev: items[i]._rev,
-      }
+    const result = await revertDelete(db, items);
+    result.forEach((record) => {
       ArcModelEvents.Request.State.update(this, type, record);
     });
-    return result.rows.map((item) => item.doc);
+    return result;
   }
 
   /**
    * Stores a history object in the data store, taking care of `_rev` property read.
    *
    * @param {ARCHistoryRequest} request The request object to store
-   * @return {Promise<ARCHistoryRequest>} A promise resolved to the updated request object.
+   * @return {Promise<ARCEntityChangeRecord>} A promise resolved to the updated request object.
    */
   async saveHistory(request) {
     const info = { ...request };
@@ -411,6 +435,7 @@ export class RequestModel extends RequestBaseModel {
     try {
       doc = await db.get(info._id);
     } catch (e) {
+      /* istanbul ignore if */
       if (e.status !== 404) {
         this._handleException(e);
         return undefined;
@@ -431,7 +456,7 @@ export class RequestModel extends RequestBaseModel {
    * @param {ARCHistoryRequest|ARCSavedRequest} request ArcRequest object
    * @param {SaveARCRequestOptions=} opts Save request object. Currently only `isDrive`
    * is supported
-   * @return {Promise<ARCHistoryRequest|ARCSavedRequest>} A promise resilved to updated request object.
+   * @return {Promise<ARCEntityChangeRecord>} A promise resilved to updated request object.
    */
   async saveRequest(request, opts = {}) {
     let typed = /** @type ARCSavedRequest */ (request);
@@ -449,14 +474,16 @@ export class RequestModel extends RequestBaseModel {
     }
     try {
       typed = await PayloadProcessor.payloadToString(typed);
-      typed = /** @type ARCSavedRequest */ (await this._saveGoogleDrive(typed, opts));
-      typed = (await this.post(typed.type, typed)).item;
+      typed = /** @type ARCSavedRequest */ (await this[saveGoogleDrive](typed, opts));
+      const record = await this.post(typed.type, typed);
+      typed = record.item;
       if (typed.type === 'saved') {
-        await this._syncProjects(typed._id, typed.projects);
+        await this[syncProjects](typed._id, typed.projects);
       }
-      return typed;
+      return record;
     } catch (e) {
       this._handleException(e);
+      /* istanbul ignore next */
       return undefined;
     }
   }
@@ -467,9 +494,9 @@ export class RequestModel extends RequestBaseModel {
    * This is not the same as searching for a request. This only lists
    * data from the datastore for given query options.
    *
-   * @param {String} type Datastore type
-   * @param {ARCModelQueryOptions=} opts Query options.
-   * @return {Promise<ARCModelQueryResult>} A promise resolved to a query result for requests.
+   * @param {string} type Datastore type
+   * @param {ARCModelListOptions=} opts Query options.
+   * @return {Promise<ARCModelListResult>} A promise resolved to a query result for requests.
    */
   async list(type, opts={}) {
     if (!type) {
@@ -480,84 +507,14 @@ export class RequestModel extends RequestBaseModel {
   }
 
   /**
-   * Adds event listeners.
-   * @param {EventTarget} node
-   */
-  _attachListeners(node) {
-    node.addEventListener('save-request', this._saveRequestHandler);
-    node.addEventListener('save-history', this._saveHistoryHandler);
-    node.addEventListener('request-object-read', this[readHandler]);
-    node.addEventListener('request-object-changed', this._handleObjectSave);
-    node.addEventListener('request-objects-changed', this._handleObjectsSave);
-    node.addEventListener('request-object-deleted', this._handleObjectDelete);
-    node.addEventListener('request-objects-deleted', this._handleObjectsDelete);
-    node.addEventListener('request-objects-undeleted', this._handleUndelete);
-    node.addEventListener('request-query', this._handleQuery);
-    node.addEventListener('request-list', this._handleList);
-    node.addEventListener(
-      'request-project-list',
-      this._listProjectRequestsHandler
-    );
-    node.addEventListener('destroy-model', this._deleteModelHandler);
-  }
-
-  /**
-   * Removes event listeners.
-   * @param {EventTarget} node
-   */
-  _detachListeners(node) {
-    node.removeEventListener('save-request', this._saveRequestHandler);
-    node.removeEventListener('save-history', this._saveHistoryHandler);
-    node.removeEventListener('request-object-read', this[readHandler]);
-    node.removeEventListener('request-object-changed', this._handleObjectSave);
-    node.removeEventListener(
-      'request-objects-changed',
-      this._handleObjectsSave
-    );
-    node.removeEventListener(
-      'request-object-deleted',
-      this._handleObjectDelete
-    );
-    node.removeEventListener(
-      'request-objects-deleted',
-      this._handleObjectsDelete
-    );
-    node.removeEventListener('request-objects-undeleted', this._handleUndelete);
-    node.removeEventListener('request-query', this._handleQuery);
-    node.removeEventListener('request-list', this._handleList);
-    node.removeEventListener(
-      'request-project-list',
-      this._listProjectRequestsHandler
-    );
-    node.removeEventListener('destroy-model', this._deleteModelHandler);
-  }
-
-  /**
-   * A handler for `save-request-data` custom event. It's special event to
-   * save / update request data dispatched by the request editor.
-   *
-   * @param {CustomEvent} e
-   */
-  _saveRequestHandler(e) {
-    if (e.defaultPrevented) {
-      return;
-    }
-    e.preventDefault();
-    e.stopPropagation();
-    const { request, projects, options } = e.detail;
-    e.detail.result = this.saveRequestProject(request, projects, options);
-  }
-
-  /**
    * Saves requests with project data.
-   * This is an actual implementation of `save-request` events.
    *
-   * @param {ARCSavedRequest|ARCHistoryRequest} request Request object to store.
+   * @param {ARCSavedRequest} request Request object to store.
    * @param {string[]=} projects List of project names to create with this request
    * and attach it to the request object.
    * @param {SaveARCRequestOptions=} options Save request options. Currently only `isDrive`
    * is supported
-   * @return {Promise<ARCSavedRequest>} A promise resolved to updated request object
+   * @return {Promise<ARCEntityChangeRecord>} A promise resolved to updated request object
    */
   async saveRequestProject(request, projects, options) {
     const typed = /** @type ARCSavedRequest */ ({ ...request });
@@ -589,12 +546,12 @@ export class RequestModel extends RequestBaseModel {
   }
 
   /**
-   * Create projects from project names.
+   * Create projects from project names and adds a request into the projects.
    * It is used when creating a request with a new project.
    *
    * @param {string[]} names Names of projects
    * @param {string=} requestId Request ID to add to the projects.
-   * @return {Promise<string[]>} Promise resolved to list of project IDs
+   * @return {Promise<string[]>} Promise resolved to list of saved project ids
    */
   async createRequestProjects(names, requestId) {
     const requests = [];
@@ -614,6 +571,7 @@ export class RequestModel extends RequestBaseModel {
     for (let i = 0, len = response.length; i < len; i++) {
       const r = response[i];
       const typedError = /** @type PouchDB.Core.Error */ (r);
+      /* istanbul ignore if */
       if (typedError.error) {
         this._handleException(typedError, true);
         continue;
@@ -621,399 +579,15 @@ export class RequestModel extends RequestBaseModel {
       const project = /** @type ARCProject */ (projects[i]);
       project._rev = r.rev;
       project._id = r.id;
-      this._fireUpdated('project-object-changed', {
-        project,
-      });
+      const record = {
+        id: r.id,
+        rev: r.rev,
+        item: project,
+      };
+      ArcModelEvents.Project.State.update(this, record);
       result[result.length] = r.id;
     }
     return result;
-  }
-
-  /**
-   * Handler for `save-history` object. It computes payload to savable state
-   * and saves history object.
-   * Note, the ID is is a combination of today's midningt timestamp, url and
-   * method. If such ID already exists the object is updated.
-   *
-   * @param {CustomEvent} e
-   */
-  _saveHistoryHandler(e) {
-    if (e.defaultPrevented) {
-      return;
-    }
-    e.preventDefault();
-    e.stopPropagation();
-    const { request } = e.detail;
-    e.detail.result = this.saveHistory(request);
-  }
-
-  /**
-   * Synchronizes project requests to ensure each project contains this
-   * `requestId` on its list of requests.
-   *
-   * @param {string} requestId Request ID
-   * @param {string[]} projects List of request projects.
-   * @return {Promise<void>}
-   */
-  async _syncProjects(requestId, projects) {
-    if (!projects || !projects.length) {
-      return;
-    }
-    const db = this.projectDb;
-    const update = [];
-    const queryResponse = await db.allDocs({
-      include_docs: true,
-    });
-
-    const { rows } = queryResponse;
-    for (let i = 0, len = rows.length; i < len; i++) {
-      const project = rows[i];
-      const { doc } = project;
-      if (projects.indexOf(project.id) === -1) {
-        const index = doc.requests ? doc.requests.indexOf(requestId) : -1;
-        if (index !== -1) {
-          doc.requests.splice(index, 1);
-          update.push(doc);
-        }
-        continue;
-      }
-      if (!doc.requests) {
-        doc.requests = [requestId];
-        update.push(doc);
-      } else if (doc.requests.indexOf(requestId) === -1) {
-        doc.requests.push(requestId);
-        update.push(doc);
-      }
-    }
-    if (!update.length) {
-      return;
-    }
-    const response = await db.bulkDocs(update);
-    for (let i = 0, len = response.length; i < len; i++) {
-      const r = response[i];
-      const typedError = /** @type PouchDB.Core.Error */ (r);
-      if (typedError.error) {
-        this._handleException(r, true);
-        continue;
-      }
-      const project = update[i];
-      project._rev = r.rev;
-      this._fireUpdated('project-object-changed', {
-        project,
-      });
-    }
-  }
-
-  /**
-   * Finds last not deleted revision of a document.
-   * @param {PouchDB.Database} db PouchDB instance
-   * @param {Entity[]} items List of documents to process
-   * @return {Promise<(ARCHistoryRequest|ARCSavedRequest)[]>} Last not deleted version of each document.
-   */
-  async _findNotDeleted(db, items) {
-    const list = items.map((item) => {
-      return {
-        id: item._id,
-        rev: item._rev,
-      };
-    });
-    const options = {
-      docs: list,
-      revs: true,
-    };
-    const result = await db.bulkGet(options);
-    const { results } = result;
-    const data = [];
-    for (let i = 0, len = results.length; i < len; i++) {
-      const item = results[i];
-      // @ts-ignore
-      const doc = /** @type PouchDB.Core.GetMeta */ (item.docs[0].ok);
-      if (!doc) {
-        data[data.length] = { ok: false };
-        continue;
-      }
-      const revs = doc._revisions;
-      const undeletedRevision = this._findUndeletedRevision(revs, list[i].rev);
-      if (!undeletedRevision) {
-        data[data.length] = { ok: false };
-      } else {
-        // @ts-ignore
-        data[data.length] = await db.get(doc._id, { rev: undeletedRevision });
-      }
-    }
-    return data;
-  }
-
-  /**
-   * Finds a next revision after the `deletedRevision` in the revisions history
-   * which is the one that reverts any changes made after it.
-   *
-   * @param {object} revs PouchDB revision history object
-   * @param {string} deletedRevision Revision of deleted object (after delete).
-   * @return {string|null} Revision ID of the object before a change registered in
-   * `deletedRevision`
-   */
-  _findUndeletedRevision(revs, deletedRevision) {
-    // find a revision matching deleted item's updated rev
-    let index = revs.start;
-    const { ids } = revs;
-    let found = false;
-    for (let i = 0, len = ids.length; i < len; i++) {
-      const revision = `${index}-${ids[i]}`;
-      if (found) {
-        return revision;
-      }
-      if (revision === deletedRevision) {
-        // next revision is the one we are looking for.
-        found = true;
-      }
-      index--;
-    }
-    return null;
-  }
-
-  /**
-   * Handler for the request read event.
-   * @param {ARCRequestReadEvent} e
-   */
-  [readHandler](e) {
-    if (this._eventCancelled(e)) {
-      return;
-    }
-    cancelEvent(e);
-    const { id, type, opts={} } = e;
-    if (!id) {
-      e.detail.result = Promise.reject(
-        new Error('Request "id" property is missing.')
-      );
-      return;
-    }
-    if (!type) {
-      e.detail.result = Promise.reject(
-        new Error('Request "type" property is missing.')
-      );
-      return;
-    }
-    const options = { ...opts };
-    delete options.rev;
-    e.detail.result = this.get(type, id, opts.rev, options);
-  }
-
-  /**
-   * Handles onject save / update
-   *
-   * @param {CustomEvent} e
-   */
-  _handleObjectSave(e) {
-    if (e.composedPath()[0] === this || !e.cancelable) {
-      return;
-    }
-    e.preventDefault();
-    e.stopPropagation();
-    const { type, request } = e.detail;
-    e.detail.result = this._saveObjectHanlder(type, request);
-  }
-
-  async _saveObjectHanlder(type, request) {
-    if (!type) {
-      throw new Error('The "type" property is missing.');
-    }
-    if (!request) {
-      throw new Error('The "request" property is missing.');
-    }
-    const db = this.getDatabase(type);
-    let item = { ...request };
-    if (item._id && !item._rev) {
-      try {
-        const dbRequest = await db.get(item._id);
-        item = { ...dbRequest, ...item };
-      } catch (e) {
-        if (e.status !== 404) {
-          this._handleException(e);
-        }
-      }
-    }
-    try {
-      return this.post(type, item);
-    } catch (e) {
-      this._handleException(e);
-      return undefined;
-    }
-  }
-
-  /**
-   * Handler for `request-objects-changed` event. Updates requests in bulk operation.
-   * @param {CustomEvent} e
-   */
-  _handleObjectsSave(e) {
-    if (e.composedPath()[0] === this || !e.cancelable) {
-      return;
-    }
-    e.preventDefault();
-    e.stopPropagation();
-
-    const { requests, type } = e.detail;
-    if (!requests) {
-      e.detail.result = Promise.reject(
-        new Error('The "requests" property is missing.')
-      );
-      return;
-    }
-    if (!type) {
-      e.detail.result = Promise.reject(
-        new Error('The "type" property is missing.')
-      );
-      return;
-    }
-    e.detail.result = this.postBulk(type, requests);
-  }
-
-  /**
-   * Deletes the object from the datastore.
-   *
-   * @param {CustomEvent} e
-   */
-  _handleObjectDelete(e) {
-    if (e.composedPath()[0] === this) {
-      return;
-    }
-    if (!e.cancelable) {
-      return;
-    }
-    e.preventDefault();
-    e.stopPropagation();
-
-    if (!e.detail.type) {
-      e.detail.result = Promise.reject(
-        new Error('Request "type" property is missing.')
-      );
-      return;
-    }
-
-    if (!e.detail.id) {
-      e.detail.result = Promise.reject(new Error('Missing "id" property.'));
-      return;
-    }
-
-    e.detail.result = this.delete(
-      e.detail.type,
-      e.detail.id,
-      e.detail.rev
-    ).catch((ex) => this._handleException(ex));
-  }
-
-  /**
-   * Queries for a list of projects.
-   * @param {CustomEvent} e
-   */
-  _handleObjectsDelete(e) {
-    if (!e.cancelable || e.composedPath()[0] === this) {
-      return;
-    }
-    e.preventDefault();
-    e.stopPropagation();
-    const { type, items } = e.detail;
-    e.detail.result = this.deleteBulk(type, items);
-  }
-
-  /**
-   * handlers `request-objects-undeleted` event to restore deleted items
-   * @param {CustomEvent} e
-   */
-  _handleUndelete(e) {
-    if (!e.cancelable || e.composedPath()[0] === this) {
-      return;
-    }
-    e.preventDefault();
-    e.stopPropagation();
-
-    const { type, items } = e.detail;
-    e.detail.result = this.revertRemove(type, items).catch((ex) =>
-      this._handleException(ex)
-    );
-  }
-
-  /**
-   * Saves the request on Google Drive.
-   * It dispatches `google-drive-data-save` event to call a component responsible
-   * for saving the request on Google Drive.
-   *
-   * This do nothing if `opts.drive is not set.`
-   *
-   * @param {ARCHistoryRequest|ARCSavedRequest} data Data to save
-   * @param {SaveARCRequestOptions} opts Save request options.
-   * @return {Promise<ARCHistoryRequest|ARCSavedRequest>} Resolved promise to updated object.
-   */
-  async _saveGoogleDrive(data, opts) {
-    if (!opts.isDrive) {
-      return data;
-    }
-    const copy = { ...data };
-    const e = new CustomEvent('google-drive-data-save', {
-      bubbles: true,
-      cancelable: true,
-      composed: true,
-      detail: {
-        result: undefined,
-        content: copy,
-        // @ts-ignore
-        file: `${copy.name || 'arc-request'}.arc`,
-        options: {
-          contentType: 'application/restclient+data',
-        },
-      },
-    });
-    this.dispatchEvent(e);
-    if (!e.defaultPrevented) {
-      throw new Error('Drive export module not found');
-    }
-    const insertResult = await e.detail.result;
-    const driveId = insertResult.id;
-    if (driveId) {
-      copy.driveId = driveId;
-    }
-    return copy;
-  }
-
-  /**
-   * Handler for `request-list` custom event.
-   * The `result` property will contain a result of calling `list()` function.
-   *
-   * The event has to be cancelable and not already cancelled in order to handle
-   * it.
-   *
-   * Required properties on `detail` object:
-   * - `type` {String} Datastore type
-   * - `queryOptions` {Object} PouchDB query options.
-   *
-   * @param {CustomEvent} e
-   */
-  _handleList(e) {
-    if (!e.cancelable || e.defaultPrevented) {
-      return;
-    }
-    e.preventDefault();
-    e.stopPropagation();
-    const { type, queryOptions } = e.detail;
-    e.detail.result = this.list(type, queryOptions).catch((ex) =>
-      this._handleException(ex)
-    );
-  }
-
-  /**
-   * A handler for the `request-query` custom event. Queries the datastore for
-   * request data.
-   * The event must have `q` property set on the detail object.
-   *
-   * @param {CustomEvent} e
-   */
-  _handleQuery(e) {
-    if (!e.cancelable) {
-      return;
-    }
-    e.preventDefault();
-    e.stopPropagation();
-    e.detail.result = this.query(e.detail.q, e.detail.type, e.detail.detailed);
   }
 
   /**
@@ -1021,12 +595,12 @@ export class RequestModel extends RequestBaseModel {
    *
    * It calls, in order, `queryUrlData()` and `queryPouchDb()` functions.
    *
-   * @param {string} q User query
+   * @param {string} q The search term
    * @param {string=} type Optional, type of the requests to search for.
    * By default it returns all data.
    * @param {boolean=} detailed If set it uses slower algorithm but performs full
    * search on the index. When false it only uses filer like query + '*'.
-   * @return {Promise<Array<Object>>} Promise resolved to the list of requests.
+   * @return {Promise<(ARCHistoryRequest|ARCSavedRequest)[]>} Promise resolved to the list of requests.
    */
   async query(q, type, detailed) {
     if (!q) {
@@ -1041,7 +615,7 @@ export class RequestModel extends RequestBaseModel {
   /**
    * Performs a query on the URL index data.
    *
-   * @param {String} q User query
+   * @param {String} q Search term
    * @param {string=} type Optional, type of the requests to search for.
    * By default it returns all data.
    * @param {boolean=} detailed If set it uses slower algorithm but performs full
@@ -1091,6 +665,7 @@ export class RequestModel extends RequestBaseModel {
     for (let i = 0, iLen = responses.length; i < iLen; i++) {
       const response = responses[i];
       for (let j = 0, jLen = response.rows.length; j < jLen; j++) {
+        /* istanbul ignore if */
         // @ts-ignore
         if (response.rows[j].error) {
           continue;
@@ -1135,7 +710,7 @@ export class RequestModel extends RequestBaseModel {
    * @return {Promise<(ARCHistoryRequest|ARCSavedRequest)[]>} Promise resolved to the list of requests.
    */
   queryHistory(q, ignore) {
-    return this._queryStore(q, ignore, this.historyDb, this.historyIndexes);
+    return this[queryStore](q, ignore, this.historyDb, this.historyIndexes);
   }
 
   /**
@@ -1146,7 +721,7 @@ export class RequestModel extends RequestBaseModel {
    * @return {Promise<(ARCHistoryRequest|ARCSavedRequest)[]>} Promise resolved to the list of requests.
    */
   async querySaved(q, ignore) {
-    return this._queryStore(q, ignore, this.savedDb, this.savedIndexes);
+    return this[queryStore](q, ignore, this.savedDb, this.savedIndexes);
   }
 
   /**
@@ -1157,7 +732,7 @@ export class RequestModel extends RequestBaseModel {
    * @param {string[]} indexes List of fields to query
    * @return {Promise<(ARCHistoryRequest|ARCSavedRequest)[]>} A promise resolved to list of PouchDB docs.
    */
-  async _queryStore(q, ignore, db, indexes) {
+  async [queryStore](q, ignore, db, indexes) {
     if (!q) {
       throw new Error('The "q" argument is required.');
     }
@@ -1202,23 +777,38 @@ export class RequestModel extends RequestBaseModel {
   }
 
   /**
-   * Handler for `request-project-list` event to query for list of requests in
-   * a project.
-   * @param {CustomEvent} e
+   * Deletes all data of selected type.
+   * @param {string|string[]} models Database type or list of types.
+   * @return {Promise<void>[]} List of promises. Might be empty array.
    */
-  _listProjectRequestsHandler(e) {
-    if (!e.cancelable) {
-      return;
+  deleteDataModel(models) {
+    let items = models;
+    if (!Array.isArray(items)) {
+      items = [items];
     }
-    e.preventDefault();
-    e.stopPropagation();
-    e.detail.result = this.readProjectRequests(e.detail.id, e.detail.opts);
+    const p = [];
+    if (
+      items.indexOf('saved-requests') !== -1 ||
+      items.indexOf('saved') !== -1 ||
+      items.indexOf('all') !== -1
+    ) {
+      p[p.length] = this.deleteModel('saved');
+    }
+    if (
+      items.indexOf('history-requests') !== -1 ||
+      items.indexOf('history') !== -1 ||
+      items.indexOf('all') !== -1
+    ) {
+      p[p.length] = this.deleteModel('history');
+    }
+    return p;
   }
 
   /**
-   * Reads list of requests associated with a project
-   * @param {string} id Project id
-   * @param {ARCRequestRestoreOptions=} opts Request query options.
+   * Reads list of requests associated with a project.
+   *
+   * @param {string} id The project id
+   * @param {ARCRequestRestoreOptions=} opts Request restore options.
    * @return {Promise<(ARCHistoryRequest|ARCSavedRequest)[]>}
    */
   async readProjectRequests(id, opts) {
@@ -1247,8 +837,430 @@ export class RequestModel extends RequestBaseModel {
     for (const item of items) {
       requests[requests.length] = await db.get(item.id);
     }
-    requests.sort(this.sortRequestProjectOrder);
+    requests.sort(this[sortRequestProjectOrder]);
     return requests;
+  }
+
+  /**
+   * Adds event listeners.
+   * @param {EventTarget} node
+   */
+  _attachListeners(node) {
+    node.addEventListener(ArcModelEventTypes.Request.read, this[readHandler]);
+    node.addEventListener(ArcModelEventTypes.Request.readBulk, this[readBulkHandler]);
+    node.addEventListener(ArcModelEventTypes.Request.store, this[storeHandler]);
+    node.addEventListener(ArcModelEventTypes.Request.update, this[updateHandler]);
+    node.addEventListener(ArcModelEventTypes.Request.updateBulk, this[updatebulkHandler]);
+    node.addEventListener(ArcModelEventTypes.Request.delete, this[deleteHandler]);
+    node.addEventListener(ArcModelEventTypes.Request.deleteBulk, this[deleteBulkHandler]);
+    node.addEventListener(ArcModelEventTypes.Request.undeleteBulk, this[undeleteBulkHandler]);
+    node.addEventListener(ArcModelEventTypes.Request.list, this[listHandler]);
+    node.addEventListener(ArcModelEventTypes.Request.query, this[queryHandler]);
+    node.addEventListener(ArcModelEventTypes.Request.projectlist, this[projectlistHandler]);
+    node.addEventListener(ArcModelEventTypes.destroy, this[deletemodelHandler]);
+  }
+
+  /**
+   * Removes event listeners.
+   * @param {EventTarget} node
+   */
+  _detachListeners(node) {
+    node.removeEventListener(ArcModelEventTypes.Request.read, this[readHandler]);
+    node.removeEventListener(ArcModelEventTypes.Request.readBulk, this[readBulkHandler]);
+    node.removeEventListener(ArcModelEventTypes.Request.store, this[storeHandler]);
+    node.removeEventListener(ArcModelEventTypes.Request.update, this[updateHandler]);
+    node.removeEventListener(ArcModelEventTypes.Request.updateBulk, this[updatebulkHandler]);
+    node.removeEventListener(ArcModelEventTypes.Request.delete, this[deleteHandler]);
+    node.removeEventListener(ArcModelEventTypes.Request.deleteBulk, this[deleteBulkHandler]);
+    node.removeEventListener(ArcModelEventTypes.Request.undeleteBulk, this[undeleteBulkHandler]);
+    node.removeEventListener(ArcModelEventTypes.Request.list, this[listHandler]);
+    node.removeEventListener(ArcModelEventTypes.Request.query, this[queryHandler]);
+    node.removeEventListener(ArcModelEventTypes.Request.projectlist, this[projectlistHandler]);
+    node.removeEventListener(ArcModelEventTypes.destroy, this[deletemodelHandler]);
+  }
+
+  /**
+   * Requests to store saved / history item.
+   * It's similar to the `post` method but it also takes care about payload
+   * transformation, project synchronization, etc.
+   * This should not be used to update request meta like name or description.
+   *
+   * @param {ARCRequestStoreEvent} e
+   */
+  [storeHandler](e) {
+    if (e.defaultPrevented) {
+      return;
+    }
+    cancelEvent(e);
+    const { requestType, request, projects, opts } = e;
+    if (requestType === 'history') {
+      e.detail.result = this.saveHistory(request);
+    } else if (requestType === 'saved') {
+      const typed = /** @type ARCSavedRequest */ (request);
+      e.detail.result = this.saveRequestProject(typed, projects, opts);
+    } else {
+      e.detail.result = Promise.reject(new Error(`Unknown request type ${requestType}`));
+    }
+  }
+
+  /**
+   * Synchronizes project requests to ensure each project contains this
+   * `requestId` on its list of requests.
+   *
+   * @param {string} requestId Request ID
+   * @param {string[]} projects List of request projects.
+   * @return {Promise<void>}
+   */
+  async [syncProjects](requestId, projects) {
+    if (!projects || !projects.length) {
+      return;
+    }
+    const db = this.projectDb;
+    const update = [];
+    const queryResponse = await db.allDocs({
+      include_docs: true,
+    });
+
+    const { rows } = queryResponse;
+    for (let i = 0, len = rows.length; i < len; i++) {
+      const project = rows[i];
+      const { doc } = project;
+      if (projects.indexOf(project.id) === -1) {
+        const index = doc.requests ? doc.requests.indexOf(requestId) : -1;
+        if (index !== -1) {
+          doc.requests.splice(index, 1);
+          update.push(doc);
+        }
+        continue;
+      }
+      if (!doc.requests) {
+        doc.requests = [requestId];
+        update.push(doc);
+      } else if (doc.requests.indexOf(requestId) === -1) {
+        doc.requests.push(requestId);
+        update.push(doc);
+      }
+    }
+    if (!update.length) {
+      return;
+    }
+    const response = await db.bulkDocs(update);
+    for (let i = 0, len = response.length; i < len; i++) {
+      const r = response[i];
+      const typedError = /** @type PouchDB.Core.Error */ (r);
+      /* istanbul ignore if */
+      if (typedError.error) {
+        this._handleException(r, true);
+        continue;
+      }
+      const project = update[i];
+      const oldRev = project._rev;
+      project._rev = r.rev;
+      const record = {
+        id: r.id,
+        rev: r.rev,
+        item: project,
+        oldRev,
+      };
+      ArcModelEvents.Project.State.update(this, record);
+    }
+  }
+
+  /**
+   * Handler for the request read event.
+   * @param {ARCRequestReadEvent} e
+   */
+  [readHandler](e) {
+    if (e.defaultPrevented) {
+      return;
+    }
+    cancelEvent(e);
+    const { id, requestType, opts } = e;
+    const userOptions = opts || {};
+    if (!id) {
+      e.detail.result = Promise.reject(
+        new Error('Request "id" property is missing.')
+      );
+      return;
+    }
+    if (!requestType) {
+      e.detail.result = Promise.reject(
+        new Error('Request "requestType" property is missing.')
+      );
+      return;
+    }
+    const options = { ...userOptions };
+    delete options.rev;
+    e.detail.result = this.get(requestType, id, userOptions.rev, options);
+  }
+
+  /**
+   * Handler for the read event in bulk.
+   * @param {ARCRequestReadBulkEvent} e
+   */
+  [readBulkHandler](e) {
+    if (e.defaultPrevented) {
+      return;
+    }
+    cancelEvent(e);
+    const { ids, requestType, opts={} } = e;
+    if (!Array.isArray(ids)) {
+      e.detail.result = Promise.reject(
+        new Error('Request "ids" property is missing.')
+      );
+      return;
+    }
+    if (!requestType) {
+      e.detail.result = Promise.reject(
+        new Error('Request "type" property is missing.')
+      );
+      return;
+    }
+    const options = { ...opts };
+    delete options.rev;
+    e.detail.result = this.getBulk(requestType, ids, options);
+  }
+
+  /**
+   * Updates request metadata
+   * @param {ARCRequestUpdateEvent} e
+   */
+  [updateHandler](e) {
+    if (e.defaultPrevented) {
+      return;
+    }
+    cancelEvent(e);
+    const { request, requestType } = e;
+    if (!requestType) {
+      e.detail.result = Promise.reject(
+        new Error('The "requestType" property is missing.')
+      );
+      return;
+    }
+    if (!request) {
+      e.detail.result = Promise.reject(
+        new Error('The "request" property is missing.')
+      );
+      return;
+    }
+    if (requestType === 'history') {
+      e.detail.result = this.saveHistory(request);
+    } else if (requestType === 'saved') {
+      const typed = /** @type ARCSavedRequest */ (request);
+      e.detail.result = this.saveRequestProject(typed);
+    } else {
+      e.detail.result = Promise.reject(new Error(`Unknown request type ${requestType}`));
+    }
+  }
+
+
+  /**
+   * Updated requests objects in a bulk operation.
+   * @param {ARCRequestUpdateBulkEvent} e
+   */
+  [updatebulkHandler](e) {
+    if (e.defaultPrevented) {
+      return;
+    }
+    cancelEvent(e);
+
+    const { requests, requestType } = e;
+    if (!requests) {
+      e.detail.result = Promise.reject(
+        new Error('The "requests" property is missing.')
+      );
+      return;
+    }
+    if (!requestType) {
+      e.detail.result = Promise.reject(
+        new Error('The "requestType" property is missing.')
+      );
+      return;
+    }
+    e.detail.result = this.postBulk(requestType, requests);
+  }
+
+  /**
+   * Deletes the object from the datastore.
+   *
+   * @param {ARCRequestDeleteEvent} e
+   */
+  [deleteHandler](e) {
+    if (e.defaultPrevented) {
+      return;
+    }
+    cancelEvent(e);
+    const { requestType, id, rev } = e;
+    if (!requestType) {
+      e.detail.result = Promise.reject(
+        new Error('Request "type" property is missing.')
+      );
+      return;
+    }
+
+    if (!id) {
+      e.detail.result = Promise.reject(new Error('Missing "id" property.'));
+      return;
+    }
+
+    e.detail.result = this.delete(requestType, id, rev);
+  }
+
+  /**
+   * Delete in bulk event handler
+   * @param {ARCRequestDeleteBulkEvent} e
+   */
+  [deleteBulkHandler](e) {
+    if (e.defaultPrevented) {
+      return;
+    }
+    e.preventDefault();
+    e.stopPropagation();
+    const { requestType, ids } = e;
+    if (!requestType) {
+      e.detail.result = Promise.reject(
+        new Error('The "requestType" property is missing.')
+      );
+      return;
+    }
+    if (!Array.isArray(ids)) {
+      e.detail.result = Promise.reject(
+        new Error('The "ids" property is missing.')
+      );
+      return;
+    }
+    e.detail.result = this.deleteBulk(requestType, ids);
+  }
+
+  /**
+   * Handles an event to restore deleted requests.
+   * @param {ARCRequestUndeleteBulkEvent} e
+   */
+  [undeleteBulkHandler](e) {
+    if (e.defaultPrevented) {
+      return;
+    }
+    e.preventDefault();
+    e.stopPropagation();
+
+    const { requestType, requests } = e;
+    if (!requestType) {
+      e.detail.result = Promise.reject(
+        new Error('The "requestType" property is missing.')
+      );
+      return;
+    }
+    if (!Array.isArray(requests)) {
+      e.detail.result = Promise.reject(
+        new Error('The "requests" property is missing.')
+      );
+      return;
+    }
+
+    e.detail.result = this.revertRemove(requestType, requests);
+  }
+
+  /**
+   * Saves the request on Google Drive.
+   * It dispatches `google-drive-data-save` event to call a component responsible
+   * for saving the request on Google Drive.
+   *
+   * This do nothing if `opts.drive is not set.`
+   *
+   * @param {ARCHistoryRequest|ARCSavedRequest} data Data to save
+   * @param {SaveARCRequestOptions} opts Save request options.
+   * @return {Promise<ARCHistoryRequest|ARCSavedRequest>} Resolved promise to updated object.
+   */
+  async [saveGoogleDrive](data, opts) {
+    if (!opts.isDrive) {
+      return data;
+    }
+    const copy = { ...data };
+    const e = new CustomEvent('google-drive-data-save', {
+      bubbles: true,
+      cancelable: true,
+      composed: true,
+      detail: {
+        result: undefined,
+        content: copy,
+        // @ts-ignore
+        file: `${copy.name || 'arc-request'}.arc`,
+        options: {
+          contentType: 'application/restclient+data',
+        },
+      },
+    });
+    this.dispatchEvent(e);
+    if (!e.defaultPrevented) {
+      throw new Error('Drive export module not found');
+    }
+    const insertResult = await e.detail.result;
+    const driveId = insertResult.id;
+    if (driveId) {
+      copy.driveId = driveId;
+    }
+    return copy;
+  }
+
+  /**
+   * Handler for `request-list` custom event.
+   * The `result` property will contain a result of calling `list()` function.
+   *
+   * The event has to be cancelable and not already cancelled in order to handle
+   * it.
+   *
+   * Required properties on `detail` object:
+   * - `type` {String} Datastore type
+   * - `queryOptions` {Object} PouchDB query options.
+   *
+   * @param {ARCRequestListEvent} e
+   */
+  [listHandler](e) {
+    if (e.defaultPrevented) {
+      return;
+    }
+    e.preventDefault();
+    e.stopPropagation();
+    const { limit, nextPageToken, requestType } = e;
+    if (!requestType) {
+      e.detail.result = Promise.reject(
+        new Error('The "requestType" property is missing.')
+      );
+      return;
+    }
+    e.detail.result = this.list(requestType, {
+      limit,
+      nextPageToken,
+    });
+  }
+
+  /**
+   * A handler for the request query event.
+   *
+   * @param {ARCRequestQueryEvent} e
+   */
+  [queryHandler](e) {
+    if (e.defaultPrevented) {
+      return;
+    }
+    e.preventDefault();
+    e.stopPropagation();
+    const { term, requestType, detailed } = e;
+    e.detail.result = this.query(term, requestType, detailed);
+  }
+
+  /**
+   * Handler for event dispatched to query for a list of requests in a project.
+   * @param {ARCRequestListProjectRequestsEvent} e
+   */
+  [projectlistHandler](e) {
+    if (e.defaultPrevented) {
+      return;
+    }
+    e.preventDefault();
+    e.stopPropagation();
+    const { id, opts } = e;
+    e.detail.result = this.readProjectRequests(id, opts);
   }
 
   /**
@@ -1258,7 +1270,7 @@ export class RequestModel extends RequestBaseModel {
    * @param {object} b
    * @return {number}
    */
-  sortRequestProjectOrder(a, b) {
+  [sortRequestProjectOrder](a, b) {
     if (a.projectOrder > b.projectOrder) {
       return 1;
     }
@@ -1275,49 +1287,22 @@ export class RequestModel extends RequestBaseModel {
   }
 
   /**
-   * Handler for `destroy-model` custom event.
-   * Deletes saved or history data when scheduled for deletion.
-   * @param {CustomEvent} e
+   * Handler for a event that destroys the application data.
+   * @param {ARCModelDeleteEvent} e
    */
-  _deleteModelHandler(e) {
-    const { models } = e.detail;
-    if (!models || !models.length) {
+  [deletemodelHandler](e) {
+    const { stores, detail } = e;
+    if (!stores || !stores.length) {
       return;
     }
-    const promises = this.deleteDataModel(models);
+    const promises = this.deleteDataModel(stores);
+    /* istanbul ignore else */
     if (promises.length) {
-      if (!e.detail.result) {
-        e.detail.result = [];
+      /* istanbul ignore else */
+      if (!Array.isArray(detail.result)) {
+        detail.result = [];
       }
-      e.detail.result = e.detail.result.concat(promises);
+      detail.result = detail.result.concat(promises);
     }
-  }
-
-  /**
-   * Deletes all data of selected type.
-   * @param {string|string[]} models Database type or list of types.
-   * @return {Promise<void>[]} List of promises. Might be empty array.
-   */
-  deleteDataModel(models) {
-    let items = models;
-    if (!Array.isArray(items)) {
-      items = [items];
-    }
-    const p = [];
-    if (
-      items.indexOf('saved-requests') !== -1 ||
-      items.indexOf('saved') !== -1 ||
-      items.indexOf('all') !== -1
-    ) {
-      p[p.length] = this.deleteModel('saved');
-    }
-    if (
-      items.indexOf('history-requests') !== -1 ||
-      items.indexOf('history') !== -1 ||
-      items.indexOf('all') !== -1
-    ) {
-      p[p.length] = this.deleteModel('history');
-    }
-    return p;
   }
 }

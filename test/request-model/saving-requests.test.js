@@ -27,12 +27,12 @@ describe('RequestModel', () => {
     return true;
   }
 
+  const formDataTestRun = hasFormDataSupport() ? it : it.skip;
+
   const generator = new DataGenerator();
 
   describe('Save request with form data', () => {
     let model = /** @type RequestModel */ (null);
-    let createdId;
-    let createdRev;
     const defaultRequest = {
       url: 'test-url',
       method: 'test-method',
@@ -42,73 +42,57 @@ describe('RequestModel', () => {
       type: 'saved',
     };
 
-    function setCreatedData(result) {
-      createdId = result._id;
-      createdRev = result._rev;
-    }
+    beforeEach(async () => {
+      model = await basicFixture();
+      defaultRequest.payload = new FormData();
+      defaultRequest.payload.append('test', 'value');
+      defaultRequest.payload.append('file', new Blob(['a'], {
+        type: 'application/x-test'
+      }), 'test.txt');
+    });
 
-    describe('simple save', () => {
-      beforeEach(async () => {
-        createdId = undefined;
-        createdRev = undefined;
-        model = await basicFixture();
-        defaultRequest.payload = new FormData();
-        defaultRequest.payload.append('test', 'value');
-        defaultRequest.payload.append('file', new Blob(['a'], {
-          type: 'application/x-test'
-        }), 'test.txt');
-      });
+    afterEach(async () => {
+      await generator.destroySavedRequestData();
+    });
 
-      afterEach(async () => {
-        if (createdId) {
-          await model.savedDb.remove(createdId, createdRev);
-        }
-      });
+    it('creates request object', async () => {
+      await model.saveRequest({ ...defaultRequest })
+      const items = await generator.getDatastoreRequestData();
+      assert.lengthOf(items, 1);
+      assert.equal(items[0].url, 'test-url');
+    });
 
-      after(async () => {
-        await generator.destroySavedRequestData();
-      });
+    it('clears entity payload', async () => {
+      const result = await model.saveRequest({ ...defaultRequest });
+      const { item } = result;
+      assert.isUndefined(item.payload);
+    });
 
-      it('Creates request object', async () => {
-        const result = await model.saveRequest({ ...defaultRequest })
-        setCreatedData(result);
-      });
+    (formDataTestRun)('Created entry contains multipart property', async () => {
+      const result = await model.saveRequest({ ...defaultRequest });
+      const { item } = result;
+      assert.typeOf(item.multipart, 'array');
+    });
 
-      it('clears entitys payload', async () => {
-        const result = await model.saveRequest({ ...defaultRequest })
-        setCreatedData(result);
-        assert.isUndefined(result.payload);
-      });
+    (formDataTestRun)('Contains text entry', async () => {
+      const result = await model.saveRequest({ ...defaultRequest });
+      const { item } = result;
+      assert.isFalse(item.multipart[0].isFile);
+      assert.equal(item.multipart[0].name, 'test');
+      assert.typeOf(item.multipart[0].value, 'string');
+    });
 
-      (hasFormDataSupport() ? it : it.skip)('Created entry contains multipart property', async () => {
-        const result = await model.saveRequest({ ...defaultRequest })
-        setCreatedData(result);
-        // @ts-ignore
-        assert.typeOf(result.multipart, 'array');
-      });
-
-      (hasFormDataSupport() ? it : it.skip)('Contains text entry', async () => {
-        const result = await model.saveRequest({ ...defaultRequest });
-        setCreatedData(result);
-        assert.isFalse(result.multipart[0].isFile);
-        assert.equal(result.multipart[0].name, 'test');
-        assert.typeOf(result.multipart[0].value, 'string');
-      });
-
-      (hasFormDataSupport() ? it : it.skip)('Contains file entry', async () => {
-        const result = await model.saveRequest({ ...defaultRequest })
-        setCreatedData(result);
-        assert.isTrue(result.multipart[1].isFile);
-        assert.equal(result.multipart[1].name, 'file');
-        assert.typeOf(result.multipart[1].value, 'string');
-      });
+    (formDataTestRun)('Contains file entry', async () => {
+      const result = await model.saveRequest({ ...defaultRequest })
+      const { item } = result;
+      assert.isTrue(item.multipart[1].isFile);
+      assert.equal(item.multipart[1].name, 'file');
+      assert.typeOf(item.multipart[1].value, 'string');
     });
   });
 
   describe('Save request with File data', () => {
     let model = /** @type RequestModel */ (null);
-    let createdId;
-    let createdRev;
     const defaultRequest = {
       url: 'test-url',
       method: 'test-method',
@@ -118,137 +102,115 @@ describe('RequestModel', () => {
       type: 'saved',
     };
 
-    function setCreatedData(result) {
-      createdId = result._id;
-      createdRev = result._rev;
+    beforeEach(async () => {
+      model = await basicFixture();
+      const b = new Blob(['a'], {
+        type: 'application/x-test'
+      });
+      // @ts-ignore
+      b.name = 'test.txt'; // mimics file object
+      defaultRequest.payload = b;
+    });
+
+    afterEach(async () => {
+      await generator.destroySavedRequestData();
+    });
+
+    it('creates request object', async () => {
+      // @ts-ignore
+      await model.saveRequest({ ...defaultRequest });
+      const items = await generator.getDatastoreRequestData();
+      assert.lengthOf(items, 1);
+      assert.equal(items[0].url, 'test-url');
+    });
+
+    it('Created entry\'s payload is cleared', async () => {
+      // @ts-ignore
+      const result = await model.saveRequest({ ...defaultRequest });
+      const { item } = result;
+      assert.isUndefined(item.payload);
+    });
+
+    it('Created entry contains blob property', async () => {
+      // @ts-ignore
+      const result = await model.saveRequest({ ...defaultRequest });
+      const { item } = result;
+      assert.typeOf(item.blob, 'string');
+    });
+
+    function dataURLtoBlob(dataurl) {
+      const arr = dataurl.split(',');
+      const mime = arr[0].match(/:(.*?);/)[1];
+      const bstr = atob(arr[1]);
+      let n = bstr.length;
+      const u8arr = new Uint8Array(n);
+      while (n--) {
+        u8arr[n] = bstr.charCodeAt(n);
+      }
+      return new Blob([u8arr], {
+        type: mime
+      });
     }
 
-    describe('Simple save', () => {
-      beforeEach(async () => {
-        model = await basicFixture();
-        const b = new Blob(['a'], {
-          type: 'application/x-test'
-        });
-        // @ts-ignore
-        b.name = 'test.txt'; // mimics file object
-        defaultRequest.payload = b;
-      });
-
-      afterEach(async () => {
-        if (createdId) {
-          await model.savedDb.remove(createdId, createdRev);
-        }
-      });
-
-      after(async () => {
-        await generator.destroySavedRequestData();
-      });
-
-      it('Creates request object', async () => {
-        // @ts-ignore
-        const result = await model.saveRequest({ ...defaultRequest });
-        setCreatedData(result);
-      });
-
-      it('Created entry\'s payload is cleared', async () => {
-        // @ts-ignore
-        const result = await model.saveRequest({ ...defaultRequest });
-        setCreatedData(result);
-        assert.isUndefined(result.payload);
-      });
-
-      it('Created entry contains blob property', async () => {
-        // @ts-ignore
-        const result = await model.saveRequest({ ...defaultRequest });
-        setCreatedData(result);
-        assert.typeOf(result.blob, 'string');
-      });
-
-      function dataURLtoBlob(dataurl) {
-        const arr = dataurl.split(',');
-        const mime = arr[0].match(/:(.*?);/)[1];
-        const bstr = atob(arr[1]);
-        let n = bstr.length;
-        const u8arr = new Uint8Array(n);
-        while (n--) {
-          u8arr[n] = bstr.charCodeAt(n);
-        }
-        return new Blob([u8arr], {
-          type: mime
-        });
-      }
-
-      it('Blob entry can be restored', async () => {
-        // @ts-ignore
-        const result = await model.saveRequest({ ...defaultRequest });
-        setCreatedData(result);
-        const blob = dataURLtoBlob(result.blob);
-        assert.equal(blob.size, defaultRequest.payload.size);
-      });
+    it('Blob entry can be restored', async () => {
+      // @ts-ignore
+      const result = await model.saveRequest({ ...defaultRequest });
+      const { item } = result;
+      const blob = dataURLtoBlob(item.blob);
+      assert.equal(blob.size, defaultRequest.payload.size);
     });
   });
 
   describe('saveRequest()', () => {
-    let clearHistory = false;
-    let clearSaved = false;
-
-    async function databaseCleanup() {
-      if (clearHistory) {
-        await generator.destroyHistoryData();
-      }
-      if (clearSaved) {
-        await generator.destroySavedRequestData();
-      }
-    }
-
     describe('Request type setup', () => {
       let model = /** @type RequestModel */ (null);
 
       beforeEach(async () => {
-        clearHistory = false;
-        clearSaved = false;
         model = await basicFixture();
       });
 
-      afterEach(() => databaseCleanup());
+      afterEach(async () => {
+        await generator.destroyHistoryData();
+        await generator.destroySavedRequestData();
+      });
 
       it('Sets history if no name', async () => {
-        clearHistory = true;
         const item = /** @type ARCHistoryRequest */ (generator.generateHistoryObject());
         delete item.type;
-        const request = await model.saveRequest(item);
+        const result = await model.saveRequest(item);
+        const { item: request } = result;
         assert.equal(request.type, 'history');
       });
 
       it('Sets saved if name', async () => {
-        clearSaved = true;
         const item = /** @type ARCSavedRequest */ (generator.generateSavedItem());
         delete item.type;
-        const request = await model.saveRequest(item);
+        const result = await model.saveRequest(item);
+        const { item: request } = result;
         assert.equal(request.type, 'saved');
       });
 
       it('Keeps type if defined', async () => {
-        clearSaved = true;
         const item = /** @type ARCHistoryRequest */ (generator.generateHistoryObject());
         item.type = 'saved';
-        const request = await model.saveRequest(item);
+        const result = await model.saveRequest(item);
+        const { item: request } = result;
         assert.equal(request.type, 'saved');
       });
 
       it('Renames "drive" to "saved"', async () => {
-        clearSaved = true;
         const item = /** @type ARCHistoryRequest */ (generator.generateHistoryObject());
         item.type = 'drive';
-        const request = await model.saveRequest(item);
+        const result = await model.saveRequest(item);
+        const { item: request } = result;
         assert.equal(request.type, 'saved');
       });
 
       it('Renames "google-drive" to "saved"', async () => {
-        clearSaved = true;
         const item = /** @type ARCHistoryRequest */ (generator.generateHistoryObject());
         item.type = 'google-drive';
-        const request = await model.saveRequest(item);
+        const result = await model.saveRequest(item);
+        const { item: request } = result;
         assert.equal(request.type, 'saved');
       });
     });
@@ -256,26 +218,27 @@ describe('RequestModel', () => {
     describe('Request id and rev', () => {
       let model = /** @type RequestModel */ (null);
       beforeEach(async () => {
-        clearHistory = false;
-        clearSaved = false;
         // clearProjects = false;
         model = await basicFixture();
       });
 
-      afterEach(() => databaseCleanup());
+      afterEach(async () => {
+        await generator.destroyHistoryData();
+        await generator.destroySavedRequestData();
+      });
 
       it('Generates an ID for the request', async () => {
-        clearHistory = true;
         const item = /** @type ARCHistoryRequest */ (generator.generateHistoryObject());
         delete item._id;
-        const request = await model.saveRequest(item);
+        const result = await model.saveRequest(item);
+        const { item: request } = result;
         assert.typeOf(request._id, 'string');
       });
 
       it('Returns the REV proeprty', async () => {
-        clearHistory = true;
         const item = /** @type ARCHistoryRequest */ (generator.generateHistoryObject());
-        const request = await model.saveRequest(item);
+        const result = await model.saveRequest(item);
+        const { item: request } = result;
         assert.typeOf(request._rev, 'string');
       });
     });
@@ -304,16 +267,15 @@ describe('RequestModel', () => {
 
       beforeEach(async () => {
         handleDriveEvent = false;
-        clearHistory = false;
-        clearSaved = false;
-        // clearProjects = false;
         model = await basicFixture();
       });
 
-      afterEach(() => databaseCleanup());
+      afterEach(async () => {
+        await generator.destroyHistoryData();
+        await generator.destroySavedRequestData();
+      });
 
       it('ignores event dispatching when when no drive info', async () => {
-        clearSaved = true;
         const item = /** @type ARCSavedRequest */ (generator.generateSavedItem());
         const spy = sinon.spy();
         model.addEventListener('google-drive-data-save', spy);
@@ -326,7 +288,6 @@ describe('RequestModel', () => {
         let thrown = false;
         try {
           await model.saveRequest(item, { isDrive: true });
-          clearSaved = true;
         } catch (e) {
           thrown = true;
         }
@@ -335,14 +296,13 @@ describe('RequestModel', () => {
 
       it('updates driveId on the model', async () => {
         handleDriveEvent = true;
-        clearSaved = true;
         const item = /** @type ARCSavedRequest */ (generator.generateSavedItem());
-        const request = await model.saveRequest(item, { isDrive: true })
+        const result = await model.saveRequest(item, { isDrive: true })
+        const { item: request } = result;
         assert.equal(request.driveId, 'test-drive-id');
       });
 
       it('Event contains request copy', async () => {
-        clearSaved = true;
         handleDriveEvent = true;
         const item = /** @type ARCSavedRequest */ (generator.generateSavedItem());
         const spy = sinon.spy();
@@ -360,7 +320,6 @@ describe('RequestModel', () => {
       });
 
       it('Event contains contentType', async () => {
-        clearSaved = true;
         handleDriveEvent = true;
         const item = /** @type ARCSavedRequest */ (generator.generateSavedItem());
         const spy = sinon.spy();
@@ -371,7 +330,6 @@ describe('RequestModel', () => {
       });
 
       it('Event contains file', async () => {
-        clearSaved = true;
         handleDriveEvent = true;
         const item = /** @type ARCSavedRequest */ (generator.generateSavedItem());
         item.name = 'test';
@@ -388,13 +346,14 @@ describe('RequestModel', () => {
       const names = ['a', 'b', 'c'];
       const requestId = 'test-id';
       beforeEach(async () => {
-        clearHistory = false;
-        clearSaved = true;
         // clearProjects = true;
         model = await basicFixture();
       });
 
-      afterEach(() => databaseCleanup());
+      afterEach(async () => {
+        await generator.destroyHistoryData();
+        await generator.destroySavedRequestData();
+      });
 
       it('Creates a list of projects from names', async () => {
         await model.createRequestProjects(names)
@@ -420,14 +379,14 @@ describe('RequestModel', () => {
       let projects;
       let createProjectRequestId;
       beforeEach(async () => {
-        clearHistory = false;
-        clearSaved = true;
-        // clearProjects = true;
         model = await basicFixture();
         projects = await model.createRequestProjects(['a', 'b', 'c'], createProjectRequestId);
       });
 
-      afterEach(() => databaseCleanup());
+      afterEach(async () => {
+        await generator.destroyHistoryData();
+        await generator.destroySavedRequestData();
+      });
 
       it('Sets request ID on projects', async () => {
         const item = /** @type ARCSavedRequest */ (generator.generateSavedItem());
@@ -494,14 +453,16 @@ describe('RequestModel', () => {
 
     it('inserts a new item', async () => {
       const item = /** @type ARCHistoryRequest */ (generator.generateHistoryObject());
-      const created = await model.saveHistory(item);
+      const record = await model.saveHistory(item);
+      const { item: created } = record;
       const result = await model.get('history', created._id);
       assert.typeOf(result, 'object');
     });
 
     it('returns inserted item', async () => {
       const item = /** @type ARCHistoryRequest */ (generator.generateHistoryObject());
-      const created = await model.saveHistory(item);
+      const record = await model.saveHistory(item);
+      const { item: created } = record;
       assert.typeOf(created, 'object', 'has the result');
       assert.typeOf(created._id, 'string', 'has _id');
       assert.typeOf(created._rev, 'string', 'has _rev');
@@ -510,28 +471,32 @@ describe('RequestModel', () => {
     it('adds id when missing', async () => {
       const item = /** @type ARCHistoryRequest */ (generator.generateHistoryObject());
       delete item._id;
-      const created = await model.saveHistory(item);
+      const record = await model.saveHistory(item);
+      const { item: created } = record;
       assert.typeOf(created._id, 'string', 'has _id');
     });
 
     it('sets type to history', async () => {
       const item = /** @type ARCHistoryRequest */ (generator.generateHistoryObject());
       item.type = 'saved';
-      const created = await model.saveHistory(item);
+      const record = await model.saveHistory(item);
+      const { item: created } = record;
       assert.equal(created.type, 'history');
     });
 
     it('updated existing item', async () => {
       const item = requests[0];
       item.type = 'saved';
-      const created = await model.saveHistory(item);
+      const record = await model.saveHistory(item);
+      const { item: created } = record;
       assert.equal(created.type, 'history');
     });
 
     it('gets latest rev for existing item', async () => {
       const item = requests[0];
       delete item._rev;
-      const created = await model.saveHistory(item);
+      const record = await model.saveHistory(item);
+      const { item: created } = record;
       assert.typeOf(created._rev, 'string');
     });
   });

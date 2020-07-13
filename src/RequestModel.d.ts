@@ -1,6 +1,18 @@
 import {RequestBaseModel} from './RequestBaseModel';
 import {ARCSavedRequest, ARCHistoryRequest, SaveARCRequestOptions, ARCRequestRestoreOptions, ARCProject} from './RequestTypes';
-import {Entity, ARCEntityChangeRecord, ARCModelQueryResult, ARCModelQueryOptions} from './types';
+import {DeletedEntity, ARCEntityChangeRecord, ARCModelListResult, ARCModelListOptions,} from './types';
+
+export declare const syncProjects: symbol;
+export declare const readBulkHandler: symbol;
+export declare const updateHandler: symbol;
+export declare const updatebulkHandler: symbol;
+export declare const deleteHandler: symbol;
+export declare const deleteBulkHandler: symbol;
+export declare const undeleteBulkHandler: symbol;
+export declare const storeHandler: symbol;
+export declare const sortRequestProjectOrder: symbol;
+export declare const saveGoogleDrive: symbol;
+export declare const queryStore: symbol;
 
 /**
  * A model to access request data in Advanced REST Client.
@@ -56,7 +68,7 @@ export declare class RequestModel extends RequestBaseModel {
    * @param opts Additional options. Currently only `restorePayload`
    * is supported
    */
-  getBulk(type: string, keys: string[], opts?: ARCRequestRestoreOptions): Promise<ARCHistoryRequest[]|ARCSavedRequest[]>;
+  getBulk(type: string, keys: string[], opts?: ARCRequestRestoreOptions): Promise<(ARCHistoryRequest|ARCSavedRequest)[]>;
 
   /**
    * Updates / saves the request object in the datastore.
@@ -91,7 +103,7 @@ export declare class RequestModel extends RequestBaseModel {
    * @returns Promise resolved to a new `_rev` property of deleted
    * object.
    */
-  delete(type: string, id: string, rev?: string): Promise<string>;
+  delete(type: string, id: string, rev?: string): Promise<DeletedEntity>;
 
   /**
    * Removes documents in a bulk operation.
@@ -99,7 +111,7 @@ export declare class RequestModel extends RequestBaseModel {
    * @param type Database type
    * @param items List of keys to remove
    */
-  deleteBulk(type: string, items: string[]): Promise<string[]>;
+  deleteBulk(type: string, items: string[]): Promise<DeletedEntity[]>;
 
   /**
    * Removes requests reference from projects in a batch operation
@@ -127,7 +139,7 @@ export declare class RequestModel extends RequestBaseModel {
    * @returns Resolved promise with restored objects. Objects have
    * updated `_rev` property.
    */
-  revertRemove(type: string, items: Entity[]): Promise<(ARCHistoryRequest|ARCSavedRequest)[]>;
+  revertRemove(type: string, items: DeletedEntity[]): Promise<ARCEntityChangeRecord<ARCHistoryRequest|ARCSavedRequest>[]>;
 
   /**
    * Stores a history obvject in the data store, taking care of `_rev`
@@ -136,7 +148,7 @@ export declare class RequestModel extends RequestBaseModel {
    * @param request The request object to store
    * @returns A promise resolved to the updated request object.
    */
-  saveHistory(request: ARCHistoryRequest): Promise<ARCHistoryRequest>;
+  saveHistory(request: ARCHistoryRequest): Promise<ARCEntityChangeRecord<ARCHistoryRequest>>;
 
   /**
    * Saves a request into a data store.
@@ -149,7 +161,7 @@ export declare class RequestModel extends RequestBaseModel {
    * is supported
    * @returns A promise resilved to updated request object.
    */
-  saveRequest(request: ARCHistoryRequest|ARCSavedRequest, opts?: SaveARCRequestOptions): Promise<ARCHistoryRequest|ARCSavedRequest>;
+  saveRequest(request: ARCHistoryRequest|ARCSavedRequest, opts?: SaveARCRequestOptions): Promise<ARCEntityChangeRecord<ARCHistoryRequest|ARCSavedRequest>>;
 
   /**
    * Performs a query for the request data.
@@ -161,23 +173,7 @@ export declare class RequestModel extends RequestBaseModel {
    * @param opts Query options.
    * @returns A promise resolved to a query result for requests.
    */
-  list(type: string, opts?: ARCModelQueryOptions): Promise<ARCModelQueryResult<ARCHistoryRequest|ARCSavedRequest>>;
-
-  /**
-   * Adds event listeners.
-   */
-  _attachListeners(node: EventTarget): void;
-
-  /**
-   * Removes event listeners.
-   */
-  _detachListeners(node: EventTarget): void;
-
-  /**
-   * A handler for `save-request-data` custom event. It's special event to
-   * save / update request data dispatched by the request editor.
-   */
-  _saveRequestHandler(e: CustomEvent): void;
+  list(type: string, opts?: ARCModelListOptions): Promise<ARCModelListResult<ARCHistoryRequest|ARCSavedRequest>>;
 
   /**
    * Saves requests with project data.
@@ -190,7 +186,7 @@ export declare class RequestModel extends RequestBaseModel {
    * is supported
    * @returns A promise resolved to updated request object
    */
-  saveRequestProject(request: ARCSavedRequest|ARCHistoryRequest, projects?: string[], options?: SaveARCRequestOptions): Promise<ARCSavedRequest>;
+  saveRequestProject(request: ARCSavedRequest|ARCHistoryRequest, projects?: string[], options?: SaveARCRequestOptions): Promise<ARCEntityChangeRecord<ARCHistoryRequest|ARCSavedRequest>>;
 
   /**
    * Create projects from project names.
@@ -201,107 +197,6 @@ export declare class RequestModel extends RequestBaseModel {
    * @returns Promise resolved to list of project IDs
    */
   createRequestProjects(names: string[], requestId?: string): Promise<string[]>;
-
-  /**
-   * Handler for `save-history` object. It computes payload to savable state
-   * and saves history object.
-   * Note, the ID is is a combination of today's midningt timestamp, url and
-   * method. If such ID already exists the object is updated.
-   */
-  _saveHistoryHandler(e: CustomEvent): void;
-
-  /**
-   * Synchronizes project requests to ensure each project contains this
-   * `requestId` on their list of requests.
-   *
-   * @param requestId Request ID
-   * @param projects List of request projects.
-   */
-  _syncProjects(requestId: string, projects?: string[]): Promise<void>;
-
-  /**
-   * Normalizes request object to whatever the app is currently using.
-   */
-  normalizeRequest(request: ARCSavedRequest): ARCSavedRequest;
-
-  /**
-   * Finds last not deleted revision of a document.
-   *
-   * @param db PouchDB instance
-   * @param items List of documents to process
-   * @returns Last not deleted version of each document.
-   */
-  _findNotDeleted(db: PouchDB.Database, items: Entity[]): Promise<(ARCHistoryRequest|ARCSavedRequest)[]>;
-
-  /**
-   * Finds a next revision after the `deletedRevision` in the revisions history
-   * which is the one that reverts any changes made after it.
-   *
-   * @param revs PouchDB revision history object
-   * @param deletedRevision Revision of deleted object (after delete).
-   * @returns Revision ID of the object before a change registered in
-   * `deletedRevision`
-   */
-  _findUndeletedRevision(revs: object, deletedRevision: string): string|null;
-
-  /**
-   * Handles onject save / update
-   */
-  _handleObjectSave(e: CustomEvent): void;
-  _saveObjectHanlder(type: string, request: ARCHistoryRequest|ARCSavedRequest): any;
-
-  /**
-   * Handler for `request-objects-changed` event. Updates requests in bulk operation.
-   */
-  _handleObjectsSave(e: CustomEvent): void;
-
-  /**
-   * Deletes the object from the datastore.
-   */
-  _handleObjectDelete(e: CustomEvent): void;
-
-  /**
-   * Queries for a list of projects.
-   */
-  _handleObjectsDelete(e: CustomEvent): void;
-
-  /**
-   * handlers `request-objects-undeleted` event to restore deleted items
-   */
-  _handleUndelete(e: CustomEvent|null): void;
-
-  /**
-   * Saves the request on Google Drive.
-   * It dispatches `google-drive-data-save` event to call a component responsible
-   * for saving the request on Google Drive.
-   *
-   * This do nothing if `opts.drive is not set.`
-   *
-   * @param data Data to save
-   * @param opts Save request options. See `saveRequest` for more info.
-   * @returns Resolved promise to updated object.
-   */
-  _saveGoogleDrive(data: ARCHistoryRequest|ARCSavedRequest, opts: SaveARCRequestOptions): Promise<ARCHistoryRequest|ARCSavedRequest>;
-
-  /**
-   * Handler for `request-list` custom event.
-   * The `result` property will contain a result of calling `list()` function.
-   *
-   * The event has to be cancelable and not already cancelled in order to handle
-   * it.
-   *
-   * Required properties on `detail` object:
-   * - `type` {String} Datastore type
-   * - `queryOptions` {Object} PouchDB query options.
-   */
-  _handleList(e: CustomEvent): void;
-
-  /**
-   * A handler for the `request-query` custom event. Queries the datastore for
-   * request data.
-   * The event must have `q` property set on the detail object.
-   */
-  _handleQuery(e: CustomEvent): void;
 
   /**
    * Queries both URL and PouchDb data.
@@ -315,7 +210,7 @@ export declare class RequestModel extends RequestBaseModel {
    * search on the index. When false it only uses filer like query + '*'.
    * @returns Promise resolved to the list of requests.
    */
-  query(q: string, type: string, detailed: boolean): Promise<(ARCHistoryRequest|ARCSavedRequest)[]>;
+  query(q: string, type?: string, detailed?: boolean): Promise<(ARCHistoryRequest|ARCSavedRequest)[]>;
 
   /**
    * Performs a query on the URL index data.
@@ -361,17 +256,6 @@ export declare class RequestModel extends RequestBaseModel {
   querySaved(q: string, ignore?: string[]): Promise<(ARCHistoryRequest|ARCSavedRequest)[]>;
 
   /**
-   * See `query()` function for description.
-   *
-   * @param q User query
-   * @param ignore List of IDs to ignore.
-   * @param db A handler to the data store.
-   * @param indexes List of fields to query
-   * @returns A promise resolved to list of PouchDB docs.
-   */
-  _queryStore(q: string, ignore: string[], db: PouchDB.Database, indexes: string[]): Promise<(ARCHistoryRequest|ARCSavedRequest)[]>;
-
-  /**
    * Performs data inding using PouchDB api.
    * This is not the same as URL indexing using `url-indexer`.
    *
@@ -380,10 +264,12 @@ export declare class RequestModel extends RequestBaseModel {
   indexData(type: string): Promise<void>;
 
   /**
-   * Handler for `request-project-list` event to query for list of requests in
-   * a project.
+   * Deletes all data of selected type.
+   *
+   * @param models Database type or list of types.
+   * @returns List of promises. Might be empty array.
    */
-  _listProjectRequestsHandler(e: CustomEvent): void;
+  deleteDataModel(models: string|string[]): Promise<void>[];
 
   /**
    * Reads list of requests associated with a project
@@ -401,23 +287,13 @@ export declare class RequestModel extends RequestBaseModel {
    */
   readProjectRequestsLegacy(id: string): Promise<(ARCHistoryRequest|ARCSavedRequest)[]>;
 
+  /**
+   * Adds event listeners.
+   */
+  _attachListeners(node: EventTarget): void;
 
   /**
-   * Sorts requests list by `projectOrder` property
+   * Removes event listeners.
    */
-  sortRequestProjectOrder(a: ARCHistoryRequest|ARCSavedRequest, b: ARCHistoryRequest|ARCSavedRequest): number;
-
-  /**
-   * Handler for `destroy-model` custom event.
-   * Deletes saved or history data when scheduled for deletion.
-   */
-  _deleteModelHandler(e: CustomEvent): void;
-
-  /**
-   * Deletes all data of selected type.
-   *
-   * @param models Database type or list of types.
-   * @returns List of promises. Might be empty array.
-   */
-  deleteDataModel(models: string|string[]): Promise<void>[];
+  _detachListeners(node: EventTarget): void;
 }

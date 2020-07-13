@@ -4,12 +4,12 @@ import {
   ARCModelDeleteEventDetail,
   ARCEntityDeletedEvent,
   ARCModelUpdateBulkEventDetail,
-  ARCEntityQueryEvent,
+  ARCEntityListEvent,
 } from './BaseEvents';
 import {
   ARCEntityChangeRecord,
-  ARCModelQueryOptions,
-  ARCModelQueryResult,
+  ARCModelListOptions,
+  ARCModelListResult,
 } from '../types';
 import { ARCProject } from '../RequestTypes';
 /**
@@ -97,11 +97,11 @@ export declare class ARCProjectDeletedEvent extends ARCEntityDeletedEvent {
 /**
  * An event to be dispatched to query for project data in the data store.
  */
-export declare class ARCProjectQueryEvent extends ARCEntityQueryEvent<ARCProject> {
+export declare class ARCProjectListEvent extends ARCEntityListEvent<ARCProject> {
   /**
    * @param opts Query options.
    */
-  constructor(opts?: ARCModelQueryOptions);
+  constructor(opts?: ARCModelListOptions);
 }
 
 /**
@@ -149,7 +149,7 @@ export declare function deleteAction(target: EventTarget, id: string, rev?: stri
  * @param opts Query options.
  * @returns Project query result.
  */
-export declare function queryAction(target: EventTarget, opts?: ARCModelQueryOptions): Promise<ARCModelQueryResult<ARCProject>>;
+export declare function queryAction(target: EventTarget, opts?: ARCModelListOptions): Promise<ARCModelListResult<ARCProject>>;
 
 /**
  * Dispatches an event after a project was updated

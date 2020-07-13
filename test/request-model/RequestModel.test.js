@@ -4,6 +4,8 @@ import * as sinon from 'sinon';
 import { PayloadProcessor } from '@advanced-rest-client/arc-electron-payload-processor/payload-processor-esm.js';
 import { ArcModelEventTypes } from '../../src/events/ArcModelEventTypes.js';
 import '../../request-model.js';
+import { sortRequestProjectOrder, queryStore } from '../../src/RequestModel.js';
+import { UrlIndexer } from '../../index.js';
 
 /* eslint-disable prefer-destructuring */
 
@@ -181,6 +183,15 @@ describe('RequestModel', () => {
       request._id = 'very-unique-id';
       const result = await model.post('saved', request);
       assert.equal(result.id, request._id);
+    });
+
+    it('reads existing item revision before storing', async () => {
+      const request = /** @type ARCSavedRequest */ (generator.generateSavedItem());
+      await model.post('saved', request);
+      request.name = 'test';
+      delete request._rev;
+      const result = await model.post('saved', request);
+      assert.typeOf(result.item._rev, 'string');
     });
 
     it('adds "updated" proeprty', async () => {
@@ -428,11 +439,12 @@ describe('RequestModel', () => {
       assert.typeOf(changeRecord.rev, 'string', 'has the revision');
     });
 
-    it('returns updated revision id', async () => {
+    it('returns delete record', async () => {
       const request = requests[5];
       const result = await model.delete(type, request._id);
-      assert.typeOf(result, 'string', 'has the revision');
-      assert.notEqual(result, request._rev, 'has updated revision');
+      assert.typeOf(result, 'object', 'has the delete record');
+      assert.notEqual(result.rev, request._rev, 'has updated revision');
+      assert.equal(result.id, request._id, 'has the id');
     });
   });
 
@@ -489,6 +501,36 @@ describe('RequestModel', () => {
       await model.deleteBulk(type, items);
       assert.equal(spy.callCount, 2);
     });
+
+    it('throws when no type', async () => {
+      const items = requests.splice(8, 2).map((item) => item._id);
+      let thrown = false;
+      try {
+        await model.deleteBulk(undefined, items);
+      } catch (e) {
+        thrown = true;
+      }
+      assert.isTrue(thrown);
+    });
+
+    it('throws when no items', async () => {
+      let thrown = false;
+      try {
+        await model.deleteBulk('saved', undefined);
+      } catch (e) {
+        thrown = true;
+      }
+      assert.isTrue(thrown);
+    });
+
+    it('ignores removing projects when no projects on a request', async () => {
+      const beforeProjects = await generator.getDatastoreProjectsData();
+      const request = /** @type ARCSavedRequest */ (generator.generateSavedItem());
+      const record = await model.post('saved', request);
+      await model.deleteBulk('saved', [record.id]);
+      const afterProjects = await generator.getDatastoreProjectsData();
+      assert.equal(beforeProjects.length, afterProjects.length);
+    });
   });
 
   describe('revertRemove()', () => {
@@ -500,18 +542,26 @@ describe('RequestModel', () => {
       await generator.destroyHistoryData();
     });
 
+    function deleted(d) {
+      return {
+        id: d._id,
+        rev: d._rev,
+      }
+    }
+
     let model = /** @type RequestModel */ (null);
     beforeEach(async () => {
       model = await basicFixture();
       const request = /** @type ARCSavedRequest */ (generator.generateSavedItem());
       const record = await model.post(type, request);
       doc = /** @type ARCSavedRequest */ (record.item);
-      doc._rev = await model.delete(type, doc._id, doc._rev);
+      const result = await model.delete(type, doc._id, doc._rev);
+      doc._rev = result.rev;
     });
 
     it('restores deleted items', async () => {
-      const result = await model.revertRemove('saved', [doc]);
-      const updatedRev = result[0]._rev;
+      const result = await model.revertRemove('saved', [deleted(doc)]);
+      const updatedRev = result[0].item._rev;
       assert.equal(updatedRev.indexOf('3-'), 0, 'The rev property is updated.');
       const data = await generator.getDatastoreRequestData();
       const [item] = data;
@@ -522,7 +572,7 @@ describe('RequestModel', () => {
     it('dispatches change event', async () => {
       const spy = sinon.spy();
       model.addEventListener(ArcModelEventTypes.Request.State.update, spy);
-      await model.revertRemove('saved', [doc]);
+      await model.revertRemove('saved', [deleted(doc)]);
       assert.isTrue(spy.calledOnce, 'event is dispatched');
       const { changeRecord } = spy.args[0][0];
       assert.equal(changeRecord.id, doc._id, 'record has the ID');
@@ -530,16 +580,36 @@ describe('RequestModel', () => {
       assert.equal(changeRecord.rev, changeRecord.item._rev, 'record has the same revision as the item');
       assert.include(changeRecord.oldRev, '2-', 'record has old revision');
     });
+
+    it('throws when no type', async () => {
+      let thrown = false;
+      try {
+        await model.revertRemove(undefined, [deleted(doc)]);
+      } catch (e) {
+        thrown = true;
+      }
+      assert.isTrue(thrown);
+    });
+
+    it('throws when no items', async () => {
+      let thrown = false;
+      try {
+        await model.revertRemove('saved', undefined);
+      } catch (e) {
+        thrown = true;
+      }
+      assert.isTrue(thrown);
+    });
   });
 
-  describe('sortRequestProjectOrder()', () => {
+  describe('[sortRequestProjectOrder]()', () => {
     let element;
     beforeEach(async () => {
       element = await basicFixture();
     });
 
     it('Returns 1 when a.order > b.order', () => {
-      const result = element.sortRequestProjectOrder(
+      const result = element[sortRequestProjectOrder](
         {
           projectOrder: 1,
         },
@@ -551,7 +621,7 @@ describe('RequestModel', () => {
     });
 
     it('Returns -1 when a.order < b.order', () => {
-      const result = element.sortRequestProjectOrder(
+      const result = element[sortRequestProjectOrder](
         {
           projectOrder: 0,
         },
@@ -563,7 +633,7 @@ describe('RequestModel', () => {
     });
 
     it('Returns 1 when a.name > b.name', () => {
-      const result = element.sortRequestProjectOrder(
+      const result = element[sortRequestProjectOrder](
         {
           name: 1,
           projectOrder: 0,
@@ -577,7 +647,7 @@ describe('RequestModel', () => {
     });
 
     it('Returns -1 when a.order < b.order', () => {
-      const result = element.sortRequestProjectOrder(
+      const result = element[sortRequestProjectOrder](
         {
           name: 0,
           projectOrder: 0,
@@ -591,7 +661,7 @@ describe('RequestModel', () => {
     });
 
     it('Returns 0 otherwise', () => {
-      const result = element.sortRequestProjectOrder(
+      const result = element[sortRequestProjectOrder](
         {
           name: 0,
           projectOrder: 0,
@@ -652,7 +722,7 @@ describe('RequestModel', () => {
     });
 
     it('Calls sorting function', async () => {
-      const spy = sinon.spy(element, 'sortRequestProjectOrder');
+      const spy = sinon.spy(element, sortRequestProjectOrder);
       await element.readProjectRequestsLegacy('1234-project');
       assert.isTrue(spy.called);
     });
@@ -710,6 +780,16 @@ describe('RequestModel', () => {
       await model.readProjectRequests(localProject._id);
       assert.isTrue(spy.called);
       assert.equal(spy.args[0][0], localProject._id);
+    });
+
+    it('throws when no type', async () => {
+      let thrown = false;
+      try {
+        await model.readProjectRequests(undefined);
+      } catch (e) {
+        thrown = true;
+      }
+      assert.isTrue(thrown);
     });
   });
 
@@ -772,8 +852,9 @@ describe('RequestModel', () => {
       model = await basicFixture();
     });
 
-    it('Calls _queryStore with arguments', async () => {
-      const spy = sinon.spy(model, '_queryStore');
+    it('Calls [queryStore] with arguments', async () => {
+      // @ts-ignore
+      const spy = sinon.spy(model, queryStore);
       await model.queryHistory('test', ['id']);
       assert.isTrue(spy.called);
       assert.equal(spy.args[0][0], 'test');
@@ -789,8 +870,9 @@ describe('RequestModel', () => {
       model = await basicFixture();
     });
 
-    it('Calls _queryStore with arguments', async () => {
-      const spy = sinon.spy(model, '_queryStore');
+    it('Calls [queryStore] with arguments', async () => {
+      // @ts-ignore
+      const spy = sinon.spy(model, queryStore);
       await model.querySaved('test', ['id']);
       assert.isTrue(spy.called);
       assert.equal(spy.args[0][0], 'test');
@@ -800,7 +882,7 @@ describe('RequestModel', () => {
     });
   });
 
-  describe('_queryStore()', () => {
+  describe('[queryStore]()', () => {
     let requests;
     before(async () => {
       requests = await generator.insertHistoryRequestData({
@@ -821,8 +903,7 @@ describe('RequestModel', () => {
       let thrown = false;
       let cause = {};
       try {
-        // @ts-ignore
-        await model._queryStore();
+        await model[queryStore]();
       } catch (e) {
         thrown = true;
         cause = e;
@@ -836,8 +917,7 @@ describe('RequestModel', () => {
       let thrown = false;
       let cause = {};
       try {
-        // @ts-ignore
-        await model._queryStore('test', 'not-an-array');
+        await model[queryStore]('test', 'not-an-array');
       } catch (e) {
         thrown = true;
         cause = e;
@@ -853,7 +933,7 @@ describe('RequestModel', () => {
       const ignore = [];
       // @ts-ignore
       const spy = sinon.spy(db, 'search');
-      await model._queryStore('test', ignore, db, indexes);
+      await model[queryStore]('test', ignore, db, indexes);
       // @ts-ignore
       db.search.restore();
       assert.isTrue(spy.called, 'Search function is called');
@@ -868,7 +948,7 @@ describe('RequestModel', () => {
       const db = model.historyDb;
       const indexes = model.historyIndexes;
       const ignore = [];
-      const results = await model._queryStore(requests[0].method, ignore, db, indexes);
+      const results = await model[queryStore](requests[0].method, ignore, db, indexes);
       assert.typeOf(results, 'array');
     });
 
@@ -876,7 +956,7 @@ describe('RequestModel', () => {
       const db = model.historyDb;
       const indexes = model.historyIndexes;
       const ignore = [requests[0]._id];
-      const results = await model._queryStore(requests[0].method, ignore, db, indexes);
+      const results = await model[queryStore](requests[0].method, ignore, db, indexes);
       const index = results.findIndex(
         (item) => item._id === requests[0]._id
       );
@@ -952,62 +1032,6 @@ describe('RequestModel', () => {
     });
   });
 
-  describe('_findUndeletedRevision()', () => {
-    let model = /** @type RequestModel */ (null);
-    beforeEach(async () => {
-      model = await basicFixture();
-    });
-
-    it('Finds revision before delete', () => {
-      const revs = {
-        start: 3,
-        ids: ['aaa', 'bbb', 'ccc'],
-      };
-      const deleted = '3-aaa';
-      const result = model._findUndeletedRevision(revs, deleted);
-      assert.equal(result, '2-bbb');
-    });
-
-    it('Returns null when not found', () => {
-      const revs = {
-        start: 3,
-        ids: ['aaa', 'bbb', 'ccc'],
-      };
-      const deleted = '4-000';
-      const result = model._findUndeletedRevision(revs, deleted);
-      assert.equal(result, null);
-    });
-  });
-
-  describe('_findNotDeleted()', () => {
-    let model = /** @type RequestModel */ (null);
-    let doc;
-    let undeletedRev;
-    beforeEach(async () => {
-      model = await basicFixture();
-      const db = model.getDatabase('saved');
-      doc = {
-        _id: 'test-id-deleted',
-        _rev: undefined,
-      };
-      const result = await db.put(doc);
-      undeletedRev = result.rev;
-      doc._rev = undeletedRev;
-      const delReq = await db.remove(doc);
-      doc._rev = delReq.rev;
-    });
-
-    afterEach(() => {
-      return generator.destroySavedRequestData();
-    });
-
-    it('Finds revision that is not deleted', async () => {
-      const db = model.getDatabase('saved');
-      const result = await model._findNotDeleted(db, [doc]);
-      assert.equal(result[0]._rev, undeletedRev);
-    });
-  });
-
   describe('list()', () => {
     const type = 'history';
     before(async () => {
@@ -1058,6 +1082,240 @@ describe('RequestModel', () => {
         nextPageToken: result1.nextPageToken,
       });
       assert.isUndefined(result2.nextPageToken);
+    });
+
+    it('throws when no type', async () => {
+      let thrown = false;
+      try {
+        await model.list(undefined);
+      } catch (e) {
+        thrown = true;
+      }
+      assert.isTrue(thrown);
+    });
+  });
+
+  describe('removeRequestsFromProject()', () => {
+    let projects = /** @type ARCProject[] */ (null);
+    before(async () => {
+      const data = await generator.insertSavedRequestData({
+        forceProject: true,
+      });
+      projects = data.projects;
+    });
+
+    after(async () => {
+      await generator.destroySavedRequestData();
+      await generator.destroyHistoryData();
+    });
+
+    let model = /** @type RequestModel */ (null);
+    beforeEach(async () => {
+      model = await basicFixture();
+    });
+
+    it('ignores when a project has no requests', async () => {
+      const [pr] = projects;
+      const [req] = pr.requests;
+      delete pr.requests;
+      await model.removeRequestsFromProject(pr, [req]);
+      const project = await model.readProject(pr._id);
+      assert.include(project.requests, req);
+    });
+
+    it('removes a request', async () => {
+      const item = projects[1];
+      const [req] = item.requests;
+      await model.removeRequestsFromProject(item, [req]);
+      const project = await model.readProject(item._id);
+      assert.notInclude(project.requests, req);
+    });
+
+    it('removes all request', async () => {
+      const item = projects[2];
+      await model.removeRequestsFromProject(item, item.requests);
+      const project = await model.readProject(item._id);
+      assert.isEmpty(project.requests);
+    });
+  });
+
+  describe('saveRequestProject()', () => {
+    after(async () => {
+      await generator.destroySavedRequestData();
+      await generator.destroyHistoryData();
+    });
+
+    let model = /** @type RequestModel */ (null);
+    beforeEach(async () => {
+      model = await basicFixture();
+    });
+
+    it('returns a change record', async () => {
+      const request = /** @type ARCSavedRequest */ (generator.generateSavedItem());
+      const result = await model.saveRequestProject(request);
+      assert.typeOf(result, 'object', 'result is an object');
+      assert.typeOf(result.id, 'string', 'has created ID');
+      assert.typeOf(result.rev, 'string', 'has created rev');
+      assert.typeOf(result.item, 'object', 'has updated object');
+      assert.equal(result.item._id, result.id, 'the id of the change record and the entity match');
+      assert.equal(result.item._rev, result.rev, 'the revision of the change record and the entity match');
+    });
+
+    it('generates an id when missing', async () => {
+      const request = /** @type ARCSavedRequest */ (generator.generateSavedItem());
+      delete request._id;
+      const result = await model.saveRequestProject(request);
+      assert.typeOf(result.id, 'string', 'has created ID');
+    });
+
+    it('creates new projects and associate them with the request', async () => {
+      const request = /** @type ARCSavedRequest */ (generator.generateSavedItem());
+      const result = await model.saveRequestProject(request, ['a', 'b', 'c']);
+      const { id, item } = result;
+      const projects = await generator.getDatastoreProjectsData();
+      assert.lengthOf(projects, 3, 'creates the projects');
+      assert.deepEqual(projects[0].requests, [id], 'project #0 has request id');
+      assert.deepEqual(projects[1].requests, [id], 'project #1 has request id');
+      assert.deepEqual(projects[2].requests, [id], 'project #2 has request id');
+      // @ts-ignore
+      assert.include(item.projects, projects[0]._id, 'request has project #0 id');
+      // @ts-ignore
+      assert.include(item.projects, projects[1]._id, 'request has project #1 id');
+      // @ts-ignore
+      assert.include(item.projects, projects[2]._id, 'request has project #2 id');
+    });
+
+    it('adds a project to the list of existing projects', async () => {
+      const request = /** @type ARCSavedRequest */ (generator.generateSavedItem());
+      request.projects = ['123-test'];
+      const result = await model.saveRequestProject(request, ['test']);
+      // @ts-ignore
+      const {projects} = result.item;
+      assert.include(projects, '123-test', 'has old project');
+      assert.lengthOf(projects, 2, 'has new project');
+    });
+
+    it('moves "legacyProject" to the projects list', async () => {
+      const request = /** @type ARCSavedRequest */ (generator.generateSavedItem());
+      // @ts-ignore
+      request.legacyProject = '123-test';
+      const result = await model.saveRequestProject(request);
+      // @ts-ignore
+      const {projects} = result.item;
+      assert.deepEqual(projects, ['123-test'], 'moves legacyProject to projects');
+      // @ts-ignore
+      assert.isUndefined(result.item.legacyProject, 'removes legacyProject');
+    });
+
+    it('does not duplicate project when moving from legacy', async () => {
+      const request = /** @type ARCSavedRequest */ (generator.generateSavedItem());
+      // @ts-ignore
+      request.legacyProject = '123-test';
+      request.projects = ['123-test'];
+      const result = await model.saveRequestProject(request);
+      // @ts-ignore
+      const {projects} = result.item;
+      assert.deepEqual(projects, ['123-test'], 'moves legacyProject to projects');
+      // @ts-ignore
+      assert.isUndefined(result.item.legacyProject, 'removes legacyProject');
+    });
+
+    it('sets type to saved', async () => {
+      const request = /** @type ARCHistoryRequest */ (generator.generateHistoryObject());
+      const result = await model.saveRequestProject(request);
+      assert.equal(result.item.type, 'saved');
+    });
+
+    it('operates on a copy', async () => {
+      const request = /** @type ARCSavedRequest */ (generator.generateSavedItem());
+      delete request._id;
+      await model.saveRequestProject(request);
+      assert.isUndefined(request._id);
+    });
+  });
+
+  describe('query()', () => {
+    let history = /** @type ARCHistoryRequest[] */ (null);
+    let saved = /** @type ARCSavedRequest[] */ (null);
+    before(async () => {
+      const data = await generator.insertSavedRequestData();
+      saved = data.requests;
+      history = await generator.insertHistoryRequestData();
+      const indexer = new UrlIndexer();
+      await indexer.reindexSaved();
+      await indexer.reindexHistory();
+    });
+
+    after(async () => {
+      await generator.destroySavedRequestData();
+      await generator.destroyHistoryData();
+    });
+
+    let model = /** @type RequestModel */ (null);
+    beforeEach(async () => {
+      model = await basicFixture();
+    });
+
+    it('throws when no q argument', async () => {
+      let thrown = false;
+      try {
+        await model.query(undefined);
+      } catch (e) {
+        thrown = true;
+      }
+      assert.isTrue(thrown);
+    });
+
+    it('returns a query result for an url data (saved)', async () => {
+      const result = await model.query(saved[0].url);
+      assert.typeOf(result, 'array');
+      assert.isAbove(result.length, 0);
+    });
+
+    it('returns a query result for an partial url data (saved)', async () => {
+      const url = new URL(saved[0].url);
+      const result = await model.query(url.pathname);
+      assert.typeOf(result, 'array');
+      assert.isAbove(result.length, 0);
+    });
+
+    it('returns a query result for an url data (history)', async () => {
+      const result = await model.query(history[0].url);
+      assert.typeOf(result, 'array');
+      assert.isAbove(result.length, 0);
+    });
+
+    it('returns a query result for an partial url data (history)', async () => {
+      const url = new URL(history[0].url);
+      const result = await model.query(url.pathname);
+      assert.typeOf(result, 'array');
+      assert.isAbove(result.length, 0);
+    });
+
+    it('returns a query result for a name', async () => {
+      const result = await model.query(saved[0].name);
+      assert.typeOf(result, 'array');
+      assert.isAbove(result.length, 0);
+    });
+
+    it('filters results to saved only', async () => {
+      const result = await model.query(history[0].url, 'saved');
+      assert.typeOf(result, 'array');
+      assert.lengthOf(result, 0);
+    });
+
+    it('filters results to history only', async () => {
+      const result = await model.query(saved[0].url, 'history');
+      assert.typeOf(result, 'array');
+      assert.lengthOf(result, 0);
+    });
+
+    it('returns a result for text search in the description', async () => {
+      saved[0].description = 'this is a test';
+      const record = await model.post('saved', saved[0]);
+      saved[0]._rev = record.rev;
+      const result = await model.query('test');
+      assert.equal(result[0]._id, saved[0]._id);
     });
   });
 });

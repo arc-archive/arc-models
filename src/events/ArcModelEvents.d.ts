@@ -1,9 +1,18 @@
-import { ARCProject, ARCHistoryRequest, ARCSavedRequest, SaveARCRequestOptions } from '../RequestTypes';
-import { ARCRequestEventRequestOptions } from './RequestEvents';
+import {
+  ARCProject,
+  ARCHistoryRequest,
+  ARCSavedRequest,
+  SaveARCRequestOptions,
+  ARCRequestRestoreOptions,
+} from '../RequestTypes';
+import {
+  ARCRequestEventRequestOptions,
+} from './RequestEvents';
 import {
   ARCEntityChangeRecord,
-  ARCModelQueryOptions,
-  ARCModelQueryResult,
+  ARCModelListOptions,
+  ARCModelListResult,
+  DeletedEntity,
 } from '../types';
 
 declare interface ProjectStateFunctions {
@@ -68,7 +77,7 @@ declare interface ProjectFunctions {
    * @param opts Query options.
    * @returns Project query result.
    */
-  query(target: EventTarget, opts?: ARCModelQueryOptions): Promise<ARCModelQueryResult<ARCProject>>;
+  query(target: EventTarget, opts?: ARCModelListOptions): Promise<ARCModelListResult<ARCProject>>;
 
   State: ProjectStateFunctions;
 }
@@ -104,6 +113,37 @@ declare interface RequestFunctions {
    * @returns Promise resolved to an ARC request model.
    */
   read(target: EventTarget, type: string, id: string, opts?: ARCRequestEventRequestOptions): Promise<ARCHistoryRequest|ARCSavedRequest>;
+  /**
+   * Dispatches an event handled by the data store to read a list of ARC requests metadata.
+   *
+   * @param target A node on which to dispatch the event.
+   * @param requestType Request type. Either `saved` or `history`.
+   * @param ids List of ids to read
+   * @param opts ARC request read options.
+   * @return Promise resolved to a list of ARC requests.
+   */
+  readBulk(target: EventTarget, requestType: string, ids: string[], opts?: ARCRequestEventRequestOptions): Promise<(ARCHistoryRequest|ARCSavedRequest)[]>;
+  /**
+   * Dispatches an event handled by the data store to read an ARC request metadata.
+   *
+   * @param target A node on which to dispatch the event.
+   * @param requestType Request type. Either `saved` or `history`.
+   * @param opts List options.
+   * @returns Promise resolved to list of results
+   */
+  list(target: EventTarget, requestType: string, opts?: ARCModelListOptions): Promise<ARCModelListResult<ARCHistoryRequest|ARCSavedRequest>>;
+
+  /**
+   * Dispatches an event handled by the data store to query for ARC request data
+   *
+   * @param target A node on which to dispatch the event.
+   * @param term The search term for the query function
+   * @param requestType The type of the requests to search for. By default it returns all data.
+   * @param detailed If set it uses slower algorithm but performs full search on the index. When false it only uses filer like query + '*'.
+   * @returns Promise resolved to list of results
+   */
+  query(target: EventTarget, term: string, requestType?: string, detailed?: boolean): Promise<(ARCHistoryRequest|ARCSavedRequest)[]>;
+
   /**
    * Dispatches an event handled by the data store to read an ARC request metadata.
    *
@@ -146,11 +186,54 @@ declare interface RequestFunctions {
    * @param rev A revision ID to delete
    * @returns Promise resolved to a new revision after delete.
    */
-  delete(target: EventTarget, type: string, id: string, rev?: string): Promise<string>;
+  delete(target: EventTarget, type: string, id: string, rev?: string): Promise<DeletedEntity>;
+  /**
+   * Dispatches an event handled by the data store to delete an ARC request from the store.
+   *
+   * @param target A node on which to dispatch the event.
+   * @param requestType Request type. Either `saved` or `history`.
+   * @param ids List of ids to delete.
+   * @returns Promise resolved to a a list of deleted revisions
+   */
+  deleteBulk(target: EventTarget, requestType: string, ids: string[]): Promise<DeletedEntity[]>;
+  /**
+   * Dispatches an event handled by the data store to delete an ARC request from the store.
+   *
+   * @param target A node on which to dispatch the event.
+   * @param requestType Request type. Either `saved` or `history`.
+   * @param requests List of requests to restore
+   * @returns Promise resolved to a a list of change records
+   */
+  undeleteBulk(target: EventTarget, requestType: string, requests: DeletedEntity[]): Promise<ARCEntityChangeRecord<ARCHistoryRequest|ARCSavedRequest>[]>;
+
+  /**
+   * Dispatches an event handled by the data store to list all requests that are association with a project.
+   *
+   * @param target A node on which to dispatch the event.
+   * @param id The project id
+   * @param opts ARC request read options.
+   * @returns Promise resolved to a a list of requests
+   */
+  projectlist(target: EventTarget, id: string, opts?: ARCRequestRestoreOptions): Promise<(ARCHistoryRequest|ARCSavedRequest)[]>;
   State: RequestStateFunctions;
 }
 
 declare interface ArcModelEvents {
+  /**
+   * Dispatches an event handled by the data store to destroy a data store.
+   *
+   * @param target A node on which to dispatch the event.
+   * @param stores A list of store names to affect
+   * @returns List of promises resolved when each store is destroyed
+   */
+  destroy(target: EventTarget, stores: string[]): Promise<void>[];
+  /**
+   * Dispatches an event information the app that a store has been destroyed.
+   *
+   * @param target A node on which to dispatch the event.
+   * @param stores A list of store names that has been deleted.
+   */
+  destroyed(target: EventTarget, stores: string[]): void;
   Project: ProjectFunctions;
   Request: RequestFunctions;
 }
