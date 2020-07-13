@@ -41,12 +41,23 @@ interface UrlIndexerEvents {
   State: UrlIndexerStateEvents;
 }
 
+interface AuthDataStateEvents {
+  update: string;
+}
+
+interface AuthDataEvents {
+  update: string;
+  query: string;
+  State: AuthDataStateEvents;
+}
+
 declare interface ArcModelEventTypes {
   destroy: string;
   destroyed: string;
   Project: ProjectEvents;
   Request: RequestEvents;
   UrlIndexer: UrlIndexerEvents;
+  AuthData: AuthDataEvents;
 }
 
 export const ArcModelEventTypes: ArcModelEventTypes;

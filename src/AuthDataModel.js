@@ -12,8 +12,13 @@ License for the specific language governing permissions and limitations under
 the License.
 */
 import { ArcBaseModel } from './ArcBaseModel.js';
+import { ArcModelEventTypes } from './events/ArcModelEventTypes.js';
+import { ArcModelEvents } from './events/ArcModelEvents.js';
 
 /** @typedef {import('./AuthDataModel').ARCAuthData} ARCAuthData */
+/** @typedef {import('./events/AuthDataEvents').ARCAuthDataUpdateEvent} ARCAuthDataUpdateEvent */
+/** @typedef {import('./events/AuthDataEvents').ARCAuthDataQueryEvent} ARCAuthDataQueryEvent */
+/** @typedef {import('./types').ARCEntityChangeRecord} ARCEntityChangeRecord */
 
 /**
  * Removes query parameters and the fragment part from the URL
@@ -53,38 +58,43 @@ export function computeKey(method, url) {
   return path;
 }
 
+export const queryHandler = Symbol('queryHandler');
+export const updateHandler = Symbol('updateHandler');
+
 /**
  * Model for authorization data stored in the application.
  */
 export class AuthDataModel extends ArcBaseModel {
   constructor() {
-    super('auth-data', 10);
-    this._queryHandler = this._queryHandler.bind(this);
-    this._updateHandler = this._updateHandler.bind(this);
+    super('auth-data');
+    this[queryHandler] = this[queryHandler].bind(this);
+    this[updateHandler] = this[updateHandler].bind(this);
   }
 
   _attachListeners(node) {
     super._attachListeners(node);
-    node.addEventListener('auth-data-query', this._queryHandler);
-    node.addEventListener('auth-data-changed', this._updateHandler);
+    node.addEventListener(ArcModelEventTypes.AuthData.query, this[queryHandler]);
+    node.addEventListener(ArcModelEventTypes.AuthData.update, this[updateHandler]);
   }
 
   _detachListeners(node) {
     super._detachListeners(node);
-    node.removeEventListener('auth-data-query', this._queryHandler);
-    node.removeEventListener('auth-data-changed', this._updateHandler);
+    node.removeEventListener(ArcModelEventTypes.AuthData.query, this[queryHandler]);
+    node.removeEventListener(ArcModelEventTypes.AuthData.update, this[updateHandler]);
   }
 
-  _queryHandler(e) {
+  /**
+   * @param {ARCAuthDataQueryEvent} e
+   */
+  [queryHandler](e) {
     if (this._eventCancelled(e)) {
       return;
     }
     e.preventDefault();
     e.stopPropagation();
-    e.detail.result = this.query(
-      e.detail.url,
-      e.detail.authMethod
-    ).catch((ex) => this._handleException(ex));
+
+    const { url, method } = e;
+    e.detail.result = this.query(url, method);
   }
 
   /**
@@ -101,6 +111,7 @@ export class AuthDataModel extends ArcBaseModel {
     try {
       return await this.db.get(key);
     } catch (cause) {
+      /* istanbul ignore else */
       if (cause && cause.status === 404) {
         return undefined;
       }
@@ -108,17 +119,18 @@ export class AuthDataModel extends ArcBaseModel {
     }
   }
 
-  _updateHandler(e) {
+  /**
+   * @param {ARCAuthDataUpdateEvent} e
+   */
+  [updateHandler](e) {
     if (this._eventCancelled(e)) {
       return;
     }
     e.preventDefault();
     e.stopPropagation();
-    e.detail.result = this.update(
-      e.detail.url,
-      e.detail.authMethod,
-      e.detail.authData
-    ).catch((ex) => this._handleException(ex));
+    const { url, method, authData } = e;
+
+    e.detail.result = this.update(url, method, authData);
   }
 
   /**
@@ -128,7 +140,7 @@ export class AuthDataModel extends ArcBaseModel {
    * @param {string} authMethod The Authorization method to restore data for.
    * @param {object} authData The authorization data to store. Schema depends on
    * the `authMethod` property. From model standpoint schema does not matter.
-   * @return {Promise<ARCAuthData>}
+   * @return {Promise<ARCEntityChangeRecord>}
    */
   async update(url, authMethod, authData) {
     const parsedUrl = normalizeUrl(url);
@@ -138,6 +150,7 @@ export class AuthDataModel extends ArcBaseModel {
     try {
       stored = await db.get(key);
     } catch (error) {
+      /* istanbul ignore else */
       if (error.status === 404) {
         stored = { _id: key };
       } else {
@@ -146,15 +159,15 @@ export class AuthDataModel extends ArcBaseModel {
     }
     const doc = { ...stored, ...authData };
     const result = await db.put(doc);
-    const detail = doc;
-    detail._rev = result.rev;
-    this.dispatchEvent(
-      new CustomEvent('auth-data-changed', {
-        bubbles: true,
-        composed: true,
-        detail,
-      })
-    );
-    return detail;
+    const oldRev = doc._rev;
+    doc._rev = result.rev;
+    const record = {
+      id: key,
+      rev: result.rev,
+      item: doc,
+      oldRev,
+    };
+    ArcModelEvents.AuthData.State.update(this, record);
+    return record;
   }
 }

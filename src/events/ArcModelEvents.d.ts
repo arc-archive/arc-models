@@ -18,6 +18,7 @@ import {
   IndexableRequest,
   IndexQueryResult,
 } from '../UrlIndexer';
+import { ARCAuthData } from '../AuthDataModel';
 
 declare interface ProjectStateFunctions {
   /**
@@ -255,6 +256,39 @@ declare interface UrlIndexerFunctions {
   State: UrlIndexerStateFunctions;
 }
 
+declare interface AuthDataStateFunctions {
+  /**
+   * Dispatches an event informing about a change in the authdata model.
+   *
+   * @param target A node on which to dispatch the event.
+   * @param record AuthData change record.
+   */
+  update(target: EventTarget, record: ARCEntityChangeRecord<ARCAuthData>): void;
+}
+
+declare interface AuthDataFunctions {
+  /**
+   * Dispatches an event handled by the data store to update an authorization data.
+   *
+   * @param target A node on which to dispatch the event.
+   * @param url The URL of the request associated with the authorization method
+   * @param method The name of the authorization method
+   * @param authData The authorization data to store.
+   * @returns Promise resolved to a the auth change record
+   */
+  update(target: EventTarget, url: string, method: string, authData: ARCAuthData): Promise<ARCEntityChangeRecord<ARCAuthData>>;
+  /**
+   * Dispatches an event handled by the data store to query for ARC authorization data
+   *
+   * @param target A node on which to dispatch the event.
+   * @param url The URL of the request associated with the authorization method
+   * @param method The name of the authorization method
+   * @returns A promise resolved to n auth data model.
+   */
+  query(target: EventTarget, url: string, method: string): Promise<ARCAuthData>;
+  State: AuthDataStateFunctions;
+}
+
 declare interface ArcModelEvents {
   /**
    * Dispatches an event handled by the data store to destroy a data store.
@@ -274,6 +308,7 @@ declare interface ArcModelEvents {
   Project: ProjectFunctions;
   Request: RequestFunctions;
   UrlIndexer: UrlIndexerFunctions;
+  AuthData: AuthDataFunctions;
 }
 
 declare const events: ArcModelEvents;

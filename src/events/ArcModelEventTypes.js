@@ -38,6 +38,13 @@ export const ArcModelEventTypes = {
       finished: 'modelstateurlindexerfinished'
     }
   },
+  AuthData: {
+    query: 'modelauthdataquery',
+    update: 'modelauthdataupdate',
+    State: {
+      update: 'modelstateauthdataupdate'
+    },
+  },
 };
 Object.freeze(ArcModelEventTypes);
 Object.freeze(ArcModelEventTypes.Project);
@@ -46,3 +53,5 @@ Object.freeze(ArcModelEventTypes.Project);
 Object.freeze(ArcModelEventTypes.Request.State);
 Object.freeze(ArcModelEventTypes.UrlIndexer);
 Object.freeze(ArcModelEventTypes.UrlIndexer.State);
+Object.freeze(ArcModelEventTypes.AuthData);
+Object.freeze(ArcModelEventTypes.AuthData.State);

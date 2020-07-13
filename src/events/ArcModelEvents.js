@@ -2,6 +2,7 @@ import * as ProjectEvents from './ProjectEvents.js';
 import * as RequestEvents from './RequestEvents.js';
 import * as BaseEvents from './BaseEvents.js';
 import * as UrlIndexerEvents from './UrlIndexerEvents.js';
+import * as AuthDataEvents from './AuthDataEvents.js';
 
 export const ArcModelEvents = {
   /**
@@ -35,7 +36,7 @@ export const ArcModelEvents = {
     State: {
       update: ProjectEvents.updatedState,
       delete: ProjectEvents.deletedState,
-    }
+    },
   },
   Request: {
     read: RequestEvents.readAction,
@@ -59,7 +60,14 @@ export const ArcModelEvents = {
     query: UrlIndexerEvents.queryAction,
     State: {
       finished: UrlIndexerEvents.finishedState,
-    }
+    },
+  },
+  AuthData: {
+    query: AuthDataEvents.queryAction,
+    update: AuthDataEvents.updateAction,
+    State: {
+      update: AuthDataEvents.updatedState,
+    },
   },
 };
 Object.freeze(ArcModelEvents);
@@ -69,3 +77,5 @@ Object.freeze(ArcModelEvents.Request);
 Object.freeze(ArcModelEvents.Request.State);
 Object.freeze(ArcModelEvents.UrlIndexer);
 Object.freeze(ArcModelEvents.UrlIndexer.State);
+Object.freeze(ArcModelEvents.AuthData);
+Object.freeze(ArcModelEvents.AuthData.State);
