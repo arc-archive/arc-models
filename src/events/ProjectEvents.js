@@ -19,7 +19,7 @@ export const changeRecordValue = Symbol('changeRecordValue');
 /**
  * An event to be dispatched to read an ARC project from the data store.
  */
-export class ARCPRojectReadEvent extends CustomEvent {
+export class ARCProjectReadEvent extends CustomEvent {
   /**
    * @param {string} id Project id
    * @param {string=} rev Project revision id
@@ -198,7 +198,7 @@ export class ARCProjectListEvent extends ARCEntityListEvent {
  * @return {Promise<ARCProject>} Promise resolved to a Project model.
  */
 export async function readAction(target, id, rev) {
-  const e = new ARCPRojectReadEvent(id, rev);
+  const e = new ARCProjectReadEvent(id, rev);
   target.dispatchEvent(e);
   return e.detail.result;
 }

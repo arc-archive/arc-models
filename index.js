@@ -22,3 +22,39 @@ export { UrlHistoryModel } from './src/UrlHistoryModel.js';
 export { UrlIndexer } from './src/UrlIndexer.js';
 export { VariablesModel } from './src/VariablesModel.js';
 export { WebsocketUrlHistoryModel } from './src/WebsocketUrlHistoryModel.js';
+export { ArcModelEventTypes } from './src/events/ArcModelEventTypes.js';
+export { ArcModelEvents } from './src/events/ArcModelEvents.js';
+export {
+  ARCProjectReadEvent,
+  ARCProjectUpdateEvent,
+  ARCProjectUpdateBulkEvent,
+  ARCProjectUpdatedEvent,
+  ARCProjectDeleteEvent,
+  ARCProjectDeletedEvent,
+  ARCProjectListEvent,
+} from './src/events/ProjectEvents.js';
+export {
+  ARCRequestReadEvent,
+  ARCRequestReadBulkEvent,
+  ARCRequestUpdateEvent,
+  ARCRequestStoreEvent,
+  ARCRequestUpdateBulkEvent,
+  ARCRequestUpdatedEvent,
+  ARCRequestDeleteEvent,
+  ARCRequestDeleteBulkEvent,
+  ARCRequestUndeleteBulkEvent,
+  ARCRequestDeletedEvent,
+  ARCRequestListEvent,
+  ARCRequestQueryEvent,
+  ARCRequestListProjectRequestsEvent,
+} from './src/events/RequestEvents.js';
+export {
+  ARCEntityDeletedEvent,
+  ARCEntityListEvent,
+  ARCModelDeleteEvent,
+  ARCModelStateDeleteEvent,
+} from './src/events/BaseEvents.js';
+export {
+  ARCUrlIndexUpdateEvent,
+  ARCUrlIndexQueryEvent,
+} from './src/events/UrlIndexerEvents.js';

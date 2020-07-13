@@ -14,7 +14,7 @@ import { PayloadProcessor } from '@advanced-rest-client/arc-electron-payload-pro
 import { v4 } from '@advanced-rest-client/uuid-generator';
 import { RequestBaseModel } from './RequestBaseModel.js';
 import '../url-indexer.js';
-import { UrlIndexer } from '../index.js';
+import { UrlIndexer } from './UrlIndexer.js';
 import { generateHistoryId, normalizeRequest, cancelEvent, revertDelete } from './Utils.js';
 import { ArcModelEvents } from './events/ArcModelEvents.js';
 import { ArcModelEventTypes } from './events/ArcModelEventTypes.js';

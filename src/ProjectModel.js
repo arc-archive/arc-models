@@ -21,7 +21,7 @@ import { cancelEvent } from './Utils.js';
 /* eslint-disable no-plusplus */
 
 /** @typedef {import('./RequestTypes').ARCProject} ARCProject */
-/** @typedef {import('./events/ProjectEvents').ARCPRojectReadEvent} ARCPRojectReadEvent */
+/** @typedef {import('./events/ProjectEvents').ARCProjectReadEvent} ARCProjectReadEvent */
 /** @typedef {import('./events/ProjectEvents').ARCProjectUpdateEvent} ARCProjectUpdateEvent */
 /** @typedef {import('./events/ProjectEvents').ARCProjectUpdateBulkEvent} ARCProjectUpdateBulkEvent */
 /** @typedef {import('./events/ProjectEvents').ARCProjectDeleteEvent} ARCProjectDeleteEvent */
@@ -158,7 +158,7 @@ export class ProjectModel extends RequestBaseModel {
 
   /**
    * Handler for project read event request.
-   * @param {ARCPRojectReadEvent} e
+   * @param {ARCProjectReadEvent} e
    */
   [readHandler](e) {
     if (this._eventCancelled(e)) {

@@ -15,7 +15,7 @@ import { ARCProject } from '../RequestTypes';
 /**
  * Project read event
  */
-export declare class ARCPRojectReadEvent extends CustomEvent<ARCModelReadEventDetail<ARCProject>> {
+export declare class ARCProjectReadEvent extends CustomEvent<ARCModelReadEventDetail<ARCProject>> {
   /**
    * Requested project ID.
    */
