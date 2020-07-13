@@ -19,7 +19,7 @@ import {
   IndexQueryResult,
 } from '../UrlIndexer';
 import { ARCAuthData } from '../AuthDataModel';
-
+import { ARCHostRule } from '../HostRulesModel';
 declare interface ProjectStateFunctions {
   /**
    * Dispatches an event after a project was updated
@@ -289,6 +289,64 @@ declare interface AuthDataFunctions {
   State: AuthDataStateFunctions;
 }
 
+declare interface HostRulesStateFunctions {
+  /**
+   * Dispatches an event informing about a change in the host rules model.
+   *
+   * @param {EventTarget} target A node on which to dispatch the event.
+   * @param {ARCEntityChangeRecord} record Host rules change record.
+   */
+  update(target: EventTarget, record: ARCEntityChangeRecord<ARCHostRule>): void;
+  /**
+   * Dispatches an event after a host rule was deleted
+   *
+   * @param target A node on which to dispatch the event.
+   * @param id Deleted host rule id.
+   * @param rev Updated revision of the deleted entity.
+   */
+  delete(target: EventTarget, id: string, rev: string): void;
+}
+
+declare interface HostRulesFunctions {
+  /**
+   * Dispatches an event handled by the data store to update a host rule entity
+   *
+   * @param target A node on which to dispatch the event.
+   * @param rule The rule object to save / update
+   * @returns Promise resolved to a the change record
+   */
+  update(target: EventTarget, rule: ARCHostRule): Promise<ARCEntityChangeRecord<ARCHostRule>>;
+
+  /**
+   * Dispatches an event handled by the data store to update host rule entities in bulk
+   *
+   * @param target A node on which to dispatch the event.
+   * @param rules The rules to save / update
+   * @returns Promise resolved to a the list of a change record
+   */
+  updateBulk(target: EventTarget, rules: ARCHostRule[]): Promise<ARCEntityChangeRecord<ARCHostRule>[]>;
+
+  /**
+   * Dispatches an event handled by the data store to delete an ARC request from the store.
+   *
+   * @param target A node on which to dispatch the event.
+   * @param id The host rule id
+   * @param rev A revision ID to delete
+   * @returns Delete record
+   */
+  delete(target: EventTarget, id: string, rev?: string): Promise<DeletedEntity>;
+
+  /**
+   * Dispatches an event handled by the data store to read a host rules data.
+   *
+   * @param target A node on which to dispatch the event.
+   * @param opts List options.
+   * @returns Promise resolved to list of results
+   */
+  list(target: EventTarget, opts?: ARCModelListOptions): Promise<ARCModelListResult<ARCHostRule>>;
+  State: HostRulesStateFunctions;
+}
+
 declare interface ArcModelEvents {
   /**
    * Dispatches an event handled by the data store to destroy a data store.
@@ -309,6 +367,7 @@ declare interface ArcModelEvents {
   Request: RequestFunctions;
   UrlIndexer: UrlIndexerFunctions;
   AuthData: AuthDataFunctions;
+  HostRules: HostRulesFunctions;
 }
 
 declare const events: ArcModelEvents;

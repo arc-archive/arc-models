@@ -29,6 +29,7 @@ import { cancelEvent } from './Utils.js';
 /** @typedef {import('./types').ARCEntityChangeRecord} ARCEntityChangeRecord */
 /** @typedef {import('./types').ARCModelListResult} ARCModelListResult */
 /** @typedef {import('./types').ARCModelListOptions} ARCModelListOptions */
+/** @typedef {import('./types').DeletedEntity} DeletedEntity */
 
 export const readHandler = Symbol('readHandler');
 export const updateHandler = Symbol('updateHandler');
@@ -112,7 +113,7 @@ export class ProjectModel extends RequestBaseModel {
    *
    * @param {string} id The ID of the datastore entry.
    * @param {string=} rev Specific revision to read. Defaults to latest revision.
-   * @return {Promise<string>} Promise resolved to a new `_rev` property of deleted object.
+   * @return {Promise<DeletedEntity>} Promise resolved to a new `_rev` property of deleted object.
    */
   async delete(id, rev) {
     return this.removeProject(id, rev);

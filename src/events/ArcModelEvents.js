@@ -3,6 +3,7 @@ import * as RequestEvents from './RequestEvents.js';
 import * as BaseEvents from './BaseEvents.js';
 import * as UrlIndexerEvents from './UrlIndexerEvents.js';
 import * as AuthDataEvents from './AuthDataEvents.js';
+import * as HostRuleEvents from './HostRuleEvents.js';
 
 export const ArcModelEvents = {
   /**
@@ -69,6 +70,17 @@ export const ArcModelEvents = {
       update: AuthDataEvents.updatedState,
     },
   },
+  HostRules: {
+    update: HostRuleEvents.updateAction,
+    updateBulk: HostRuleEvents.updateActionBulk,
+    delete: HostRuleEvents.deleteAction,
+    list: HostRuleEvents.listAction,
+    // clear: HostRuleEvents.cle,
+    State: {
+      update: HostRuleEvents.updatedState,
+      delete: HostRuleEvents.deletedState,
+    },
+  },
 };
 Object.freeze(ArcModelEvents);
 Object.freeze(ArcModelEvents.Project);
@@ -79,3 +91,5 @@ Object.freeze(ArcModelEvents.UrlIndexer);
 Object.freeze(ArcModelEvents.UrlIndexer.State);
 Object.freeze(ArcModelEvents.AuthData);
 Object.freeze(ArcModelEvents.AuthData.State);
+Object.freeze(ArcModelEvents.HostRules);
+Object.freeze(ArcModelEvents.HostRules.State);

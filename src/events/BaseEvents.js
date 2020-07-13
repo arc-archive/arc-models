@@ -21,6 +21,15 @@ export class ARCEntityDeletedEvent extends Event {
    * @param {string} rev Entity updated revision id
    */
   constructor(type, id, rev) {
+    if (typeof type !== 'string') {
+      throw new Error('The type argument expected to be a string.');
+    }
+    if (typeof id !== 'string') {
+      throw new Error('The id argument expected to be a string.');
+    }
+    if (typeof rev !== 'string') {
+      throw new Error('The rev argument expected to be a string.');
+    }
     super(type, {
       bubbles: true,
       composed: true,
@@ -67,6 +76,9 @@ export class ARCEntityListEvent extends CustomEvent {
    * @param {ARCModelListOptions=} [opts={}] Query options.
    */
   constructor(type, opts={}) {
+    if (typeof type !== 'string') {
+      throw new Error('The type argument expected to be a string.');
+    }
     super(type, {
       bubbles: true,
       composed: true,
@@ -88,6 +100,9 @@ export class ARCModelDeleteEvent extends CustomEvent {
    * @param {string[]} stores A list of store names to delete the data from
    */
   constructor(stores) {
+    if (!Array.isArray(stores)) {
+      throw new Error('The stores expected to be an array.');
+    }
     super(ArcModelEventTypes.destroy, {
       bubbles: true,
       composed: true,
@@ -113,6 +128,9 @@ export class ARCModelStateDeleteEvent extends Event {
    * @param {string[]} stores A list of store names that has been destroyed.
    */
   constructor(stores) {
+    if (!Array.isArray(stores)) {
+      throw new Error('The stores expected to be an array.');
+    }
     super(ArcModelEventTypes.destroyed, {
       bubbles: true,
       composed: true,

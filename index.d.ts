@@ -78,3 +78,11 @@ export {
   ARCUrlIndexUpdateEvent,
   ARCUrlIndexQueryEvent,
 } from './src/events/UrlIndexerEvents';
+export {
+  ARCHostRuleUpdateEvent,
+  ARCHostRuleUpdateBulkEvent,
+  ARCHostRuleUpdatedEvent,
+  ARCHostRuleDeleteEvent,
+  ARCHostRuleDeletedEvent,
+  ARCHostRuletListEvent,
+} from './src/events/HostRuleEvents';

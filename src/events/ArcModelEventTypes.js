@@ -35,14 +35,25 @@ export const ArcModelEventTypes = {
     update: 'modelurlindexerupdate',
     query: 'modelurlindexerquery',
     State: {
-      finished: 'modelstateurlindexerfinished'
+      finished: 'modelstateurlindexerfinished',
     }
   },
   AuthData: {
     query: 'modelauthdataquery',
     update: 'modelauthdataupdate',
     State: {
-      update: 'modelstateauthdataupdate'
+      update: 'modelstateauthdataupdate',
+    },
+  },
+  HostRules: {
+    update: 'modelhostrulesupdate',
+    updateBulk: 'modelhostrulesupdatebulk',
+    delete: 'modelhostrulesdelete',
+    list: 'modelhostruleslist',
+    clear: 'modelhostrulesclear',
+    State: {
+      update: 'modelstatehostrulesupdate',
+      delete: 'modelstatehostrulesdelete',
     },
   },
 };
@@ -55,3 +66,5 @@ Object.freeze(ArcModelEventTypes.UrlIndexer);
 Object.freeze(ArcModelEventTypes.UrlIndexer.State);
 Object.freeze(ArcModelEventTypes.AuthData);
 Object.freeze(ArcModelEventTypes.AuthData.State);
+Object.freeze(ArcModelEventTypes.HostRules);
+Object.freeze(ArcModelEventTypes.HostRules.State);

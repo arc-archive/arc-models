@@ -29,6 +29,7 @@ if (typeof PouchDB !== 'undefined' && typeof PouchQuickSearch !== 'undefined') {
 
 /** @typedef {import('./RequestTypes').ARCProject} ARCProject */
 /** @typedef {import('./types').ARCEntityChangeRecord} ARCEntityChangeRecord */
+/** @typedef {import('./types').DeletedEntity} DeletedEntity */
 
 /**
  * A base class for Request and Projects` models.
@@ -148,7 +149,7 @@ export class RequestBaseModel extends ArcBaseModel {
    *
    * @param {string} id The ID of the datastore entry.
    * @param {string=} rev Specific revision to read. Defaults to latest revision.
-   * @return {Promise<string>} Promise resolved to a new `_rev` property of deleted object.
+   * @return {Promise<DeletedEntity>} Promise resolved to a new `_rev` property of deleted object.
    */
   async removeProject(id, rev) {
     if (!id) {
@@ -161,6 +162,9 @@ export class RequestBaseModel extends ArcBaseModel {
     }
     const response = await this.projectDb.remove(id, winningRev);
     ArcModelEvents.Project.State.delete(this, id, response.rev);
-    return response.rev;
+    return {
+      id,
+      rev: response.rev,
+    };
   }
 }
