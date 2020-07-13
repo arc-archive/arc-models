@@ -3,6 +3,7 @@ import { DataGenerator } from '@advanced-rest-client/arc-data-generator';
 import * as sinon from 'sinon';
 import '../../project-model.js';
 import { ArcModelEventTypes } from '../../src/events/ArcModelEventTypes.js';
+import { normalizeProjects } from '../../src/ProjectModel.js';
 
 /** @typedef {import('../../src/ProjectModel').ProjectModel} ProjectModel */
 /** @typedef {import('../../src/events/ProjectEvents').ARCProjectUpdatedEvent} ARCProjectUpdatedEvent */
@@ -91,6 +92,37 @@ describe('ProjectModel', () => {
       assert.typeOf(changeRecord.item, 'object', 'has created object');
       assert.isUndefined(changeRecord.oldRev, 'has no oldRev');
     });
+
+    it('throws when no project', async () => {
+      let thrown = false;
+      try {
+        await element.post(undefined);
+      } catch (e) {
+        thrown = true;
+      }
+      assert.isTrue(thrown);
+    });
+
+    it('throws when no project id', async () => {
+      const project = /** @type ARCProject */ (generator.createProjectObject());
+      delete project._id;
+      let thrown = false;
+      try {
+        await element.post(project);
+      } catch (e) {
+        thrown = true;
+      }
+      assert.isTrue(thrown);
+    });
+
+    it('updates already existing item with the rev value', async () => {
+      const project = /** @type ARCProject */ (generator.createProjectObject());
+      await element.post(project);
+      project.name = 'test';
+      delete project._rev;
+      const result = await element.post(project);
+      assert.equal(result.item.name, 'test');
+    });
   });
 
   describe('postBulk()', () => {
@@ -132,6 +164,26 @@ describe('ProjectModel', () => {
       element.addEventListener(ArcModelEventTypes.Project.State.update, spy);
       await element.postBulk(projects);
       assert.equal(spy.callCount, 2);
+    });
+
+    it('throws when no projects', async () => {
+      let thrown = false;
+      try {
+        await element.postBulk(undefined);
+      } catch (e) {
+        thrown = true;
+      }
+      assert.isTrue(thrown);
+    });
+
+    it('throws when empty projects', async () => {
+      let thrown = false;
+      try {
+        await element.postBulk([]);
+      } catch (e) {
+        thrown = true;
+      }
+      assert.isTrue(thrown);
     });
   });
 
@@ -274,6 +326,68 @@ describe('ProjectModel', () => {
         thrown = true;
       }
       assert.isTrue(thrown, 'Has no entity');
+    });
+  });
+
+  describe('[normalizeProjects]()', () => {
+    let model = /** @type ProjectModel */ (null);
+    beforeEach(async () => {
+      model = await basicFixture();
+    });
+
+    it('filters out invalid items', () => {
+      const result = model[normalizeProjects](['test']);
+      assert.deepEqual(result, []);
+    });
+
+    it('adds order property', () => {
+      const project = /** @type ARCProject */ (generator.createProjectObject());
+      delete project.order;
+      const result = model[normalizeProjects]([project]);
+      assert.equal(result[0].order, 0);
+    });
+
+    it('respects existing order property', () => {
+      const project = /** @type ARCProject */ (generator.createProjectObject());
+      project.order = 1;
+      const result = model[normalizeProjects]([project]);
+      assert.equal(result[0].order, 1);
+    });
+
+    it('adds requests property', () => {
+      const project = /** @type ARCProject */ (generator.createProjectObject());
+      delete project.requests;
+      const result = model[normalizeProjects]([project]);
+      assert.deepEqual(result[0].requests, []);
+    });
+
+    it('respects existing order property', () => {
+      const project = /** @type ARCProject */ (generator.createProjectObject());
+      project.requests = ['test'];
+      const result = model[normalizeProjects]([project]);
+      assert.deepEqual(result[0].requests, ['test']);
+    });
+
+    it('adds updated property', () => {
+      const project = /** @type ARCProject */ (generator.createProjectObject());
+      delete project.updated;
+      const result = model[normalizeProjects]([project]);
+      assert.typeOf(result[0].updated, 'number');
+    });
+
+    it('adds created property', () => {
+      const project = /** @type ARCProject */ (generator.createProjectObject());
+      delete project.created;
+      const result = model[normalizeProjects]([project]);
+      assert.typeOf(result[0].created, 'number');
+      assert.equal(result[0].created, result[0].updated);
+    });
+
+    it('respects existing created property', () => {
+      const project = /** @type ARCProject */ (generator.createProjectObject());
+      project.created = 10;
+      const result = model[normalizeProjects]([project]);
+      assert.equal(result[0].created, 10);
     });
   });
 });

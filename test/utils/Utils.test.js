@@ -1,6 +1,13 @@
 import {  assert } from '@open-wc/testing';
 import { DataGenerator } from '@advanced-rest-client/arc-data-generator';
-import { normalizeRequest, findUndeletedRevision, revertDelete } from '../../src/Utils.js';
+import {
+  normalizeRequest,
+  findUndeletedRevision,
+  revertDelete,
+  computeMidnight,
+  computeTime,
+  normalizeRequestType,
+} from '../../src/Utils.js';
 
 const generator = new DataGenerator();
 
@@ -184,6 +191,57 @@ describe('Utils', () => {
       const result = await revertDelete(db, [deleted(doc1), deleted(doc2)]);
       assert.typeOf(result, 'array');
       assert.lengthOf(result, 1);
+    });
+  });
+
+  describe('computeMidnight()', () => {
+    const d = new Date();
+    d.setHours(0, 0, 0, 0);
+    const todaysMidnight = d.getTime();
+
+    it('returns todays midnight when invalid argument', () => {
+      const result = computeMidnight(undefined);
+      assert.equal(result, todaysMidnight);
+    });
+
+    it('returns todays midnight for today', () => {
+      const result = computeMidnight(Date.now());
+      assert.equal(result, todaysMidnight);
+    });
+  });
+
+  describe('computeTime()', () => {
+    const d = new Date();
+    d.setHours(0, 0, 0, 0);
+    const todaysMidnight = d.getTime();
+
+    it('adds _time', () => {
+      const result = computeTime({ time: Date.now() });
+      // @ts-ignore
+      assert.equal(result._time, todaysMidnight);
+    });
+
+    it('returns a copy', () => {
+      const obj = { time: Date.now() };
+      computeTime(obj);
+      assert.isUndefined(obj._time);
+    });
+  });
+
+  describe('normalizeRequestType()', () => {
+    it('processes saved-requests', () => {
+      const result = normalizeRequestType('saved-requests');
+      assert.equal(result, 'saved');
+    });
+
+    it('processes history-requests', () => {
+      const result = normalizeRequestType('history-requests');
+      assert.equal(result, 'history');
+    });
+
+    it('processes legacy-projects', () => {
+      const result = normalizeRequestType('legacy-projects');
+      assert.equal(result, 'projects');
     });
   });
 });

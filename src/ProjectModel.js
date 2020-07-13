@@ -86,6 +86,7 @@ export class ProjectModel extends RequestBaseModel {
         const doc = await db.get(item._id);
         item = { ...doc, ...item };
       } catch (e) {
+        /* istanbul ignore if */
         if (e.status !== 404) {
           this._handleException(e);
           return undefined;
@@ -123,7 +124,7 @@ export class ProjectModel extends RequestBaseModel {
    * @return {Promise<ARCEntityChangeRecord[]>}
    */
   async postBulk(projects) {
-    if (!projects || !projects.length) {
+    if (!Array.isArray(projects) || !projects.length) {
       throw new Error('The "projects" property is required');
     }
     const items = this[normalizeProjects](projects);
@@ -236,12 +237,14 @@ export class ProjectModel extends RequestBaseModel {
       const response = responses[i];
       const project = { ...projects[i] };
       const typedError = /** @type PouchDB.Core.Error */ (response);
+      /* istanbul ignore if */
       if (typedError.error) {
         this._handleException(typedError, true);
         continue;
       }
       const oldRev = project._rev;
       project._rev = response.rev;
+      /* istanbul ignore if */
       if (!project._id) {
         project._id = response.id;
       }
