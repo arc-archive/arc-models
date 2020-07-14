@@ -2,6 +2,14 @@ import { RequestBaseModel } from './RequestBaseModel.js';
 import { ARCProject } from './RequestTypes';
 import { ARCEntityChangeRecord, ARCModelListResult, ARCModelListOptions } from './types';
 
+export const readHandler: symbol;
+export const updateHandler: symbol;
+export const updateBulkHandler: symbol;
+export const deleteHandler: symbol;
+export const queryHandler: symbol;
+export const normalizeProjects: symbol;
+export const processUpdateBulkResponse: symbol;
+
 /**
  * A model to access projects data in Advanced REST Client.
  * This component provides direct access to the data via the API

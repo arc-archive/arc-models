@@ -18,46 +18,10 @@ describe('<url-indexer> - Indexing test', () => {
   }
 
   before(async () => {
-    await DbHelper.clearData();
+    await DbHelper.destroy();
   });
 
   describe('Data indexing', () => {
-    function allIndexes(db) {
-      return new Promise((resolve, reject) => {
-        const tx = db.transaction('urls', 'readonly');
-        const store = tx.objectStore('urls');
-        const results = [];
-        tx.onerror = () => {
-          reject(results);
-        };
-        tx.oncomplete = () => {
-          resolve(results);
-        };
-        const request = store.openCursor();
-        request.onsuccess = (e) => {
-          const cursor = e.target.result;
-          if (cursor) {
-            results[results.length] = cursor.value;
-            cursor.continue();
-          }
-        };
-      });
-    }
-    function clearAllIndexes(db) {
-      return new Promise((resolve, reject) => {
-        const tx = db.transaction('urls', 'readwrite');
-        const store = tx.objectStore('urls');
-        const results = [];
-        tx.onerror = () => {
-          reject(results);
-        };
-        tx.oncomplete = () => {
-          resolve(results);
-        };
-        store.clear();
-      });
-    }
-
     describe('[storeIndexes]()', () => {
       let element = /** @type UrlIndexer */ (null);
       let inserts;
@@ -81,13 +45,14 @@ describe('<url-indexer> - Indexing test', () => {
 
       afterEach(async () => {
         const db = await element.openSearchStore();
-        await clearAllIndexes(db);
+        db.close();
+        await DbHelper.clearData();
       });
 
       it('Stores data into the data store', async () => {
         const db = await element.openSearchStore();
         await element[storeIndexes](db, inserts);
-        const data = await allIndexes(db);
+        const data = await DbHelper.readAllIndexes();
         assert.lengthOf(data, 2);
       });
     });
@@ -121,7 +86,8 @@ describe('<url-indexer> - Indexing test', () => {
 
       afterEach(async () => {
         const db = await element.openSearchStore();
-        await clearAllIndexes(db);
+        db.close();
+        await DbHelper.clearData();
       });
 
       it('Results to empty array when no indexes found', async () => {
@@ -171,13 +137,13 @@ describe('<url-indexer> - Indexing test', () => {
 
       afterEach(async () => {
         const db = await element.openSearchStore();
-        await clearAllIndexes(db);
+        db.close();
+        await DbHelper.clearData();
       });
 
       it('Stores indexes in the data store', async () => {
         await element.index(requests);
-        const db = await element.openSearchStore();
-        const result = await allIndexes(db);
+        const result = await DbHelper.readAllIndexes();
         assert.typeOf(result, 'array');
         assert.lengthOf(result, 11);
       });
@@ -185,8 +151,7 @@ describe('<url-indexer> - Indexing test', () => {
       it('does not insert repeated data', async () => {
         await element.index(requests);
         await element.index(requests);
-        const db = await element.openSearchStore();
-        const result = await allIndexes(db);
+        const result = await DbHelper.readAllIndexes();
         assert.typeOf(result, 'array');
         assert.lengthOf(result, 11);
       });
@@ -195,8 +160,7 @@ describe('<url-indexer> - Indexing test', () => {
         ArcModelEvents.UrlIndexer.update(document.body, requests);
         // should be enough?
         await aTimeout(200);
-        const db = await element.openSearchStore();
-        const result = await allIndexes(db);
+        const result = await DbHelper.readAllIndexes();
         assert.lengthOf(result, 11);
       });
     });
@@ -250,47 +214,24 @@ describe('<url-indexer> - Indexing test', () => {
         (item) => item.url.toLowerCase() === url.toLowerCase()
       );
     }
-    /**
-     * Removes all indexes from the index data store.
-     * @return {Promise}
-     */
-    function clearData() {
-      return new Promise((resolve, reject) => {
-        const request = window.indexedDB.open(
-          INDEX_STORE_NAME,
-          INDEX_STORE_VERSION
-        );
-        request.onsuccess = (e) => {
-          // @ts-ignore
-          const db = e.target.result;
-          const tx = db.transaction('urls', 'readwrite');
-          const store = tx.objectStore('urls');
-          tx.onerror = () => {
-            reject(new Error('Unable to clear the store'));
-          };
-          tx.oncomplete = () => {
-            resolve();
-          };
-          store.clear();
-        };
-        request.onerror = () => {
-          reject(new Error('Unable to open the store'));
-        };
-      });
-    }
 
     describe('Basic indexing', () => {
       const FULL_URL = 'https://domain.com/api?a=b&c=d';
       const REQUEST_ID = 'test-id';
       const REQUEST_TYPE = 'saved';
 
-      after(() => {
-        return clearData();
-      });
-
       let element = /** @type UrlIndexer */ (null);
       beforeEach(async () => {
         element = await basicFixture();
+      });
+
+      afterEach(async () => {
+        const db = await element.openSearchStore();
+        db.close();
+      });
+
+      after(async () => {
+        await DbHelper.clearData();
       });
 
       /**
@@ -394,7 +335,11 @@ describe('<url-indexer> - Indexing test', () => {
       element = await basicFixture();
     });
 
-    afterEach(() => DbHelper.clearData());
+    afterEach(async () => {
+      const db = await element.openSearchStore();
+      db.close();
+      await DbHelper.clearData();
+    });
 
     it('reindexes saved requests', async () => {
       await element.reindexSaved();
@@ -430,7 +375,11 @@ describe('<url-indexer> - Indexing test', () => {
       element = await basicFixture();
     });
 
-    afterEach(() => DbHelper.clearData());
+    afterEach(async () => {
+      const db = await element.openSearchStore();
+      db.close();
+      await DbHelper.clearData();
+    });
 
     it('reindexes history requests', async () => {
       await element.reindexHistory();
@@ -450,6 +399,12 @@ describe('<url-indexer> - Indexing test', () => {
     let element = /** @type UrlIndexer */ (null);
     beforeEach(async () => {
       element = await basicFixture();
+    });
+
+    afterEach(async () => {
+      const db = await element.openSearchStore();
+      db.close();
+      await DbHelper.clearData();
     });
 
     it('rejects when unknown type', async () => {

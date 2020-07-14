@@ -6,6 +6,9 @@ export declare interface DefaultQueryOptions extends Object {
   include_docs: boolean;
 }
 
+export declare const deletemodelHandler: symbol;
+export declare const notifyDestroyed: symbol;
+
 /**
  * A base class for all models.
  */
@@ -57,15 +60,6 @@ export declare class ArcBaseModel extends HTMLElement {
   read(id: string, rev?: string): Promise<object>;
 
   /**
-   * Dispatches non-cancelable change event.
-   *
-   * @param type Event type
-   * @param detail A detail object to dispatch.
-   * @returns Created and dispatched event.
-   */
-  _fireUpdated(type: string, detail?: object): CustomEvent;
-
-  /**
    * Handles any exception in the model in a unified way.
    *
    * @param e An error object
@@ -79,20 +73,6 @@ export declare class ArcBaseModel extends HTMLElement {
    * Note that `name` property must be set before calling this function.
    */
   deleteModel(name?: string): Promise<void>;
-
-  /**
-   * Notifies the application that the model has been removed and data sestroyed.
-   *
-   * @param type Database name.
-   * @returns Dispatched event
-   */
-  _notifyModelDestroyed(type: string): CustomEvent;
-
-  /**
-   * Handler for `destroy-model` custom event.
-   * Deletes current data when scheduled for deletion.
-   */
-  _deleteModelHandler(e: CustomEvent): void;
 
   /**
    * Checks if event can be processed giving it's cancelation status or if

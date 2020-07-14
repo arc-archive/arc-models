@@ -20,6 +20,8 @@ import {
 } from '../UrlIndexer';
 import { ARCAuthData } from '../AuthDataModel';
 import { ARCHostRule } from '../HostRulesModel';
+import { ARCClientCertificate } from '../ClientCertificateModel';
+
 declare interface ProjectStateFunctions {
   /**
    * Dispatches an event after a project was updated
@@ -71,9 +73,9 @@ declare interface ProjectFunctions {
    * @param target A node on which to dispatch the event.
    * @param id The id of the project to delete.
    * @param rev The revision of the project. If not set then the latest revision is used.
-   * @returns Promise resolved to a new revision after delete.
+   * @returns Promise resolved to the delete record
    */
-  delete(target: EventTarget, id: string, rev?: string): Promise<string>;
+  delete(target: EventTarget, id: string, rev?: string): Promise<DeletedEntity>;
 
   /**
    * Dispatches an event to list the project data.
@@ -347,6 +349,64 @@ declare interface HostRulesFunctions {
   State: HostRulesStateFunctions;
 }
 
+declare interface ClientCertificateStateFunctions {
+  /**
+   * Dispatches an event after a client certificate was updated
+   *
+   * @param target A node on which to dispatch the event.
+   * @param record Change record
+   */
+  update(target: EventTarget, record: ARCEntityChangeRecord<ARCClientCertificate>): void;
+  /**
+   * Dispatches an event after a client certificate was deleted
+   *
+   * @param target A node on which to dispatch the event.
+   * @param id Deleted client certificate id.
+   * @param rev Updated revision of the client certificate.
+   */
+  delete(target: EventTarget, id: string, rev: string): void;
+}
+
+declare interface ClientCertificateFunctions {
+  /**
+   * Dispatches an event handled by the data store to read the client certificate.
+   *
+   * @param target A node on which to dispatch the event.
+   * @param id The id of the client certificate
+   * @param rev The revision of the client certificate. If not set then the latest revision is used.
+   * @returns Promise resolved to a client certificate model.
+   */
+  read(target: EventTarget, id: string, rev?: string): Promise<ARCClientCertificate>;
+  /**
+   * Dispatches an event to list the client certificates data.
+   *
+   * @param target A node on which to dispatch the event.
+   * @param opts Query options.
+   * @returns The list result.
+   */
+  list(target: EventTarget, opts?: ARCModelListOptions): Promise<ARCModelListResult<ARCClientCertificate>>;
+  /**
+   * Dispatches an event handled by the data store to delete a client certificate
+   *
+   * @param target A node on which to dispatch the event.
+   * @param id The id of the project to delete.
+   * @param rev The revision of the project. If not set then the latest revision is used.
+   * @returns Promise resolved to a new revision after delete.
+   */
+  delete(target: EventTarget, id: string, rev?: string): Promise<DeletedEntity>;
+  /**
+   * Dispatches an event handled by the data store to insert a new client certificate.
+   *
+   * @param target A node on which to dispatch the event.
+   * @param item The certificate object.
+   * @returns Promise resolved to the change record
+   */
+  insert(target: EventTarget, item: ARCClientCertificate): Promise<ARCEntityChangeRecord<ARCClientCertificate>>;
+
+
+  State: ClientCertificateStateFunctions;
+}
+
 declare interface ArcModelEvents {
   /**
    * Dispatches an event handled by the data store to destroy a data store.
@@ -360,14 +420,15 @@ declare interface ArcModelEvents {
    * Dispatches an event information the app that a store has been destroyed.
    *
    * @param target A node on which to dispatch the event.
-   * @param stores A list of store names that has been deleted.
+   * @param store The name of the deleted store
    */
-  destroyed(target: EventTarget, stores: string[]): void;
+  destroyed(target: EventTarget, store: string): void;
   Project: ProjectFunctions;
   Request: RequestFunctions;
   UrlIndexer: UrlIndexerFunctions;
   AuthData: AuthDataFunctions;
   HostRules: HostRulesFunctions;
+  ClientCertificate: ClientCertificateFunctions;
 }
 
 declare const events: ArcModelEvents;

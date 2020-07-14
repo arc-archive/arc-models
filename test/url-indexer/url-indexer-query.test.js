@@ -19,21 +19,6 @@ describe('<url-indexer> - Indexing test', () => {
   });
 
   describe('Query index', () => {
-    function clearAllIndexes(db) {
-      return new Promise((resolve, reject) => {
-        const tx = db.transaction('urls', 'readwrite');
-        const store = tx.objectStore('urls');
-        const results = [];
-        tx.onerror = () => {
-          reject(results);
-        };
-        tx.oncomplete = () => {
-          resolve(results);
-        };
-        store.clear();
-      });
-    }
-
     describe('Querying for data', () => {
       before(async () => {
         const toIndex = [
@@ -63,9 +48,7 @@ describe('<url-indexer> - Indexing test', () => {
       });
 
       after(async () => {
-        const indexer = new UrlIndexer();
-        const db = await indexer.openSearchStore();
-        await clearAllIndexes(db);
+        await DbHelper.clearData();
       });
 
       class SearchResults {
@@ -81,6 +64,11 @@ describe('<url-indexer> - Indexing test', () => {
         let element = /** @type UrlIndexer */ (null);
         beforeEach(async () => {
           element = await basicFixture();
+        });
+
+        afterEach(async () => {
+          const db = await element.openSearchStore();
+          db.close();
         });
 
         [
@@ -121,6 +109,11 @@ describe('<url-indexer> - Indexing test', () => {
         let element = /** @type UrlIndexer */ (null);
         beforeEach(async () => {
           element = await basicFixture();
+        });
+
+        afterEach(async () => {
+          const db = await element.openSearchStore();
+          db.close();
         });
 
         [
@@ -193,8 +186,7 @@ describe('<url-indexer> - Indexing test', () => {
       });
 
       after(async () => {
-        const db = await element.openSearchStore();
-        await clearAllIndexes(db);
+        await DbHelper.clearData();
       });
 
       const groupMatch = {

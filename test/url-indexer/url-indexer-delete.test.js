@@ -15,7 +15,7 @@ describe('<url-indexer> - Delete test', () => {
   }
 
   before(async () => {
-    await DbHelper.clearData();
+    await DbHelper.destroy();
   });
 
   describe('deleteIndexedData()', () => {
@@ -41,9 +41,13 @@ describe('<url-indexer> - Delete test', () => {
       ]);
     });
 
-    afterEach(() => DbHelper.clearData());
+    afterEach(async () => {
+      const db = await element.openSearchStore();
+      db.close();
+      await DbHelper.clearData()
+    });
 
-    it('Deletes index of a single request', async () => {
+    it('deletes index of a single request', async () => {
       await element.deleteIndexedData([REQUEST_ID]);
       const data = await DbHelper.readAllIndexes();
       assert.lengthOf(data, 8);
@@ -74,7 +78,11 @@ describe('<url-indexer> - Delete test', () => {
       ]);
     });
 
-    afterEach(() => DbHelper.clearData());
+    afterEach(async () => {
+      const db = await element.openSearchStore();
+      db.close();
+      await DbHelper.clearData()
+    });
 
     it('Deletes by type only', async () => {
       await element.deleteIndexedType('t1');
@@ -101,7 +109,11 @@ describe('<url-indexer> - Delete test', () => {
       ]);
     });
 
-    afterEach(() => DbHelper.clearData());
+    afterEach(async () => {
+      const db = await element.openSearchStore();
+      db.close();
+      await DbHelper.clearData()
+    });
 
     it('Deletes all index data', async () => {
       await element.clearIndexedData();
@@ -128,7 +140,11 @@ describe('<url-indexer> - Delete test', () => {
       ]);
     });
 
-    afterEach(() => DbHelper.clearData());
+    afterEach(async () => {
+      const db = await element.openSearchStore();
+      db.close();
+      await DbHelper.clearData()
+    });
 
     it('clears saved via saved-requests type', async () => {
       await ArcModelEvents.destroy(document.body, ['saved-requests']);
@@ -185,7 +201,11 @@ describe('<url-indexer> - Delete test', () => {
       ]);
     });
 
-    afterEach(() => DbHelper.clearData());
+    afterEach(async () => {
+      const db = await element.openSearchStore();
+      db.close();
+      await DbHelper.clearData()
+    });
 
     it('deletes request by id', async () => {
       ArcModelEvents.Request.State.delete(document.body, 'saved', 'r1', 'old');

@@ -1,4 +1,5 @@
 import { fixture, assert } from '@open-wc/testing';
+// import { DbHelper } from './db-helper.js';
 import '../../url-indexer.js';
 import {
   generateId,
@@ -291,13 +292,18 @@ describe('URL indexer', () => {
   describe('[prepareRequestIndexData]()', () => {
     let element = /** @type UrlIndexer */ (null);
     let request;
-    before(async () => {
+    beforeEach(async () => {
       element = await basicFixture();
       request = {
         id: 'test-id',
         url: 'https://domain.com/Api/Path?p1=1&p2=2',
         type: 'saved',
       };
+    });
+
+    afterEach(async () => {
+      const db = await element.openSearchStore();
+      db.close();
     });
 
     it('Always returns an array', () => {
@@ -377,9 +383,14 @@ describe('URL indexer', () => {
     const url = 'test-url';
     const type = 'test-type';
     let indexed;
-    before(async () => {
+    beforeEach(async () => {
       element = await basicFixture();
       indexed = [];
+    });
+
+    afterEach(async () => {
+      const db = await element.openSearchStore();
+      db.close();
     });
 
     it('Creates datastore entry if not exists', () => {
@@ -434,7 +445,7 @@ describe('URL indexer', () => {
     const type = 'test-type';
     let indexed;
     let request;
-    before(async () => {
+    beforeEach(async () => {
       element = await basicFixture();
       indexed = [];
       request = {
@@ -442,6 +453,11 @@ describe('URL indexer', () => {
         url,
         type,
       };
+    });
+
+    afterEach(async () => {
+      const db = await element.openSearchStore();
+      db.close();
     });
 
     it('creates index entity when not indexed', () => {
@@ -471,10 +487,15 @@ describe('URL indexer', () => {
     const type = 'test-type';
     let indexed;
     let parser;
-    before(async () => {
+    beforeEach(async () => {
       element = await basicFixture();
       indexed = [];
       parser = new URL(requestUrl);
+    });
+
+    afterEach(async () => {
+      const db = await element.openSearchStore();
+      db.close();
     });
 
     it('Creates index entity when not indexed', () => {
@@ -511,10 +532,15 @@ describe('URL indexer', () => {
     const type = 'test-type';
     let indexed;
     let parser;
-    before(async () => {
+    beforeEach(async () => {
       element = await basicFixture();
       indexed = [];
       parser = new URL(requestUrl);
+    });
+
+    afterEach(async () => {
+      const db = await element.openSearchStore();
+      db.close();
     });
 
     it('Creates index entity when not indexed', () => {
@@ -551,10 +577,15 @@ describe('URL indexer', () => {
     const type = 'test-type';
     let indexed;
     let parser;
-    before(async () => {
+    beforeEach(async () => {
       element = await basicFixture();
       indexed = [];
       parser = new URL(requestUrl);
+    });
+
+    afterEach(async () => {
+      const db = await element.openSearchStore();
+      db.close();
     });
 
     it('Creates index entity when not indexed', () => {
@@ -592,11 +623,16 @@ describe('URL indexer', () => {
     let indexed;
     let parser;
     let target;
-    before(async () => {
+    beforeEach(async () => {
       element = await basicFixture();
       indexed = [];
       target = [];
       parser = new URL(requestUrl);
+    });
+
+    afterEach(async () => {
+      const db = await element.openSearchStore();
+      db.close();
     });
 
     it('Adds index entity when not indexed', () => {
@@ -636,11 +672,16 @@ describe('URL indexer', () => {
 
   describe('openSearchStore()', () => {
     let element = /** @type UrlIndexer */ (null);
-    before(async () => {
+    beforeEach(async () => {
       element = await basicFixture();
     });
 
-    // after(() => DbHelper.clearData());
+    afterEach(async () => {
+      const db = await element.openSearchStore();
+      db.close();
+    });
+
+    // after(() => DbHelper.destroy());
 
     // after((done) => {
     //   DbHelper.clearData()

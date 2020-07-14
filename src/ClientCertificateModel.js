@@ -12,12 +12,29 @@ License for the specific language governing permissions and limitations under
 the License.
 */
 import { ArcBaseModel } from './ArcBaseModel.js';
-/* eslint-disable require-atomic-updates */
+import { ArcModelEventTypes } from './events/ArcModelEventTypes.js';
+import { ArcModelEvents } from './events/ArcModelEvents.js';
+
 /* eslint-disable class-methods-use-this */
 /* eslint-disable no-param-reassign */
+
 /** @typedef {import('./ClientCertificateModel').ARCClientCertificate} ARCClientCertificate */
 /** @typedef {import('./ClientCertificateModel').ARCCertificateIndex} ARCCertificateIndex */
 /** @typedef {import('./ClientCertificateModel').ARCCertificate} ARCCertificate */
+/** @typedef {import('./events/CertificatesEvents').ARCClientCertificateInsertEvent} ARCClientCertificateInsertEvent */
+/** @typedef {import('./events/CertificatesEvents').ARCClientCertificateReadEvent} ARCClientCertificateReadEvent */
+/** @typedef {import('./events/CertificatesEvents').ARCClientCertificateDeleteEvent} ARCClientCertificateDeleteEvent */
+/** @typedef {import('./events/CertificatesEvents').ARCClientCertificateListEvent} ARCClientCertificateListEvent */
+/** @typedef {import('./types').ARCEntityChangeRecord} ARCEntityChangeRecord */
+/** @typedef {import('./types').DeletedEntity} DeletedEntity */
+/** @typedef {import('./types').ARCModelListResult} ARCModelListResult */
+/** @typedef {import('./types').ARCModelListOptions} ARCModelListOptions */
+
+export const listHandler = Symbol('listHandler');
+export const insertHandler = Symbol('insertHandler');
+export const deleteHandler = Symbol('deleteHandler');
+export const readHandler = Symbol('readHandler');
+
 /**
  * Events based access to client-certificates data store.
  *
@@ -57,11 +74,11 @@ import { ArcBaseModel } from './ArcBaseModel.js';
  */
 export class ClientCertificateModel extends ArcBaseModel {
   constructor() {
-    super('client-certificates', 1);
-    this._listHandler = this._listHandler.bind(this);
-    this._getHandler = this._getHandler.bind(this);
-    this._deleteHandler = this._deleteHandler.bind(this);
-    this._insertHandler = this._insertHandler.bind(this);
+    super('client-certificates');
+    this[listHandler] = this[listHandler].bind(this);
+    this[readHandler] = this[readHandler].bind(this);
+    this[deleteHandler] = this[deleteHandler].bind(this);
+    this[insertHandler] = this[insertHandler].bind(this);
   }
 
   /**
@@ -70,46 +87,35 @@ export class ClientCertificateModel extends ArcBaseModel {
    */
   get dataDb() {
     /* global PouchDB */
-    return new PouchDB('client-certificates-data', {
-      revs_limit: 1,
-    });
+    return new PouchDB('client-certificates-data');
   }
 
   _attachListeners(node) {
     super._attachListeners(node);
-    node.addEventListener('client-certificate-list', this._listHandler);
-    node.addEventListener('client-certificate-get', this._getHandler);
-    node.addEventListener('client-certificate-delete', this._deleteHandler);
-    node.addEventListener('client-certificate-insert', this._insertHandler);
+    node.addEventListener(ArcModelEventTypes.ClientCertificate.list, this[listHandler]);
+    node.addEventListener(ArcModelEventTypes.ClientCertificate.read, this[readHandler]);
+    node.addEventListener(ArcModelEventTypes.ClientCertificate.delete, this[deleteHandler]);
+    node.addEventListener(ArcModelEventTypes.ClientCertificate.insert, this[insertHandler]);
   }
 
   _detachListeners(node) {
     super._detachListeners(node);
-    node.removeEventListener('api-index-list', this._listHandler);
-    node.removeEventListener('client-certificate-get', this._getHandler);
-    node.removeEventListener('client-certificate-delete', this._deleteHandler);
-    node.removeEventListener('client-certificate-insert', this._insertHandler);
+    node.removeEventListener(ArcModelEventTypes.ClientCertificate.list, this[listHandler]);
+    node.removeEventListener(ArcModelEventTypes.ClientCertificate.read, this[readHandler]);
+    node.removeEventListener(ArcModelEventTypes.ClientCertificate.delete, this[deleteHandler]);
+    node.removeEventListener(ArcModelEventTypes.ClientCertificate.insert, this[insertHandler]);
   }
 
   /**
    * Lists certificates installed in the application.
    *
-   * Note, pagination is not enabled for this store. By calling this function
-   * it returns all certificates from the database.
-   *
-   * The list data only contain certificate's meta data. Certificate's content
-   * and password is kept in different store.
-   *
-   * @return {Promise<ARCCertificateIndex[]>}
+   * @param {ARCModelListOptions=} opts Query options.
+   * @return {Promise<ARCModelListResult>} A promise resolved to a list of projects.
    */
-  async list() {
-    const response = await this.db.allDocs({
-      include_docs: true,
-    });
-    const result = response.rows.map((item) => {
-      const { doc } = item;
+  async list(opts={}) {
+    const result = await this.listEntities(this.db, opts);
+    result.items.forEach((doc) => {
       delete doc.dataKey;
-      return doc;
     });
     return result;
   }
@@ -118,13 +124,18 @@ export class ClientCertificateModel extends ArcBaseModel {
    * Reads clioent certificate full structure.
    * Returns certificate's meta data + cert + key.
    * @param {String} id Certificate's datastore id.
+   * @param {string=} rev Specific revision to read. Defaults to the latest revision.
    * @return {Promise<ARCClientCertificate>} Promise resolved to a certificate object.
    */
-  async get(id) {
+  async get(id, rev) {
     if (!id) {
       throw new Error('The "id" argument is missing');
     }
-    const doc = await this.db.get(id);
+    const opts = {};
+    if (rev) {
+      opts.rev = rev;
+    }
+    const doc = await this.db.get(id, opts);
     const { dataKey } = doc;
     const data = await this.dataDb.get(dataKey);
     delete data._id;
@@ -146,7 +157,7 @@ export class ClientCertificateModel extends ArcBaseModel {
    * conflict with GDPR.
    *
    * @param {string} id Certificate's datastore id.
-   * @return {Promise<void>} Promise resolved when both entries are deleted.
+   * @return {Promise<DeletedEntity>} Promise resolved when both entries are deleted.
    */
   async delete(id) {
     if (!id) {
@@ -155,16 +166,17 @@ export class ClientCertificateModel extends ArcBaseModel {
     const { db } = this;
     const doc = await db.get(id);
     doc._deleted = true;
-    await db.put(doc);
+    const updateRecord = await db.put(doc);
     const { dataKey } = doc;
     const { dataDb } = this;
     const data = await dataDb.get(dataKey);
     data._deleted = true;
     await dataDb.put(data);
-    const detail = {
+    ArcModelEvents.ClientCertificate.State.delete(this, id, updateRecord.rev);
+    return {
       id,
+      rev: updateRecord.rev,
     };
-    this._fireUpdated('client-certificate-delete', detail);
   }
 
   /**
@@ -172,9 +184,7 @@ export class ClientCertificateModel extends ArcBaseModel {
    * See class description for data structure.
    *
    * @param {ARCClientCertificate} cert Data to insert.
-   * @return {Promise<string>} Unlike other models, promise resolved to inserted
-   * id. Because this API operates on a single ID without reviews this won't
-   * return the final object.
+   * @return {Promise<ARCEntityChangeRecord>} Returns a change record for the entity
    */
   async insert(cert) {
     const data = { ...cert };
@@ -201,8 +211,14 @@ export class ClientCertificateModel extends ArcBaseModel {
     delete data.dataKey;
     data._id = res.id;
     data._rev = res.rev;
-    this._fireUpdated('client-certificate-insert', data);
-    return res.id;
+
+    const record = {
+      id: res.id,
+      rev: res.rev,
+      item: data,
+    };
+    ArcModelEvents.ClientCertificate.State.update(this, record);
+    return record;
   }
 
   /**
@@ -280,43 +296,60 @@ export class ClientCertificateModel extends ArcBaseModel {
     return new Uint8Array([...asciiString].map((char) => char.charCodeAt(0)));
   }
 
-  _listHandler(e) {
-    if (e.defaultPrevented || !e.cancelable) {
+  /**
+   * @param {ARCClientCertificateListEvent} e
+   */
+  [listHandler](e) {
+    if (e.defaultPrevented) {
       return;
     }
     e.preventDefault();
     e.stopPropagation();
-    e.detail.result = this.list();
+    const { limit, nextPageToken } = e;
+
+    e.detail.result = this.list({
+      limit,
+      nextPageToken,
+    });
   }
 
-  _getHandler(e) {
-    if (e.defaultPrevented || !e.cancelable) {
+  /**
+   * @param {ARCClientCertificateReadEvent} e
+   */
+  [readHandler](e) {
+    if (e.defaultPrevented) {
       return;
     }
     e.preventDefault();
     e.stopPropagation();
-    const { id } = e.detail;
-    e.detail.result = this.get(id);
+    const { id, rev } = e;
+    e.detail.result = this.get(id, rev);
   }
 
-  _deleteHandler(e) {
-    if (e.defaultPrevented || !e.cancelable) {
+  /**
+   * @param {ARCClientCertificateDeleteEvent} e
+   */
+  [deleteHandler](e) {
+    if (e.defaultPrevented) {
       return;
     }
     e.preventDefault();
     e.stopPropagation();
-    const { id } = e.detail;
+    const { id } = e;
     e.detail.result = this.delete(id);
   }
 
-  _insertHandler(e) {
-    if (e.defaultPrevented || !e.cancelable) {
+  /**
+   * @param {ARCClientCertificateInsertEvent} e
+   */
+  [insertHandler](e) {
+    if (e.defaultPrevented) {
       return;
     }
     e.preventDefault();
     e.stopPropagation();
-    const { value } = e.detail;
-    e.detail.result = this.insert(value);
+    const { certificate } = e;
+    e.detail.result = this.insert(certificate);
   }
 
   /**

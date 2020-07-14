@@ -56,6 +56,17 @@ export const ArcModelEventTypes = {
       delete: 'modelstatehostrulesdelete',
     },
   },
+  ClientCertificate: {
+    read: 'modelclientcertificateread',
+    list: 'modelclientcertificatelist',
+    delete: 'modelclientcertificatedelete',
+    update: 'modelclientcertificateupdate',
+    insert: 'modelclientcertificateinsert',
+    State: {
+      update: 'modelstateclientcertificateupdate',
+      delete: 'modelstateclientcertificatedelete',
+    }
+  },
 };
 Object.freeze(ArcModelEventTypes);
 Object.freeze(ArcModelEventTypes.Project);
@@ -68,3 +79,5 @@ Object.freeze(ArcModelEventTypes.AuthData);
 Object.freeze(ArcModelEventTypes.AuthData.State);
 Object.freeze(ArcModelEventTypes.HostRules);
 Object.freeze(ArcModelEventTypes.HostRules.State);
+Object.freeze(ArcModelEventTypes.ClientCertificate);
+Object.freeze(ArcModelEventTypes.ClientCertificate.State);

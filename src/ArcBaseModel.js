@@ -13,10 +13,17 @@ the License.
 */
 
 import 'pouchdb/dist/pouchdb.js';
+import { ArcModelEventTypes } from './events/ArcModelEventTypes.js';
+import { ArcModelEvents } from './events/ArcModelEvents.js';
+
 /* eslint-disable class-methods-use-this */
 
 /** @typedef {import('./types').ARCModelListResult} ARCModelListResult */
 /** @typedef {import('./types').ARCModelListOptions} ARCModelListOptions */
+/** @typedef {import('./events/BaseEvents').ARCModelDeleteEvent} ARCModelDeleteEvent */
+
+export const deletemodelHandler = Symbol('deletemodelHandler');
+export const notifyDestroyed = Symbol('notifyDestroyed');
 
 /**
  * A base class for all models.
@@ -30,7 +37,7 @@ export class ArcBaseModel extends HTMLElement {
     super();
     this.name = dbname;
     this.revsLimit = revsLimit;
-    this._deleteModelHandler = this._deleteModelHandler.bind(this);
+    this[deletemodelHandler] = this[deletemodelHandler].bind(this);
   }
 
   /**
@@ -89,14 +96,14 @@ export class ArcBaseModel extends HTMLElement {
    * @param {EventTarget} node
    */
   _attachListeners(node) {
-    node.addEventListener('destroy-model', this._deleteModelHandler);
+    node.addEventListener(ArcModelEventTypes.destroy, this[deletemodelHandler]);
   }
 
   /**
    * @param {EventTarget} node
    */
   _detachListeners(node) {
-    node.removeEventListener('destroy-model', this._deleteModelHandler);
+    node.removeEventListener(ArcModelEventTypes.destroy, this[deletemodelHandler]);
   }
 
   /**
@@ -131,24 +138,6 @@ export class ArcBaseModel extends HTMLElement {
       opts.rev = rev;
     }
     return this.db.get(id, opts);
-  }
-
-  /**
-   * Dispatches non-cancelable change event.
-   *
-   * @param {string} type Event type
-   * @param {object} detail A detail object to dispatch.
-   * @return {CustomEvent} Created and dispatched event.
-   */
-  _fireUpdated(type, detail) {
-    const e = new CustomEvent(type, {
-      cancelable: false,
-      composed: true,
-      bubbles: true,
-      detail,
-    });
-    this.dispatchEvent(e);
-    return e;
   }
 
   /**
@@ -187,40 +176,39 @@ export class ArcBaseModel extends HTMLElement {
    */
   async deleteModel() {
     await this.db.destroy();
-    this._notifyModelDestroyed(this.name);
+    this[notifyDestroyed](this.name);
   }
 
   /**
    * Notifies the application that the model has been removed and data sestroyed.
-   * @param {string} type Database name.
-   * @return {CustomEvent} Dispatched event
+   *
+   * @param {string} store The name of the deleted store
    */
-  _notifyModelDestroyed(type) {
-    const e = new CustomEvent('datastore-destroyed', {
-      bubbles: true,
-      composed: true,
-      detail: {
-        datastore: type,
-      },
-    });
-    this.dispatchEvent(e);
-    return e;
+  [notifyDestroyed](store) {
+    ArcModelEvents.destroyed(this, store);
   }
 
   /**
    * Handler for `destroy-model` custom event.
    * Deletes current data when scheduled for deletion.
-   * @param {CustomEvent} e
+   * @param {ARCModelDeleteEvent} e
    */
-  _deleteModelHandler(e) {
-    const { models } = e.detail;
-    if (!models || !models.length || !this.name) {
+  [deletemodelHandler](e) {
+    if (e.defaultPrevented) {
       return;
     }
-    if (models.indexOf(this.name) !== -1) {
-      if (!e.detail.result) {
-        e.detail.result = [];
-      }
+    const { stores, detail } = e;
+    if (!stores || !stores.length) {
+      return;
+    }
+    if (!stores || !stores.length || !this.name) {
+      return;
+    }
+    /* istanbul ignore else */
+    if (!Array.isArray(detail.result)) {
+      detail.result = [];
+    }
+    if (stores.indexOf(this.name) !== -1) {
       e.detail.result.push(this.deleteModel());
     }
   }

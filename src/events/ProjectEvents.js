@@ -2,13 +2,10 @@
 import { ArcModelEventTypes } from './ArcModelEventTypes.js';
 import { ARCEntityDeletedEvent, ARCEntityListEvent } from './BaseEvents.js';
 
-/** @typedef {import('./BaseEvents').ARCModelReadEventDetail} ARCModelReadEventDetail */
-/** @typedef {import('./BaseEvents').ARCModelUpdateEventDetail} ARCModelUpdateEventDetail */
-/** @typedef {import('./BaseEvents').ARCModelUpdateBulkEventDetail} ARCModelUpdateBulkEventDetail */
-/** @typedef {import('./BaseEvents').ARCModelDeleteEventDetail} ARCModelDeleteEventDetail */
 /** @typedef {import('../types').ARCEntityChangeRecord} ARCEntityChangeRecord */
 /** @typedef {import('../types').ARCModelListOptions} ARCModelListOptions */
 /** @typedef {import('../types').ARCModelListResult} ARCModelListResult */
+/** @typedef {import('../types').DeletedEntity} DeletedEntity */
 /** @typedef {import('../RequestTypes').ARCProject} ARCProject */
 
 export const projectValue = Symbol('projectValue');
@@ -108,7 +105,7 @@ export class ARCProjectUpdateBulkEvent extends CustomEvent {
 /**
  * An event dispatched from the store after updating a project
  */
-export class ARCProjectUpdatedEvent extends CustomEvent {
+export class ARCProjectUpdatedEvent extends Event {
   /**
    * @param {ARCEntityChangeRecord} record Project change record.
    */
@@ -235,7 +232,7 @@ export async function updateBulkAction(target, projects) {
  * @param {EventTarget} target A node on which to dispatch the event.
  * @param {string} id The id of the project to delete.
  * @param {string=} rev The revision of the project. If not set then the latest revision is used.
- * @return {Promise<string>} Promise resolved to a new revision after delete.
+ * @return {Promise<DeletedEntity>} Promise resolved to the delete record
  */
 export async function deleteAction(target, id, rev) {
   const e = new ARCProjectDeleteEvent(id, rev);

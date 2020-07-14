@@ -10,6 +10,7 @@ import {
   ARCEntityChangeRecord,
   ARCModelListOptions,
   ARCModelListResult,
+  DeletedEntity,
 } from '../types';
 import { ARCProject } from '../RequestTypes';
 /**
@@ -138,9 +139,9 @@ export declare function updateBulkAction(target: EventTarget, projects: ARCProje
  * @param target A node on which to dispatch the event.
  * @param id The id of the project to delete.
  * @param rev The revision of the project. If not set then the latest revision is used.
- * @returns Promise resolved to a new revision after delete.
+ * @returns Promise resolved to the delete record
  */
-export declare function deleteAction(target: EventTarget, id: string, rev?: string): Promise<string>;
+export declare function deleteAction(target: EventTarget, id: string, rev?: string): Promise<DeletedEntity>;
 
 /**
  * Dispatches an event to list the project data.

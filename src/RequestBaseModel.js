@@ -11,7 +11,7 @@ WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
 License for the specific language governing permissions and limitations under
 the License.
 */
-import { ArcBaseModel } from './ArcBaseModel.js';
+import { ArcBaseModel, deletemodelHandler, notifyDestroyed } from './ArcBaseModel.js';
 import 'pouchdb/dist/pouchdb.js';
 import '@advanced-rest-client/pouchdb-quick-search/dist/pouchdb.quick-search.min.js';
 import { ArcModelEvents } from './events/ArcModelEvents.js';
@@ -19,7 +19,6 @@ import { normalizeRequestType } from './Utils.js';
 
 /* global PouchQuickSearch */
 /* eslint-disable class-methods-use-this */
-/* eslint-disable require-atomic-updates */
 
 // @ts-ignore
 if (typeof PouchDB !== 'undefined' && typeof PouchQuickSearch !== 'undefined') {
@@ -30,6 +29,7 @@ if (typeof PouchDB !== 'undefined' && typeof PouchQuickSearch !== 'undefined') {
 /** @typedef {import('./RequestTypes').ARCProject} ARCProject */
 /** @typedef {import('./types').ARCEntityChangeRecord} ARCEntityChangeRecord */
 /** @typedef {import('./types').DeletedEntity} DeletedEntity */
+/** @typedef {import('./events/BaseEvents').ARCModelDeleteEvent} ARCModelDeleteEvent */
 
 /**
  * A base class for Request and Projects` models.
@@ -74,19 +74,22 @@ export class RequestBaseModel extends ArcBaseModel {
   }
 
   /**
-   * Handler for `destroy-model` custom event.
-   * Deletes current data when scheduled for deletion.
-   * @param {CustomEvent} e
+   * Overrides data model delete handler to support dynamic nature of this component
+   * @param {ARCModelDeleteEvent} e
    */
-  _deleteModelHandler(e) {
-    const { models } = e.detail;
-    if (!models || !models.length || !this.name) {
+  [deletemodelHandler](e) {
+    const { stores, detail } = e;
+    if (!stores || !stores.length) {
       return;
     }
-    if (models.indexOf(this.name) !== -1) {
-      if (!e.detail.result) {
-        e.detail.result = [];
-      }
+    if (!stores || !stores.length || !this.name) {
+      return;
+    }
+    /* istanbul ignore else */
+    if (!Array.isArray(detail.result)) {
+      detail.result = [];
+    }
+    if (stores.indexOf(this.name) !== -1) {
       e.detail.result.push(this.deleteModel(this.name));
     }
   }
@@ -99,7 +102,7 @@ export class RequestBaseModel extends ArcBaseModel {
   async deleteModel(type) {
     const db = this.getDatabase(type);
     await db.destroy();
-    this._notifyModelDestroyed(type);
+    this[notifyDestroyed](type);
   }
 
   /**

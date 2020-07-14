@@ -1,9 +1,13 @@
 import { fixture, assert } from '@open-wc/testing';
 import * as sinon from 'sinon';
-import { ArcBaseModel } from '../../src/ArcBaseModel.js';
+import { ArcModelEventTypes } from '../../src/events/ArcModelEventTypes.js';
+import { ArcModelEvents } from '../../src/events/ArcModelEvents.js';
+import { ArcBaseModel, notifyDestroyed, deletemodelHandler } from '../../src/ArcBaseModel.js';
+import { ARCModelDeleteEvent } from '../../src/events/BaseEvents.js';
 import { STORE_NAME } from './TestModel.js';
 
 /** @typedef {import('./TestModel').TestModel} TestModel */
+/** @typedef {import('../../src/events/BaseEvents').ARCModelStateDeleteEvent} ARCModelStateDeleteEvent */
 
 /* eslint-disable require-atomic-updates */
 
@@ -107,56 +111,10 @@ describe('ArcBaseModel', () => {
     });
   });
 
-  describe('_fireUpdated()', () => {
-    let element;
-    const eventType = 'test-event';
-    const eDetail = 'test-detail';
-
-    beforeEach(async () => {
-      element = /** @type {TestModel} */ (await fixture(
-        '<test-model></test-model>'
-      ));
-    });
-
-    it('Dispatches custom event', () => {
-      const spy = sinon.spy();
-      element.addEventListener(eventType, spy);
-      element._fireUpdated(eventType);
-      assert.isTrue(spy.called);
-    });
-
-    it('Returns dispatched event', () => {
-      const e = element._fireUpdated(eventType, eDetail);
-      assert.equal(e.constructor.name, 'CustomEvent');
-    });
-
-    it('Event contains passed detail', () => {
-      const e = element._fireUpdated(eventType, eDetail);
-      assert.equal(e.detail, eDetail);
-    });
-
-    it('Event is not cancelable', () => {
-      const e = element._fireUpdated(eventType, eDetail);
-      assert.isFalse(e.cancelable);
-    });
-
-    it('Event is composed', () => {
-      const e = element._fireUpdated(eventType, eDetail);
-      assert.isTrue(e.composed);
-    });
-
-    it('Event bubbles', () => {
-      const e = element._fireUpdated(eventType, eDetail);
-      assert.isTrue(e.bubbles);
-    });
-  });
-
   describe('_handleException()', () => {
-    let element;
+    let element = /** @type TestModel */ (null);
     beforeEach(async () => {
-      element = /** @type {TestModel} */ (await fixture(
-        '<test-model></test-model>'
-      ));
+      element = await basicFixture();
     });
 
     it('Throws the error', () => {
@@ -201,8 +159,8 @@ describe('ArcBaseModel', () => {
     });
   });
 
-  describe('_notifyModelDestroyed()', () => {
-    let element;
+  describe('[notifyDestroyed]()', () => {
+    let element = /** @type TestModel */ (null);
     const storeName = 'test-store';
 
     beforeEach(async () => {
@@ -211,61 +169,68 @@ describe('ArcBaseModel', () => {
       ));
     });
 
-    it('Dispatches custom event', () => {
+    it('dispatches a custom event', () => {
       const spy = sinon.spy();
-      element.addEventListener('datastore-destroyed', spy);
-      element._notifyModelDestroyed(storeName);
+      element.addEventListener(ArcModelEventTypes.destroyed, spy);
+      element[notifyDestroyed](storeName);
       assert.isTrue(spy.called);
     });
 
-    it('Returns dispatched event', () => {
-      const e = element._notifyModelDestroyed(storeName);
-      assert.equal(e.constructor.name, 'CustomEvent');
+    it('contains datastore on the detail object', () => {
+      const spy = sinon.spy();
+      element.addEventListener(ArcModelEventTypes.destroyed, spy);
+      element[notifyDestroyed](storeName);
+      const e = /** @type ARCModelStateDeleteEvent */ (spy.args[0][0]);
+      assert.equal(e.store, storeName);
     });
 
-    it('Contains datastore on the detail object', () => {
-      const e = element._notifyModelDestroyed(storeName);
-      assert.equal(e.detail.datastore, storeName);
-    });
-
-    it('Event is not cancelable', () => {
-      const e = element._notifyModelDestroyed(storeName);
+    it('is not cancelable', () => {
+      const spy = sinon.spy();
+      element.addEventListener(ArcModelEventTypes.destroyed, spy);
+      element[notifyDestroyed](storeName);
+      const e = /** @type ARCModelStateDeleteEvent */ (spy.args[0][0]);
       assert.isFalse(e.cancelable);
     });
 
-    it('Event is composed', () => {
-      const e = element._notifyModelDestroyed(storeName);
-      assert.isTrue(e.composed);
+    it('bubbles', () => {
+      const spy = sinon.spy();
+      element.addEventListener(ArcModelEventTypes.destroyed, spy);
+      element[notifyDestroyed](storeName);
+      const e = /** @type ARCModelStateDeleteEvent */ (spy.args[0][0]);
+      assert.isTrue(e.bubbles);
     });
 
-    it('Event bubbles', () => {
-      const e = element._notifyModelDestroyed(storeName);
-      assert.isTrue(e.bubbles);
+    it('is composed', () => {
+      const spy = sinon.spy();
+      element.addEventListener(ArcModelEventTypes.destroyed, spy);
+      element[notifyDestroyed](storeName);
+      const e = /** @type ARCModelStateDeleteEvent */ (spy.args[0][0]);
+      assert.isTrue(e.composed);
     });
   });
 
   describe('deleteModel()', () => {
-    let element;
+    let element = /** @type TestModel */ (null);
     beforeEach(async () => {
       element = /** @type {TestModel} */ (await fixture(
         '<test-model></test-model>'
       ));
     });
 
-    it('Deletes model', () => {
-      return element.deleteModel().then(() => {});
+    it('deletes the model', async () => {
+      await element.deleteModel();
     });
 
-    it('Dispatches datastore-destroyed event', async () => {
+    it('dispatches the state event', async () => {
       const spy = sinon.spy();
-      element.addEventListener('datastore-destroyed', spy);
+      element.addEventListener(ArcModelEventTypes.destroyed, spy);
       await element.deleteModel();
       assert.isTrue(spy.called);
-      const { detail } = spy.args[0][0];
-      assert.equal(detail.datastore, element.name);
+      const e = /** @type ARCModelStateDeleteEvent */ (spy.args[0][0]);
+      assert.equal(e.store, element.name);
     });
 
-    it('Rejects the promise when datastore error', async () => {
+    it('rejects the promise when datastore error', async () => {
       let called = false;
       element.name = undefined;
       try {
@@ -280,7 +245,7 @@ describe('ArcBaseModel', () => {
   });
 
   describe('_eventCancelled()', () => {
-    let element;
+    let element = /** @type TestModel */ (null);
     beforeEach(async () => {
       element = /** @type {TestModel} */ (await fixture(
         '<test-model></test-model>'
@@ -310,6 +275,7 @@ describe('ArcBaseModel', () => {
           return [element];
         },
       };
+      // @ts-ignore
       const result = element._eventCancelled(e);
       assert.isTrue(result);
     });
@@ -324,39 +290,41 @@ describe('ArcBaseModel', () => {
     });
   });
 
-  describe('_deleteModelHandler()', () => {
-    function dispatchEvent(name) {
-      const e = new CustomEvent('destroy-model', {
-        bubbles: true,
-        detail: {
-          models: name,
-          result: undefined,
-        },
+  describe('[deletemodelHandler]()', () => {
+    let element = /** @type TestModel */ (null);
+    beforeEach(async () => {
+      element = await basicFixture();
+    });
+
+    it('is ignored when cancelled', async () => {
+      document.body.addEventListener(ArcModelEventTypes.destroy, function f(e) {
+        e.preventDefault();
+        document.body.removeEventListener(ArcModelEventTypes.destroy, f);
       });
-
+      const e = new ARCModelDeleteEvent(['test']);
       document.body.dispatchEvent(e);
-      return e;
-    }
-
-    it('Event is ignored when no name', async () => {
-      await fixture('<test-model></test-model>');
-      const e = dispatchEvent();
+      element[deletemodelHandler](e);
       assert.isUndefined(e.detail.result);
     });
 
-    it('Event is ignored when name is different', async () => {
-      await fixture('<test-model></test-model>');
-      const e = dispatchEvent('TEST');
-      assert.isUndefined(e.detail.result);
+    it('is ignored for different name', async () => {
+      const e = new ARCModelDeleteEvent(['test']);
+      document.body.dispatchEvent(e);
+      assert.isEmpty(e.detail.result);
     });
 
-    it('Event is handled when name matches', async () => {
-      await fixture('<test-model></test-model>');
-      const e = dispatchEvent(STORE_NAME);
+    it('is processed with current name', async () => {
+      const e = new ARCModelDeleteEvent([STORE_NAME]);
+      document.body.dispatchEvent(e);
       assert.typeOf(e.detail.result, 'array');
       assert.lengthOf(e.detail.result, 1);
-      assert.typeOf(e.detail.result[0].then, 'function');
       return e.detail.result[0];
+    });
+
+    it('handles the event', async () => {
+      const spy = sinon.spy(element, 'deleteModel');
+      await ArcModelEvents.destroy(document.body, [STORE_NAME]);
+      assert.isTrue(spy.calledOnce);
     });
   });
 

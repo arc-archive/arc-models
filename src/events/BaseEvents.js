@@ -106,6 +106,7 @@ export class ARCModelDeleteEvent extends CustomEvent {
     super(ArcModelEventTypes.destroy, {
       bubbles: true,
       composed: true,
+      cancelable: true,
       detail: {},
     });
     this[storesValue] = stores;
@@ -125,23 +126,23 @@ export class ARCModelDeleteEvent extends CustomEvent {
  */
 export class ARCModelStateDeleteEvent extends Event {
   /**
-   * @param {string[]} stores A list of store names that has been destroyed.
+   * @param {string} store The name of the deleted store
    */
-  constructor(stores) {
-    if (!Array.isArray(stores)) {
-      throw new Error('The stores expected to be an array.');
+  constructor(store) {
+    if (typeof store !== 'string') {
+      throw new Error('The store expected to be a string.');
     }
     super(ArcModelEventTypes.destroyed, {
       bubbles: true,
       composed: true,
     });
-    this[storesValue] = stores;
+    this[storesValue] = store;
   }
 
   /**
-   * @return {string[]} The list of deleted stores used to initialize the event.
+   * @return {string} The name of the deleted store used to initialize the event.
    */
-  get stores() {
+  get store() {
     return this[storesValue];
   }
 }

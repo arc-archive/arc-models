@@ -4,6 +4,7 @@ import * as BaseEvents from './BaseEvents.js';
 import * as UrlIndexerEvents from './UrlIndexerEvents.js';
 import * as AuthDataEvents from './AuthDataEvents.js';
 import * as HostRuleEvents from './HostRuleEvents.js';
+import * as CertificatesEvents from './CertificatesEvents.js';
 
 export const ArcModelEvents = {
   /**
@@ -11,21 +12,23 @@ export const ArcModelEvents = {
    *
    * @param {EventTarget} target A node on which to dispatch the event.
    * @param {string[]} stores A list of store names to affect
-   * @return {Promise<void>[]} List of promises resolved when each store is destroyed
+   * @return {Promise<void>} List of promises resolved when each store is destroyed
    */
-  destroy: (target, stores) => {
+  destroy: async (target, stores) => {
     const e = new BaseEvents.ARCModelDeleteEvent(stores);
     target.dispatchEvent(e);
-    return e.detail.result;
+    if (Array.isArray(e.detail.result)) {
+      await Promise.all(e.detail.result);
+    }
   },
   /**
    * Dispatches an event information the app that a store has been destroyed.
    *
    * @param {EventTarget} target A node on which to dispatch the event.
-   * @param {string[]} stores A list of store names that has been deleted.
+   * @param {string} store The name of the deleted store
    */
-  destroyed: (target, stores) => {
-    const e = new BaseEvents.ARCModelStateDeleteEvent(stores);
+  destroyed: (target, store) => {
+    const e = new BaseEvents.ARCModelStateDeleteEvent(store);
     target.dispatchEvent(e);
   },
   Project: {
@@ -81,6 +84,17 @@ export const ArcModelEvents = {
       delete: HostRuleEvents.deletedState,
     },
   },
+  ClientCertificate: {
+    read: CertificatesEvents.readAction,
+    list: CertificatesEvents.listAction,
+    delete: CertificatesEvents.deleteAction,
+    // update: 'modelclientcertificateupdate',
+    insert: CertificatesEvents.insertAction,
+    State: {
+      update: CertificatesEvents.updatedState,
+      delete: CertificatesEvents.deletedState,
+    },
+  },
 };
 Object.freeze(ArcModelEvents);
 Object.freeze(ArcModelEvents.Project);
@@ -93,3 +107,5 @@ Object.freeze(ArcModelEvents.AuthData);
 Object.freeze(ArcModelEvents.AuthData.State);
 Object.freeze(ArcModelEvents.HostRules);
 Object.freeze(ArcModelEvents.HostRules.State);
+Object.freeze(ArcModelEvents.ClientCertificate);
+Object.freeze(ArcModelEvents.ClientCertificate.State);

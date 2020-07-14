@@ -468,9 +468,13 @@ export class UrlIndexer extends HTMLElement {
    */
   [getIndexedDataAll](db, ids) {
     return new Promise((resolve) => {
+      const result = /** @type IndexableRequestMap */ ({});
+      if (!db.objectStoreNames.contains('urls')) {
+        resolve(result);
+        return;
+      }
       const tx = db.transaction('urls', 'readonly');
       const store = tx.objectStore('urls');
-      const result = /** @type IndexableRequestMap */ ({});
       tx.onerror = () => {
         resolve(result);
       };

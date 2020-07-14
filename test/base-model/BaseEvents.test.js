@@ -120,7 +120,7 @@ describe('BaseEvents', () => {
   });
 
   describe('ARCModelStateDeleteEvent', () => {
-    const stores = ['test'];
+    const store = 'test';
 
     it('throws when no type argument', () => {
       let e;
@@ -130,12 +130,12 @@ describe('BaseEvents', () => {
       assert.isUndefined(e);
     });
 
-    it('has readonly stores property', () => {
-      const e = new ARCModelStateDeleteEvent(stores);
-      assert.deepEqual(e.stores, stores, 'has the id property');
+    it('has readonly store property', () => {
+      const e = new ARCModelStateDeleteEvent(store);
+      assert.deepEqual(e.store, store, 'has the id property');
       assert.throws(() => {
         // @ts-ignore
-        e.stores = [];
+        e.store = 'other';
       });
     });
   });

@@ -143,11 +143,11 @@ export class ARCModelDeleteEvent extends CustomEvent<ARCModelDestroyEventDetail>
  */
 export class ARCModelStateDeleteEvent extends Event {
   /**
-   * @return {string[]} The list of deleted stores used to initialize the event.
+   * The name of the deleted store used to initialize the event.
    */
-  readonly stores: string[];
+  readonly store: string;
   /**
-   * @param stores A list of store names that has been destroyed.
+   * @param stores The name of the deleted store
    */
-  constructor(stores: string[]);
+  constructor(store: string);
 }

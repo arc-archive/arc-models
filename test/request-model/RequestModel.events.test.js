@@ -1,5 +1,6 @@
 import { fixture, assert } from '@open-wc/testing';
 import { DataGenerator } from '@advanced-rest-client/arc-data-generator';
+import * as sinon from 'sinon';
 import { ArcModelEventTypes } from '../../src/events/ArcModelEventTypes.js';
 import { ArcModelEvents } from '../../src/events/ArcModelEvents.js';
 import '../../request-model.js';
@@ -1068,21 +1069,24 @@ describe('RequestModel Events API', () => {
     });
   });
 
-
   describe(`${ArcModelEventTypes.destroy} event`, () => {
+    let element = /** @type RequestModel */ (null);
     beforeEach(async () => {
-      await basicFixture();
+      element = await basicFixture();
     });
 
-    it('returns a single promise', () => {
-      const result = ArcModelEvents.destroy(document.body, ['saved-requests']);
-      assert.lengthOf(result, 1);
-      return Promise.all(result);
+    it('calls deleteModel() with data store name', async () => {
+      const spy = sinon.spy(element, 'deleteModel');
+      await ArcModelEvents.destroy(document.body, ['saved-requests']);
+      assert.isTrue(spy.calledOnce, 'function was called');
+      // argument is normalized
+      assert.equal(spy.args[0][0], 'saved', 'passes the argument');
     });
 
-    it('does nothing when no items to delete', () => {
-      const result = ArcModelEvents.destroy(document.body, []);
-      assert.notOk(result);
+    it('does nothing when no items to delete', async () => {
+      const spy = sinon.spy(element, 'deleteModel');
+      await ArcModelEvents.destroy(document.body, ['other']);
+      assert.isFalse(spy.called, 'function was called');
     });
   });
 });

@@ -65,6 +65,20 @@ interface HostRulesEvents {
   State: HostRulesStateEvents;
 }
 
+interface ClientCertificateStateEvents {
+  update: string;
+  delete: string;
+}
+
+interface ClientCertificateEvents {
+  read: string;
+  list: string;
+  delete: string;
+  update: string;
+  insert: string;
+  State: ClientCertificateStateEvents;
+}
+
 declare interface ArcModelEventTypes {
   destroy: string;
   destroyed: string;
@@ -73,6 +87,7 @@ declare interface ArcModelEventTypes {
   UrlIndexer: UrlIndexerEvents;
   AuthData: AuthDataEvents;
   HostRules: HostRulesEvents;
+  ClientCertificate: ClientCertificateEvents;
 }
 
 export const ArcModelEventTypes: ArcModelEventTypes;
