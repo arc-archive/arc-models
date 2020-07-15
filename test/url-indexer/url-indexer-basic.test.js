@@ -1,5 +1,5 @@
 import { fixture, assert } from '@open-wc/testing';
-// import { DbHelper } from './db-helper.js';
+import { DbHelper } from './db-helper.js';
 import '../../url-indexer.js';
 import {
   generateId,
@@ -30,15 +30,42 @@ describe('URL indexer', () => {
     return fixture('<url-indexer></url-indexer>');
   }
 
-  function noop() {}
   const hasUrlSupport = typeof URL !== 'undefined';
+
+  after(async () => {
+    await DbHelper.destroy();
+  });
+
+  describe('openSearchStore()', () => {
+    let element = /** @type UrlIndexer */ (null);
+    beforeEach(async () => {
+      element = await basicFixture();
+    });
+
+    afterEach(async () => {
+      const db = await element.openSearchStore();
+      db.close();
+    });
+
+    it('eventually opens the data store', async () => {
+      const result = await element.openSearchStore();
+      // @ts-ignore
+      assert.isTrue(result instanceof window.IDBDatabase);
+    });
+
+    it('always returns the same database instance', async () => {
+      const db1 = await element.openSearchStore();
+      const db2 = await element.openSearchStore();
+      assert.isTrue(db1 === db2);
+    });
+  });
 
   describe('[generateId]()', () => {
     let element = /** @type UrlIndexer */ (null);
     const type = 'test-type';
     const url = 'test-url';
 
-    before(async () => {
+    beforeEach(async () => {
       element = await basicFixture();
     });
 
@@ -64,7 +91,7 @@ describe('URL indexer', () => {
     });
   });
 
-  describe('Consts', () => {
+  describe('constans', () => {
     it('indexStoreName is string', () => {
       assert.typeOf(STORE_NAME, 'string');
     });
@@ -88,10 +115,8 @@ describe('URL indexer', () => {
     const url = 'test-url';
     const type = 'test-type';
 
-    before(async () => {
+    beforeEach(async () => {
       element = await basicFixture();
-      // @ts-ignore
-      element.index = noop;
     });
 
     it('sets [indexDebounceValue] property', () => {
@@ -197,10 +222,8 @@ describe('URL indexer', () => {
   describe('[deleteIndexDebounce]()', () => {
     let element = /** @type UrlIndexer */ (null);
     const id = 'test-id';
-    before(async () => {
+    beforeEach(async () => {
       element = await basicFixture();
-      // @ts-ignore
-      element.deleteIndexedData = noop;
     });
 
     it('Sets [deleteIndexDebounceValue] property', () => {
@@ -221,17 +244,17 @@ describe('URL indexer', () => {
     it('[deleteRequestQueueValue] item has the id', () => {
       element[deleteIndexDebounce](id);
       const result = element[deleteRequestQueueValue][0];
-      assert.equal(result, id);
       clearTimeout(element[deleteIndexDebounceValue]);
       element[deleteRequestQueueValue] = undefined;
+      assert.equal(result, id);
     });
 
     it('does nothing if repeates the call', (done) => {
       element[deleteIndexDebounce](id);
       setTimeout(() => {
         element[deleteIndexDebounce](id);
-        assert.typeOf(element[deleteRequestQueueValue], 'array', 'Array is set');
-        assert.lengthOf(element[deleteRequestQueueValue], 1, 'Has single item');
+        assert.typeOf(element[deleteRequestQueueValue], 'array', 'array is set');
+        assert.lengthOf(element[deleteRequestQueueValue], 1, 'has single item');
         const result = element[deleteRequestQueueValue][0];
         assert.equal(result, id);
         clearTimeout(element[deleteIndexDebounceValue]);
@@ -311,18 +334,12 @@ describe('URL indexer', () => {
       assert.typeOf(result, 'array');
     });
 
-    it('Returns 8 items', () => {
-      if (!hasUrlSupport) {
-        return;
-      }
+    (hasUrlSupport ? it : it.skip)('returns 8 items', () => {
       const result = element[prepareRequestIndexData](request, []);
       assert.lengthOf(result, 8);
     });
 
-    it('Skips already indexed items', () => {
-      if (!hasUrlSupport) {
-        return;
-      }
+    (hasUrlSupport ? it : it.skip)('skips already indexed items', () => {
       const result = element[prepareRequestIndexData](request, [
         {
           url: 'p1=1&p2=2',
@@ -349,10 +366,7 @@ describe('URL indexer', () => {
       assert.lengthOf(result, 6);
     });
 
-    it('Items has required structure', () => {
-      if (!hasUrlSupport) {
-        return;
-      }
+    (hasUrlSupport ? it : it.skip)('Items has required structure', () => {
       const result = element[prepareRequestIndexData](request, []);
       for (let i = 0; i < result.length; i++) {
         const item = result[i];
@@ -667,46 +681,6 @@ describe('URL indexer', () => {
       target = [];
       element[appendQueryParams](parser, id, type, indexed, target);
       assert.lengthOf(target, 0);
-    });
-  });
-
-  describe('openSearchStore()', () => {
-    let element = /** @type UrlIndexer */ (null);
-    beforeEach(async () => {
-      element = await basicFixture();
-    });
-
-    afterEach(async () => {
-      const db = await element.openSearchStore();
-      db.close();
-    });
-
-    // after(() => DbHelper.destroy());
-
-    // after((done) => {
-    //   DbHelper.clearData()
-    //   .then(() => {
-    //     element.__db.close();
-    //     const request = window.indexedDB.deleteDatabase('request-index');
-    //     request.onerror = () => {
-    //       done(new Error('Unable to delete database'));
-    //     };
-    //     request.onsuccess = () => {
-    //       done();
-    //     };
-    //   });
-    // });
-
-    it('eventually opens the data store', async () => {
-      const result = await element.openSearchStore();
-      // @ts-ignore
-      assert.isTrue(result instanceof window.IDBDatabase);
-    });
-
-    it('always returns the same database instance', async () => {
-      const db1 = await element.openSearchStore();
-      const db2 = await element.openSearchStore();
-      assert.isTrue(db1 === db2);
     });
   });
 });

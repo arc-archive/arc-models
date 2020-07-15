@@ -14,9 +14,9 @@ describe('<url-indexer> - Delete test', () => {
     return fixture('<url-indexer></url-indexer>');
   }
 
-  before(async () => {
-    await DbHelper.destroy();
-  });
+  // before(async () => {
+  //   await DbHelper.destroy();
+  // });
 
   describe('deleteIndexedData()', () => {
     const FULL_URL = 'https://domain.com/api?a=b&c=d';

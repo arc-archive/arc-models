@@ -79,6 +79,18 @@ interface ClientCertificateEvents {
   State: ClientCertificateStateEvents;
 }
 
+interface WSUrlHistoryStateEvents {
+  update: string;
+}
+
+interface WSUrlHistoryEvents {
+  // read: string;
+  list: string;
+  insert: string;
+  query: string;
+  State: WSUrlHistoryStateEvents;
+}
+
 declare interface ArcModelEventTypes {
   destroy: string;
   destroyed: string;
@@ -88,6 +100,7 @@ declare interface ArcModelEventTypes {
   AuthData: AuthDataEvents;
   HostRules: HostRulesEvents;
   ClientCertificate: ClientCertificateEvents;
+  WSUrlHistory: WSUrlHistoryEvents;
 }
 
 export const ArcModelEventTypes: ArcModelEventTypes;

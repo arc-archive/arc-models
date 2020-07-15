@@ -1,6 +1,10 @@
 import {ArcBaseModel} from './ArcBaseModel.js';
-
-import { Entity } from './types';
+import {
+  Entity,
+  ARCEntityChangeRecord,
+  ARCModelListOptions,
+  ARCModelListResult,
+} from './types';
 
 export declare interface ARCWebsocketUrlHistory extends Entity {
   /**
@@ -14,6 +18,10 @@ export declare interface ARCWebsocketUrlHistory extends Entity {
 }
 
 export declare function sortFunction(a: ARCWebsocketUrlHistory, b: ARCWebsocketUrlHistory): number;
+
+export const insertHandler: symbol;
+export const listHandler: symbol;
+export const queryHandler: symbol;
 
 /**
  * Events based access to websockets URL history datastore.
@@ -39,31 +47,38 @@ export declare class WebsocketUrlHistoryModel extends ArcBaseModel {
 
   constructor();
 
-  _attachListeners(node: EventTarget): void;
-  _detachListeners(node: EventTarget): void;
+  /**
+   * Lists all project objects.
+   *
+   * @param opts Query options.
+   * @returns A promise resolved to a list of projects.
+   */
+  list(opts?: ARCModelListOptions): Promise<ARCModelListResult<ARCWebsocketUrlHistory>>;
 
   /**
-   * Handles the read object event
+   * Adds an URL to the history and checks for already existing entires.
+   * @param url The URL to insert
+   * @returns A promise resolved to the URL change record
    */
-  _handleRead(e: CustomEvent): void;
-  _handleChange(e: CustomEvent): void;
+  addUrl(url: string): Promise<ARCEntityChangeRecord<ARCWebsocketUrlHistory>>;
 
   /**
    * Updates / saves the object in the datastore.
    * This function fires `websocket-url-history-changed` event.
    *
    * @param obj A project to save / update
-   * @returns Resolved promise to project object with updated `_rev`
+   * @returns A promise resolved to the URL change record
    */
-  update(obj: ARCWebsocketUrlHistory): Promise<ARCWebsocketUrlHistory>;
-  _handleQueryHistory(e: CustomEvent): void;
-  _handleQuery(e: CustomEvent): void;
+  update(obj: ARCWebsocketUrlHistory): Promise<ARCEntityChangeRecord<ARCWebsocketUrlHistory>>;
 
   /**
-   * Lists websocket history objects.
+   * Queries for websocket history objects.
    *
-   * @param query A partial url to match results.
-   * @returns A promise resolved to a list of PouchDB documents.
+   * @param {string} query A partial url to match results. If not set it returns whole history.
+   * @return {} A promise resolved to a list of PouchDB documents.
    */
-  list(query: string): Promise<ARCWebsocketUrlHistory[]>;
+  query(query: string): Promise<ARCWebsocketUrlHistory[]>;
+
+  _attachListeners(node: EventTarget): void;
+  _detachListeners(node: EventTarget): void;
 }
