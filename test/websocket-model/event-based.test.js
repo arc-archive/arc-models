@@ -160,6 +160,19 @@ describe('WebsocketUrlHistoryModel - Events API', () => {
       const result = await ArcModelEvents.WSUrlHistory.insert(document.body, entity._id);
       assert.typeOf(result.item.midnight, 'number');
     });
+
+    it('adds url value', async () => {
+      const entity = /** @type ARCWebsocketUrlHistory */ (generator.generateUrlObject());
+      delete entity.url;
+      const result = await ArcModelEvents.WSUrlHistory.insert(document.body, entity._id);
+      assert.typeOf(result.item.url, 'string');
+    });
+
+    it('lowercases the _id', async () => {
+      const url = 'https://API.domain.com';
+      const result = await ArcModelEvents.WSUrlHistory.insert(document.body, url);
+      assert.equal(result.id, url.toLowerCase());
+    });
   });
 
   describe(`${ArcModelEventTypes.WSUrlHistory.query} event`, () => {
@@ -213,6 +226,33 @@ describe('WebsocketUrlHistoryModel - Events API', () => {
       const result = await ArcModelEvents.WSUrlHistory.query(document.body, entity._id);
       const [item] = result;
       assert.equal(item.midnight, 100);
+    });
+
+    it('adds url to an item when not there', async () => {
+      const entity = /** @type ARCWebsocketUrlHistory */ (generator.generateUrlObject());
+      entity._id = 'arc://custom-no-url/value';
+      delete entity.url;
+      await element.update(entity);
+      const result = await ArcModelEvents.WSUrlHistory.query(document.body, entity._id);
+      const [item] = result;
+      assert.typeOf(item.url, 'string');
+    });
+
+    it('uses existing "url" value when set', async () => {
+      const entity = /** @type ARCWebsocketUrlHistory */ (generator.generateUrlObject());
+      entity._id = 'arc://custom-with-url/value';
+      entity.url = 'https://API.domain.com';
+      await element.update(entity);
+      const result = await ArcModelEvents.WSUrlHistory.query(document.body, entity._id);
+      const [item] = result;
+      assert.equal(item.url, 'https://API.domain.com');
+    });
+
+    it('queries using lowercase keys', async () => {
+      await ArcModelEvents.WSUrlHistory.insert(document.body, 'https://API.domain.com');
+      const result = await ArcModelEvents.WSUrlHistory.query(document.body, 'https://api.DomaIN.com');
+      const [item] = result;
+      assert.equal(item.url, 'https://API.domain.com');
     });
   });
 

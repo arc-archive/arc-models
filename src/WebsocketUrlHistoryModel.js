@@ -58,24 +58,7 @@ export const listHandler = Symbol('listHandler');
 export const queryHandler = Symbol('queryHandler');
 
 /**
- * Events based access to websockets URL history datastore.
- *
- * Note: **All events must be cancelable.** When the event is cancelled by an instance
- * of the element it won't be handled again by other instance that possibly exists
- * in the DOM.
- *
- * Cancellable event is a request to models for change. Non-cancellable event
- * is a notification for views to update their values.
- * For example `request-object-changed` event notifies model to update object in
- * the datastore if the event is cancelable and to update views if it's not
- * cancellable.
- *
- * Each handled event contains the `result` property on the `detail` object. It
- * contains a `Promise` object with a result of the operation. Also, for update / delete
- * events the same non-cancelable event is fired.
- *
- * Events handled by this element are cancelled and propagation of the event is
- * stopped.
+ * Gives an access to the WebScoket entities.
  */
 export class WebsocketUrlHistoryModel extends ArcBaseModel {
   constructor() {
@@ -100,6 +83,7 @@ export class WebsocketUrlHistoryModel extends ArcBaseModel {
         day.setHours(0, 0, 0, 0);
         historyItem.midnight = day.getTime();
       }
+      historyItem.url = historyItem.url || historyItem._id;
     });
     return result;
   }
@@ -111,18 +95,23 @@ export class WebsocketUrlHistoryModel extends ArcBaseModel {
    */
   async addUrl(url) {
     let obj;
+    const lower = url.toLowerCase();
     const day = new Date();
     const currentTimestamp = day.getTime();
     day.setHours(0, 0, 0, 0);
     const midnight = day.getTime();
     try {
-      obj = /** @type ARCWebsocketUrlHistory */ (await this.read(url));
+      obj = /** @type ARCWebsocketUrlHistory */ (await this.read(lower));
       obj.cnt++;
       obj.time = currentTimestamp;
       obj.midnight = midnight;
+      if (!obj.url) {
+        obj.url = url;
+      }
     } catch (e) {
       obj = {
-        _id: url,
+        _id: lower,
+        url,
         cnt: 1,
         time: currentTimestamp,
         midnight,
@@ -156,10 +145,11 @@ export class WebsocketUrlHistoryModel extends ArcBaseModel {
   /**
    * Queries for websocket history objects.
    *
-   * @param {string} query A partial url to match results. If not set it returns whole history.
+   * @param {string} q A partial url to match results. If not set it returns whole history.
    * @return {Promise<ARCWebsocketUrlHistory[]>} A promise resolved to a list of PouchDB documents.
    */
-  async query(query) {
+  async query(q) {
+    const query = q.toLowerCase();
     const { db } = this;
     const initial = await db.allDocs();
     const { rows } = initial;
@@ -184,6 +174,7 @@ export class WebsocketUrlHistoryModel extends ArcBaseModel {
         day.setHours(0, 0, 0, 0);
         historyItem.midnight = day.getTime();
       }
+      historyItem.url = historyItem.url || historyItem._id;
       return historyItem;
     });
     result.sort(sortFunction);

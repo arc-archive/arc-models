@@ -16,6 +16,10 @@ export declare interface ARCWebsocketUrlHistory extends Entity {
    */
   time: number;
   /**
+   * The request URL stored in the history.
+   */
+  url: string;
+  /**
    * A timestamp of the midnight that corresponds to the `time` property.
    */
   midnight: number;
@@ -28,24 +32,7 @@ export const listHandler: symbol;
 export const queryHandler: symbol;
 
 /**
- * Events based access to websockets URL history datastore.
- *
- * Note: **All events must be cancelable.** When the event is cancelled by an instance
- * of the element it won't be handled again by other instance that possibly exists
- * in the DOM.
- *
- * Cancellable event is a request to models for change. Non-cancellable event
- * is a notification for views to update their values.
- * For example `request-object-changed` event notifies model to update object in
- * the datastore if the event is cancelable and to update views if it's not
- * cancellable.
- *
- * Each handled event contains the `result` property on the `detail` object. It
- * contains a `Promise` object with a result of the operation. Also, for update / delete
- * events the same non-cancelable event is fired.
- *
- * Events handled by this element are cancelled and propagation of the event is
- * stopped.
+ * Gives an access to the WebScoket entities.
  */
 export declare class WebsocketUrlHistoryModel extends ArcBaseModel {
   constructor();

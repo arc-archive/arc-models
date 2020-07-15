@@ -25,11 +25,13 @@ describe('WebsocketUrlHistoryModel', () => {
           midnight: 1,
           cnt: 0,
           time: 0,
+          url: '/',
         },
         {
           midnight: 0,
           cnt: 0,
           time: 0,
+          url: '/',
         }
       );
       assert.equal(result, 1);
@@ -41,11 +43,13 @@ describe('WebsocketUrlHistoryModel', () => {
           midnight: 0,
           cnt: 1,
           time: 0,
+          url: '/',
         },
         {
           midnight: 0,
           cnt: 0,
           time: 0,
+          url: '/',
         }
       );
       assert.equal(result, 1);
@@ -57,11 +61,13 @@ describe('WebsocketUrlHistoryModel', () => {
           midnight: 0,
           cnt: 0,
           time: 0,
+          url: '/',
         },
         {
           midnight: 1,
           cnt: 0,
           time: 0,
+          url: '/',
         }
       );
       assert.equal(result, -1);
@@ -70,15 +76,16 @@ describe('WebsocketUrlHistoryModel', () => {
     it('Returns -1 when a "cnt" is samller', () => {
       const result = sortFunction(
         {
-          // @ts-ignore
           midnight: 0,
           cnt: 0,
           time: 0,
+          url: '/',
         },
         {
           midnight: 0,
           cnt: 1,
           time: 0,
+          url: '/',
         }
       );
       assert.equal(result, -1);
@@ -90,11 +97,13 @@ describe('WebsocketUrlHistoryModel', () => {
           midnight: 0,
           cnt: 0,
           time: 0,
+          url: '/',
         },
         {
           midnight: 0,
           cnt: 0,
           time: 0,
+          url: '/',
         }
       );
       assert.equal(result, 0);
@@ -229,6 +238,18 @@ describe('WebsocketUrlHistoryModel', () => {
       const result = await element.addUrl(entity._id);
       assert.typeOf(result.item.midnight, 'number');
     });
+
+    it('lowercases the _id', async () => {
+      const url = 'https://API.domain.com';
+      const result = await element.addUrl(url);
+      assert.equal(result.id, url.toLowerCase());
+    });
+
+    it('keeps case of the URL', async () => {
+      const url = 'https://API.domain.com';
+      const result = await element.addUrl(url);
+      assert.equal(result.item.url, url);
+    });
   });
 
   describe('update()', () => {
@@ -320,6 +341,33 @@ describe('WebsocketUrlHistoryModel', () => {
       const result = await element.query(entity._id);
       const [item] = result;
       assert.equal(item.midnight, 100);
+    });
+
+    it('adds url to an item when not there', async () => {
+      const entity = /** @type ARCWebsocketUrlHistory */ (generator.generateUrlObject());
+      entity._id = 'arc://custom-no-url/value';
+      delete entity.url;
+      await element.update(entity);
+      const result = await element.query(entity._id);
+      const [item] = result;
+      assert.typeOf(item.url, 'string');
+    });
+
+    it('uses existing "url" value when set', async () => {
+      const entity = /** @type ARCWebsocketUrlHistory */ (generator.generateUrlObject());
+      entity._id = 'arc://custom-with-url/value';
+      entity.url = 'https://API.domain.com';
+      await element.update(entity);
+      const result = await element.query(entity._id);
+      const [item] = result;
+      assert.equal(item.url, 'https://API.domain.com');
+    });
+
+    it('queries using lowercase keys', async () => {
+      await element.addUrl('https://API.domain.com');
+      const result = await element.query('https://api.DomaIN.com');
+      const [item] = result;
+      assert.equal(item.url, 'https://API.domain.com');
     });
   });
 });
