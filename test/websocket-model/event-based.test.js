@@ -72,6 +72,30 @@ describe('WebsocketUrlHistoryModel - Events API', () => {
       });
       assert.isUndefined(result2.nextPageToken);
     });
+
+    it('adds midnight to an item when not there', async () => {
+      const entity = /** @type ARCWebsocketUrlHistory */ (generator.generateUrlObject());
+      entity._id = 'arc://custom-no-midnight/value';
+      delete entity.midnight;
+      await element.update(entity);
+      const result = await ArcModelEvents.WSUrlHistory.list(document.body, {
+        limit: 31,
+      });
+      const item = result.items.find((i) => i._id === entity._id);
+      assert.typeOf(item.midnight, 'number');
+    });
+
+    it('uses existing "midnight" value when set', async () => {
+      const entity = /** @type ARCWebsocketUrlHistory */ (generator.generateUrlObject());
+      entity._id = 'arc://custom-with-midnight/value';
+      entity.midnight = 100;
+      await element.update(entity);
+      const result = await ArcModelEvents.WSUrlHistory.list(document.body, {
+        limit: 32,
+      });
+      const item = result.items.find((i) => i._id === entity._id);
+      assert.equal(item.midnight, 100);
+    });
   });
 
   describe(`${ArcModelEventTypes.WSUrlHistory.insert} event`, () => {
@@ -130,6 +154,12 @@ describe('WebsocketUrlHistoryModel - Events API', () => {
       }
       assert.isTrue(thrown);
     });
+
+    it('adds midnight value', async () => {
+      const entity = /** @type ARCWebsocketUrlHistory */ (generator.generateUrlObject());
+      const result = await ArcModelEvents.WSUrlHistory.insert(document.body, entity._id);
+      assert.typeOf(result.item.midnight, 'number');
+    });
   });
 
   describe(`${ArcModelEventTypes.WSUrlHistory.query} event`, () => {
@@ -140,8 +170,9 @@ describe('WebsocketUrlHistoryModel - Events API', () => {
       await model.db.bulkDocs(created);
     });
 
+    let element = /** @type WebsocketUrlHistoryModel */ (null);
     beforeEach(async () => {
-      await basicFixture();
+      element = await basicFixture();
     });
 
     after(async () => {
@@ -162,6 +193,26 @@ describe('WebsocketUrlHistoryModel - Events API', () => {
     it('returns empty array when not found', async () => {
       const result = await ArcModelEvents.WSUrlHistory.query(document.body, 'this will not exist');
       assert.lengthOf(result, 0);
+    });
+
+    it('adds midnight to an item when not there', async () => {
+      const entity = /** @type ARCWebsocketUrlHistory */ (generator.generateUrlObject());
+      entity._id = 'arc://custom-no-midnight/value';
+      delete entity.midnight;
+      await element.update(entity);
+      const result = await ArcModelEvents.WSUrlHistory.query(document.body, entity._id);
+      const [item] = result;
+      assert.typeOf(item.midnight, 'number');
+    });
+
+    it('uses existing "midnight" value when set', async () => {
+      const entity = /** @type ARCWebsocketUrlHistory */ (generator.generateUrlObject());
+      entity._id = 'arc://custom-with-midnight/value';
+      entity.midnight = 100;
+      await element.update(entity);
+      const result = await ArcModelEvents.WSUrlHistory.query(document.body, entity._id);
+      const [item] = result;
+      assert.equal(item.midnight, 100);
     });
   });
 

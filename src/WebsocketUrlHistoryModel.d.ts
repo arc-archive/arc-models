@@ -15,6 +15,11 @@ export declare interface ARCWebsocketUrlHistory extends Entity {
    * Last use timestamp.
    */
   time: number;
+  /**
+   * A timestamp of the midnight that corresponds to the `time` property.
+   * Old entities (created before 2020) may not have this property.
+   */
+  midnight: number;
 }
 
 export declare function sortFunction(a: ARCWebsocketUrlHistory, b: ARCWebsocketUrlHistory): number;

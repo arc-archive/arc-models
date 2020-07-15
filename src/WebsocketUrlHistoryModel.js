@@ -27,9 +27,15 @@ import { ArcModelEvents } from './events/ArcModelEvents.js';
 /* eslint-disable no-continue */
 /* eslint-disable no-await-in-loop */
 
+/**
+ * Sotring functions for url history
+ * @param {ARCWebsocketUrlHistory} a
+ * @param {ARCWebsocketUrlHistory} b
+ * @return {number}
+ */
 export function sortFunction(a, b) {
-  const aTime = a._time;
-  const bTime = b._time;
+  const aTime = a.midnight;
+  const bTime = b.midnight;
   if (aTime > bTime) {
     return 1;
   }
@@ -86,7 +92,16 @@ export class WebsocketUrlHistoryModel extends ArcBaseModel {
    * @return {Promise<ARCModelListResult>} A promise resolved to a list of projects.
    */
   async list(opts={}) {
-    return this.listEntities(this.db, opts);
+    const result = await this.listEntities(this.db, opts);
+    result.items.forEach((item) => {
+      const historyItem = /** @type ARCWebsocketUrlHistory */ (item);
+      if (!historyItem.midnight) {
+        const day = new Date(historyItem.time);
+        day.setHours(0, 0, 0, 0);
+        historyItem.midnight = day.getTime();
+      }
+    });
+    return result;
   }
 
   /**
@@ -96,15 +111,21 @@ export class WebsocketUrlHistoryModel extends ArcBaseModel {
    */
   async addUrl(url) {
     let obj;
+    const day = new Date();
+    const currentTimestamp = day.getTime();
+    day.setHours(0, 0, 0, 0);
+    const midnight = day.getTime();
     try {
       obj = /** @type ARCWebsocketUrlHistory */ (await this.read(url));
       obj.cnt++;
-      obj.time = Date.now();
+      obj.time = currentTimestamp;
+      obj.midnight = midnight;
     } catch (e) {
       obj = {
         _id: url,
         cnt: 1,
-        time: Date.now(),
+        time: currentTimestamp,
+        midnight,
       };
     }
     return this.update(obj);
@@ -154,8 +175,17 @@ export class WebsocketUrlHistoryModel extends ArcBaseModel {
     }
     const response = await db.allDocs({
       keys,
+      include_docs: true,
     });
-    const result = response.rows.map((item) => item.doc);
+    const result = response.rows.map((item) => {
+      const historyItem = /** @type ARCWebsocketUrlHistory */ (item.doc);
+      if (!historyItem.midnight) {
+        const day = new Date(historyItem.time);
+        day.setHours(0, 0, 0, 0);
+        historyItem.midnight = day.getTime();
+      }
+      return historyItem;
+    });
     result.sort(sortFunction);
     return result;
   }

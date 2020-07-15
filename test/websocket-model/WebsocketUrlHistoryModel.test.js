@@ -22,11 +22,14 @@ describe('WebsocketUrlHistoryModel', () => {
     it('Returns 1 when a "time" is bigger', () => {
       const result = sortFunction(
         {
-          // @ts-ignore
-          _time: 1,
+          midnight: 1,
+          cnt: 0,
+          time: 0,
         },
         {
-          _time: 0,
+          midnight: 0,
+          cnt: 0,
+          time: 0,
         }
       );
       assert.equal(result, 1);
@@ -35,13 +38,14 @@ describe('WebsocketUrlHistoryModel', () => {
     it('Returns 1 when a "cnt" is bigger', () => {
       const result = sortFunction(
         {
-          // @ts-ignore
-          _time: 0,
+          midnight: 0,
           cnt: 1,
+          time: 0,
         },
         {
-          _time: 0,
+          midnight: 0,
           cnt: 0,
+          time: 0,
         }
       );
       assert.equal(result, 1);
@@ -50,11 +54,14 @@ describe('WebsocketUrlHistoryModel', () => {
     it('Returns -1 when a "time" is smaller', () => {
       const result = sortFunction(
         {
-          // @ts-ignore
-          _time: 0,
+          midnight: 0,
+          cnt: 0,
+          time: 0,
         },
         {
-          _time: 1,
+          midnight: 1,
+          cnt: 0,
+          time: 0,
         }
       );
       assert.equal(result, -1);
@@ -64,12 +71,14 @@ describe('WebsocketUrlHistoryModel', () => {
       const result = sortFunction(
         {
           // @ts-ignore
-          _time: 0,
+          midnight: 0,
           cnt: 0,
+          time: 0,
         },
         {
-          _time: 0,
+          midnight: 0,
           cnt: 1,
+          time: 0,
         }
       );
       assert.equal(result, -1);
@@ -78,13 +87,14 @@ describe('WebsocketUrlHistoryModel', () => {
     it('Returns 0 when "time" and "cnt" equals', () => {
       const result = sortFunction(
         {
-          // @ts-ignore
-          _time: 0,
+          midnight: 0,
           cnt: 0,
+          time: 0,
         },
         {
-          _time: 0,
+          midnight: 0,
           cnt: 0,
+          time: 0,
         }
       );
       assert.equal(result, 0);
@@ -141,6 +151,30 @@ describe('WebsocketUrlHistoryModel', () => {
       });
       assert.isUndefined(result2.nextPageToken);
     });
+
+    it('adds midnight to an item when not there', async () => {
+      const entity = /** @type ARCWebsocketUrlHistory */ (generator.generateUrlObject());
+      entity._id = 'arc://custom-no-midnight/value';
+      delete entity.midnight;
+      await element.update(entity);
+      const result = await element.list({
+        limit: 31,
+      });
+      const item = result.items.find((i) => i._id === entity._id);
+      assert.typeOf(item.midnight, 'number');
+    });
+
+    it('uses existing "midnight" value when set', async () => {
+      const entity = /** @type ARCWebsocketUrlHistory */ (generator.generateUrlObject());
+      entity._id = 'arc://custom-with-midnight/value';
+      entity.midnight = 100;
+      await element.update(entity);
+      const result = await element.list({
+        limit: 32,
+      });
+      const item = result.items.find((i) => i._id === entity._id);
+      assert.equal(item.midnight, 100);
+    });
   });
 
   describe('addUrl()', () => {
@@ -188,6 +222,12 @@ describe('WebsocketUrlHistoryModel', () => {
       element.addEventListener(ArcModelEventTypes.WSUrlHistory.State.update, spy);
       await element.addUrl(entity._id);
       assert.isTrue(spy.calledOnce);
+    });
+
+    it('adds midnight value', async () => {
+      const entity = /** @type ARCWebsocketUrlHistory */ (generator.generateUrlObject());
+      const result = await element.addUrl(entity._id);
+      assert.typeOf(result.item.midnight, 'number');
     });
   });
 
@@ -260,6 +300,26 @@ describe('WebsocketUrlHistoryModel', () => {
     it('returns empty array when not found', async () => {
       const result = await element.query('this will not exist');
       assert.lengthOf(result, 0);
+    });
+
+    it('adds midnight to an item when not there', async () => {
+      const entity = /** @type ARCWebsocketUrlHistory */ (generator.generateUrlObject());
+      entity._id = 'arc://custom-no-midnight/value';
+      delete entity.midnight;
+      await element.update(entity);
+      const result = await element.query(entity._id);
+      const [item] = result;
+      assert.typeOf(item.midnight, 'number');
+    });
+
+    it('uses existing "midnight" value when set', async () => {
+      const entity = /** @type ARCWebsocketUrlHistory */ (generator.generateUrlObject());
+      entity._id = 'arc://custom-with-midnight/value';
+      entity.midnight = 100;
+      await element.update(entity);
+      const result = await element.query(entity._id);
+      const [item] = result;
+      assert.equal(item.midnight, 100);
     });
   });
 });
