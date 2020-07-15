@@ -80,7 +80,6 @@ export const ArcModelEvents = {
     updateBulk: HostRuleEvents.updateActionBulk,
     delete: HostRuleEvents.deleteAction,
     list: HostRuleEvents.listAction,
-    // clear: HostRuleEvents.cle,
     State: {
       update: HostRuleEvents.updatedState,
       delete: HostRuleEvents.deletedState,

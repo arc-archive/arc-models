@@ -109,6 +109,17 @@ describe('ArcBaseModel', () => {
       // @ts-ignore
       assert.equal(doc._rev, rev1);
     });
+
+    it('throws when no id', async () => {
+      const element = await basicFixture();
+      let thrown = false;
+      try {
+        await element.read(undefined);
+      } catch (_) {
+        thrown = true;
+      }
+      assert.isTrue(thrown);
+    });
   });
 
   describe('_handleException()', () => {
@@ -311,6 +322,12 @@ describe('ArcBaseModel', () => {
       const e = new ARCModelDeleteEvent(['test']);
       document.body.dispatchEvent(e);
       assert.isEmpty(e.detail.result);
+    });
+
+    it('is ignored when no store names', () => {
+      const e = new ARCModelDeleteEvent([]);
+      document.body.dispatchEvent(e);
+      assert.isUndefined(e.detail.result);
     });
 
     it('is processed with current name', async () => {

@@ -46,6 +46,20 @@ describe('ProjectModel', () => {
         await ArcModelEvents.Project.update(document.body, project);
         assert.isTrue(spy.called);
       });
+
+      it('ignores the event when cancelled', async () => {
+        document.body.addEventListener(ArcModelEventTypes.Project.update, function f(e) {
+          e.preventDefault();
+          document.body.removeEventListener(ArcModelEventTypes.Project.update, f);
+        });
+        const e = new CustomEvent(ArcModelEventTypes.Project.update, {
+          bubbles: true,
+          cancelable: true,
+          detail: { result: undefined },
+        });
+        document.body.dispatchEvent(e);
+        assert.isUndefined(e.detail.result);
+      });
     });
 
     describe(ArcModelEventTypes.Project.updateBulk, () => {
@@ -75,6 +89,20 @@ describe('ProjectModel', () => {
         const projects = /** @type ARCProject[] */ (generator.generateProjects({ projectsSize: 2 }));
         await ArcModelEvents.Project.updateBulk(document.body, projects);
         assert.isTrue(spy.called);
+      });
+
+      it('ignores the event when cancelled', async () => {
+        document.body.addEventListener(ArcModelEventTypes.Project.updateBulk, function f(e) {
+          e.preventDefault();
+          document.body.removeEventListener(ArcModelEventTypes.Project.updateBulk, f);
+        });
+        const e = new CustomEvent(ArcModelEventTypes.Project.updateBulk, {
+          bubbles: true,
+          cancelable: true,
+          detail: { result: undefined },
+        });
+        document.body.dispatchEvent(e);
+        assert.isUndefined(e.detail.result);
       });
     });
 
@@ -106,6 +134,20 @@ describe('ProjectModel', () => {
         await ArcModelEvents.Project.read(document.body, created[0]._id);
         assert.isTrue(spy.called);
       });
+
+      it('ignores the event when cancelled', async () => {
+        document.body.addEventListener(ArcModelEventTypes.Project.read, function f(e) {
+          e.preventDefault();
+          document.body.removeEventListener(ArcModelEventTypes.Project.read, f);
+        });
+        const e = new CustomEvent(ArcModelEventTypes.Project.read, {
+          bubbles: true,
+          cancelable: true,
+          detail: { result: undefined },
+        });
+        document.body.dispatchEvent(e);
+        assert.isUndefined(e.detail.result);
+      });
     });
 
     describe(ArcModelEventTypes.Project.query, () => {
@@ -136,6 +178,20 @@ describe('ProjectModel', () => {
         const spy = sinon.spy(element, 'list');
         await ArcModelEvents.Project.query(document.body);
         assert.isTrue(spy.called);
+      });
+
+      it('ignores the event when cancelled', async () => {
+        document.body.addEventListener(ArcModelEventTypes.Project.query, function f(e) {
+          e.preventDefault();
+          document.body.removeEventListener(ArcModelEventTypes.Project.query, f);
+        });
+        const e = new CustomEvent(ArcModelEventTypes.Project.query, {
+          bubbles: true,
+          cancelable: true,
+          detail: { result: undefined },
+        });
+        document.body.dispatchEvent(e);
+        assert.isUndefined(e.detail.result);
       });
     });
 
@@ -175,6 +231,20 @@ describe('ProjectModel', () => {
         const spy = sinon.spy(model, 'removeProject');
         await ArcModelEvents.Project.delete(document.body, id);
         assert.isTrue(spy.called);
+      });
+
+      it('ignores the event when cancelled', async () => {
+        document.body.addEventListener(ArcModelEventTypes.Project.delete, function f(e) {
+          e.preventDefault();
+          document.body.removeEventListener(ArcModelEventTypes.Project.delete, f);
+        });
+        const e = new CustomEvent(ArcModelEventTypes.Project.delete, {
+          bubbles: true,
+          cancelable: true,
+          detail: { result: undefined },
+        });
+        document.body.dispatchEvent(e);
+        assert.isUndefined(e.detail.result);
       });
     });
   });

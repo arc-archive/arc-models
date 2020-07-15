@@ -50,7 +50,6 @@ export const ArcModelEventTypes = {
     updateBulk: 'modelhostrulesupdatebulk',
     delete: 'modelhostrulesdelete',
     list: 'modelhostruleslist',
-    clear: 'modelhostrulesclear',
     State: {
       update: 'modelstatehostrulesupdate',
       delete: 'modelstatehostrulesdelete',

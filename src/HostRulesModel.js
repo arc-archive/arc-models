@@ -34,7 +34,6 @@ export const updateHandler = Symbol('updateHandler');
 export const updateBulkHandler = Symbol('updateBulkHandler');
 export const deleteHandler = Symbol('deleteHandler');
 export const listHandler = Symbol('listHandler');
-export const clearHandler = Symbol('clearHandler');
 
 /**
  * Model for host rules.
@@ -57,7 +56,6 @@ export class HostRulesModel extends ArcBaseModel {
     this[updateHandler] = this[updateHandler].bind(this);
     this[deleteHandler] = this[deleteHandler].bind(this);
     this[listHandler] = this[listHandler].bind(this);
-    this[clearHandler] = this[clearHandler].bind(this);
     this[updateBulkHandler] = this[updateBulkHandler].bind(this);
   }
 
@@ -67,7 +65,6 @@ export class HostRulesModel extends ArcBaseModel {
     node.addEventListener(ArcModelEventTypes.HostRules.updateBulk, this[updateBulkHandler]);
     node.addEventListener(ArcModelEventTypes.HostRules.delete, this[deleteHandler]);
     node.addEventListener(ArcModelEventTypes.HostRules.list, this[listHandler]);
-    node.addEventListener(ArcModelEventTypes.HostRules.clear, this[clearHandler]);
   }
 
   _detachListeners(node) {
@@ -76,7 +73,6 @@ export class HostRulesModel extends ArcBaseModel {
     node.removeEventListener(ArcModelEventTypes.HostRules.updateBulk, this[updateBulkHandler]);
     node.removeEventListener(ArcModelEventTypes.HostRules.delete, this[deleteHandler]);
     node.removeEventListener(ArcModelEventTypes.HostRules.list, this[listHandler]);
-    node.removeEventListener(ArcModelEventTypes.HostRules.clear, this[clearHandler]);
   }
 
   /**
@@ -258,17 +254,6 @@ export class HostRulesModel extends ArcBaseModel {
     e.detail.result = this.list({
       limit,
       nextPageToken,
-    });
-  }
-
-  [clearHandler](e) {
-    if (e.defaultPrevented) {
-      return;
-    }
-    e.preventDefault();
-    e.stopPropagation();
-    e.detail.result = this.db.destroy().then(() => {
-      this._fireUpdated('host-rules-clear');
     });
   }
 }

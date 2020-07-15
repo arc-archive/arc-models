@@ -1083,10 +1083,16 @@ describe('RequestModel Events API', () => {
       assert.equal(spy.args[0][0], 'saved', 'passes the argument');
     });
 
-    it('does nothing when no items to delete', async () => {
+    it('ignores when no stores in the request', async () => {
+      const spy = sinon.spy(element, 'deleteModel');
+      await ArcModelEvents.destroy(document.body, []);
+      assert.isFalse(spy.called);
+    });
+
+    it('ignores when requesting different store', async () => {
       const spy = sinon.spy(element, 'deleteModel');
       await ArcModelEvents.destroy(document.body, ['other']);
-      assert.isFalse(spy.called, 'function was called');
+      assert.isFalse(spy.called);
     });
   });
 });

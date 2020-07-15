@@ -6,6 +6,7 @@ import '../../client-certificate-model.js';
 import { ArcModelEventTypes } from '../../src/events/ArcModelEventTypes.js';
 
 /** @typedef {import('../../src/ClientCertificateModel').ClientCertificateModel} ClientCertificateModel */
+/** @typedef {import('../../src/ClientCertificateModel').ARCClientCertificate} ARCClientCertificate */
 /** @typedef {import('../../src/ClientCertificateModel').ARCCertificate} ARCCertificate */
 
 describe('ClientCertificateModel', () => {
@@ -330,6 +331,21 @@ describe('ClientCertificateModel', () => {
       assert.typeOf(changeRecord.item, 'object', 'has created object');
       assert.isUndefined(changeRecord.oldRev, 'has no oldRev');
     });
+
+    it('adds "created" property when not set', async () => {
+      const item = /** @type ARCClientCertificate */ (generator.generateClientCertificate());
+      delete item.created;
+      const record = await element.insert(item);
+      assert.typeOf(record.item.created, 'number');
+    });
+
+    it('ignores the key if now set', async () => {
+      const item = /** @type ARCClientCertificate */ (generator.generateClientCertificate({
+        noKey: true,
+      }));
+      const record = await element.insert(item);
+      assert.isUndefined(record.item.key);
+    });
   });
 
   describe('deleteModel()', () => {
@@ -352,6 +368,96 @@ describe('ClientCertificateModel', () => {
       await element.deleteModel();
       const all = await element.list();
       assert.lengthOf(all.items, 0);
+    });
+  });
+
+  describe('certificateToStore()', () => {
+    let element = /** @type ClientCertificateModel */ (null);
+    beforeEach(async () => {
+      element = await basicFixture();
+    });
+
+    afterEach(async () => {
+      await generator.destroyClientCertificates();
+    });
+
+    it('returns the same certificate when has string data', () => {
+      const cert = generator.generateCertificate({
+        binary: false,
+      });
+      assert.typeOf(cert.data, 'string');
+      const result = /** @type ARCCertificate */ (element.certificateToStore(cert));
+      assert.typeOf(result.data, 'string');
+    });
+
+    it('converts binary data to safe string', () => {
+      const cert = generator.generateCertificate({
+        binary: true,
+      });
+      assert.notTypeOf(cert.data, 'string');
+      const result = /** @type ARCCertificate */ (element.certificateToStore(cert));
+      assert.typeOf(result.data, 'string', 'has the string data');
+      assert.equal(result.type, 'buffer');
+    });
+
+    it('processes a list of certificates', () => {
+      const cert = generator.generateCertificate({
+        binary: true,
+      });
+      assert.notTypeOf(cert.data, 'string');
+      const result = /** @type ARCCertificate[] */ (element.certificateToStore([cert]));
+      assert.typeOf(result, 'array', 'the result is an array');
+      assert.lengthOf(result, 1, 'has the same number of items');
+      assert.typeOf(result[0].data, 'string', 'has the string data');
+    });
+
+    it('throws when no data property', () => {
+      const cert = generator.generateCertificate({
+        binary: true,
+      });
+      delete cert.data;
+      assert.throws(() => {
+        element.certificateToStore(cert);
+      });
+    });
+  });
+
+  describe('certificateFromStore()', () => {
+    let element = /** @type ClientCertificateModel */ (null);
+    beforeEach(async () => {
+      element = await basicFixture();
+    });
+
+    afterEach(async () => {
+      await generator.destroyClientCertificates();
+    });
+
+    it('returns the same certificate when has no type', () => {
+      const cert = generator.generateCertificate({
+        binary: false,
+      });
+      assert.typeOf(cert.data, 'string');
+      const result = /** @type ARCCertificate */ (element.certificateFromStore(cert));
+      assert.typeOf(result.data, 'string');
+    });
+
+    it('converts string back to the binary data', () => {
+      const cert = generator.generateCertificate({
+        binary: true,
+      });
+      cert.data = element.bufferToBase64(cert.data);
+      cert.type = 'buffer';
+      const result = /** @type ARCCertificate */ (element.certificateFromStore(cert));
+      assert.typeOf(result.data, 'Uint8Array');
+    });
+
+    it('processes a list of certificates', () => {
+      const cert = generator.generateCertificate({
+        binary: false,
+      });
+      const result = /** @type ARCCertificate[] */ (element.certificateFromStore([cert]));
+      assert.typeOf(result, 'array', 'the result is an array');
+      assert.lengthOf(result, 1, 'has the same number of items');
     });
   });
 });

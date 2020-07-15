@@ -198,9 +198,6 @@ export class ArcBaseModel extends HTMLElement {
       return;
     }
     const { stores, detail } = e;
-    if (!stores || !stores.length) {
-      return;
-    }
     if (!stores || !stores.length || !this.name) {
       return;
     }

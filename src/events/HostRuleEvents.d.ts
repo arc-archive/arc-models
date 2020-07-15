@@ -79,7 +79,7 @@ export declare class ARCHostRuleDeleteEvent extends CustomEvent<ARCModelDeleteEv
    * @param {string} id Request id
    * @param {string=} rev A revision ID to delete
    */
-  constructor(id: string, rev: string);
+  constructor(id: string, rev?: string);
 }
 
 /**

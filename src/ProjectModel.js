@@ -14,7 +14,6 @@ the License.
 import { RequestBaseModel } from './RequestBaseModel.js';
 import { ArcModelEventTypes } from './events/ArcModelEventTypes.js';
 import { ArcModelEvents } from './events/ArcModelEvents.js';
-import { cancelEvent } from './Utils.js';
 
 /* eslint-disable class-methods-use-this */
 /* eslint-disable no-continue */
@@ -162,10 +161,12 @@ export class ProjectModel extends RequestBaseModel {
    * @param {ARCProjectReadEvent} e
    */
   [readHandler](e) {
-    if (this._eventCancelled(e)) {
+    if (e.defaultPrevented) {
       return;
     }
-    cancelEvent(e);
+    e.preventDefault();
+    e.stopPropagation();
+
     const { id, rev } = e;
     e.detail.result = this.readProject(id, rev);
   }
@@ -175,10 +176,12 @@ export class ProjectModel extends RequestBaseModel {
    * @param {ARCProjectUpdateEvent} e
    */
   [updateHandler](e) {
-    if (this._eventCancelled(e)) {
+    if (e.defaultPrevented) {
       return;
     }
-    cancelEvent(e);
+    e.preventDefault();
+    e.stopPropagation();
+
     const { project } = e;
     e.detail.result = this.post(project);
   }
@@ -188,10 +191,12 @@ export class ProjectModel extends RequestBaseModel {
    * @param {ARCProjectUpdateBulkEvent} e
    */
   [updateBulkHandler](e) {
-    if (this._eventCancelled(e)) {
+    if (e.defaultPrevented) {
       return;
     }
-    cancelEvent(e);
+    e.preventDefault();
+    e.stopPropagation();
+
     const { projects } = e;
     e.detail.result = this.postBulk(projects);
   }
@@ -269,10 +274,11 @@ export class ProjectModel extends RequestBaseModel {
    * @param {ARCProjectDeleteEvent} e
    */
   [deleteHandler](e) {
-    if (this._eventCancelled(e)) {
+    if (e.defaultPrevented) {
       return;
     }
-    cancelEvent(e);
+    e.preventDefault();
+    e.stopPropagation();
 
     const { id, rev } = e;
     e.detail.result = this.removeProject(id, rev);
@@ -283,15 +289,12 @@ export class ProjectModel extends RequestBaseModel {
    * @param {ARCProjectListEvent} e
    */
   [queryHandler](e) {
-    if (this._eventCancelled(e)) {
+    if (e.defaultPrevented) {
       return;
     }
-    cancelEvent(e);
-    if (!e.detail) {
-      throw new Error(
-        'The `detail` object must be set prior sending the event'
-      );
-    }
+    e.preventDefault();
+    e.stopPropagation();
+
     const { limit, nextPageToken } = e;
     e.detail.result = this.list({
       limit,

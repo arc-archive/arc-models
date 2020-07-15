@@ -65,7 +65,6 @@ export class RequestBaseModel extends ArcBaseModel {
         return this.savedDb;
       case 'history':
         return this.historyDb;
-      case 'legacy-projects':
       case 'projects':
         return this.projectDb;
       default:
@@ -79,9 +78,6 @@ export class RequestBaseModel extends ArcBaseModel {
    */
   [deletemodelHandler](e) {
     const { stores, detail } = e;
-    if (!stores || !stores.length) {
-      return;
-    }
     if (!stores || !stores.length || !this.name) {
       return;
     }

@@ -3,20 +3,17 @@ import sinon from 'sinon';
 import { DataGenerator } from '@advanced-rest-client/arc-data-generator';
 import { RequestBaseModel } from '../../src/RequestBaseModel.js';
 import { ArcModelEventTypes } from '../../src/events/ArcModelEventTypes.js';
+import { ArcModelEvents } from '../../src/events/ArcModelEvents.js';
 
 /** @typedef {import('../../src/RequestTypes').ARCProject} ARCProject */
 /** @typedef {import('../../src/types').ARCEntityChangeRecord} ARCEntityChangeRecord */
 
 class RequestTestModel extends RequestBaseModel {
-  static get is() {
-    return 'request-test-model';
-  }
-
   constructor() {
     super('legacy-projects');
   }
 }
-window.customElements.define(RequestTestModel.is, RequestTestModel);
+window.customElements.define('request-test-model', RequestTestModel);
 
 describe('RequestBaseModel', () => {
   const generator = new DataGenerator();
@@ -277,6 +274,52 @@ describe('RequestBaseModel', () => {
         thrown = true;
       }
       assert.isTrue(thrown);
+    });
+  });
+
+  describe('[deletemodelHandler]()', () => {
+    let element = /** @type {RequestTestModel} */ (null);
+    beforeEach(async () => {
+      element = await basicFixture();
+      await generator.insertSavedRequestData();
+    });
+
+    afterEach(async () => {
+      await generator.destroySavedRequestData();
+    });
+
+    it('clears requested data', async () => {
+      await ArcModelEvents.destroy(document.body, ['legacy-projects']);
+      const items = await generator.getDatastoreProjectsData();
+      assert.lengthOf(items, 0);
+    });
+
+    it('calls deleteModel() with the type name', async () => {
+      const spy = sinon.spy(element, 'deleteModel');
+      await ArcModelEvents.destroy(document.body, ['legacy-projects']);
+      assert.isTrue(spy.called, 'the function was called');
+      assert.equal(spy.args[0][0], 'legacy-projects', 'passes the store name');
+    });
+
+    it('notifies about data destroy', async () => {
+      const spy = sinon.spy();
+      element.addEventListener(ArcModelEventTypes.destroyed, spy);
+      await ArcModelEvents.destroy(document.body, ['legacy-projects']);
+      assert.isTrue(spy.called, 'the event is dispatched');
+    });
+
+    it('ignores when no stores in the request', async () => {
+      const spy = sinon.spy();
+      element.addEventListener(ArcModelEventTypes.destroyed, spy);
+      await ArcModelEvents.destroy(document.body, []);
+      assert.isFalse(spy.called);
+    });
+
+    it('ignores when requesting different store', async () => {
+      const spy = sinon.spy();
+      element.addEventListener(ArcModelEventTypes.destroyed, spy);
+      await ArcModelEvents.destroy(document.body, ['other']);
+      assert.isFalse(spy.called);
     });
   });
 });

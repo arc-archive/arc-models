@@ -75,6 +75,20 @@ describe('<client-certificate-model> events based', () => {
         // @ts-ignore
         assert.isUndefined(result.items[0].dataKey);
       });
+
+      it('ignores the event when cancelled', async () => {
+        document.body.addEventListener(ArcModelEventTypes.ClientCertificate.list, function f(e) {
+          e.preventDefault();
+          document.body.removeEventListener(ArcModelEventTypes.ClientCertificate.list, f);
+        });
+        const e = new CustomEvent(ArcModelEventTypes.ClientCertificate.list, {
+          bubbles: true,
+          cancelable: true,
+          detail: { result: undefined },
+        });
+        document.body.dispatchEvent(e);
+        assert.isUndefined(e.detail.result);
+      });
     });
 
     describe('Without data', () => {
@@ -150,6 +164,20 @@ describe('<client-certificate-model> events based', () => {
         assert.typeOf(result, 'object', 'returns an object');
         assert.notEqual(result.name, 'updated-name', 'has previous version');
         assert.notEqual(result._rev, response.rev, 'has previous revision');
+      });
+
+      it('ignores the event when cancelled', async () => {
+        document.body.addEventListener(ArcModelEventTypes.ClientCertificate.read, function f(e) {
+          e.preventDefault();
+          document.body.removeEventListener(ArcModelEventTypes.ClientCertificate.read, f);
+        });
+        const e = new CustomEvent(ArcModelEventTypes.ClientCertificate.read, {
+          bubbles: true,
+          cancelable: true,
+          detail: { result: undefined },
+        });
+        document.body.dispatchEvent(e);
+        assert.isUndefined(e.detail.result);
       });
     });
 
@@ -243,6 +271,20 @@ describe('<client-certificate-model> events based', () => {
       }
       assert.equal(err.message, 'The "id" argument is missing');
     });
+
+    it('ignores the event when cancelled', async () => {
+      document.body.addEventListener(ArcModelEventTypes.ClientCertificate.delete, function f(e) {
+        e.preventDefault();
+        document.body.removeEventListener(ArcModelEventTypes.ClientCertificate.delete, f);
+      });
+      const e = new CustomEvent(ArcModelEventTypes.ClientCertificate.delete, {
+        bubbles: true,
+        cancelable: true,
+        detail: { result: undefined },
+      });
+      document.body.dispatchEvent(e);
+      assert.isUndefined(e.detail.result);
+    });
   });
 
   describe(`${ArcModelEventTypes.ClientCertificate.insert} event`, () => {
@@ -327,6 +369,20 @@ describe('<client-certificate-model> events based', () => {
       assert.typeOf(changeRecord.rev, 'string', 'has a rev');
       assert.typeOf(changeRecord.item, 'object', 'has created object');
       assert.isUndefined(changeRecord.oldRev, 'has no oldRev');
+    });
+
+    it('ignores the event when cancelled', async () => {
+      document.body.addEventListener(ArcModelEventTypes.ClientCertificate.insert, function f(e) {
+        e.preventDefault();
+        document.body.removeEventListener(ArcModelEventTypes.ClientCertificate.insert, f);
+      });
+      const e = new CustomEvent(ArcModelEventTypes.ClientCertificate.insert, {
+        bubbles: true,
+        cancelable: true,
+        detail: { result: undefined },
+      });
+      document.body.dispatchEvent(e);
+      assert.isUndefined(e.detail.result);
     });
   });
 

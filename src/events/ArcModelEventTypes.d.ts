@@ -62,7 +62,6 @@ interface HostRulesEvents {
   updateBulk: string;
   delete: string;
   list: string;
-  clear: string;
   State: HostRulesStateEvents;
 }
 
