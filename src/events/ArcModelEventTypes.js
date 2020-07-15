@@ -84,6 +84,25 @@ export const ArcModelEventTypes = {
       update: 'modelstateurlhistoryupdate',
     },
   },
+  Environment: {
+    read: 'modelenvironmentread',
+    update: 'modelenvironmentupdate',
+    delete: 'modelenvironmentdelete',
+    list: 'modelenvironmentlist',
+    State: {
+      update: 'modelstateenvironmentupdate',
+      delete: 'modelstateenvironmentdelete',
+    },
+  },
+  Variable: {
+    update: 'modelvariableupdate',
+    delete: 'modelvariabledelete',
+    list: 'modelvariablelist',
+    State: {
+      update: 'modelstatevariableupdate',
+      delete: 'modelstatevariabledelete',
+    },
+  },
 };
 Object.freeze(ArcModelEventTypes);
 Object.freeze(ArcModelEventTypes.Project);
@@ -102,3 +121,7 @@ Object.freeze(ArcModelEventTypes.WSUrlHistory);
 Object.freeze(ArcModelEventTypes.WSUrlHistory.State);
 Object.freeze(ArcModelEventTypes.UrlHistory);
 Object.freeze(ArcModelEventTypes.UrlHistory.State);
+Object.freeze(ArcModelEventTypes.Environment);
+Object.freeze(ArcModelEventTypes.Environment.State);
+Object.freeze(ArcModelEventTypes.Variable);
+Object.freeze(ArcModelEventTypes.Variable.State);

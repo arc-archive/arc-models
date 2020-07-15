@@ -7,6 +7,7 @@ import * as HostRuleEvents from './HostRuleEvents.js';
 import * as CertificatesEvents from './CertificatesEvents.js';
 import * as WSUrlHistoryEvents from './WSUrlHistoryEvents.js';
 import * as UrlHistoryEvents from './UrlHistoryEvents.js';
+import * as VariableEvents from './VariableEvents.js';
 
 export const ArcModelEvents = {
   /**
@@ -114,6 +115,25 @@ export const ArcModelEvents = {
       update: UrlHistoryEvents.updatedState,
     },
   },
+  Environment: {
+    read: VariableEvents.readEnvironmentAction,
+    update: VariableEvents.updateEnvironmentAction,
+    delete: VariableEvents.deleteEnvironmentAction,
+    list: VariableEvents.listEnvironmentAction,
+    State: {
+      update: VariableEvents.updatedEnvironmentState,
+      delete: VariableEvents.deletedEnvironmentState,
+    },
+  },
+  Variable: {
+    update: VariableEvents.updateVariableAction,
+    delete: VariableEvents.deleteVariableAction,
+    list: VariableEvents.listVariableAction,
+    State: {
+      update: VariableEvents.updatedVariableState,
+      delete: VariableEvents.deletedVariableState,
+    },
+  },
 };
 Object.freeze(ArcModelEvents);
 Object.freeze(ArcModelEvents.Project);
@@ -132,3 +152,7 @@ Object.freeze(ArcModelEvents.WSUrlHistory);
 Object.freeze(ArcModelEvents.WSUrlHistory.State);
 Object.freeze(ArcModelEvents.UrlHistory);
 Object.freeze(ArcModelEvents.UrlHistory.State);
+Object.freeze(ArcModelEvents.Environment);
+Object.freeze(ArcModelEvents.Environment.State);
+Object.freeze(ArcModelEvents.Variable);
+Object.freeze(ArcModelEvents.Variable.State);

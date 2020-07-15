@@ -23,6 +23,7 @@ import { ARCHostRule } from '../HostRulesModel';
 import { ARCClientCertificate } from '../ClientCertificateModel';
 import { ARCWebsocketUrlHistory } from '../WebsocketUrlHistoryModel';
 import { ARCUrlHistory } from '../UrlHistoryModel';
+import { ARCVariable, ARCEnvironment } from '../VariablesModel';
 
 declare interface ProjectStateFunctions {
   /**
@@ -487,6 +488,107 @@ declare interface UrlHistoryFunctions {
   State: UrlHistoryStateFunctions;
 }
 
+declare interface EnvironmentStateFunctions {
+  /**
+   * Dispatches an event after an environment was updated
+   *
+   * @param target A node on which to dispatch the event.
+   * @param record Change record
+   */
+  update(target: EventTarget, record: ARCEntityChangeRecord<ARCEnvironment>): void;
+  /**
+   * Dispatches an event after an environment was deleted
+   *
+   * @param target A node on which to dispatch the event.
+   * @param id Deleted record id.
+   * @param rev Updated revision.
+   */
+  delete(target: EventTarget, id: string, rev: string): void;
+}
+
+declare interface EnvironmentFunctions {
+  /**
+   * Dispatches an event handled by the data store to read the environment metadata
+   *
+   * @param target A node on which to dispatch the event.
+   * @param name The name of the environment
+   * @returns Promise resolved to an environment model.
+   */
+  read(target: EventTarget, name: string): Promise<ARCEnvironment>;
+  /**
+   * Dispatches an event handled by the data store to update an environment metadata.
+   *
+   * @param target A node on which to dispatch the event.
+   * @param item The environment object to update.
+   * @returns Promise resolved to the change record
+   */
+  update(target: EventTarget, item: ARCEnvironment): Promise<ARCEntityChangeRecord<ARCEnvironment>>;
+  /**
+   * Dispatches an event handled by the data store to delete an environment and its variables.
+   *
+   * @param target A node on which to dispatch the event.
+   * @param id The id of the environment to delete.
+   * @returns Promise resolved to the delete record
+   */
+  delete(target: EventTarget, id: string): Promise<DeletedEntity>;
+  /**
+   * Dispatches an event to list the environemnts data.
+   *
+   * @param target A node on which to dispatch the event.
+   * @param opts Query options.
+   * @returns Model query result.
+   */
+  list(target: EventTarget, opts?: ARCModelListOptions): Promise<ARCModelListResult<ARCEnvironment>>;
+  State: EnvironmentStateFunctions;
+}
+
+declare interface VariableStateFunctions {
+  /**
+   * Dispatches an event after a variable was updated
+   *
+   * @param target A node on which to dispatch the event.
+   * @param record Change record
+   */
+  update(target: EventTarget, record: ARCEntityChangeRecord<ARCVariable>): void;
+  /**
+   * Dispatches an event after an variable was deleted
+   *
+   * @param target A node on which to dispatch the event.
+   * @param id Deleted record id.
+   * @param rev Updated revision.
+   */
+  delete(target: EventTarget, id: string, rev: string): void;
+}
+
+declare interface VariableFunctions {
+  /**
+   * Dispatches an event handled by the data store to update a variable metadata.
+   *
+   * @param target A node on which to dispatch the event.
+   * @param item The variable object to update.
+   * @returns Promise resolved to the change record
+   */
+  update(target: EventTarget, item: ARCVariable): Promise<ARCEntityChangeRecord<ARCVariable>>;
+  /**
+   * Dispatches an event handled by the data store to delete a variable.
+   *
+   * @param target A node on which to dispatch the event.
+   * @param id The id of the variable to delete.
+   * @returns Promise resolved to the delete record
+   */
+  delete(target: EventTarget, id: string): Promise<DeletedEntity>;
+  /**
+   * Dispatches an event to list the variables data.
+   *
+   * @param target A node on which to dispatch the event.
+   * @param name The name of the environment
+   * @param opts Query options.
+   * @returns Model query result.
+   */
+  list(target: EventTarget, name: string, opts?: ARCModelListOptions): Promise<ARCModelListResult<ARCVariable>>;
+  State: VariableStateFunctions;
+}
+
 declare interface ArcModelEvents {
   /**
    * Dispatches an event handled by the data store to destroy a data store.
@@ -511,6 +613,8 @@ declare interface ArcModelEvents {
   ClientCertificate: ClientCertificateFunctions;
   WSUrlHistory: WSUrlHistoryFunctions;
   UrlHistory: UrlHistoryFunctions;
+  Environment: EnvironmentFunctions;
+  Variable: VariableFunctions;
 }
 
 declare const events: ArcModelEvents;

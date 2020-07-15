@@ -1,9 +1,9 @@
-interface ProjectStateEvents {
+declare interface ProjectStateEvents {
   update: string;
   delete: string;
 }
 
-interface ProjectEvents {
+declare interface ProjectEvents {
   read: string;
   update: string;
   delete: string;
@@ -12,12 +12,12 @@ interface ProjectEvents {
   State: ProjectStateEvents;
 }
 
-interface RequestStateEvents {
+declare interface RequestStateEvents {
   update: string;
   delete: string;
 }
 
-interface RequestEvents {
+declare interface RequestEvents {
   read: string;
   readBulk: string;
   update: string;
@@ -32,32 +32,32 @@ interface RequestEvents {
   State: RequestStateEvents;
 }
 
-interface UrlIndexerStateEvents {
+declare interface UrlIndexerStateEvents {
   finished: string;
 }
 
-interface UrlIndexerEvents {
+declare interface UrlIndexerEvents {
   update: string;
   query: string;
   State: UrlIndexerStateEvents;
 }
 
-interface AuthDataStateEvents {
+declare interface AuthDataStateEvents {
   update: string;
 }
 
-interface AuthDataEvents {
+declare interface AuthDataEvents {
   update: string;
   query: string;
   State: AuthDataStateEvents;
 }
 
-interface HostRulesStateEvents {
+declare interface HostRulesStateEvents {
   update: string;
   delete: string;
 }
 
-interface HostRulesEvents {
+declare interface HostRulesEvents {
   update: string;
   updateBulk: string;
   delete: string;
@@ -65,12 +65,12 @@ interface HostRulesEvents {
   State: HostRulesStateEvents;
 }
 
-interface ClientCertificateStateEvents {
+declare interface ClientCertificateStateEvents {
   update: string;
   delete: string;
 }
 
-interface ClientCertificateEvents {
+declare interface ClientCertificateEvents {
   read: string;
   list: string;
   delete: string;
@@ -79,11 +79,11 @@ interface ClientCertificateEvents {
   State: ClientCertificateStateEvents;
 }
 
-interface WSUrlHistoryStateEvents {
+declare interface WSUrlHistoryStateEvents {
   update: string;
 }
 
-interface WSUrlHistoryEvents {
+declare interface WSUrlHistoryEvents {
   // read: string;
   list: string;
   insert: string;
@@ -91,16 +91,41 @@ interface WSUrlHistoryEvents {
   State: WSUrlHistoryStateEvents;
 }
 
-interface UrlHistoryStateEvents {
+declare interface UrlHistoryStateEvents {
   update: string;
 }
 
-interface UrlHistoryEvents {
+declare interface UrlHistoryEvents {
   // read: string;
   list: string;
   insert: string;
   query: string;
   State: UrlHistoryStateEvents;
+}
+
+declare interface EnvironmentStateEvents {
+  update: string;
+  delete: string;
+}
+
+declare interface EnvironmentEvents {
+  read: string;
+  update: string;
+  delete: string;
+  list: string;
+  State: EnvironmentStateEvents;
+}
+
+declare interface VariableStateEvents {
+  update: string;
+  delete: string;
+}
+
+declare interface VariableEvents {
+  update: string;
+  delete: string;
+  list: string;
+  State: VariableStateEvents;
 }
 
 declare interface ArcModelEventTypes {
@@ -114,6 +139,8 @@ declare interface ArcModelEventTypes {
   ClientCertificate: ClientCertificateEvents;
   WSUrlHistory: WSUrlHistoryEvents;
   UrlHistory: UrlHistoryEvents;
+  Environment: EnvironmentEvents;
+  Variable: VariableEvents;
 }
 
 export const ArcModelEventTypes: ArcModelEventTypes;
