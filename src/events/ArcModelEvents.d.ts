@@ -22,6 +22,7 @@ import { ARCAuthData } from '../AuthDataModel';
 import { ARCHostRule } from '../HostRulesModel';
 import { ARCClientCertificate } from '../ClientCertificateModel';
 import { ARCWebsocketUrlHistory } from '../WebsocketUrlHistoryModel';
+import { ARCUrlHistory } from '../UrlHistoryModel';
 
 declare interface ProjectStateFunctions {
   /**
@@ -447,6 +448,45 @@ declare interface WSUrlHistoryFunctions {
   State: WSUrlHistoryStateFunctions;
 }
 
+declare interface UrlHistoryStateFunctions {
+  /**
+   * Dispatches an event after an URL entity was updated
+   *
+   * @param target A node on which to dispatch the event.
+   * @param record The change record
+   */
+  update(target: EventTarget, record: ARCEntityChangeRecord<ARCUrlHistory>): void;
+}
+
+declare interface UrlHistoryFunctions {
+  /**
+   * Dispatches an event handled by the data store to list a page of the results
+   *
+   * @param target A node on which to dispatch the event.
+   * @param opts List options.
+   * @returns Promise resolved to the change record for the URL
+   */
+  list(target: EventTarget, opts?: ARCModelListOptions): Promise<ARCModelListResult<ARCUrlHistory>>;
+  /**
+   * Dispatches an event handled by the data store to add an URL to the history
+   *
+   * @param target A node on which to dispatch the event.
+   * @param url The URL to insert
+   * @returns Promise resolved to the change record for the URL
+   */
+  insert(target: EventTarget, url: string): Promise<ARCEntityChangeRecord<ARCUrlHistory>>;
+  /**
+   * Dispatches an event handled by the data store to list a page of the results
+   *
+   * @param target A node on which to dispatch the event.
+   * @param term THe query term
+   * @returns Promise resolved to the change record for the URL
+   */
+  query(target: EventTarget, term: string): Promise<ARCUrlHistory[]>;
+
+  State: UrlHistoryStateFunctions;
+}
+
 declare interface ArcModelEvents {
   /**
    * Dispatches an event handled by the data store to destroy a data store.
@@ -470,6 +510,7 @@ declare interface ArcModelEvents {
   HostRules: HostRulesFunctions;
   ClientCertificate: ClientCertificateFunctions;
   WSUrlHistory: WSUrlHistoryFunctions;
+  UrlHistory: UrlHistoryFunctions;
 }
 
 declare const events: ArcModelEvents;

@@ -12,22 +12,31 @@ License for the specific language governing permissions and limitations under
 the License.
 */
 import { ArcBaseModel } from './ArcBaseModel.js';
+import { ArcModelEventTypes } from './events/ArcModelEventTypes.js';
+import { ArcModelEvents } from './events/ArcModelEvents.js';
+
 /* eslint-disable no-plusplus */
 
 /** @typedef {import('./UrlHistoryModel').ARCUrlHistory} ARCUrlHistory */
+/** @typedef {import('./events/UrlHistoryEvents').ARCHistoryUrlInsertEvent} ARCHistoryUrlInsertEvent */
+/** @typedef {import('./events/UrlHistoryEvents').ARCHistoryUrlListEvent} ARCHistoryUrlListEvent */
+/** @typedef {import('./events/UrlHistoryEvents').ARCHistoryUrlQueryEvent} ARCHistoryUrlQueryEvent */
+/** @typedef {import('./types').ARCModelListResult} ARCModelListResult */
+/** @typedef {import('./types').ARCModelListOptions} ARCModelListOptions */
+/** @typedef {import('./types').ARCEntityChangeRecord} ARCEntityChangeRecord */
 
 /**
  * A function used to sort query list items. It relays on two properties that
  * are set by query function on array entries: `_time` which is a timestamp of
  * the entry and `cnt` which is number of times the URL has been used.
  *
- * @param {Object} a
- * @param {Object} b
+ * @param {ARCUrlHistory} a
+ * @param {ARCUrlHistory} b
  * @return {number}
  */
 export function sortFunction(a, b) {
-  const aTime = a._time;
-  const bTime = b._time;
+  const aTime = a.midnight;
+  const bTime = b.midnight;
   if (aTime > bTime) {
     return 1;
   }
@@ -45,6 +54,10 @@ export function sortFunction(a, b) {
   return -1;
 }
 
+export const insertHandler = Symbol('insertHandler');
+export const listHandler = Symbol('listHandler');
+export const queryHandler = Symbol('queryHandler');
+
 /**
  * An element that saves Request URL in the history and serves list
  * of saved URLs.
@@ -52,200 +65,188 @@ export function sortFunction(a, b) {
  * The `url-history-query` event expects the `q` property set on the `detail`
  * object. It is passed to the `query()` function and result of calling this
  * function is set on detail's `result` property.
- *
- * ### Example
- *
- * ```javascript
- *
- * const e = new CustomEvent('url-history-query', {
- *  detail: {
- *    q: 'http://mulesoft.com/path/'
- *  },
- *  cancelable: true,
- *  bubbles: true,
- *  composed: true // if fired in shaddow DOM
- * });
- * document.body.dispatchEvent(e);
- *
- * e.detail.result.then((urls) => console.log(urls));
- * ```
- *
- * The `url-history-store` requires the `value` property to be set on
- * the `detail` object and it is passed to the `store()` function.
- *
- * ### Example
- *
- * ```javascript
- * const e = new CustomEvent('url-history-store', {
- *  detail: {
- *    value: 'http://mulesoft.com/path/'
- *  },
- *  cancelable: true,
- *  bubbles: true,
- *  composed: true
- * });
- * document.dispatchEvent(e);
- * ```
- *
- * Both events are cancelled and propagation of the event is stopped.
- * Therefore the event should be dispatched with `caneclable` flag set to true.
- *
- * The element listens for events on the `window` object so it can be placed
- * anywhere in the DOM.
- *
- * ### Example
- *
- * ```html
- * <body>
- *  <url-history-saver></url-history-saver>
- * </body>
- * ```
  */
 export class UrlHistoryModel extends ArcBaseModel {
   constructor() {
     super('url-history', 10);
-    this._handleStore = this._handleStore.bind(this);
-    this._handleQuery = this._handleQuery.bind(this);
+    this[insertHandler] = this[insertHandler].bind(this);
+    this[listHandler] = this[listHandler].bind(this);
+    this[queryHandler] = this[queryHandler].bind(this);
+  }
+
+  /**
+   * Lists all project objects.
+   *
+   * @param {ARCModelListOptions=} opts Query options.
+   * @return {Promise<ARCModelListResult>} A promise resolved to a list of projects.
+   */
+  async list(opts={}) {
+    const result = await this.listEntities(this.db, opts);
+    result.items.forEach((item) => {
+      const historyItem = /** @type ARCUrlHistory */ (item);
+      if (!historyItem.midnight) {
+        const day = new Date(historyItem.time);
+        day.setHours(0, 0, 0, 0);
+        historyItem.midnight = day.getTime();
+      }
+      historyItem.url = historyItem.url || historyItem._id;
+    });
+    return result;
+  }
+
+  /**
+   * Adds an URL to the history and checks for already existing entires.
+   * @param {string} url The URL to insert
+   * @return {Promise<ARCEntityChangeRecord>} A promise resolved to the URL change record
+   */
+  async addUrl(url) {
+    let obj;
+    const lower = url.toLowerCase();
+    const day = new Date();
+    const currentTimestamp = day.getTime();
+    day.setHours(0, 0, 0, 0);
+    const midnight = day.getTime();
+    try {
+      obj = /** @type ARCUrlHistory */ (await this.read(lower));
+      obj.cnt++;
+      obj.time = currentTimestamp;
+      obj.midnight = midnight;
+      if (!obj.url) {
+        obj.url = url;
+      }
+    } catch (e) {
+      obj = {
+        _id: lower,
+        url,
+        cnt: 1,
+        time: currentTimestamp,
+        midnight,
+      };
+    }
+    return this.update(obj);
+  }
+
+  /**
+   * Updates / saves the object in the datastore.
+   * This function fires `websocket-url-history-changed` event.
+   *
+   * @param {ARCUrlHistory} obj A project to save / update
+   * @return {Promise<ARCEntityChangeRecord>} A promise resolved to the URL change record
+   */
+  async update(obj) {
+    const item = { ...obj };
+    const oldRev = item._rev;
+    const result = await this.db.put(item);
+    item._rev = result.rev;
+    const record = {
+      id: item._id,
+      rev: result.rev,
+      oldRev,
+      item,
+    };
+    ArcModelEvents.UrlHistory.State.update(this, record);
+    return record;
+  }
+
+  /**
+   * Queries for websocket history objects.
+   *
+   * @param {string} q A partial url to match results. If not set it returns whole history.
+   * @return {Promise<ARCUrlHistory[]>} A promise resolved to a list of PouchDB documents.
+   */
+  async query(q) {
+    const query = q.toLowerCase();
+    const { db } = this;
+    const initial = await db.allDocs();
+    const { rows } = initial;
+    const keys = [];
+    rows.forEach((item) => {
+      if (query && !item.id.includes(query)) {
+        return;
+      }
+      keys[keys.length] = item.id;
+    });
+    if (!keys.length) {
+      return [];
+    }
+    const response = await db.allDocs({
+      keys,
+      include_docs: true,
+    });
+    const result = response.rows.map((item) => {
+      const historyItem = /** @type ARCUrlHistory */ (item.doc);
+      if (!historyItem.midnight) {
+        const day = new Date(historyItem.time);
+        day.setHours(0, 0, 0, 0);
+        historyItem.midnight = day.getTime();
+      }
+      historyItem.url = historyItem.url || historyItem._id;
+      return historyItem;
+    });
+    result.sort(sortFunction);
+    return result;
   }
 
   _attachListeners(node) {
     super._attachListeners(node);
-    node.addEventListener('url-history-store', this._handleStore);
-    node.addEventListener('url-history-query', this._handleQuery);
+    node.addEventListener(ArcModelEventTypes.UrlHistory.insert, this[insertHandler]);
+    node.addEventListener(ArcModelEventTypes.UrlHistory.list, this[listHandler]);
+    node.addEventListener(ArcModelEventTypes.UrlHistory.query, this[queryHandler]);
   }
 
   _detachListeners(node) {
     super._detachListeners(node);
-    node.removeEventListener('url-history-store', this._handleStore);
-    node.removeEventListener('url-history-query', this._handleQuery);
+    node.removeEventListener(ArcModelEventTypes.UrlHistory.insert, this[insertHandler]);
+    node.removeEventListener(ArcModelEventTypes.UrlHistory.list, this[listHandler]);
+    node.removeEventListener(ArcModelEventTypes.UrlHistory.query, this[queryHandler]);
   }
 
   /**
-   * Handles `url-history-store` custom event and stores an URL in the
-   * datastore.
-   * The event is canceled and propagation is topped upon handling. The
-   * event should be fired with `cancelable` flag set to `true`.
-   *
-   * It calls `store()` function with the `value` property of the `detail`
-   * object as an attribute.
-   *
-   * It creates a new `result` property on the `detail` object which is a
-   * result of calling `store()` function.
-   *
-   * @param {CustomEvent} e
+   * @param {ARCHistoryUrlInsertEvent} e
    */
-  _handleStore(e) {
-    e.preventDefault();
-    e.stopPropagation();
-    const { value } = e.detail;
-    if (!value) {
-      e.detail.result = Promise.reject(
-        new Error('The "value" property is not defined.')
-      );
+  [insertHandler](e) {
+    if (e.defaultPrevented) {
       return;
     }
-    e.detail.result = this.store(value);
-  }
-
-  /**
-   * It creates new entry if the URL wasn't already in the data store or
-   * updates a `time` and `cnt` property of existing item.
-   *
-   * @param {String} url A URL to store in the history store.
-   * @return {Promise<PouchDB.Core.Response>} Resolved promise to the insert response of PouchDB
-   */
-  async store(url) {
-    const { db } = this;
-    const lower = url.toLowerCase();
-    let doc;
-    try {
-      doc = await db.get(lower);
-    } catch (e) {
-      if (e.status !== 404) {
-        this._handleException(e);
-      }
-    }
-    if (!doc) {
-      doc = {
-        _id: lower,
-        cnt: 1,
-        time: Date.now(),
-        url,
-      };
-    } else {
-      doc.cnt++;
-      doc.time = Date.now();
-    }
-
-    try {
-      return db.put(doc);
-    } catch (e) {
-      this._handleException(e);
-      // This is for linter only
-      return undefined;
-    }
-  }
-
-  /**
-   * Handles the `url-history-query` custom event.
-   * It cancels the event and prohibiits bubbling. Therefore the event should be
-   * fired as a `cancelable`. It adds the `result` property to the `detail`
-   * object which carries a Promise that will resolve to a list of PouchDB
-   * documentnts. It is the same as result as for calling `query()` functiuon.
-   *
-   * The event must contain a `q` property with the query string that is passed
-   * to the `query()` function.
-   *
-   * @param {CustomEvent} e
-   */
-  _handleQuery(e) {
     e.preventDefault();
     e.stopPropagation();
-    const { q } = e.detail;
-    if (!q) {
-      const err = new Error('The "q" property is not defined.');
-      e.detail.result = Promise.reject(err);
+    const { url } = e;
+    if (typeof url !== 'string') {
+      e.detail.result = Promise.reject(new Error('Expected url argument to be a string'));
       return;
     }
-    e.detail.result = this.query(q);
+    e.detail.result = this.addUrl(url);
   }
 
   /**
-   * Gets a list of maching URLs from the datastore.
-   * List elements are carrying the `url` property with the full
-   * URL and `cnt` property with number of times this URL has been updated in
-   * the data store. `cnt` is used to sort the results.
-   *
-   * Additional properties are regular PouchDB properties like `_id` and `_rev`.
-   *
-   * @param {string} q A string to search for. It result with entries that url
-   * contains (not start with!) a `q`.
-   * @return {Promise<ARCUrlHistory[]>} Resolved promise to a list of history items.
+   * @param {ARCHistoryUrlListEvent} e
    */
-  async query(q) {
-    const { db } = this;
-    const query = q.toLowerCase();
-    try {
-      const response = await db.allDocs();
-      const ps = [];
-      response.rows.forEach((item) => {
-        if (item.id.indexOf(query) !== -1) {
-          ps.push(db.get(item.id));
-        }
-      });
-      const items = await Promise.all(ps);
-      const normalized = items.map((i) => {
-        const item = { ...i };
-        const d = new Date(item.time);
-        d.setHours(0, 0, 0, 0);
-        item._time = d.getTime();
-        item.url = item.url || item._id;
-        return item;
-      });
-      return normalized.sort(sortFunction);
-    } catch (cause) {
-      this._handleException(cause);
-      return null;
+  [listHandler](e) {
+    if (e.defaultPrevented) {
+      return;
     }
+    e.preventDefault();
+    e.stopPropagation();
+
+    const { limit, nextPageToken } = e;
+    e.detail.result = this.list({
+      limit,
+      nextPageToken,
+    });
   }
+
+  /**
+   * @param {ARCHistoryUrlQueryEvent} e
+   */
+  [queryHandler](e) {
+    if (e.defaultPrevented) {
+      return;
+    }
+    e.preventDefault();
+    e.stopPropagation();
+
+    const { term } = e;
+    e.detail.result = this.query(term);
+  }
+
 }

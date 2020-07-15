@@ -17,7 +17,6 @@ export declare interface ARCWebsocketUrlHistory extends Entity {
   time: number;
   /**
    * A timestamp of the midnight that corresponds to the `time` property.
-   * Old entities (created before 2020) may not have this property.
    */
   midnight: number;
 }
@@ -49,7 +48,6 @@ export const queryHandler: symbol;
  * stopped.
  */
 export declare class WebsocketUrlHistoryModel extends ArcBaseModel {
-
   constructor();
 
   /**
@@ -69,9 +67,9 @@ export declare class WebsocketUrlHistoryModel extends ArcBaseModel {
 
   /**
    * Updates / saves the object in the datastore.
-   * This function fires `websocket-url-history-changed` event.
+   * This function dispatches the change event
    *
-   * @param obj A project to save / update
+   * @param obj An entity to store
    * @returns A promise resolved to the URL change record
    */
   update(obj: ARCWebsocketUrlHistory): Promise<ARCEntityChangeRecord<ARCWebsocketUrlHistory>>;
@@ -79,8 +77,8 @@ export declare class WebsocketUrlHistoryModel extends ArcBaseModel {
   /**
    * Queries for websocket history objects.
    *
-   * @param {string} query A partial url to match results. If not set it returns whole history.
-   * @return {} A promise resolved to a list of PouchDB documents.
+   * @param query A partial url to match results. If not set it returns whole history.
+   * @returns A promise resolved to a list of PouchDB documents.
    */
   query(query: string): Promise<ARCWebsocketUrlHistory[]>;
 

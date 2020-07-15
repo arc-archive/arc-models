@@ -6,6 +6,7 @@ import * as AuthDataEvents from './AuthDataEvents.js';
 import * as HostRuleEvents from './HostRuleEvents.js';
 import * as CertificatesEvents from './CertificatesEvents.js';
 import * as WSUrlHistoryEvents from './WSUrlHistoryEvents.js';
+import * as UrlHistoryEvents from './UrlHistoryEvents.js';
 
 export const ArcModelEvents = {
   /**
@@ -105,6 +106,15 @@ export const ArcModelEvents = {
       update: WSUrlHistoryEvents.updatedState,
     },
   },
+  UrlHistory: {
+    // read: 'modelwsurlhistoryread',
+    list: UrlHistoryEvents.listAction,
+    insert: UrlHistoryEvents.insertAction,
+    query: UrlHistoryEvents.queryAction,
+    State: {
+      update: UrlHistoryEvents.updatedState,
+    },
+  },
 };
 Object.freeze(ArcModelEvents);
 Object.freeze(ArcModelEvents.Project);
@@ -121,3 +131,5 @@ Object.freeze(ArcModelEvents.ClientCertificate);
 Object.freeze(ArcModelEvents.ClientCertificate.State);
 Object.freeze(ArcModelEvents.WSUrlHistory);
 Object.freeze(ArcModelEvents.WSUrlHistory.State);
+Object.freeze(ArcModelEvents.UrlHistory);
+Object.freeze(ArcModelEvents.UrlHistory.State);

@@ -16,6 +16,7 @@ interface RequestStateEvents {
   update: string;
   delete: string;
 }
+
 interface RequestEvents {
   read: string;
   readBulk: string;
@@ -91,6 +92,18 @@ interface WSUrlHistoryEvents {
   State: WSUrlHistoryStateEvents;
 }
 
+interface UrlHistoryStateEvents {
+  update: string;
+}
+
+interface UrlHistoryEvents {
+  // read: string;
+  list: string;
+  insert: string;
+  query: string;
+  State: UrlHistoryStateEvents;
+}
+
 declare interface ArcModelEventTypes {
   destroy: string;
   destroyed: string;
@@ -101,6 +114,7 @@ declare interface ArcModelEventTypes {
   HostRules: HostRulesEvents;
   ClientCertificate: ClientCertificateEvents;
   WSUrlHistory: WSUrlHistoryEvents;
+  UrlHistory: UrlHistoryEvents;
 }
 
 export const ArcModelEventTypes: ArcModelEventTypes;

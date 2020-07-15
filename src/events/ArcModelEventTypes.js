@@ -73,7 +73,16 @@ export const ArcModelEventTypes = {
     insert: 'modelwsurlhistoryinsert',
     query: 'modelwsurlhistoryquery',
     State: {
-      update: 'modelstatewebsocketurlhistoryupdate',
+      update: 'modelstatewsurlhistoryupdate',
+    },
+  },
+  UrlHistory: {
+    // read: 'modelwsurlhistoryread',
+    list: 'modelurlhistorylist',
+    insert: 'modelurlhistoryinsert',
+    query: 'modelurlhistoryquery',
+    State: {
+      update: 'modelstateurlhistoryupdate',
     },
   },
 };
@@ -92,3 +101,5 @@ Object.freeze(ArcModelEventTypes.ClientCertificate);
 Object.freeze(ArcModelEventTypes.ClientCertificate.State);
 Object.freeze(ArcModelEventTypes.WSUrlHistory);
 Object.freeze(ArcModelEventTypes.WSUrlHistory.State);
+Object.freeze(ArcModelEventTypes.UrlHistory);
+Object.freeze(ArcModelEventTypes.UrlHistory.State);
