@@ -846,6 +846,7 @@ export class RequestModel extends RequestBaseModel {
    * @param {EventTarget} node
    */
   _attachListeners(node) {
+    super._attachListeners(node);
     node.addEventListener(ArcModelEventTypes.Request.read, this[readHandler]);
     node.addEventListener(ArcModelEventTypes.Request.readBulk, this[readBulkHandler]);
     node.addEventListener(ArcModelEventTypes.Request.store, this[storeHandler]);
@@ -865,6 +866,7 @@ export class RequestModel extends RequestBaseModel {
    * @param {EventTarget} node
    */
   _detachListeners(node) {
+    super._detachListeners(node);
     node.removeEventListener(ArcModelEventTypes.Request.read, this[readHandler]);
     node.removeEventListener(ArcModelEventTypes.Request.readBulk, this[readBulkHandler]);
     node.removeEventListener(ArcModelEventTypes.Request.store, this[storeHandler]);

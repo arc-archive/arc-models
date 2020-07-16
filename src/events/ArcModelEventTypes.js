@@ -103,6 +103,22 @@ export const ArcModelEventTypes = {
       delete: 'modelstatevariabledelete',
     },
   },
+  RestApi: {
+    list: 'modelrestapilist',
+    read: 'modelrestapiread',
+    dataRead: 'modelrestapidataread',
+    update: 'modelrestapiupdate',
+    dataUpdate: 'modelrestapidataupdate',
+    updateBulk: 'modelrestapiupdatebulk',
+    delete: 'modelrestapidelete',
+    versionDelete: 'modelrestapiversiondelete',
+    State: {
+      update: 'modelstaterestapiupdate',
+      dataUpdate: 'modelstaterestapidataupdate',
+      delete: 'modelstaterestapidelete',
+      versionDelete: 'modelstaterestapiversiondelete',
+    },
+  },
 };
 Object.freeze(ArcModelEventTypes);
 Object.freeze(ArcModelEventTypes.Project);
@@ -125,3 +141,5 @@ Object.freeze(ArcModelEventTypes.Environment);
 Object.freeze(ArcModelEventTypes.Environment.State);
 Object.freeze(ArcModelEventTypes.Variable);
 Object.freeze(ArcModelEventTypes.Variable.State);
+Object.freeze(ArcModelEventTypes.RestApi);
+Object.freeze(ArcModelEventTypes.RestApi.State);

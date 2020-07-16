@@ -25,6 +25,7 @@ import { ARCWebsocketUrlHistory } from '../WebsocketUrlHistoryModel';
 import { ARCUrlHistory } from '../UrlHistoryModel';
 import { ARCVariable, ARCEnvironment } from '../VariablesModel';
 import { ARCVariablesListOptions } from './VariableEvents';
+import { ARCRestApi, ARCRestApiIndex } from '../RestApiModel';
 
 declare interface ProjectStateFunctions {
   /**
@@ -590,6 +591,113 @@ declare interface VariableFunctions {
   State: VariableStateFunctions;
 }
 
+declare interface RestApiStateFunctions {
+  /**
+   * Dispatches an event after a REST API index entity was updated
+   *
+   * @param target A node on which to dispatch the event.
+   * @param record Change record
+   */
+  update(target: EventTarget, record: ARCEntityChangeRecord<ARCRestApiIndex>): void;
+  /**
+   * Dispatches an event after a REST API was deleted
+   *
+   * @param target A node on which to dispatch the event.
+   * @param id Deleted entity id
+   * @param rev Updated revision of the entity.
+   */
+  dataUpdate(target: EventTarget, record: ARCEntityChangeRecord<ARCRestApi>): void;
+  /**
+   * Dispatches an event after a REST API data entity was updated
+   *
+   * @param target A node on which to dispatch the event.
+   * @param record Change record
+   */
+  delete(target: EventTarget, id: string, rev: string): void;
+  /**
+   * Dispatches an event after a REST API version was deleted
+   *
+   * @param target A node on which to dispatch the event.
+   * @param id Deleted entity id
+   * @param rev Updated revision of the entity.
+   * @param indexId Index id of the removed item
+   * @param version Removed version name
+   */
+  versionDelete(target: EventTarget, id: string, rev: string, indexId: string, version: string): void;
+}
+
+declare interface RestApiFunctions {
+  /**
+   * Dispatches an event to list the REST API index data.
+   *
+   * @param target A node on which to dispatch the event.
+   * @param opts Query options.
+   * @returns List query result.
+   */
+  list(target: EventTarget, opts?: ARCModelListOptions): Promise<ARCModelListResult<ARCRestApiIndex>>;
+  /**
+   * Dispatches an event handled by the data store to read the REST API index metadata.
+   *
+   * @param target A node on which to dispatch the event.
+   * @param id The entity id
+   * @param rev The optional revision
+   * @returns Promise resolved to the entity
+   */
+  read(target: EventTarget, id: string, rev?: string): Promise<ARCRestApiIndex>;
+  /**
+   * Dispatches an event handled by the data store to read the REST API data metadata.
+   *
+   * @param target A node on which to dispatch the event.
+   * @param id The entity id
+   * @param rev The optional revision
+   * @returns Promise resolved to the entity
+   */
+  dataRead(target: EventTarget, id: string, rev?: string): Promise<ARCRestApi>;
+  /**
+   * Dispatches an event handled by the data store to update an API Index entity
+   *
+   * @param target A node on which to dispatch the event.
+   * @param entity The entity to update.
+   * @returns Promise resolved to a the change record
+   */
+  update(target: EventTarget, entity: ARCRestApiIndex): ARCEntityChangeRecord<ARCRestApiIndex>;
+  /**
+   * Dispatches an event handled by the data store to update a REST API data entity
+   *
+   * @param target A node on which to dispatch the event.
+   * @param entity The entity to update.
+   * @returns Promise resolved to a the change record
+   */
+  dataUpdate(target: EventTarget, entity: ARCRestApi): Promise<ARCEntityChangeRecord<ARCRestApi>>;
+  /**
+   * Dispatches an event handled by the data store to update a list of REST API index entities.
+   *
+   * @param target A node on which to dispatch the event.
+   * @param entities The list of entities to update.
+   * @returns Promise resolved to a list of change records
+   */
+  updateBulk(target: EventTarget, entities: ARCRestApiIndex[]): Promise<ARCEntityChangeRecord<ARCRestApiIndex>[]>;
+  /**
+   * Dispatches an event handled by the data store to delete a RETS API.
+   *
+   * @param target A node on which to dispatch the event.
+   * @param id The id of the entity to delete.
+   * @param rev The revision of the entity.
+   * @returns Promise resolved to the delete record
+   */
+  delete(target: EventTarget, id: string, rev?: string): Promise<DeletedEntity>;
+  /**
+   * Dispatches an event handled by the data store to delete a version of a RETS API.
+   *
+   * @param target A node on which to dispatch the event.
+   * @param id The id of the entity to delete.
+   * @param version The version of the API to delete
+   * @returns Promise resolved to the delete record
+   */
+  versionDelete(target: EventTarget, id: string, version: string): Promise<DeletedEntity>;
+  State: RestApiStateFunctions;
+}
+
 declare interface ArcModelEvents {
   /**
    * Dispatches an event handled by the data store to destroy a data store.
@@ -616,6 +724,7 @@ declare interface ArcModelEvents {
   UrlHistory: UrlHistoryFunctions;
   Environment: EnvironmentFunctions;
   Variable: VariableFunctions;
+  RestApi: RestApiFunctions;
 }
 
 declare const events: ArcModelEvents;

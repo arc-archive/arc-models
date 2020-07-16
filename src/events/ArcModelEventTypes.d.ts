@@ -128,6 +128,25 @@ declare interface VariableEvents {
   State: VariableStateEvents;
 }
 
+declare interface RestApiStateEvents {
+  update: string;
+  dataUpdate: string;
+  delete: string;
+  versionDelete: string;
+}
+
+declare interface RestApiEvents {
+  list: string;
+  read: string;
+  dataRead: string;
+  update: string;
+  dataUpdate: string;
+  updateBulk: string;
+  delete: string;
+  versionDelete: string;
+  State: RestApiStateEvents;
+}
+
 declare interface ArcModelEventTypes {
   destroy: string;
   destroyed: string;
@@ -141,6 +160,7 @@ declare interface ArcModelEventTypes {
   UrlHistory: UrlHistoryEvents;
   Environment: EnvironmentEvents;
   Variable: VariableEvents;
+  RestApi: RestApiEvents;
 }
 
 export const ArcModelEventTypes: ArcModelEventTypes;

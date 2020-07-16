@@ -8,6 +8,7 @@ import * as CertificatesEvents from './CertificatesEvents.js';
 import * as WSUrlHistoryEvents from './WSUrlHistoryEvents.js';
 import * as UrlHistoryEvents from './UrlHistoryEvents.js';
 import * as VariableEvents from './VariableEvents.js';
+import * as RestApiEvents from './RestApiEvents.js';
 
 export const ArcModelEvents = {
   /**
@@ -132,6 +133,22 @@ export const ArcModelEvents = {
     State: {
       update: VariableEvents.updatedVariableState,
       delete: VariableEvents.deletedVariableState,
+    },
+  },
+  RestApi: {
+    list: RestApiEvents.listAction,
+    read: RestApiEvents.readAction,
+    dataRead: RestApiEvents.dataReadAction,
+    update: RestApiEvents.updateAction,
+    dataUpdate: RestApiEvents.dataUpdateAction,
+    updateBulk: RestApiEvents.updateBulkAction,
+    delete: RestApiEvents.deleteAction,
+    versionDelete: RestApiEvents.versionDeleteAction,
+    State: {
+      update: RestApiEvents.updatedState,
+      dataUpdate: RestApiEvents.dataUpdatedState,
+      delete: RestApiEvents.deletedState,
+      versionDelete: RestApiEvents.versionDeletedState,
     },
   },
 };

@@ -66,3 +66,62 @@ export {
   ARCHostRuleDeletedEvent,
   ARCHostRuletListEvent,
 } from './src/events/HostRuleEvents.js';
+
+export {
+  ARCAuthDataUpdateEvent,
+  ARCAuthDataQueryEvent,
+  ARCAuthDataUpdatedEvent,
+} from './src/events/AuthDataEvents.js';
+
+export {
+  ARCClientCertificateReadEvent,
+  ARCClientCertificateInsertEvent,
+  ARCClientCertificateUpdateEvent,
+  ARCClientCertificateUpdatedEvent,
+  ARCClientCertificateDeleteEvent,
+  ARCClientCertificateDeletedEvent,
+  ARCClientCertificateListEvent,
+} from './src/events/CertificatesEvents.js';
+
+export {
+  ARCRestApiReadEvent,
+  ARCRestApiUpdateEvent,
+  ARCRestApiUpdateBulkEvent,
+  ARCRestApiUpdatedEvent,
+  ARCRestApiDeleteEvent,
+  ARCRestApiDeletedEvent,
+  ARCRestApiListEvent,
+  ARCRestApiDataReadEvent,
+  ARCRestApiDataUpdateEvent,
+  ARCRestApiDataUpdatedEvent,
+  ARCRestApiVersionDeleteEvent,
+  ARCRestApiVersionDeletedEvent,
+} from './src/events/RestApiEvents.js';
+
+export {
+  ARCHistoryUrlInsertEvent,
+  ARCHistoryUrlUpdatedEvent,
+  ARCHistoryUrlListEvent,
+  ARCHistoryUrlQueryEvent,
+} from './src/events/UrlHistoryEvents.js';
+
+export {
+  ARCWSUrlInsertEvent,
+  ARCWSUrlUpdatedEvent,
+  ARCWSUrlListEvent,
+  ARCWSUrlQueryEvent,
+} from './src/events/WSUrlHistoryEvents.js';
+
+export {
+  ARCEnvironmentReadEvent,
+  ARCEnvironmentUpdateEvent,
+  ARCEnvironmentUpdatedEvent,
+  ARCEnvironmentDeleteEvent,
+  ARCEnvironmentDeletedEvent,
+  ARCEnvironmentListEvent,
+  ARCVariableUpdateEvent,
+  ARCVariableUpdatedEvent,
+  ARCEVariableDeleteEvent,
+  ARCVariableDeletedEvent,
+  ARCVariableListEvent,
+} from './src/events/VariableEvents.js';
