@@ -24,6 +24,7 @@ import { ARCClientCertificate } from '../ClientCertificateModel';
 import { ARCWebsocketUrlHistory } from '../WebsocketUrlHistoryModel';
 import { ARCUrlHistory } from '../UrlHistoryModel';
 import { ARCVariable, ARCEnvironment } from '../VariablesModel';
+import { ARCVariablesListOptions } from './VariableEvents';
 
 declare interface ProjectStateFunctions {
   /**
@@ -538,7 +539,7 @@ declare interface EnvironmentFunctions {
    * @param opts Query options.
    * @returns Model query result.
    */
-  list(target: EventTarget, opts?: ARCModelListOptions): Promise<ARCModelListResult<ARCEnvironment>>;
+  list(target: EventTarget, opts?: ARCVariablesListOptions): Promise<ARCModelListResult<ARCEnvironment>>;
   State: EnvironmentStateFunctions;
 }
 
@@ -585,7 +586,7 @@ declare interface VariableFunctions {
    * @param opts Query options.
    * @returns Model query result.
    */
-  list(target: EventTarget, name: string, opts?: ARCModelListOptions): Promise<ARCModelListResult<ARCVariable>>;
+  list(target: EventTarget, name: string, opts?: ARCVariablesListOptions): Promise<ARCModelListResult<ARCVariable>>;
   State: VariableStateFunctions;
 }
 

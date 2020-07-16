@@ -370,12 +370,13 @@ export class VariablesModel extends ArcBaseModel {
       const m = "Can't create a variable without the variable property";
       throw new Error(m);
     }
+    const entity = { ...data };
     const db = this.variableDb;
     let oldRev;
-    if (data._id) {
+    if (entity._id) {
       try {
-        const doc = await db.get(data._id);
-        data._rev = doc._rev;
+        const doc = await db.get(entity._id);
+        entity._rev = doc._rev;
         oldRev = doc._rev;
       } catch (e) {
         if (e.status !== 404) {
@@ -384,21 +385,21 @@ export class VariablesModel extends ArcBaseModel {
       }
     }
     let result;
-    if (data._id) {
-      result = await db.put(data);
+    if (entity._id) {
+      result = await db.put(entity);
     } else {
-      result = await db.post(data);
+      result = await db.post(entity);
     }
     if (!result.ok) {
       this._handleException(result);
     }
-    data._id = result.id;
-    data._rev = result.rev;
+    entity._id = result.id;
+    entity._rev = result.rev;
     const record = {
       id: result.id,
       rev: result.rev,
       oldRev,
-      item: data,
+      item: entity,
     };
     ArcModelEvents.Variable.State.update(this, record);
     return record;
@@ -477,6 +478,7 @@ export class VariablesModel extends ArcBaseModel {
   }
 
   _attachListeners(node) {
+    super._attachListeners(node);
     node.addEventListener(ArcModelEventTypes.Environment.read, this[envReadHandler]);
     node.addEventListener(ArcModelEventTypes.Environment.update, this[envUpdateHandler]);
     node.addEventListener(ArcModelEventTypes.Environment.delete, this[envDeleteHandler]);
@@ -487,6 +489,7 @@ export class VariablesModel extends ArcBaseModel {
   }
 
   _detachListeners(node) {
+    super._detachListeners(node);
     node.removeEventListener(ArcModelEventTypes.Environment.read, this[envReadHandler]);
     node.removeEventListener(ArcModelEventTypes.Environment.update, this[envUpdateHandler]);
     node.removeEventListener(ArcModelEventTypes.Environment.delete, this[envDeleteHandler]);

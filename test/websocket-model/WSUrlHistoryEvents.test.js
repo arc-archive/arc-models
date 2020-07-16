@@ -38,7 +38,7 @@ describe('WSUrlHistoryEvents', () => {
       item: /** @type ARCWebsocketUrlHistory */ (generator.generateUrlObject()),
     };
 
-    it('has readonly rev property', () => {
+    it('has readonly changeRecord property', () => {
       const e = new ARCWSUrlUpdatedEvent(record);
       assert.deepEqual(e.changeRecord, record);
       assert.throws(() => {

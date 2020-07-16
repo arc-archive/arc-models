@@ -143,7 +143,7 @@ export class ARCEnvironmentListEvent extends ARCEntityListEvent {
   /**
    * @param {ARCVariablesListOptions=} opts Query options.
    */
-  constructor(opts) {
+  constructor(opts={}) {
     super(ArcModelEventTypes.Environment.list, opts);
     this[readallValue] = opts.readall;
   }
@@ -258,7 +258,7 @@ export class ARCVariableListEvent extends ARCEntityListEvent {
    * @param {string} name The name of the environment
    * @param {ARCVariablesListOptions=} opts Query options.
    */
-  constructor(name, opts) {
+  constructor(name, opts={}) {
     super(ArcModelEventTypes.Variable.list, opts);
     this[nameValue] = name;
     this[readallValue] = opts.readall;
