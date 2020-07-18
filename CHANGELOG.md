@@ -658,3 +658,59 @@
 * finishing tests for projects [a7e4c71](https://github.com/advanced-rest-client/arc-models/commit/a7e4c718a990a3f94ceb550ada0aee6062a62a0c) by Pawel
 
 
+<a name="4.0.1"></a>
+## [4.0.1](https://github.com/advanced-rest-client/arc-models/compare/3.2.0...4.0.1) (2020-07-18)
+
+### Build
+
+* bumping version [24e82ed](https://github.com/advanced-rest-client/arc-models/commit/24e82ed4092051e1b68fb3fa76d444b213723510) by Pawel
+
+
+### Update
+
+* removing old tests folder [df7af76](https://github.com/advanced-rest-client/arc-models/commit/df7af7643938c3b5f8e463dcff95bb8c0937565e) by Pawel
+* [ci skip] automated merge master->stage. syncing main branches [ccdede4](https://github.com/advanced-rest-client/arc-models/commit/ccdede4ae34f255ad4d78d89b4aece45df5618ca) by Ci agent
+* upgrading dependencies [0b70d30](https://github.com/advanced-rest-client/arc-models/commit/0b70d309712e268e7c3dbb097488b95b0eb72a8e) by Pawel
+* refactoring WS URL history model [1a13239](https://github.com/advanced-rest-client/arc-models/commit/1a132396c00b6795bca5d4b772033793b0c6b821) by Pawel
+* adding tests for the base request model [f039774](https://github.com/advanced-rest-client/arc-models/commit/f039774b289cc73c446d339c504c614f539ca0ff) by Pawel
+* adding client certificates tests [90071f0](https://github.com/advanced-rest-client/arc-models/commit/90071f08de6acecd2dc305bee96788f1d0227bb4) by Pawel
+* updating utils and project tests [c040aa1](https://github.com/advanced-rest-client/arc-models/commit/c040aa137dd22ef23208ecc059d0b63561638b9a) by Pawel
+* adding events for request model [f5f417b](https://github.com/advanced-rest-client/arc-models/commit/f5f417b4eb08a974ff338a8722a3588eac4e27f4) by Pawel
+* adding events for request model [50cb51f](https://github.com/advanced-rest-client/arc-models/commit/50cb51fed14de731686368d936e9eaaf94bda1af) by Pawel
+* updating project model [34508ba](https://github.com/advanced-rest-client/arc-models/commit/34508badbee7f71100a3be30faa47bf6e5c00fc4) by Pawel
+* [ci skip] automated merge master->stage. syncing main branches [2f00a80](https://github.com/advanced-rest-client/arc-models/commit/2f00a803bd08b928af0b72250bcf37b134ee31c3) by Ci agent
+
+
+### Documentation
+
+* updating documentation [8842100](https://github.com/advanced-rest-client/arc-models/commit/88421001e4435ce008327603152b5b12c68f4b09) by Pawel
+
+
+### Features
+
+* adding url to the websocket URL history [a1569e0](https://github.com/advanced-rest-client/arc-models/commit/a1569e081170319f141df9927ffdceccafe5b114) by Pawel
+* adding midnight to the WS URL history model [d52b253](https://github.com/advanced-rest-client/arc-models/commit/d52b2531b1b0d1a05779d54cd3f67cedc512bbaa) by Pawel
+
+
+### Refactor
+
+* refactoring project.query to project.list event [610f6d7](https://github.com/advanced-rest-client/arc-models/commit/610f6d722eee44fa0bc03fe36e06d4093987ce32) by Pawel
+* refactoring REST API model [f7d14d5](https://github.com/advanced-rest-client/arc-models/commit/f7d14d5caa58a22538b64ad148d73d74fd9f45fc) by Pawel
+* refactoring variables model [ce57fb0](https://github.com/advanced-rest-client/arc-models/commit/ce57fb085904a1e1ec94d486ea097e5d7224a39b) by Pawel
+* refactoring the URL history model [3654bc7](https://github.com/advanced-rest-client/arc-models/commit/3654bc74c869a64bcb4b4ab74748b00204644398) by Pawel
+* refactoring host rules model [130543d](https://github.com/advanced-rest-client/arc-models/commit/130543d592b97ef0455ef5c6cff2822486d1cd5c) by Pawel
+* refactoring auth data model [f1a75b4](https://github.com/advanced-rest-client/arc-models/commit/f1a75b40d09e7f13aac9fd59cba9b7c71b652d2e) by Pawel
+* refactoring types export [abd2ff5](https://github.com/advanced-rest-client/arc-models/commit/abd2ff5551149db831fe45d50c8f98a018f7bb29) by Pawel
+* refactoring URL indexed model [dcefaf9](https://github.com/advanced-rest-client/arc-models/commit/dcefaf9463e6bbf76b764f7f65219db792a9daa2) by Pawel
+* updating events declaration [29820c4](https://github.com/advanced-rest-client/arc-models/commit/29820c4f9c8f789a5161e17f9dc4dd5a35db5e58) by Pawel
+
+
+### Testing
+
+* adding tests for event types [2cb60f5](https://github.com/advanced-rest-client/arc-models/commit/2cb60f59a40947ab871dbf61233f91a520b0b12e) by Pawel
+* adding tests for the variables model [c4af2c5](https://github.com/advanced-rest-client/arc-models/commit/c4af2c51f7cfd5ad31d98845b20bc00e0bd6120b) by Pawel
+* increasing coverage for tests [18e2085](https://github.com/advanced-rest-client/arc-models/commit/18e2085ff570f3c6976c958629bedd688310aba9) by Pawel
+* adding base class tests [e153bfb](https://github.com/advanced-rest-client/arc-models/commit/e153bfb6accd900acdd5d4c1763a07a94c3c8689) by Pawel
+* finishing tests for projects [a7e4c71](https://github.com/advanced-rest-client/arc-models/commit/a7e4c718a990a3f94ceb550ada0aee6062a62a0c) by Pawel
+
+
