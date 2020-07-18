@@ -34,7 +34,7 @@ export const readHandler = Symbol('readHandler');
 export const updateHandler = Symbol('updateHandler');
 export const updateBulkHandler = Symbol('updateBulkHandler');
 export const deleteHandler = Symbol('deleteHandler');
-export const queryHandler = Symbol('queryHandler');
+export const listHandler = Symbol('listHandler');
 export const normalizeProjects = Symbol('normalizeProjects');
 export const processUpdateBulkResponse = Symbol('processUpdateBulkResponse');
 
@@ -52,7 +52,7 @@ export class ProjectModel extends RequestBaseModel {
     this[readHandler] = this[readHandler].bind(this);
     this[updateHandler] = this[updateHandler].bind(this);
     this[deleteHandler] = this[deleteHandler].bind(this);
-    this[queryHandler] = this[queryHandler].bind(this);
+    this[listHandler] = this[listHandler].bind(this);
     this[updateBulkHandler] = this[updateBulkHandler].bind(this);
   }
 
@@ -141,7 +141,7 @@ export class ProjectModel extends RequestBaseModel {
     node.addEventListener(ArcModelEventTypes.Project.update, this[updateHandler]);
     node.addEventListener(ArcModelEventTypes.Project.updateBulk, this[updateBulkHandler]);
     node.addEventListener(ArcModelEventTypes.Project.delete, this[deleteHandler]);
-    node.addEventListener(ArcModelEventTypes.Project.query, this[queryHandler]);
+    node.addEventListener(ArcModelEventTypes.Project.list, this[listHandler]);
   }
 
   /**
@@ -153,7 +153,7 @@ export class ProjectModel extends RequestBaseModel {
     node.removeEventListener(ArcModelEventTypes.Project.update, this[updateHandler]);
     node.removeEventListener(ArcModelEventTypes.Project.updateBulk, this[updateBulkHandler]);
     node.removeEventListener(ArcModelEventTypes.Project.delete, this[deleteHandler]);
-    node.removeEventListener(ArcModelEventTypes.Project.query, this[queryHandler]);
+    node.removeEventListener(ArcModelEventTypes.Project.list, this[listHandler]);
   }
 
   /**
@@ -288,7 +288,7 @@ export class ProjectModel extends RequestBaseModel {
    * Queries for a list of projects.
    * @param {ARCProjectListEvent} e
    */
-  [queryHandler](e) {
+  [listHandler](e) {
     if (e.defaultPrevented) {
       return;
     }

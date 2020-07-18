@@ -87,9 +87,9 @@ declare interface ProjectFunctions {
    *
    * @param target A node on which to dispatch the event.
    * @param opts Query options.
-   * @returns Project query result.
+   * @returns Project list result.
    */
-  query(target: EventTarget, opts?: ARCModelListOptions): Promise<ARCModelListResult<ARCProject>>;
+  list(target: EventTarget, opts?: ARCModelListOptions): Promise<ARCModelListResult<ARCProject>>;
 
   State: ProjectStateFunctions;
 }

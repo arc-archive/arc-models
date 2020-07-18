@@ -6,7 +6,7 @@ export const ArcModelEventTypes = {
     update: 'modelprojectchange',
     updateBulk: 'modelprojectupdatebulk',
     delete: 'modelprojectdelete',
-    query: 'modelprojectquery',
+    list: 'modelprojectlist',
     State: {
       update: 'modelstateprojectchange',
       delete: 'modelstateprojectdelete',

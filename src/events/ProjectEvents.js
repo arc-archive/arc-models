@@ -175,14 +175,14 @@ export class ARCProjectDeletedEvent extends ARCEntityDeletedEvent {
 }
 
 /**
- * An event to be dispatched to query for project data in the data store.
+ * An event to be dispatched to list for project data in the data store.
  */
 export class ARCProjectListEvent extends ARCEntityListEvent {
   /**
    * @param {ARCModelListOptions=} opts Query options.
    */
   constructor(opts) {
-    super(ArcModelEventTypes.Project.query, opts);
+    super(ArcModelEventTypes.Project.list, opts);
   }
 }
 
@@ -245,9 +245,9 @@ export async function deleteAction(target, id, rev) {
  *
  * @param {EventTarget} target A node on which to dispatch the event.
  * @param {ARCModelListOptions=} opts Query options.
- * @return {Promise<ARCModelListResult>} Project query result.
+ * @return {Promise<ARCModelListResult>} Project list result.
  */
-export async function queryAction(target, opts) {
+export async function listAction(target, opts) {
   const e = new ARCProjectListEvent(opts);
   target.dispatchEvent(e);
   return e.detail.result;

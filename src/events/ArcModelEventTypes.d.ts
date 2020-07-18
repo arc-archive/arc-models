@@ -7,7 +7,7 @@ declare interface ProjectEvents {
   read: string;
   update: string;
   delete: string;
-  query: string;
+  list: string;
   updateBulk: string;
   State: ProjectStateEvents;
 }

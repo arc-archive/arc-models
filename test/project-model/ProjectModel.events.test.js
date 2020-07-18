@@ -150,7 +150,7 @@ describe('ProjectModel', () => {
       });
     });
 
-    describe(ArcModelEventTypes.Project.query, () => {
+    describe(ArcModelEventTypes.Project.list, () => {
       before(async () => {
         const model = await basicFixture();
         const projects = /** @type ARCProject[] */ (generator.generateProjects({ projectsSize: 30 }));
@@ -166,8 +166,8 @@ describe('ProjectModel', () => {
         await generator.destroySavedRequestData();
       });
 
-      it('returns a query result for default parameters', async () => {
-        const result = await ArcModelEvents.Project.query(document.body);
+      it('returns a list result for default parameters', async () => {
+        const result = await ArcModelEvents.Project.list(document.body);
         assert.typeOf(result, 'object', 'result is an object');
         assert.typeOf(result.nextPageToken, 'string', 'has page token');
         assert.typeOf(result.items, 'array', 'has response items');
@@ -176,16 +176,16 @@ describe('ProjectModel', () => {
 
       it('calls list() function', async () => {
         const spy = sinon.spy(element, 'list');
-        await ArcModelEvents.Project.query(document.body);
+        await ArcModelEvents.Project.list(document.body);
         assert.isTrue(spy.called);
       });
 
       it('ignores the event when cancelled', async () => {
-        document.body.addEventListener(ArcModelEventTypes.Project.query, function f(e) {
+        document.body.addEventListener(ArcModelEventTypes.Project.list, function f(e) {
           e.preventDefault();
-          document.body.removeEventListener(ArcModelEventTypes.Project.query, f);
+          document.body.removeEventListener(ArcModelEventTypes.Project.list, f);
         });
-        const e = new CustomEvent(ArcModelEventTypes.Project.query, {
+        const e = new CustomEvent(ArcModelEventTypes.Project.list, {
           bubbles: true,
           cancelable: true,
           detail: { result: undefined },

@@ -240,7 +240,7 @@ describe('ProjectModel', () => {
       await generator.destroySavedRequestData();
     });
 
-    it('returns a query result for default parameters', async () => {
+    it('returns a list result for default parameters', async () => {
       const result = await element.list();
       assert.typeOf(result, 'object', 'result is an object');
       assert.typeOf(result.nextPageToken, 'string', 'has page token');

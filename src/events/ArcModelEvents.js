@@ -40,7 +40,7 @@ export const ArcModelEvents = {
     update: ProjectEvents.updateAction,
     updateBulk: ProjectEvents.updateBulkAction,
     delete: ProjectEvents.deleteAction,
-    query: ProjectEvents.queryAction,
+    list: ProjectEvents.listAction,
     State: {
       update: ProjectEvents.updatedState,
       delete: ProjectEvents.deletedState,

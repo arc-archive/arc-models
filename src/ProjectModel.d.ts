@@ -6,7 +6,7 @@ export const readHandler: symbol;
 export const updateHandler: symbol;
 export const updateBulkHandler: symbol;
 export const deleteHandler: symbol;
-export const queryHandler: symbol;
+export const listHandler: symbol;
 export const normalizeProjects: symbol;
 export const processUpdateBulkResponse: symbol;
 
