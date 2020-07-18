@@ -6,7 +6,7 @@ import { UrlIndexer } from '../../index.js';
 
 /** @typedef {import('../../src/UrlIndexer').UrlIndexer} UrlIndexer */
 
-describe('<url-indexer> - Indexing test', () => {
+describe('UrlIndexer', () => {
   /**
    * @return {Promise<UrlIndexer>}
    */

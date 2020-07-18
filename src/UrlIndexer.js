@@ -320,6 +320,9 @@ export class UrlIndexer extends HTMLElement {
       request.onsuccess = (e) => {
         const evTarget = /** @type IDBOpenDBRequest */ (e.target);
         const { result } = evTarget;
+        result.onclose = () => {
+          this.__db = undefined;
+        };
         this.__db = result;
         resolve(result);
       };
@@ -354,6 +357,8 @@ export class UrlIndexer extends HTMLElement {
     if (data.remove.length) {
       await this[removeRedundantIndexes](db, data.remove);
     }
+    db.close();
+    this.__db = null;
     ArcModelEvents.UrlIndexer.State.finished(this);
   }
 
@@ -397,6 +402,8 @@ export class UrlIndexer extends HTMLElement {
     if (items.length) {
       await this[removeRedundantIndexes](db, items);
     }
+    db.close();
+    this.__db = null;
   }
 
   /**
@@ -408,7 +415,11 @@ export class UrlIndexer extends HTMLElement {
     const db = await this.openSearchStore();
     const tx = db.transaction('urls', 'readwrite');
     return new Promise((resolve, reject) => {
-      tx.oncomplete = () => resolve();
+      tx.oncomplete = () => {
+        db.close();
+        this.__db = null;
+        resolve();
+      };
       tx.onerror = () => {
         // console.warn('Unable to clear index by type.', e);
         reject(new Error('Transaction error'));
@@ -443,6 +454,8 @@ export class UrlIndexer extends HTMLElement {
         reject(new Error('Unable to clear URL indexed data'));
       };
       tx.oncomplete = () => {
+        db.close();
+        this.__db = null;
         resolve();
       };
       store.clear();
@@ -767,12 +780,16 @@ export class UrlIndexer extends HTMLElement {
       const results = /** @type IndexQueryResult */ ({});
       tx.onerror = () => {
         // console.warn('Transaction error');
+        db.close();
+        this.__db = null;
         resolve(results);
       };
       tx.oncomplete = () => {
         // performance.mark('search-key-scan-2-end');
         // performance.measure('search-key-scan-2-end',
         //  'search-key-scan-2-start');
+        db.close();
+        this.__db = null;
         resolve(results);
       };
       const keyRange = IDBKeyRange.only(1);
@@ -828,12 +845,16 @@ export class UrlIndexer extends HTMLElement {
       const results = /** @type IndexQueryResult */ ({});
       tx.onerror = () => {
         // console.warn('Query index transaction error');
+        db.close();
+        this.__db = null;
         resolve(results);
       };
       tx.oncomplete = () => {
         // performance.mark('search-casing-end');
         // performance.measure('search-casing-end',
         //  'search-casing-start');
+        db.close();
+        this.__db = null;
         resolve(results);
       };
       const request = store.openCursor();
