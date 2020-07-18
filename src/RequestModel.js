@@ -170,7 +170,7 @@ export class RequestModel extends RequestBaseModel {
       if (opts && opts.restorePayload) {
         request = PayloadProcessor.restorePayload(request);
       }
-      requests[requests.length] = request;
+      requests[requests.length] = normalizeRequest(request);
     });
     return requests;
   }
@@ -189,7 +189,12 @@ export class RequestModel extends RequestBaseModel {
   async post(type, request) {
     const db = this.getDatabase(type);
     const oldRev = request._rev;
-    let copy = normalizeRequest({ ...request });
+    const updated = Date.now();
+    const day = new Date(updated);
+    day.setHours(0, 0, 0, 0);
+
+    const timeValues = { updated, midnight: day.getTime() };
+    let copy = normalizeRequest({ ...request, ...timeValues });
     if (!copy._id) {
       copy._id = v4();
     }
@@ -205,7 +210,6 @@ export class RequestModel extends RequestBaseModel {
       }
     }
 
-    copy.updated = Date.now();
     const response = await db.put(copy);
     copy._rev = response.rev;
     const result = {
@@ -503,7 +507,12 @@ export class RequestModel extends RequestBaseModel {
       throw new Error('The "type" parameter is required.');
     }
     const db = this.getDatabase(type);
-    return this.listEntities(db, opts);
+    const result = await this.listEntities(db, opts);
+    result.items = result.items.map((item) => {
+      const typed = /** @type ARCSavedRequest */ (item);
+      return normalizeRequest(typed);
+    });
+    return result;
   }
 
   /**
@@ -629,6 +638,8 @@ export class RequestModel extends RequestBaseModel {
       detailed,
     };
     const data = await indexer.query(q, opts);
+    const db = await indexer.openSearchStore();
+    db.close();
     const keys = Object.keys(data);
     if (!keys.length) {
       return [];
@@ -670,7 +681,7 @@ export class RequestModel extends RequestBaseModel {
         if (response.rows[j].error) {
           continue;
         }
-        result[result.length] = response.rows[j].doc;
+        result[result.length] = normalizeRequest(response.rows[j].doc);
       }
     }
     return result;
@@ -753,7 +764,7 @@ export class RequestModel extends RequestBaseModel {
     const result = [];
     for (let i = rows.length - 1; i >= 0; i--) {
       if (!(ignore && ignore.indexOf(rows[i].id) !== -1)) {
-        result[result.length] = rows[i].doc;
+        result[result.length] = normalizeRequest(rows[i].doc);
       }
     }
     return result;
@@ -835,7 +846,7 @@ export class RequestModel extends RequestBaseModel {
     );
     const requests = [];
     for (const item of items) {
-      requests[requests.length] = await db.get(item.id);
+      requests[requests.length] = normalizeRequest(await db.get(item.id));
     }
     requests.sort(this[sortRequestProjectOrder]);
     return requests;

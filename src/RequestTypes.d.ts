@@ -88,6 +88,10 @@ export declare interface ARCRequest extends HTTPRequest {
    * An ID of Google Drive object where this request is stored.
    */
   driveId?: string;
+  /**
+   * A timestamp of the midnight when the request object was updated
+   */
+  midnight?: number;
 }
 
 /**

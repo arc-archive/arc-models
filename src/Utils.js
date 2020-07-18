@@ -95,6 +95,11 @@ export function normalizeRequest(request) {
   if (!request.created) {
     request.created = Date.now();
   }
+  if (!request.midnight) {
+    const day = new Date(request.updated);
+    day.setHours(0, 0, 0, 0);
+    request.midnight = day.getTime();
+  }
   return request;
 }
 

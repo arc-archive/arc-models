@@ -60,7 +60,13 @@ describe('RequestModel Events API', () => {
 
     it('returns a request', async () => {
       const result = await ArcModelEvents.Request.read(document.body, 'saved', requests[0]._id);
+      delete result.midnight;
       assert.deepEqual(result, requests[0]);
+    });
+
+    it('adds computed midnight value', async () => {
+      const result = await ArcModelEvents.Request.read(document.body, 'saved', requests[0]._id);
+      assert.typeOf(result.midnight, 'number');
     });
 
     it('passes rev option', async () => {
@@ -182,7 +188,15 @@ describe('RequestModel Events API', () => {
 
     it('returns a list of requests', async () => {
       const result = await ArcModelEvents.Request.readBulk(document.body, 'saved', [requests[0]._id, requests[1]._id]);
+      delete result[0].midnight;
+      delete result[1].midnight;
       assert.deepEqual(result, [requests[0], requests[1]]);
+    });
+
+    it('adds computed midnight value', async () => {
+      const result = await ArcModelEvents.Request.readBulk(document.body, 'saved', [requests[0]._id, requests[1]._id]);
+      assert.typeOf(result[0].midnight, 'number');
+      assert.typeOf(result[1].midnight, 'number');
     });
 
     it('throws when no ids when constructing the event', async () => {

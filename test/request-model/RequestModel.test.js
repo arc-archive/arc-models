@@ -51,7 +51,21 @@ describe('RequestModel', () => {
 
       it('returns an item with specified revision', async () => {
         const result = await model.get(type, requests[0]._id, requests[0]._rev);
+        delete result.midnight;
         assert.deepEqual(result, requests[0]);
+      });
+
+      it('adds computed midnight value', async () => {
+        const result = await model.get(type, requests[0]._id, requests[0]._rev);
+        assert.typeOf(result.midnight, 'number');
+      });
+
+      it('respects existing midnight value', async () => {
+        const request = /** @type ARCSavedRequest */ (generator.generateSavedItem());
+        request.midnight = 12345;
+        const record = await model.savedDb.post(request);
+        const result = await model.get(type, record.id);
+        assert.equal(result.midnight, 12345);
       });
 
       it('returns an item with old revision', async () => {
@@ -97,7 +111,13 @@ describe('RequestModel', () => {
 
       it('returns an item with specified revision', async () => {
         const result = await model.get(type, requests[0]._id, requests[0]._rev);
+        delete result.midnight;
         assert.deepEqual(result, requests[0]);
+      });
+
+      it('adds computed midnight value', async () => {
+        const result = await model.get(type, requests[0]._id);
+        assert.typeOf(result.midnight, 'number');
       });
 
       it('returns an item with old revision', async () => {
@@ -149,6 +169,18 @@ describe('RequestModel', () => {
       // @ts-ignore
       PayloadProcessor.restorePayload.restore();
       assert.equal(spy.callCount, 5);
+    });
+
+    it('normalizes the requests', async () => {
+      const request = /** @type ARCSavedRequest */ (generator.generateSavedItem());
+      delete request.updated;
+      delete request.created;
+      delete request.midnight;
+      const record = await model.historyDb.post(request);
+      const result = await model.getBulk(type, [record.id]);
+      assert.typeOf(result[0].updated, 'number');
+      assert.typeOf(result[0].created, 'number');
+      assert.typeOf(result[0].midnight, 'number');
     });
   });
 
@@ -257,6 +289,20 @@ describe('RequestModel', () => {
       const result = await model.post('history', request);
       assert.equal(result.item.type, 'history');
     });
+
+    it('adds updated value', async () => {
+      const request = /** @type ARCSavedRequest */ (generator.generateSavedItem());
+      delete request.updated;
+      const result = await model.post('saved', request);
+      assert.typeOf(result.item.updated, 'number');
+    });
+
+    it('adds midnight value', async () => {
+      const request = /** @type ARCSavedRequest */ (generator.generateSavedItem());
+      const result = await model.post('saved', request);
+      assert.typeOf(result.item.midnight, 'number');
+      assert.isBelow(result.item.midnight, result.item.updated);
+    });
   });
 
   describe('postBulk()', () => {
@@ -364,6 +410,20 @@ describe('RequestModel', () => {
       const requests = /** @type ARCHistoryRequest[] */ (generator.generateHistoryRequestsData());
       const result = await model.postBulk('history', requests);
       assert.equal(result[0].item.type, 'history');
+    });
+
+    it('adds updated value', async () => {
+      const request = /** @type ARCSavedRequest */ (generator.generateSavedItem());
+      delete request.updated;
+      const result = await model.postBulk('saved', [request]);
+      assert.typeOf(result[0].item.updated, 'number');
+    });
+
+    it('adds midnight value', async () => {
+      const request = /** @type ARCSavedRequest */ (generator.generateSavedItem());
+      const result = await model.postBulk('saved', [request]);
+      assert.typeOf(result[0].item.midnight, 'number');
+      assert.isBelow(result[0].item.midnight, result[0].item.updated);
     });
   });
 
