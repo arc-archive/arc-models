@@ -11,13 +11,14 @@ WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
 License for the specific language governing permissions and limitations under
 the License.
 */
-import { ArcBaseModel } from './ArcBaseModel.js';
+import { ArcBaseModel, deletemodelHandler, notifyDestroyed } from './ArcBaseModel.js';
 import 'pouchdb/dist/pouchdb.js';
 import '@advanced-rest-client/pouchdb-quick-search/dist/pouchdb.quick-search.min.js';
+import { ArcModelEvents } from './events/ArcModelEvents.js';
+import { normalizeRequestType } from './Utils.js';
 
 /* global PouchQuickSearch */
 /* eslint-disable class-methods-use-this */
-/* eslint-disable require-atomic-updates */
 
 // @ts-ignore
 if (typeof PouchDB !== 'undefined' && typeof PouchQuickSearch !== 'undefined') {
@@ -26,6 +27,9 @@ if (typeof PouchDB !== 'undefined' && typeof PouchQuickSearch !== 'undefined') {
 }
 
 /** @typedef {import('./RequestTypes').ARCProject} ARCProject */
+/** @typedef {import('./types').ARCEntityChangeRecord} ARCEntityChangeRecord */
+/** @typedef {import('./types').DeletedEntity} DeletedEntity */
+/** @typedef {import('./events/BaseEvents').ARCModelDeleteEvent} ARCModelDeleteEvent */
 
 /**
  * A base class for Request and Projects` models.
@@ -56,14 +60,11 @@ export class RequestBaseModel extends ArcBaseModel {
    * @return {PouchDB.Database} PouchDB instance for the datastore.
    */
   getDatabase(type) {
-    switch (type) {
-      case 'saved-requests':
+    switch (normalizeRequestType(type)) {
       case 'saved':
         return this.savedDb;
-      case 'history-requests':
       case 'history':
         return this.historyDb;
-      case 'legacy-projects':
       case 'projects':
         return this.projectDb;
       default:
@@ -72,19 +73,19 @@ export class RequestBaseModel extends ArcBaseModel {
   }
 
   /**
-   * Handler for `destroy-model` custom event.
-   * Deletes current data when scheduled for deletion.
-   * @param {CustomEvent} e
+   * Overrides data model delete handler to support dynamic nature of this component
+   * @param {ARCModelDeleteEvent} e
    */
-  _deleteModelHandler(e) {
-    const { models } = e.detail;
-    if (!models || !models.length || !this.name) {
+  [deletemodelHandler](e) {
+    const { stores, detail } = e;
+    if (!stores || !stores.length || !this.name) {
       return;
     }
-    if (models.indexOf(this.name) !== -1) {
-      if (!e.detail.result) {
-        e.detail.result = [];
-      }
+    /* istanbul ignore else */
+    if (!Array.isArray(detail.result)) {
+      detail.result = [];
+    }
+    if (stores.indexOf(this.name) !== -1) {
       e.detail.result.push(this.deleteModel(this.name));
     }
   }
@@ -97,15 +98,14 @@ export class RequestBaseModel extends ArcBaseModel {
   async deleteModel(type) {
     const db = this.getDatabase(type);
     await db.destroy();
-    this._notifyModelDestroyed(type);
+    this[notifyDestroyed](type);
   }
 
   /**
    * Reads an entry from the datastore.
    *
    * @param {string} id The ID of the datastore entry.
-   * @param {string=} rev Specific revision to read. Defaults to latest
-   * revision.
+   * @param {string=} rev Specific revision to read. Defaults to the latest revision.
    * @return {Promise<ARCProject>} Promise resolved to a datastore object.
    */
   async readProject(id, rev) {
@@ -121,35 +121,38 @@ export class RequestBaseModel extends ArcBaseModel {
 
   /**
    * Updates / saves a project object in the datastore.
-   * This function fires `project-object-changed` event.
    *
    * @param {ARCProject} project A project to save / update
-   * @return {Promise<ARCProject>} Resolved promise to project object with updated `_rev`
+   * @return {Promise<ARCEntityChangeRecord>} Resolved promise to project's change record.
    */
   async updateProject(project) {
     const copy = { ...project };
     copy.updated = Date.now();
     const oldRev = copy._rev;
-    const result = await this.projectDb.put(copy);
-    copy._rev = result.rev;
-    this._fireUpdated('project-object-changed', {
-      project: copy,
-      oldRev,
-    });
-    return copy;
+    const response = await this.projectDb.put(copy);
+    copy._rev = response.rev;
+    const result = {
+      id: copy._id,
+      rev: response.rev,
+      item: copy,
+    }
+    if (oldRev) {
+      result.oldRev = oldRev;
+    }
+    ArcModelEvents.Project.State.update(this, result);
+    return result;
   }
 
   /**
-   * Removed an object from the datastore.
-   * This function fires `project-object-deleted` event.
+   * Removes a project from the datastore.
    *
    * @param {string} id The ID of the datastore entry.
    * @param {string=} rev Specific revision to read. Defaults to latest revision.
-   * @return {Promise<string>} Promise resolved to a new `_rev` property of deleted object.
+   * @return {Promise<DeletedEntity>} Promise resolved to a new `_rev` property of deleted object.
    */
   async removeProject(id, rev) {
     if (!id) {
-      throw new Error('Missing "id" property.');
+      throw new Error('Missing project "id" property.');
     }
     let winningRev = rev;
     if (!winningRev) {
@@ -157,12 +160,10 @@ export class RequestBaseModel extends ArcBaseModel {
       winningRev = obj._rev;
     }
     const response = await this.projectDb.remove(id, winningRev);
-    const detail = {
+    ArcModelEvents.Project.State.delete(this, id, response.rev);
+    return {
       id,
       rev: response.rev,
-      oldRev: winningRev,
     };
-    this._fireUpdated('project-object-deleted', detail);
-    return response.rev;
   }
 }

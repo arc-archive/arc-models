@@ -1,5 +1,8 @@
 import { fixture, assert } from '@open-wc/testing';
 import '../../url-indexer.js';
+import { DbHelper } from './db-helper.js';
+import { ArcModelEvents } from '../../src/events/ArcModelEvents.js';
+import { UrlIndexer } from '../../index.js';
 
 /** @typedef {import('../../src/UrlIndexer').UrlIndexer} UrlIndexer */
 
@@ -11,27 +14,13 @@ describe('<url-indexer> - Indexing test', () => {
     return fixture('<url-indexer></url-indexer>');
   }
 
+  before(async () => {
+    await DbHelper.clearData();
+  });
+
   describe('Query index', () => {
-    function clearAllIndexes(db) {
-      return new Promise((resolve, reject) => {
-        const tx = db.transaction('urls', 'readwrite');
-        const store = tx.objectStore('urls');
-        const results = [];
-        tx.onerror = () => {
-          reject(results);
-        };
-        tx.oncomplete = () => {
-          resolve(results);
-        };
-        store.clear();
-      });
-    }
-
     describe('Querying for data', () => {
-      let element = /** @type UrlIndexer */ (null);
-
       before(async () => {
-        element = await basicFixture();
         const toIndex = [
           {
             id: 'test-id-1',
@@ -54,12 +43,12 @@ describe('<url-indexer> - Indexing test', () => {
             type: 'history',
           },
         ];
-        await element.index(toIndex);
+        const indexer = new UrlIndexer();
+        await indexer.index(toIndex);
       });
 
       after(async () => {
-        const db = await element.openSearchStore();
-        await clearAllIndexes(db);
+        await DbHelper.clearData();
       });
 
       class SearchResults {
@@ -72,6 +61,16 @@ describe('<url-indexer> - Indexing test', () => {
       }
 
       describe('Case search', () => {
+        let element = /** @type UrlIndexer */ (null);
+        beforeEach(async () => {
+          element = await basicFixture();
+        });
+
+        afterEach(async () => {
+          const db = await element.openSearchStore();
+          db.close();
+        });
+
         [
           new SearchResults('https:', 4, 2, 2),
           new SearchResults('api', 2, 0, 2),
@@ -98,10 +97,25 @@ describe('<url-indexer> - Indexing test', () => {
             });
             assert.lengthOf(Object.keys(result), historySize);
           });
+
+          it('queries via event', async () => {
+            const result = await ArcModelEvents.UrlIndexer.query(document.body, url);
+            assert.lengthOf(Object.keys(result), size);
+          });
         });
       });
 
       describe('Detailed search', () => {
+        let element = /** @type UrlIndexer */ (null);
+        beforeEach(async () => {
+          element = await basicFixture();
+        });
+
+        afterEach(async () => {
+          const db = await element.openSearchStore();
+          db.close();
+        });
+
         [
           new SearchResults('https:', 4, 2, 2),
           new SearchResults('api', 3, 1, 2),
@@ -126,6 +140,16 @@ describe('<url-indexer> - Indexing test', () => {
               detailed: true,
               type: 'history',
             });
+            assert.lengthOf(Object.keys(result), historySize);
+          });
+
+          it('queries via event', async () => {
+            const result = await ArcModelEvents.UrlIndexer.query(document.body, url, undefined, true);
+            assert.lengthOf(Object.keys(result), size);
+          });
+
+          it('queries via event with type', async () => {
+            const result = await ArcModelEvents.UrlIndexer.query(document.body, url, 'history', true);
             assert.lengthOf(Object.keys(result), historySize);
           });
         });
@@ -162,8 +186,7 @@ describe('<url-indexer> - Indexing test', () => {
       });
 
       after(async () => {
-        const db = await element.openSearchStore();
-        await clearAllIndexes(db);
+        await DbHelper.clearData();
       });
 
       const groupMatch = {

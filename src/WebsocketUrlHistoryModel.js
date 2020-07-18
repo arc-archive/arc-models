@@ -12,17 +12,30 @@ License for the specific language governing permissions and limitations under
 the License.
 */
 import { ArcBaseModel } from './ArcBaseModel.js';
-import { computeTime } from './Utils.js';
+import { ArcModelEventTypes } from './events/ArcModelEventTypes.js';
+import { ArcModelEvents } from './events/ArcModelEvents.js';
 
 /** @typedef {import('./WebsocketUrlHistoryModel').ARCWebsocketUrlHistory} ARCWebsocketUrlHistory */
+/** @typedef {import('./events/WSUrlHistoryEvents').ARCWSUrlInsertEvent} ARCWSUrlInsertEvent */
+/** @typedef {import('./events/WSUrlHistoryEvents').ARCWSUrlListEvent} ARCWSUrlListEvent */
+/** @typedef {import('./events/WSUrlHistoryEvents').ARCWSUrlQueryEvent} ARCWSUrlQueryEvent */
+/** @typedef {import('./types').ARCModelListResult} ARCModelListResult */
+/** @typedef {import('./types').ARCModelListOptions} ARCModelListOptions */
+/** @typedef {import('./types').ARCEntityChangeRecord} ARCEntityChangeRecord */
 
 /* eslint-disable no-plusplus */
 /* eslint-disable no-continue */
 /* eslint-disable no-await-in-loop */
 
+/**
+ * Sotring functions for url history
+ * @param {ARCWebsocketUrlHistory} a
+ * @param {ARCWebsocketUrlHistory} b
+ * @return {number}
+ */
 export function sortFunction(a, b) {
-  const aTime = a._time;
-  const bTime = b._time;
+  const aTime = a.midnight;
+  const bTime = b.midnight;
   if (aTime > bTime) {
     return 1;
   }
@@ -39,94 +52,72 @@ export function sortFunction(a, b) {
   }
   return 0;
 }
+
+export const insertHandler = Symbol('insertHandler');
+export const listHandler = Symbol('listHandler');
+export const queryHandler = Symbol('queryHandler');
+
 /**
- * Events based access to websockets URL history datastore.
- *
- * Note: **All events must be cancelable.** When the event is cancelled by an instance
- * of the element it won't be handled again by other instance that possibly exists
- * in the DOM.
- *
- * Cancellable event is a request to models for change. Non-cancellable event
- * is a notification for views to update their values.
- * For example `request-object-changed` event notifies model to update object in
- * the datastore if the event is cancelable and to update views if it's not
- * cancellable.
- *
- * Each handled event contains the `result` property on the `detail` object. It
- * contains a `Promise` object with a result of the operation. Also, for update / delete
- * events the same non-cancelable event is fired.
- *
- * Events handled by this element are cancelled and propagation of the event is
- * stopped.
+ * Gives an access to the WebScoket entities.
  */
 export class WebsocketUrlHistoryModel extends ArcBaseModel {
   constructor() {
     super('websocket-url-history', 10);
-    this._handleChange = this._handleChange.bind(this);
-    this._handleRead = this._handleRead.bind(this);
-    this._handleQuery = this._handleQuery.bind(this);
-    this._handleQueryHistory = this._handleQueryHistory.bind(this);
+    this[insertHandler] = this[insertHandler].bind(this);
+    this[listHandler] = this[listHandler].bind(this);
+    this[queryHandler] = this[queryHandler].bind(this);
   }
 
-  _attachListeners(node) {
-    super._attachListeners(node);
-    node.addEventListener('websocket-url-history-changed', this._handleChange);
-    node.addEventListener('websocket-url-history-read', this._handleRead);
-    node.addEventListener('websocket-url-history-query', this._handleQuery);
-    node.addEventListener(
-      'websocket-url-history-list',
-      this._handleQueryHistory
-    );
-  }
-
-  _detachListeners(node) {
-    super._detachListeners(node);
-    node.removeEventListener(
-      'websocket-url-history-changed',
-      this._handleChange
-    );
-    node.removeEventListener('websocket-url-history-read', this._handleRead);
-    node.removeEventListener('websocket-url-history-query', this._handleQuery);
-    node.removeEventListener(
-      'websocket-url-history-list',
-      this._handleQueryHistory
-    );
-  }
-
-  // Handles the read object event
-  _handleRead(e) {
-    if (this._eventCancelled(e)) {
-      return;
-    }
-    e.preventDefault();
-    e.stopPropagation();
-
-    e.detail.result = this.read(e.detail.url).catch((ev) => {
-      if (ev.status === 404) {
-        return;
+  /**
+   * Lists all project objects.
+   *
+   * @param {ARCModelListOptions=} opts Query options.
+   * @return {Promise<ARCModelListResult>} A promise resolved to a list of projects.
+   */
+  async list(opts={}) {
+    const result = await this.listEntities(this.db, opts);
+    result.items.forEach((item) => {
+      const historyItem = /** @type ARCWebsocketUrlHistory */ (item);
+      if (!historyItem.midnight) {
+        const day = new Date(historyItem.time);
+        day.setHours(0, 0, 0, 0);
+        historyItem.midnight = day.getTime();
       }
-      this._handleException(ev);
+      historyItem.url = historyItem.url || historyItem._id;
     });
+    return result;
   }
 
-  _handleChange(e) {
-    if (this._eventCancelled(e)) {
-      return;
+  /**
+   * Adds an URL to the history and checks for already existing entires.
+   * @param {string} url The URL to insert
+   * @return {Promise<ARCEntityChangeRecord>} A promise resolved to the URL change record
+   */
+  async addUrl(url) {
+    let obj;
+    const lower = url.toLowerCase();
+    const day = new Date();
+    const currentTimestamp = day.getTime();
+    day.setHours(0, 0, 0, 0);
+    const midnight = day.getTime();
+    try {
+      obj = /** @type ARCWebsocketUrlHistory */ (await this.read(lower));
+      obj.cnt++;
+      obj.time = currentTimestamp;
+      obj.midnight = midnight;
+      if (!obj.url) {
+        obj.url = url;
+      }
+    } catch (e) {
+      obj = {
+        _id: lower,
+        url,
+        cnt: 1,
+        time: currentTimestamp,
+        midnight,
+      };
     }
-    e.preventDefault();
-    e.stopPropagation();
-
-    if (!e.detail.item) {
-      e.detail.result = Promise.reject(new Error('Missing "item" property.'));
-      return;
-    }
-    if (!e.detail.item._id) {
-      e.detail.result = Promise.reject(new Error('Missing "_id" property.'));
-      return;
-    }
-    e.detail.result = this.update(e.detail.item).catch((ev) =>
-      this._handleException(ev)
-    );
+    return this.update(obj);
   }
 
   /**
@@ -134,61 +125,121 @@ export class WebsocketUrlHistoryModel extends ArcBaseModel {
    * This function fires `websocket-url-history-changed` event.
    *
    * @param {ARCWebsocketUrlHistory} obj A project to save / update
-   * @return {Promise<ARCWebsocketUrlHistory>} Resolved promise to project object with updated `_rev`
+   * @return {Promise<ARCEntityChangeRecord>} A promise resolved to the URL change record
    */
   async update(obj) {
     const item = { ...obj };
     const oldRev = item._rev;
     const result = await this.db.put(item);
     item._rev = result.rev;
-    this._fireUpdated('websocket-url-history-changed', {
-      item,
+    const record = {
+      id: item._id,
+      rev: result.rev,
       oldRev,
-    });
-    return item;
-  }
-
-  _handleQueryHistory(e) {
-    if (this._eventCancelled(e)) {
-      return;
-    }
-    e.preventDefault();
-    e.stopPropagation();
-
-    e.detail.result = this.list().catch((ev) => this._handleException(ev));
-  }
-
-  _handleQuery(e) {
-    if (this._eventCancelled(e)) {
-      return;
-    }
-    e.preventDefault();
-    e.stopPropagation();
-    const { q } = e.detail;
-    e.detail.result = this.list(q).catch((ev) => this._handleException(ev));
+      item,
+    };
+    ArcModelEvents.WSUrlHistory.State.update(this, record);
+    return record;
   }
 
   /**
-   * Lists websocket history objects.
+   * Queries for websocket history objects.
    *
-   * @param {string=} query A partial url to match results.
+   * @param {string} q A partial url to match results. If not set it returns whole history.
    * @return {Promise<ARCWebsocketUrlHistory[]>} A promise resolved to a list of PouchDB documents.
    */
-  async list(query) {
+  async query(q) {
+    const query = q.toLowerCase();
     const { db } = this;
-    const response = await db.allDocs();
-    const { rows } = response;
-    const result = [];
-    for (let i = 0, len = rows.length; i < len; i++) {
-      const item = rows[i];
-      if (query && item.id.indexOf(query) === -1) {
-        continue;
+    const initial = await db.allDocs();
+    const { rows } = initial;
+    const keys = [];
+    rows.forEach((item) => {
+      if (query && !item.id.includes(query)) {
+        return;
       }
-      let doc = await db.get(item.id);
-      doc = computeTime(doc);
-      result.push(doc);
+      keys[keys.length] = item.id;
+    });
+    if (!keys.length) {
+      return [];
     }
+    const response = await db.allDocs({
+      keys,
+      include_docs: true,
+    });
+    const result = response.rows.map((item) => {
+      const historyItem = /** @type ARCWebsocketUrlHistory */ (item.doc);
+      if (!historyItem.midnight) {
+        const day = new Date(historyItem.time);
+        day.setHours(0, 0, 0, 0);
+        historyItem.midnight = day.getTime();
+      }
+      historyItem.url = historyItem.url || historyItem._id;
+      return historyItem;
+    });
     result.sort(sortFunction);
     return result;
+  }
+
+  _attachListeners(node) {
+    super._attachListeners(node);
+    node.addEventListener(ArcModelEventTypes.WSUrlHistory.insert, this[insertHandler]);
+    node.addEventListener(ArcModelEventTypes.WSUrlHistory.list, this[listHandler]);
+    node.addEventListener(ArcModelEventTypes.WSUrlHistory.query, this[queryHandler]);
+  }
+
+  _detachListeners(node) {
+    super._detachListeners(node);
+    node.removeEventListener(ArcModelEventTypes.WSUrlHistory.insert, this[insertHandler]);
+    node.removeEventListener(ArcModelEventTypes.WSUrlHistory.list, this[listHandler]);
+    node.removeEventListener(ArcModelEventTypes.WSUrlHistory.query, this[queryHandler]);
+  }
+
+  /**
+   * @param {ARCWSUrlInsertEvent} e
+   */
+  [insertHandler](e) {
+    if (e.defaultPrevented) {
+      return;
+    }
+    e.preventDefault();
+    e.stopPropagation();
+    const { url } = e;
+    if (typeof url !== 'string') {
+      e.detail.result = Promise.reject(new Error('Expected url argument to be a string'));
+      return;
+    }
+    e.detail.result = this.addUrl(url);
+  }
+
+  /**
+   * @param {ARCWSUrlListEvent} e
+   */
+  [listHandler](e) {
+    if (e.defaultPrevented) {
+      return;
+    }
+    e.preventDefault();
+    e.stopPropagation();
+
+    const { limit, nextPageToken } = e;
+    e.detail.result = this.list({
+      limit,
+      nextPageToken,
+    });
+  }
+
+  /**
+   * @param {ARCWSUrlQueryEvent} e
+   */
+  [queryHandler](e) {
+    if (e.defaultPrevented) {
+      return;
+    }
+    e.preventDefault();
+    e.stopPropagation();
+
+    const { term } = e;
+    e.detail.result = this.query(term);
   }
 }

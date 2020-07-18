@@ -11,13 +11,22 @@ WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
 License for the specific language governing permissions and limitations under
 the License.
 */
-// import { v4 } from '@advanced-rest-client/uuid-generator';
+
 import 'pouchdb/dist/pouchdb.js';
+import { ArcModelEventTypes } from './events/ArcModelEventTypes.js';
+import { ArcModelEvents } from './events/ArcModelEvents.js';
+
+/* eslint-disable class-methods-use-this */
+
+/** @typedef {import('./types').ARCModelListResult} ARCModelListResult */
+/** @typedef {import('./types').ARCModelListOptions} ARCModelListOptions */
+/** @typedef {import('./events/BaseEvents').ARCModelDeleteEvent} ARCModelDeleteEvent */
+
+export const deletemodelHandler = Symbol('deletemodelHandler');
+export const notifyDestroyed = Symbol('notifyDestroyed');
 
 /**
  * A base class for all models.
- *
- * @appliesMixin EventsTargetMixin
  */
 export class ArcBaseModel extends HTMLElement {
   /**
@@ -28,7 +37,7 @@ export class ArcBaseModel extends HTMLElement {
     super();
     this.name = dbname;
     this.revsLimit = revsLimit;
-    this._deleteModelHandler = this._deleteModelHandler.bind(this);
+    this[deletemodelHandler] = this[deletemodelHandler].bind(this);
   }
 
   /**
@@ -55,6 +64,24 @@ export class ArcBaseModel extends HTMLElement {
     return this._oldEventsTarget || window;
   }
 
+  /**
+   * Database query options for pagination.
+   * Override this value to change the query options like limit of the results in one call.
+   *
+   * This is query options passed to the PouchDB `allDocs` function. Note that it will not
+   * set `include_docs` option. A conviniet shortcut is to set the the `includeDocs` property
+   * and the directive will be added automatically.
+   *
+   * @type {Object}
+   */
+  get defaultQueryOptions() {
+    return {
+      limit: 25,
+      descending: true,
+      include_docs: true,
+    };
+  }
+
   connectedCallback() {
     if (!this._oldEventsTarget) {
       this._eventsTargetChanged(this.eventsTarget);
@@ -69,14 +96,14 @@ export class ArcBaseModel extends HTMLElement {
    * @param {EventTarget} node
    */
   _attachListeners(node) {
-    node.addEventListener('destroy-model', this._deleteModelHandler);
+    node.addEventListener(ArcModelEventTypes.destroy, this[deletemodelHandler]);
   }
 
   /**
    * @param {EventTarget} node
    */
   _detachListeners(node) {
-    node.removeEventListener('destroy-model', this._deleteModelHandler);
+    node.removeEventListener(ArcModelEventTypes.destroy, this[deletemodelHandler]);
   }
 
   /**
@@ -111,24 +138,6 @@ export class ArcBaseModel extends HTMLElement {
       opts.rev = rev;
     }
     return this.db.get(id, opts);
-  }
-
-  /**
-   * Dispatches non-cancelable change event.
-   *
-   * @param {string} type Event type
-   * @param {object} detail A detail object to dispatch.
-   * @return {CustomEvent} Created and dispatched event.
-   */
-  _fireUpdated(type, detail) {
-    const e = new CustomEvent(type, {
-      cancelable: false,
-      composed: true,
-      bubbles: true,
-      detail,
-    });
-    this.dispatchEvent(e);
-    return e;
   }
 
   /**
@@ -167,40 +176,36 @@ export class ArcBaseModel extends HTMLElement {
    */
   async deleteModel() {
     await this.db.destroy();
-    this._notifyModelDestroyed(this.name);
+    this[notifyDestroyed](this.name);
   }
 
   /**
    * Notifies the application that the model has been removed and data sestroyed.
-   * @param {string} type Database name.
-   * @return {CustomEvent} Dispatched event
+   *
+   * @param {string} store The name of the deleted store
    */
-  _notifyModelDestroyed(type) {
-    const e = new CustomEvent('datastore-destroyed', {
-      bubbles: true,
-      composed: true,
-      detail: {
-        datastore: type,
-      },
-    });
-    this.dispatchEvent(e);
-    return e;
+  [notifyDestroyed](store) {
+    ArcModelEvents.destroyed(this, store);
   }
 
   /**
    * Handler for `destroy-model` custom event.
    * Deletes current data when scheduled for deletion.
-   * @param {CustomEvent} e
+   * @param {ARCModelDeleteEvent} e
    */
-  _deleteModelHandler(e) {
-    const { models } = e.detail;
-    if (!models || !models.length || !this.name) {
+  [deletemodelHandler](e) {
+    if (e.defaultPrevented) {
       return;
     }
-    if (models.indexOf(this.name) !== -1) {
-      if (!e.detail.result) {
-        e.detail.result = [];
-      }
+    const { stores, detail } = e;
+    if (!stores || !stores.length || !this.name) {
+      return;
+    }
+    /* istanbul ignore else */
+    if (!Array.isArray(detail.result)) {
+      detail.result = [];
+    }
+    if (stores.indexOf(this.name) !== -1) {
       e.detail.result.push(this.deleteModel());
     }
   }
@@ -222,5 +227,68 @@ export class ArcBaseModel extends HTMLElement {
       return true;
     }
     return false;
+  }
+
+  /**
+   * Decodes passed page token back to the passed parameters object.
+   * @param {string} token The page token value.
+   * @return {object|null} Restored page query parameters or null if error
+   */
+  decodePageToken(token) {
+    if (!token) {
+      return null;
+    }
+    try {
+      const decoded = atob(token);
+      return JSON.parse(decoded);
+    } catch (e) {
+      return null;
+    }
+  }
+
+  /**
+   * Encodes page parameters into a page token.
+   * @param {object} params Parameters to encode
+   * @return {string} Page token
+   */
+  encodePageToken(params) {
+    const str = JSON.stringify(params);
+    return btoa(str);
+  }
+
+  /**
+   * Lists all project objects.
+   *
+   * @param {PouchDB.Database} db Reference to a database
+   * @param {ARCModelListOptions=} opts Query options.
+   * @return {Promise<ARCModelListResult>} A promise resolved to a list of entities.
+   */
+  async listEntities(db, opts={}) {
+    const { limit, nextPageToken } = opts;
+    let queryOptions = this.defaultQueryOptions;
+    if (limit) {
+      queryOptions.limit = limit;
+    }
+    if (nextPageToken) {
+      const pageOptions = this.decodePageToken(nextPageToken);
+      if (pageOptions) {
+        queryOptions = { ...queryOptions, ...pageOptions };
+      }
+    }
+    let items = [];
+    let token;
+    const response = await db.allDocs(queryOptions);
+    if (response && response.rows.length > 0) {
+      const params = {
+        startkey: response.rows[response.rows.length - 1].key,
+        skip: 1,
+      }
+      token = this.encodePageToken(params);
+      items = response.rows.map((item) => item.doc);
+    }
+    return {
+      items,
+      nextPageToken: token,
+    }
   }
 }

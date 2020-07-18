@@ -1,9 +1,15 @@
 import {ArcBaseModel} from './ArcBaseModel';
-import { Entity } from './types';
+import {
+  Entity,
+  DeletedEntity,
+  ARCEntityChangeRecord,
+  ARCModelListOptions,
+  ARCModelListResult,
+} from './types';
 
 export declare interface ARCEnvironment extends Entity {
   name: string;
-  created?: number|Date;
+  created?: number;
 }
 
 export declare interface ARCVariable extends Entity {
@@ -25,37 +31,8 @@ export declare interface ARCVariable extends Entity {
   enabled: boolean;
 }
 
-export declare interface DeleteEnvironmentResult {
-  /** id of the targeted document */
-  id: string;
-  /** resulting revision of the targeted document */
-  rev: string;
-}
-
-export declare interface DeleteVariableResult {
-  /** id of the targeted document */
-  id: string;
-  /** resulting revision of the targeted document */
-  rev: string;
-}
-
 /**
  * Model for variables
- *
- * Available events:
- *
- * - `environment-read` Read environment object
- * - `environment-updated` Change / add record
- * - `environment-deleted` Remove record
- * - `environment-list-variables` List variables for an environment
- * - `environment-list` List variables
- * - `variable-updated` - Add / update variable
- * - `variable-deleted` - Delete variable
- * - `destroy-model` - Delete model action
- *
- * Each event must be cancelable or it will be ignored.
- * The insert, change and delete events dispatches non cancelable update/delete
- * events. Application should listen for this events to update it's state.
  */
 export declare class VariablesModel extends ArcBaseModel {
 
@@ -71,65 +48,19 @@ export declare class VariablesModel extends ArcBaseModel {
 
   constructor();
 
-  _attachListeners(node: EventTarget): void;
-  _detachListeners(node: EventTarget): void;
-
-
   /**
-   * Handler for `environment-read` custom event.
-   * Reads environment onject info by it's name.
-   */
-  _envReadHandler(e: CustomEvent): void;
-
-  /**
-   * Reads the environment data.
+   * Reads the environment meta data.
+   *
    * @param environment Environment name to read
    */
-  readEnvironment(environment: string): Promise<ARCEnvironment>;
+  readEnvironment(environment: string): Promise<ARCEnvironment|undefined>;
 
   /**
-   * A handler for the `environment-updated` custom event.
-   * Updates the environment in the data store.
+   * Updates the environment entity.
    *
-   * The `environment-updated` custom event should be cancellable or the event
-   * won't be handled at all.
+   * @param data Entity to store
    */
-  _envUpdateHandler(e: CustomEvent): void;
-
-  /**
-   * Updates environment value.
-   *
-   * If the `value` doesn't contains the `_id` property a new environment is
-   * created. The `_rev` property is always updated to the latest value.
-   *
-   * @param data A PouchDB object to be stored. It should contain the
-   * `_id` property if the object is about to be updated. If the `_id` doesn't
-   * exists a new object is created.
-   */
-  updateEnvironment(data: ARCEnvironment): Promise<ARCEnvironment>;
-
-  /**
-   * A special case when the name of the environment changes.
-   * It updates any related to this environment variables.
-   *
-   * If this is current environment it also changes its name.
-   *
-   * @param oldName Name of the environment befoe the change
-   * @param data Updated data store entry
-   */
-  _updateEnvironmentName(oldName: string, data: ARCEnvironment): Promise<void>;
-
-  /**
-   * A handler for the `environment-deleted` custom event.
-   * Deletes a variable in the data store.
-   *
-   * The `environment-deleted` custom event should be cancellable or the event
-   * won't be handled at all.
-   *
-   * The delete function fires non cancellable `environment-deleted` custom
-   * event so the UI components can use it to update their values.
-   */
-  _envDeleteHandler(e: CustomEvent): void;
+  updateEnvironment(data: ARCEnvironment): Promise<ARCEntityChangeRecord<ARCEnvironment>>;
 
   /**
    * Deletes an environment from the data store.
@@ -143,94 +74,51 @@ export declare class VariablesModel extends ArcBaseModel {
    * `environments-list-changed` event is fired alongside the `environment-deleted`
    * event.
    *
-   * @param id The `_id` of the object to delete.
+   * @param id The id of the entity to delete
+   * @returns Null when the document cannot be found
    */
-   deleteEnvironment(id: string): Promise<DeleteEnvironmentResult>;
+  deleteEnvironment(id: string): Promise<DeletedEntity|null>;
 
   /**
-   * To be called after the environment has been deleted. It clears variables
-   * for the environment.
+   * Lists all user defined environments.
    *
-   * @param environment The environment name.
+   * @param opts Query options.
+   * @returns A promise resolved to a list of projects.
    */
-  _deleteEnvironmentVariables(environment: string): Promise<void>;
-
-  /**
-   * A handler for the `environment-list` custom event.
-   * Adds a `value` propety of the event `detail` object with the array of the
-   * user defined environments objects. Each item is a PouchDb data store item
-   * (with `_id` and `_rev`).
-   *
-   * The `value` set on the details object can be undefined if the user haven't
-   * defined any environments or if the manager haven't restored the list yet.
-   * In the later case the event target element should listen for
-   * `environments-list-changed` event to update the list of available environments.
-   *
-   * The `environment-current` custom event should be cancellable or the event
-   * won't be handled at all.
-   */
-  _envListHandler(e: CustomEvent): void;
+  listEnvironments(opts?: ARCModelListOptions): Promise<ARCModelListResult<ARCEnvironment>>;
 
   /**
    * Lists all user defined environments.
    *
    * @returns Resolved promise with the list of environments.
    */
-  listEnvironments(): Promise<ARCEnvironment[]>;
+  listAllEnvironments(): Promise<ARCModelListResult<ARCEnvironment>>;
 
   /**
-   * A handler for the `variable-list` custom event.
-   *
-   * Adds a `value` propety of the event `detail` object with the array of the
-   * variables restored for current environment. Each item is a PouchDb data
-   * store item (with `_id` and `_rev`).
-   */
-  _varListHandler(e: CustomEvent): void;
-
-  /**
-   * Refreshes list of variables for the `environment`.
+   * Reads all variables for the `environment`
    *
    * @param environment Name of the environment to get the variables
-   * from.
-   * @returns Resolved promise with the list of variables for the
-   * environment.
+   * for.
+   * @returns Resolved promise with the list of variables for the environment.
    */
-  listVariables(environment: string): Promise<ARCVariable[]>;
+  listAllVariables(environment: string): Promise<ARCModelListResult<ARCVariable>>;
 
   /**
-   * A handler for the `variable-updated` custom event.
-   * Updates the variable in the data store.
+   * Lists all user defined environments.
    *
-   * The `variable-updated` custom event should be cancellable or the event
-   * won't be handled at all.
+   * @param name The name of the environment
+   * @param opts Query options.
+   * @returns A promise resolved to a list of projects.
    */
-  _varUpdateHandler(e: CustomEvent): void;
+  listVariables(name: string, opts?: ARCModelListOptions): Promise<ARCModelListResult<ARCVariable>>;
 
   /**
-   * Updates a variable value.
+   * Updates a variable entity.
    *
-   * If the `value` doesn't contains the `_id` property a new variable will
-   * be created. The `_rev` property will be always updated to the latest value
-   * so there's no need to set it on the object.
-   *
-   * After saving the data this method sends the `variable-updated` event that
-   * can't be cancelled so other managers that are present in the DOM will not
-   * update the value again.
-   *
-   * @param data A PouchDB object to be stored. It should contain the
-   * `_id` property if the object is about to be updated. If the `_id` doesn't
-   * exists a new object is created.
+   * @param data An entity to update
+   * @returns Promise resolved to the variable change record
    */
-  updateVariable(data: ARCVariable): Promise<ARCVariable>;
-
-  /**
-   * Deletes a variable from the data store.
-   *
-   * @param e Optional. If it is called from the event handler, this
-   * is the event object. If initial validation fails then it will set `error`
-   * property on the `detail` object.
-   */
-  _varDeleteHandler(e: CustomEvent): void;
+  updateVariable(data: ARCVariable): Promise<ARCEntityChangeRecord<ARCVariable>>;
 
   /**
    * Deletes a variable from the data store.
@@ -246,13 +134,8 @@ export declare class VariablesModel extends ArcBaseModel {
    *
    * @param id The PouchDB `_id` property of the object to delete.
    */
-  deleteVariable(id: string): Promise<DeleteVariableResult>;
+  deleteVariable(id: string): Promise<DeletedEntity>;
 
-  /**
-   * Handler for `destroy-model` custom event.
-   * Deletes saved or history data when scheduled for deletion.
-   */
-  _deleteModelHandler(e: CustomEvent): void;
-  _delVariablesModel(): Promise<void>;
-  _delEnvironmentsModel(): Promise<void>;
+  _attachListeners(node: EventTarget): void;
+  _detachListeners(node: EventTarget): void;
 }

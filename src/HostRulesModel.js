@@ -12,13 +12,28 @@ License for the specific language governing permissions and limitations under
 the License.
 */
 import { ArcBaseModel } from './ArcBaseModel.js';
+import { ArcModelEventTypes } from './events/ArcModelEventTypes.js';
+import { ArcModelEvents } from './events/ArcModelEvents.js';
+
 /* eslint-disable require-atomic-updates */
 /* eslint-disable no-plusplus */
 /* eslint-disable no-continue */
 /* eslint-disable no-param-reassign */
 
 /** @typedef {import('./HostRulesModel').ARCHostRule} ARCHostRule */
-/** @typedef {import('./HostRulesModel').ARCHostRuleCreate} ARCHostRuleCreate */
+/** @typedef {import('./types').ARCEntityChangeRecord} ARCEntityChangeRecord */
+/** @typedef {import('./types').DeletedEntity} DeletedEntity */
+/** @typedef {import('./types').ARCModelListResult} ARCModelListResult */
+/** @typedef {import('./types').ARCModelListOptions} ARCModelListOptions */
+/** @typedef {import('./events/HostRuleEvents').ARCHostRuleUpdateEvent} ARCHostRuleUpdateEvent */
+/** @typedef {import('./events/HostRuleEvents').ARCHostRuleUpdateBulkEvent} ARCHostRuleUpdateBulkEvent */
+/** @typedef {import('./events/HostRuleEvents').ARCHostRuleDeleteEvent} ARCHostRuleDeleteEvent */
+/** @typedef {import('./events/HostRuleEvents').ARCHostRuletListEvent} ARCHostRuletListEvent */
+
+export const updateHandler = Symbol('updateHandler');
+export const updateBulkHandler = Symbol('updateBulkHandler');
+export const deleteHandler = Symbol('deleteHandler');
+export const listHandler = Symbol('listHandler');
 
 /**
  * Model for host rules.
@@ -37,30 +52,27 @@ import { ArcBaseModel } from './ArcBaseModel.js';
  */
 export class HostRulesModel extends ArcBaseModel {
   constructor() {
-    super('host-rules', 10);
-    this._updatedHandler = this._updatedHandler.bind(this);
-    this._deletedHandler = this._deletedHandler.bind(this);
-    this._listHandler = this._listHandler.bind(this);
-    this._clearHandler = this._clearHandler.bind(this);
-    this._insertHandler = this._insertHandler.bind(this);
+    super('host-rules');
+    this[updateHandler] = this[updateHandler].bind(this);
+    this[deleteHandler] = this[deleteHandler].bind(this);
+    this[listHandler] = this[listHandler].bind(this);
+    this[updateBulkHandler] = this[updateBulkHandler].bind(this);
   }
 
   _attachListeners(node) {
     super._attachListeners(node);
-    node.addEventListener('host-rules-insert', this._insertHandler);
-    node.addEventListener('host-rules-changed', this._updatedHandler);
-    node.addEventListener('host-rules-deleted', this._deletedHandler);
-    node.addEventListener('host-rules-list', this._listHandler);
-    node.addEventListener('host-rules-clear', this._clearHandler);
+    node.addEventListener(ArcModelEventTypes.HostRules.update, this[updateHandler]);
+    node.addEventListener(ArcModelEventTypes.HostRules.updateBulk, this[updateBulkHandler]);
+    node.addEventListener(ArcModelEventTypes.HostRules.delete, this[deleteHandler]);
+    node.addEventListener(ArcModelEventTypes.HostRules.list, this[listHandler]);
   }
 
   _detachListeners(node) {
     super._detachListeners(node);
-    node.removeEventListener('host-rules-insert', this._insertHandler);
-    node.removeEventListener('host-rules-changed', this._updatedHandler);
-    node.removeEventListener('host-rules-deleted', this._deletedHandler);
-    node.removeEventListener('host-rules-list', this._listHandler);
-    node.removeEventListener('host-rules-clear', this._clearHandler);
+    node.removeEventListener(ArcModelEventTypes.HostRules.update, this[updateHandler]);
+    node.removeEventListener(ArcModelEventTypes.HostRules.updateBulk, this[updateBulkHandler]);
+    node.removeEventListener(ArcModelEventTypes.HostRules.delete, this[deleteHandler]);
+    node.removeEventListener(ArcModelEventTypes.HostRules.list, this[listHandler]);
   }
 
   /**
@@ -68,9 +80,13 @@ export class HostRulesModel extends ArcBaseModel {
    * This function fires `host-rules-changed` event.
    *
    * @param {ARCHostRule} info A rule object to save / update
-   * @return {Promise<ARCHostRule>} Resolved promise to updated object with updated `_rev`
+   * @return {Promise<ARCEntityChangeRecord>} Resolved promise to updated object with updated `_rev`
    */
   async update(info) {
+    if (!info) {
+      throw new Error('The "rule" property is missing');
+    }
+
     const rule = { ...info };
     rule.updated = Date.now();
     const { db } = this;
@@ -79,6 +95,7 @@ export class HostRulesModel extends ArcBaseModel {
         const doc = await db.get(rule._id);
         rule._rev = doc._rev;
       } catch (e) {
+        /* istanbul ignore if */
         if (e.status !== 404) {
           this._handleException(e);
         }
@@ -87,11 +104,14 @@ export class HostRulesModel extends ArcBaseModel {
     const oldRev = rule._rev;
     const result = await this.db.put(rule);
     rule._rev = result.rev;
-    this._fireUpdated('host-rules-changed', {
-      rule,
+    const record = {
+      id: rule._id,
+      rev: result.rev,
+      item: rule,
       oldRev,
-    });
-    return rule;
+    };
+    ArcModelEvents.HostRules.State.update(this, record);
+    return record;
   }
 
   /**
@@ -99,16 +119,18 @@ export class HostRulesModel extends ArcBaseModel {
    * This function fires `host-rules-changed` event.
    *
    * @param {ARCHostRule[]} items List of rules to save / update
-   * @return {Promise<(PouchDB.Core.Response|PouchDB.Core.Error)[]>} Resolved promise to the result of Pouch DB operation
+   * @return {Promise<ARCEntityChangeRecord[]>} Resolved promise to the result of Pouch DB operation
    */
   async updateBulk(items) {
     const rules = items.map((item) => {
       return { ...item, updated: Date.now() };
     });
     const response = await this.db.bulkDocs(rules);
+    const result = [];
     for (let i = 0, len = response.length; i < len; i++) {
       const r = response[i];
       const typedError = /** @type PouchDB.Core.Error */ (r);
+      /* istanbul ignore if */
       if (typedError.error) {
         this._handleException(typedError, true);
         continue;
@@ -116,25 +138,28 @@ export class HostRulesModel extends ArcBaseModel {
       const rule = rules[i];
       const oldRev = rule._rev;
       rule._rev = r.rev;
+      /* istanbul ignore if */
       if (!rule._id) {
         rule._id = r.id;
       }
-      const detail = {
-        rule,
+      const record = {
+        id: rule._id,
+        rev: r.rev,
+        item: rule,
         oldRev,
       };
-      this._fireUpdated('host-rules-changed', detail);
+      result.push(record);
+      ArcModelEvents.HostRules.State.update(this, record);
     }
-    return response;
+    return result;
   }
 
   /**
    * Removed an object from the datastore.
-   * This function fires `host-rules-deleted` event.
    *
    * @param {string} id The ID of the datastore entry.
-   * @param {string?} rev Specific revision to read. Defaults to latest revision.
-   * @return {Promise<string>} Promise resolved to a new `_rev` property of deleted object.
+   * @param {string=} rev Specific revision to read. Defaults to latest revision.
+   * @return {Promise<DeletedEntity>} Promise resolved to a new `_rev` property of deleted object.
    */
   async delete(id, rev) {
     if (!rev) {
@@ -142,30 +167,22 @@ export class HostRulesModel extends ArcBaseModel {
       rev = obj._rev;
     }
     const response = await this.db.remove(id, rev);
-    const detail = {
+    const result = {
       id,
       rev: response.rev,
-      oldRev: rev,
     };
-    this._fireUpdated('host-rules-deleted', detail);
-    return response.rev;
+    ArcModelEvents.HostRules.State.delete(this, id, response.rev);
+    return result;
   }
 
   /**
-   * Lists all existing host rules
+   * Lists all host rules in pagination
    *
-   * @return {Promise<ARCHostRule[]>} Promise resolved to list of the host rules
+   * @param {ARCModelListOptions=} opts Query options.
+   * @return {Promise<ARCModelListResult>} A promise resolved to a list of rules.
    */
-  async list() {
-    const queryOptions = {
-      include_docs: true,
-    };
-    const response = await this.db.allDocs(queryOptions);
-    let data = [];
-    if (response && response.rows.length > 0) {
-      data = response.rows.map((item) => item.doc);
-    }
-    return data;
+  async list(opts={}) {
+    return this.listEntities(this.db, opts);
   }
 
   /**
@@ -173,15 +190,15 @@ export class HostRulesModel extends ArcBaseModel {
    * It sets `result` property on event detail object with a result of calling
    * `updateBulk()` function.
    *
-   * @param {CustomEvent} e
+   * @param {ARCHostRuleUpdateBulkEvent} e
    */
-  _insertHandler(e) {
-    if (!e.cancelable) {
+  [updateBulkHandler](e) {
+    if (e.defaultPrevented) {
       return;
     }
     e.preventDefault();
     e.stopPropagation();
-    const { rules } = e.detail;
+    const { rules } = e;
     if (!rules) {
       e.detail.result = Promise.reject(
         new Error('The "rules" property is missing')
@@ -191,59 +208,52 @@ export class HostRulesModel extends ArcBaseModel {
     e.detail.result = this.updateBulk(rules);
   }
 
-  _updatedHandler(e) {
-    if (!e.cancelable || e.composedPath()[0] === this) {
+  /**
+   * @param {ARCHostRuleUpdateEvent} e
+   */
+  [updateHandler](e) {
+    if (e.defaultPrevented) {
       return;
     }
     e.preventDefault();
     e.stopPropagation();
-    const { rule } = e.detail;
-    if (!rule || !rule._id) {
-      e.detail.result = Promise.reject(
-        new Error('The "rule" property is missing')
-      );
-      return;
-    }
-    e.detail.result = this.update(rule).catch((ex) =>
-      this._handleException(ex)
-    );
+    const { rule } = e;
+    e.detail.result = this.update(rule);
   }
 
-  _deletedHandler(e) {
-    if (!e.cancelable || e.composedPath()[0] === this) {
+  /**
+   * @param {ARCHostRuleDeleteEvent} e
+   */
+  [deleteHandler](e) {
+    if (e.defaultPrevented) {
       return;
     }
     e.preventDefault();
     e.stopPropagation();
 
-    const { id, rev } = e.detail;
+    const { id, rev } = e;
     if (!id) {
       e.detail.result = Promise.reject(new Error('Missing "id" property.'));
       return;
     }
 
-    e.detail.result = this.delete(id, rev).catch((ex) =>
-      this._handleException(ex)
-    );
+    e.detail.result = this.delete(id, rev);
   }
 
-  _listHandler(e) {
-    if (!e.cancelable || e.composedPath()[0] === this) {
+  /**
+   * @param {ARCHostRuletListEvent} e
+   */
+  [listHandler](e) {
+    if (e.defaultPrevented) {
       return;
     }
     e.preventDefault();
     e.stopPropagation();
-    e.detail.result = this.list().catch((ex) => this._handleException(ex));
-  }
+    const { limit, nextPageToken } = e;
 
-  _clearHandler(e) {
-    if (!e.cancelable || e.composedPath()[0] === this) {
-      return;
-    }
-    e.preventDefault();
-    e.stopPropagation();
-    e.detail.result = this.db.destroy().then(() => {
-      this._fireUpdated('host-rules-clear');
+    e.detail.result = this.list({
+      limit,
+      nextPageToken,
     });
   }
 }

@@ -1,6 +1,8 @@
 import { fixture, assert, aTimeout } from '@open-wc/testing';
 import { DbHelper } from './db-helper.js';
 import '../../url-indexer.js';
+import { ArcModelEvents } from '../../src/events/ArcModelEvents.js';
+import { ArcModelEventTypes } from '../../src/events/ArcModelEventTypes.js';
 
 /** @typedef {import('../../src/UrlIndexer').UrlIndexer} UrlIndexer */
 
@@ -11,6 +13,10 @@ describe('<url-indexer> - Delete test', () => {
   async function basicFixture() {
     return fixture('<url-indexer></url-indexer>');
   }
+
+  // before(async () => {
+  //   await DbHelper.destroy();
+  // });
 
   describe('deleteIndexedData()', () => {
     const FULL_URL = 'https://domain.com/api?a=b&c=d';
@@ -35,9 +41,13 @@ describe('<url-indexer> - Delete test', () => {
       ]);
     });
 
-    afterEach(() => DbHelper.clearData());
+    afterEach(async () => {
+      const db = await element.openSearchStore();
+      db.close();
+      await DbHelper.clearData()
+    });
 
-    it('Deletes index of a single request', async () => {
+    it('deletes index of a single request', async () => {
       await element.deleteIndexedData([REQUEST_ID]);
       const data = await DbHelper.readAllIndexes();
       assert.lengthOf(data, 8);
@@ -68,7 +78,11 @@ describe('<url-indexer> - Delete test', () => {
       ]);
     });
 
-    afterEach(() => DbHelper.clearData());
+    afterEach(async () => {
+      const db = await element.openSearchStore();
+      db.close();
+      await DbHelper.clearData()
+    });
 
     it('Deletes by type only', async () => {
       await element.deleteIndexedType('t1');
@@ -95,7 +109,11 @@ describe('<url-indexer> - Delete test', () => {
       ]);
     });
 
-    afterEach(() => DbHelper.clearData());
+    afterEach(async () => {
+      const db = await element.openSearchStore();
+      db.close();
+      await DbHelper.clearData()
+    });
 
     it('Deletes all index data', async () => {
       await element.clearIndexedData();
@@ -104,7 +122,7 @@ describe('<url-indexer> - Delete test', () => {
     });
   });
 
-  describe('_deleteModelHandler()', () => {
+  describe('[deletemodelHandler]()', () => {
     let element = /** @type UrlIndexer */ (null);
     beforeEach(async () => {
       element = await basicFixture();
@@ -122,76 +140,50 @@ describe('<url-indexer> - Delete test', () => {
       ]);
     });
 
-    afterEach(() => DbHelper.clearData());
+    afterEach(async () => {
+      const db = await element.openSearchStore();
+      db.close();
+      await DbHelper.clearData()
+    });
 
     it('clears saved via saved-requests type', async () => {
-      // @ts-ignore
-      await element._deleteModelHandler({
-        detail: {
-          datastore: ['saved-requests'],
-        },
-      });
+      await ArcModelEvents.destroy(document.body, ['saved-requests']);
       const data = await DbHelper.readAllIndexes();
       assert.lengthOf(data, 3);
     });
 
     it('clears saved via saved type', async () => {
-      // @ts-ignore
-      await element._deleteModelHandler({
-        detail: {
-          datastore: ['saved'],
-        },
-      });
+      await ArcModelEvents.destroy(document.body, ['saved']);
       const data = await DbHelper.readAllIndexes();
       assert.lengthOf(data, 3);
     });
 
     it('clears history via history-requests type', async () => {
-      // @ts-ignore
-      await element._deleteModelHandler({
-        detail: {
-          datastore: ['history-requests'],
-        },
-      });
+      await ArcModelEvents.destroy(document.body, ['history-requests']);
       const data = await DbHelper.readAllIndexes();
       assert.lengthOf(data, 3);
     });
 
     it('clears saved via history type', async () => {
-      // @ts-ignore
-      await element._deleteModelHandler({
-        detail: {
-          datastore: ['history'],
-        },
-      });
+      await ArcModelEvents.destroy(document.body, ['history']);
       const data = await DbHelper.readAllIndexes();
       assert.lengthOf(data, 3);
     });
 
     it('clears all requests', async () => {
-      // @ts-ignore
-      await element._deleteModelHandler({
-        detail: {
-          datastore: 'all',
-        },
-      });
+      await ArcModelEvents.destroy(document.body, ['all']);
       const data = await DbHelper.readAllIndexes();
       assert.lengthOf(data, 0);
     });
 
     it('ignores other data stores', async () => {
-      // @ts-ignore
-      await element._deleteModelHandler({
-        detail: {
-          datastore: 'other',
-        },
-      });
+      await ArcModelEvents.destroy(document.body, ['other']);
       const data = await DbHelper.readAllIndexes();
       assert.lengthOf(data, 6);
     });
   });
 
-  describe('_requestDeleteHandler()', () => {
+  describe('[requestDeleteHandler]()', () => {
     let element = /** @type UrlIndexer */ (null);
     beforeEach(async () => {
       element = await basicFixture();
@@ -209,18 +201,14 @@ describe('<url-indexer> - Delete test', () => {
       ]);
     });
 
-    afterEach(() => DbHelper.clearData());
+    afterEach(async () => {
+      const db = await element.openSearchStore();
+      db.close();
+      await DbHelper.clearData()
+    });
 
     it('deletes request by id', async () => {
-      document.body.dispatchEvent(
-        new CustomEvent('request-object-deleted', {
-          bubbles: true,
-          cancelable: false,
-          detail: {
-            id: 'r1',
-          },
-        })
-      );
+      ArcModelEvents.Request.State.delete(document.body, 'saved', 'r1', 'old');
       // should be enough?
       await aTimeout(200);
       const data = await DbHelper.readAllIndexes();
@@ -229,12 +217,10 @@ describe('<url-indexer> - Delete test', () => {
 
     it('ignores cancelable events', async () => {
       document.body.dispatchEvent(
-        new CustomEvent('request-object-deleted', {
+        new CustomEvent(ArcModelEventTypes.Request.State.update, {
           bubbles: true,
           cancelable: true,
-          detail: {
-            id: 'r1',
-          },
+          detail: {},
         })
       );
       // should be enough?

@@ -1,5 +1,11 @@
 import {ArcBaseModel} from './ArcBaseModel.js';
-import { Entity } from './types';
+import {
+  Entity,
+  ARCEntityChangeRecord,
+  DeletedEntity,
+  ARCModelListOptions,
+  ARCModelListResult,
+} from './types';
 
 export declare interface ARCHostRuleCreate extends Entity {
   /**
@@ -25,7 +31,7 @@ export declare interface ARCHostRule extends ARCHostRuleCreate {
    * The timestamp when the rule was updated the last time.
    * This value is created by the model. Not accepted when creating an entity.
    */
-  updated: number;
+  updated?: number;
 }
 
 /**
@@ -50,13 +56,22 @@ export declare class HostRulesModel extends ArcBaseModel {
   _detachListeners(node: EventTarget): void;
 
   /**
+   * Reads an entry from the datastore.
+   *
+   * @param id The ID of the datastore entry.
+   * @param rev Specific revision to read. Defaults to latest revision.
+   * @returns Promise resolved to a datastore object.
+   */
+  read(id: string, rev?: string): Promise<ARCHostRule>;
+
+  /**
    * Updates / saves the host rule object in the datastore.
    * This function fires `host-rules-changed` event.
    *
    * @param rule A rule object to save / update
    * @returns Resolved promise to updated object with updated `_rev`
    */
-  update(rule: ARCHostRule): Promise<ARCHostRule>;
+  update(rule: ARCHostRule): Promise<ARCEntityChangeRecord<ARCHostRule>>;
 
   /**
    * Updates / saves the host rule object in the datastore.
@@ -65,7 +80,7 @@ export declare class HostRulesModel extends ArcBaseModel {
    * @param rules List of rules to save / update
    * @returns Resolved promise to the result of Pouch DB operation
    */
-  updateBulk(rules: ARCHostRule[]): Promise<(PouchDB.Core.Response|PouchDB.Core.Error)[]>;
+  updateBulk(rules: ARCHostRule[]): Promise<ARCEntityChangeRecord<ARCHostRule>[]>;
 
   /**
    * Removed an object from the datastore.
@@ -75,23 +90,12 @@ export declare class HostRulesModel extends ArcBaseModel {
    * @param rev Specific revision to read. Defaults to latest revision.
    * @returns Promise resolved to a new `_rev` property of deleted object.
    */
-  delete(id: string, rev?: string): Promise<string>;
+  delete(id: string, rev?: string): Promise<DeletedEntity>;
 
   /**
    * Lists all existing host rules
    *
    * @returns Promise resolved to list of the host rules
    */
-  list(): Promise<ARCHostRule[]>;
-
-  /**
-   * Handler for `host-rules-insert` custom event. Creates rules in bulk.
-   * It sets `result` property on event detail object with a result of calling
-   * `updateBulk()` function.
-   */
-  _insertHandler(e: CustomEvent): void;
-  _updatedHandler(e: CustomEvent): void;
-  _deletedHandler(e: CustomEvent): void;
-  _listHandler(e: CustomEvent): void;
-  _clearHandler(e: CustomEvent): void;
+  list(opts?: ARCModelListOptions): Promise<ARCModelListResult<ARCHostRule>>;
 }

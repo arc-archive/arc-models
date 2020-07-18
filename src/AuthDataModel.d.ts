@@ -1,5 +1,5 @@
-import {ArcBaseModel} from './ArcBaseModel';
-import { Entity } from './types';
+import { ArcBaseModel } from './ArcBaseModel';
+import { Entity, ARCEntityChangeRecord } from './types';
 
 export declare interface ARCAuthData extends Entity {
   username?: string;
@@ -31,7 +31,6 @@ export declare class AuthDataModel extends ArcBaseModel {
 
   _attachListeners(node: EventTarget): void;
   _detachListeners(node: EventTarget): void;
-  _queryHandler(e: CustomEvent): void;
 
   /**
    * Queries for a datastore entry. Similar to `read()` but without using `id`
@@ -41,7 +40,6 @@ export declare class AuthDataModel extends ArcBaseModel {
    * @param authMethod The Authorization method to restore data for.
    */
   query(url: string, authMethod: string): Promise<ARCAuthData|undefined>;
-  _updateHandler(e: CustomEvent): void;
 
   /**
    * Creates or updates the auth data in the data store for given method and URl.
@@ -51,5 +49,5 @@ export declare class AuthDataModel extends ArcBaseModel {
    * @param authData The authorization data to store. Schema depends on
    * the `authMethod` property. From model standpoint schema does not matter.
    */
-  update(url: string, authMethod: string, authData: object): Promise<ARCAuthData>;
+  update(url: string, authMethod: string, authData: object): Promise<ARCEntityChangeRecord<ARCAuthData>>;
 }

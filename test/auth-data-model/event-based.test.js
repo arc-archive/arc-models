@@ -1,6 +1,8 @@
 import { fixture, assert } from '@open-wc/testing';
 import { DataGenerator } from '@advanced-rest-client/arc-data-generator';
 import '../../auth-data-model.js';
+import { ArcModelEventTypes } from '../../src/events/ArcModelEventTypes.js';
+import { ArcModelEvents } from '../../src/events/ArcModelEvents.js';
 
 /** @typedef {import('../../src/AuthDataModel').AuthDataModel} AuthDataModel */
 
@@ -12,11 +14,16 @@ describe('Authorization data model - events', () => {
   const url = 'http://domain.com/auth';
   const method = 'x-ntlm';
 
-  describe('"auth-data-query"', () => {
+  /**
+   * @return {Promise<AuthDataModel>}
+   */
+  async function basicFixture() {
+    return fixture('<auth-data-model></auth-data-model>');
+  }
+
+  describe(`${ArcModelEventTypes.AuthData.query} event`, () => {
     before(async () => {
-      const element = /** @type {AuthDataModel} */ (await fixture(
-        '<auth-data-model></auth-data-model>'
-      ));
+      const element = await basicFixture();
       await element.update(url, method, {
         username: 'uname-test',
         password: 'pwd-test',
@@ -28,267 +35,74 @@ describe('Authorization data model - events', () => {
       await generator.destroyAuthData();
     });
 
-    it('Cancels the event', async () => {
-      await fixture('<auth-data-model></auth-data-model>');
-      const e = new CustomEvent('auth-data-query', {
+    beforeEach(async () => {
+      await basicFixture();
+    });
+
+    it('ignores cancelled events', async () => {
+      document.body.addEventListener(ArcModelEventTypes.AuthData.query, function f(e) {
+        e.preventDefault();
+        document.body.removeEventListener(ArcModelEventTypes.AuthData.query, f);
+      });
+      const e = new CustomEvent(ArcModelEventTypes.AuthData.query, {
         bubbles: true,
         cancelable: true,
-        detail: {
-          url,
-          authMethod: method,
-          result: undefined,
-        },
+        composed: true,
+        detail: { result: undefined },
       });
+      // @ts-ignore
+      e.url = url;
+      // @ts-ignore
+      e.method = method;
       document.body.dispatchEvent(e);
-      await e.detail.result;
-      assert.isTrue(e.defaultPrevented);
-    });
-
-    it('Ignores non-cancellable event', async () => {
-      const element = /** @type {AuthDataModel} */ (await fixture(
-        '<auth-data-model></auth-data-model>'
-      ));
-      const e = {
-        cancelable: false,
-        detail: {
-          url,
-          authMethod: method,
-          result: undefined,
-        },
-      };
-      // @ts-ignore
-      element._queryHandler(e);
       assert.isUndefined(e.detail.result);
     });
 
-    it('Ignores cancelled event', async () => {
-      const element = /** @type {AuthDataModel} */ (await fixture(
-        '<auth-data-model></auth-data-model>'
-      ));
-      const e = {
-        cancelable: true,
-        defaultPrevented: true,
-        detail: {
-          url,
-          authMethod: method,
-          result: undefined,
-        },
-      };
-      // @ts-ignore
-      element._queryHandler(e);
-      assert.isUndefined(e.detail.result);
-    });
-
-    it('Ignores self dispatched events', async () => {
-      const element = /** @type {AuthDataModel} */ (await fixture(
-        '<auth-data-model></auth-data-model>'
-      ));
-      const e = {
-        cancelable: true,
-        composedPath: () => {
-          return [element];
-        },
-        detail: {
-          url,
-          authMethod: method,
-          result: undefined,
-        },
-      };
-      // @ts-ignore
-      element._queryHandler(e);
-      assert.isUndefined(e.detail.result);
-    });
-
-    it('Resutls with auth data', async () => {
-      await fixture('<auth-data-model></auth-data-model>');
-      const e = new CustomEvent('auth-data-query', {
-        bubbles: true,
-        cancelable: true,
-        detail: {
-          url,
-          authMethod: method,
-          result: undefined,
-        },
-      });
-      document.body.dispatchEvent(e);
-      const result = await e.detail.result;
+    it('results with auth data', async () => {
+      const result = await ArcModelEvents.AuthData.query(document.body, url, method);
       assert.equal(result.username, 'uname-test');
       assert.equal(result.password, 'pwd-test');
       assert.equal(result.domain, 'some');
     });
-
-    it('Handles exceptions', async () => {
-      const element = /** @type {AuthDataModel} */ (await fixture(
-        '<auth-data-model></auth-data-model>'
-      ));
-      const e = {
-        cancelable: true,
-        composedPath: () => [],
-        preventDefault: () => {},
-        stopPropagation: () => {},
-        detail: {
-          url,
-          authMethod: method,
-        },
-      };
-      element.query = () => {
-        return Promise.reject(new Error('test'));
-      };
-      let called = false;
-      // @ts-ignore
-      element._queryHandler(e);
-      return e.detail.result
-        .catch((cause) => {
-          if (cause.message === 'test') {
-            called = true;
-          }
-        })
-        .then(() => {
-          assert.isTrue(called);
-        });
-    });
   });
 
-  describe('"auth-data-changed" event', () => {
-    const authData = { test: true };
+  describe(`${ArcModelEventTypes.AuthData.update} event`, () => {
+    const authData = { username: 'uname', password: 'other' };
     after(() => {
       return generator.destroyAuthData();
     });
 
-    it('Ignores non-cancellable event', async () => {
-      const element = /** @type {AuthDataModel} */ (await fixture(
-        '<auth-data-model></auth-data-model>'
-      ));
-      const e = {
-        cancelable: false,
-        detail: {
-          url,
-          authMethod: method,
-          authData,
-        },
-      };
-      // @ts-ignore
-      element._updateHandler(e);
-      assert.isUndefined(e.detail.result);
+    beforeEach(async () => {
+      await basicFixture();
     });
 
-    it('Ignores cancelled event', async () => {
-      const element = /** @type {AuthDataModel} */ (await fixture(
-        '<auth-data-model></auth-data-model>'
-      ));
-      const e = {
-        cancelable: true,
-        defaultPrevented: true,
-        detail: {
-          url,
-          authMethod: method,
-          authData,
-          result: undefined,
-        },
-      };
-      // @ts-ignore
-      element._updateHandler(e);
-      assert.isUndefined(e.detail.result);
-    });
-
-    it('Ignores self dispatched events', async () => {
-      const element = /** @type {AuthDataModel} */ (await fixture(
-        '<auth-data-model></auth-data-model>'
-      ));
-      const e = {
-        cancelable: true,
-        composedPath: () => {
-          return [element];
-        },
-        detail: {
-          url,
-          authMethod: method,
-          authData,
-          result: undefined,
-        },
-      };
-      // @ts-ignore
-      element._updateHandler(e);
-      assert.isUndefined(e.detail.result);
-    });
-
-    it('Cancels the event', async () => {
-      await fixture('<auth-data-model></auth-data-model>');
-      const e = new CustomEvent('auth-data-changed', {
+    it('ignores cancelled events', async () => {
+      document.body.addEventListener(ArcModelEventTypes.AuthData.update, function f(e) {
+        e.preventDefault();
+        document.body.removeEventListener(ArcModelEventTypes.AuthData.update, f);
+      });
+      const e = new CustomEvent(ArcModelEventTypes.AuthData.update, {
         bubbles: true,
         cancelable: true,
-        detail: {
-          url,
-          authMethod: method,
-          authData,
-          result: undefined,
-        },
+        composed: true,
+        detail: { result: undefined },
       });
+      // @ts-ignore
+      e.url = url;
+      // @ts-ignore
+      e.method = method;
+      // @ts-ignore
+      e.authData = authData;
       document.body.dispatchEvent(e);
-      await e.detail.result;
-      assert.isTrue(e.defaultPrevented);
+      assert.isUndefined(e.detail.result);
     });
 
-    it('Handles exceptions', async () => {
-      const element = /** @type {AuthDataModel} */ (await fixture(
-        '<auth-data-model></auth-data-model>'
-      ));
-      const e = {
-        cancelable: true,
-        composedPath: () => [],
-        preventDefault: () => {},
-        stopPropagation: () => {},
-        detail: {
-          url,
-          authMethod: method,
-          authData,
-          result: undefined,
-        },
-      };
-      element.update = () => {
-        return Promise.reject(new Error('test'));
-      };
-      let called = false;
-      // @ts-ignore
-      element._updateHandler(e);
-      return e.detail.result
-        .catch((cause) => {
-          if (cause.message === 'test') {
-            called = true;
-          }
-        })
-        .then(() => {
-          assert.isTrue(called);
-        });
-    });
-
-    it('Calls update function', async () => {
-      let args;
-      const element = /** @type {AuthDataModel} */ (await fixture(
-        '<auth-data-model></auth-data-model>'
-      ));
-      // @ts-ignore
-      element.update = (...data) => {
-        args = data;
-        return Promise.resolve();
-      };
-      const e = new CustomEvent('auth-data-changed', {
-        bubbles: true,
-        cancelable: true,
-        detail: {
-          url,
-          authMethod: method,
-          authData,
-          result: undefined,
-        },
-      });
-      document.body.dispatchEvent(e);
-      return e.detail.result.then(() => {
-        assert.ok(args);
-        assert.equal(args[0], url);
-        assert.equal(args[1], method);
-        assert.deepEqual(args[2], authData);
-      });
+    it('updates the entity', async () => {
+      const record = await ArcModelEvents.AuthData.update(document.body, url, method, authData);
+      assert.typeOf(record, 'object', 'returns an object');
+      assert.typeOf(record.rev, 'string', 'revision is set');
+      assert.typeOf(record.id, 'string', 'id is set');
+      assert.typeOf(record.item, 'object', 'item is set');
     });
   });
 });

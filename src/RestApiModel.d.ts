@@ -1,5 +1,24 @@
-import { ArcBaseModel } from './ArcBaseModel.js';
-import { Entity } from './types';
+import { ArcBaseModel } from './ArcBaseModel';
+import {
+  Entity,
+  ARCModelListOptions,
+  ARCModelListResult,
+  ARCEntityChangeRecord,
+  DeletedEntity,
+} from './types';
+
+export const readHandler: symbol;
+export const updateHandler: symbol;
+export const updatebulkHandler: symbol;
+export const deleteHandler: symbol;
+export const listHandler: symbol;
+export const datareadHandler: symbol;
+export const dataupdateHandler: symbol;
+export const versionDeleteHandler: symbol;
+export const removeVersion: symbol;
+export const removeVersions: symbol;
+export const deleteIndexModel: symbol;
+export const deleteDataModel: symbol;
 
 export declare interface ARCRestApiIndex extends Entity {
   /**
@@ -43,37 +62,8 @@ export declare interface ARCRestApi extends Entity {
   amfVersion?: string;
 }
 
-export declare interface UpdateApiIndexResult {
-  /**
-   * Previous revision id
-   */
-  oldRev: string;
-  /**
-   * API index object
-   */
-  apiInfo: ARCRestApi;
-}
-
-export declare interface ApiIndexQueryOptions {
-  /**
-   * Received from previous query page token.
-   */
-  nextPageToken?: string;
-}
-
-export declare interface ApiIndexQueryResult {
-  /**
-   * Received from previous query page token.
-   */
-  nextPageToken?: string;
-  /**
-   * API index items
-   */
-  items: ARCRestApiIndex[];
-}
-
 /**
- * Events based access to REST APIs datastore.
+ * REST APIs model.
  */
 export declare class RestApiModel extends ArcBaseModel {
 
@@ -90,22 +80,48 @@ export declare class RestApiModel extends ArcBaseModel {
    */
   readonly dataDb: PouchDB.Database;
 
-  _cachedQueryOptions: object;
-
   constructor();
-  _attachListeners(node: EventTarget): void;
-  _detachListeners(node: EventTarget): void;
-
-
 
   /**
    * Reads an entry from the index datastore.
    *
    * @param id The ID of the datastore entry.
    * @param rev Specific revision to read. Defaults to latest revision.
-   * @returns Promise resolved to a project object.
+   * @returns Promise resolved to an index object.
    */
   readIndex(id: string, rev?: string): Promise<ARCRestApiIndex>;
+
+  /**
+   * Creates / updates API index object.
+   *
+   * @param doc PouchDB document.
+   * @returns Promise resolved to a change record.
+   */
+  updateIndex(doc: ARCRestApiIndex): Promise<ARCEntityChangeRecord<ARCRestApiIndex>>;
+
+  /**
+   * Updates many index objects in one request.
+   *
+   * @param docs List of PouchDB documents to update.
+   * @returns Promise resolved to a list of the change records.
+   */
+  updateIndexBatch(docs: ARCRestApiIndex[]): Promise<ARCEntityChangeRecord<ARCRestApiIndex>[]>
+
+  /**
+   * Removes all AMF and index data from datastores for given index id.
+   *
+   * @param {string} id Index entry ID to delete.
+   * @return {Promise<DeletedEntity>} Promise resolved to a delete record
+   */
+  delete(id: string): Promise<DeletedEntity>;
+
+  /**
+   * Lists index data.
+   *
+   * @param opts Query options.
+   * @returns A promise resolved to a list of REST APIs.
+   */
+  list(opts?: ARCModelListOptions): Promise<ARCModelListResult<ARCRestApiIndex>>;
 
   /**
    * Reads an entry from the raml data datastore.
@@ -119,39 +135,10 @@ export declare class RestApiModel extends ArcBaseModel {
   /**
    * Creates / updates API data object.
    *
-   * @param indexId Id of the index object
-   * @param version Version of the API data
-   * @param data AMF model to store
-   * @returns Resolved promise to a document with updated `_rev`
+   * @param entity The entity to update.
+   * @returns Promise resolved to a change record.
    */
-  updateData(indexId: string, version: string, data: object): Promise<ARCRestApi>;
-
-  /**
-   * Creates / updates API index object.
-   * The `_id` property must be already set on the object.
-   *
-   * This function fires `api-index-changed` custom event on success.
-   *
-   * @param doc PouchDB document.
-   * @returns Resolved promise to a document with updated `_rev`
-   */
-  updateIndex(doc: ARCRestApiIndex): Promise<ARCRestApiIndex>;
-
-  /**
-   * Updates many index objects in one request.
-   *
-   * @param docs List of PouchDB documents to update.
-   * @returns Resolved promise to a list of document with updated `_rev`
-   */
-  updateIndexBatch(docs: ARCRestApiIndex[]): Promise<ARCRestApiIndex[]>;
-
-  /**
-   * Removes all AMF and index data from datastores for given index id.
-   *
-   * @param id Index entry ID to delete.
-   * @returns Promise resolved to a new `_rev` property of deleted object.
-   */
-  delete(id: string): Promise<string>;
+  updateData(entity: ARCRestApi): Promise<ARCEntityChangeRecord<ARCRestApi>>;
 
   /**
    * Removes information about version from ARC data datastore and from index
@@ -160,7 +147,7 @@ export declare class RestApiModel extends ArcBaseModel {
    * @param id Index object ID
    * @param version Version to remove.
    */
-  removeVersion(id: string, version: string): Promise<void>;
+  removeVersion(id: string, version: string): Promise<DeletedEntity>
 
   /**
    * Removes versions of API data in a bulk operation.
@@ -170,87 +157,6 @@ export declare class RestApiModel extends ArcBaseModel {
    */
   removeVersions(indexId: string, versions: string[]): Promise<void>;
 
-  /**
-   * Removes API versions from the store.
-   * @param ids A list of IDs to remove
-   */
-  _removeVersions(ids: string[]): Promise<void>;
-
-  /**
-   * Removes a version from the data store.
-   * @param id Version id
-   */
-  _removeVersion(id: string): Promise<void>;
-
-  /**
-   * Lists index data.
-   *
-   * @param opts Query options
-   * @returns A promise resolved to a query result object on success.
-   */
-  listIndex(opts?: ApiIndexQueryOptions): Promise<ApiIndexQueryResult>;
-
-  /**
-   * Generates `nextPageToken` as a random string.
-   *
-   * @returns Random 32 characters long string.
-   */
-  _makeNextPageToken(): string;
-
-  /**
-   * A handler for `api-index-changed` custom event.
-   */
-  _indexChangeHandler(e: CustomEvent): void;
-
-  /**
-   * Handler for the `api-data-read` custom event.
-   *
-   * Event `detail` object must contain the `id` property with datastore entry
-   * id and may contain a `rev` property to read a specific revision.
-   *
-   * It sets a `result` property on the event `detail` object that is a
-   * promise returned by `readData()` function.
-   */
-  _readHandler(e: CustomEvent): void;
-  _readIndexHandler(e: CustomEvent): void;
-
-  /**
-   * Handler for the `api-data-changed` custom event.
-   */
-  _dataUpdateHandler(e: CustomEvent): void;
-
-  /**
-   * Deletes the object from the datastores.
-   * It is only handled if the event in cancelable and not cancelled.
-   *
-   * Event has to have `id` property set on the detail object.
-   *
-   * It sets `result` property on the event detail object with a result of
-   * calling `remove()` function.
-   */
-  _deletedHandler(e: CustomEvent): void;
-  _versionDeletedHandler(e: CustomEvent): void;
-
-  /**
-   * Handler for the `api-index-changed-batch` custom event.
-   * It requires to have `items` property set to event detail as an array of
-   * PouchDB documents to update.
-   *
-   * It sets `result` property on the event detail object with a result of
-   * calling `updateIndexBatch()` function.
-   */
-  _indexesUpdatedHandler(e: CustomEvent): void;
-
-  /**
-   * Handler for the `api-index-list` custom event.
-   */
-  _indexListHandler(e: CustomEvent): void;
-
-  /**
-   * Handler for `destroy-model` custom event.
-   * Deletes saved or history data when scheduled for deletion.
-   */
-  _deleteModelHandler(e: CustomEvent|null): void;
-  _delIndexModel(): Promise<void>;
-  _delDataModel(): Promise<void>;
+  _attachListeners(node: EventTarget): void;
+  _detachListeners(node: EventTarget): void;
 }

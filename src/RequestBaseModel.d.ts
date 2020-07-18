@@ -1,5 +1,6 @@
-import {ArcBaseModel} from './ArcBaseModel';
+import { ArcBaseModel } from './ArcBaseModel';
 import { ARCProject } from './RequestTypes';
+import { ARCEntityChangeRecord, DeletedEntity } from './types';
 
 /**
  * A base class for Request and Projects` models.
@@ -18,7 +19,7 @@ export declare class RequestBaseModel extends ArcBaseModel {
   getDatabase(type: string): PouchDB.Database;
 
   /**
-   * Deletes database data by tye.
+   * Deletes database data by type.
    *
    * @param type Either `saved` or `history`
    */
@@ -41,7 +42,7 @@ export declare class RequestBaseModel extends ArcBaseModel {
    * @param project A project to save / update
    * @returns Resolved promise to project object with updated `_rev`
    */
-  updateProject(project: ARCProject): Promise<ARCProject>;
+  updateProject(project: ARCProject): Promise<ARCEntityChangeRecord<ARCProject>>;
 
   /**
    * Removed an object from the datastore.
@@ -51,5 +52,5 @@ export declare class RequestBaseModel extends ArcBaseModel {
    * @param rev Specific revision to read. Defaults to latest revision.
    * @returns Promise resolved to a new `_rev` property of deleted object.
    */
-  removeProject(id: string, rev?: string): Promise<string>;
+  removeProject(id: string, rev?: string): Promise<DeletedEntity>;
 }

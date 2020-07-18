@@ -21,6 +21,128 @@ export { RestApiModel } from './src/RestApiModel';
 export { ARCProject, HTTPRequest, ARCRequest, ARCHistoryRequest, ARCSavedRequest, SaveARCRequestOptions, ARCRequestRestoreOptions } from './src/RequestTypes';
 export { UrlHistoryModel, ARCUrlHistory } from './src/UrlHistoryModel';
 export { UrlIndexer, IndexableRequest, IndexQueryOptions, IndexQueryResult } from './src/UrlIndexer';
-export { VariablesModel, ARCEnvironment, ARCVariable, DeleteEnvironmentResult, DeleteVariableResult } from './src/VariablesModel';
+export { VariablesModel, ARCEnvironment, ARCVariable } from './src/VariablesModel';
 export { WebsocketUrlHistoryModel, ARCWebsocketUrlHistory } from './src/WebsocketUrlHistoryModel';
-export { Entity } from './src/types';
+export { ArcModelEventTypes } from './src/events/ArcModelEventTypes';
+export { ArcModelEvents } from './src/events/ArcModelEvents';
+export {
+  Entity,
+  DeletedEntity,
+  ARCEntityChangeRecord,
+  ARCRequestEntityChangeRecord,
+  ARCModelListOptions,
+  ARCModelListResult,
+  ARCModelListResultDetail,
+} from './src/types';
+
+export {
+  ARCProjectReadEvent,
+  ARCProjectUpdateEvent,
+  ARCProjectUpdateBulkEvent,
+  ARCProjectUpdatedEvent,
+  ARCProjectDeleteEvent,
+  ARCProjectDeletedEvent,
+  ARCProjectListEvent,
+} from './src/events/ProjectEvents';
+export {
+  ARCRequestEventRequestOptions,
+  ARCRequestReadEvent,
+  ARCRequestReadBulkEvent,
+  ARCRequestUpdateEvent,
+  ARCRequestStoreEvent,
+  ARCRequestUpdateBulkEvent,
+  ARCRequestUpdatedEvent,
+  ARCRequestDeleteEvent,
+  ARCRequestDeleteBulkEvent,
+  ARCRequestUndeleteBulkEvent,
+  ARCRequestDeletedEvent,
+  ARCRequestListEvent,
+  ARCRequestQueryEvent,
+  ARCRequestListProjectRequestsEvent,
+} from './src/events/RequestEvents';
+export {
+  ARCModelReadEventDetail,
+  ARCModelReadBulkEventDetail,
+  ARCModelUpdateEventDetail,
+  ARCModelUpdateBulkEventDetail,
+  ARCModelDeleteEventDetail,
+  ARCModelDestroyEventDetail,
+  ARCModelVoidResultEventDetail,
+  ARCModelDeleteBulkEventDetail,
+  ARCEntityDeletedEvent,
+  ARCEntityListEvent,
+  ARCModelDeleteEvent,
+  ARCModelStateDeleteEvent,
+} from './src/events/BaseEvents';
+export {
+  ARCUrlIndexUpdateEvent,
+  ARCUrlIndexQueryEvent,
+} from './src/events/UrlIndexerEvents';
+export {
+  ARCHostRuleUpdateEvent,
+  ARCHostRuleUpdateBulkEvent,
+  ARCHostRuleUpdatedEvent,
+  ARCHostRuleDeleteEvent,
+  ARCHostRuleDeletedEvent,
+  ARCHostRuletListEvent,
+} from './src/events/HostRuleEvents';
+
+export {
+  ARCAuthDataUpdateEvent,
+  ARCAuthDataQueryEvent,
+  ARCAuthDataUpdatedEvent,
+} from './src/events/AuthDataEvents';
+
+export {
+  ARCClientCertificateReadEvent,
+  ARCClientCertificateInsertEvent,
+  ARCClientCertificateUpdateEvent,
+  ARCClientCertificateUpdatedEvent,
+  ARCClientCertificateDeleteEvent,
+  ARCClientCertificateDeletedEvent,
+  ARCClientCertificateListEvent,
+} from './src/events/CertificatesEvents';
+
+export {
+  ARCRestApiReadEvent,
+  ARCRestApiUpdateEvent,
+  ARCRestApiUpdateBulkEvent,
+  ARCRestApiUpdatedEvent,
+  ARCRestApiDeleteEvent,
+  ARCRestApiDeletedEvent,
+  ARCRestApiListEvent,
+  ARCRestApiDataReadEvent,
+  ARCRestApiDataUpdateEvent,
+  ARCRestApiDataUpdatedEvent,
+  ARCRestApiVersionDeleteEvent,
+  ARCRestApiVersionDeletedEvent,
+} from './src/events/RestApiEvents';
+
+export {
+  ARCHistoryUrlInsertEvent,
+  ARCHistoryUrlUpdatedEvent,
+  ARCHistoryUrlListEvent,
+  ARCHistoryUrlQueryEvent,
+} from './src/events/UrlHistoryEvents';
+
+export {
+  ARCWSUrlInsertEvent,
+  ARCWSUrlUpdatedEvent,
+  ARCWSUrlListEvent,
+  ARCWSUrlQueryEvent,
+} from './src/events/WSUrlHistoryEvents';
+
+export {
+  ARCVariablesListOptions,
+  ARCEnvironmentReadEvent,
+  ARCEnvironmentUpdateEvent,
+  ARCEnvironmentUpdatedEvent,
+  ARCEnvironmentDeleteEvent,
+  ARCEnvironmentDeletedEvent,
+  ARCEnvironmentListEvent,
+  ARCVariableUpdateEvent,
+  ARCVariableUpdatedEvent,
+  ARCEVariableDeleteEvent,
+  ARCVariableDeletedEvent,
+  ARCVariableListEvent,
+} from './src/events/VariableEvents';

@@ -12,6 +12,9 @@ License for the specific language governing permissions and limitations under
 the License.
 */
 import { v4 } from '@advanced-rest-client/uuid-generator';
+import { normalizeRequestType } from './Utils.js';
+import { ArcModelEventTypes } from './events/ArcModelEventTypes.js';
+import { ArcModelEvents } from './events/ArcModelEvents.js';
 
 /** @typedef {import('./UrlIndexer').IndexableRequest} IndexableRequest */
 /** @typedef {import('./UrlIndexer').IndexableRequestInternal} IndexableRequestInternal */
@@ -19,21 +22,46 @@ import { v4 } from '@advanced-rest-client/uuid-generator';
 /** @typedef {import('./UrlIndexer').ProcessedQueryResults} ProcessedQueryResults */
 /** @typedef {import('./UrlIndexer').IndexQueryOptions} IndexQueryOptions */
 /** @typedef {import('./UrlIndexer').IndexQueryResult} IndexQueryResult */
+/** @typedef {import('./events/RequestEvents').ARCRequestUpdatedEvent} ARCRequestUpdatedEvent */
+/** @typedef {import('./events/RequestEvents').ARCRequestDeletedEvent} ARCRequestDeletedEvent */
+/** @typedef {import('./events/BaseEvents').ARCModelDeleteEvent} ARCModelDeleteEvent */
+/** @typedef {import('./events/UrlIndexerEvents').ARCUrlIndexUpdateEvent} ARCUrlIndexUpdateEvent */
+/** @typedef {import('./events/UrlIndexerEvents').ARCUrlIndexQueryEvent} ARCUrlIndexQueryEvent */
 
 /* eslint-disable class-methods-use-this */
 /* eslint-disable no-plusplus */
 /* eslint-disable no-continue */
 
-export function normalizeType(type) {
-  switch (type) {
-    case 'saved-requests':
-      return 'saved';
-    case 'history-requests':
-      return 'history';
-    default:
-      return type;
-  }
-}
+export const indexRequestQueueValue = Symbol('indexRequestQueueValue');
+export const deleteRequestQueueValue = Symbol('deleteRequestQueueValue');
+export const indexDebounceValue = Symbol('indexDebounceValue');
+export const deleteIndexDebounceValue = Symbol('deleteIndexDebounceValue');
+export const indexUpdateHandler = Symbol('indexUpdateHandler');
+export const indexQueryHandler = Symbol('indexQueryHandler');
+export const requestChangeHandler = Symbol('requestChangeHandler');
+export const requestDeleteHandler = Symbol('requestDeleteHandler');
+export const deletemodelHandler = Symbol('deletemodelHandler');
+export const deleteStores = Symbol('deleteStores');
+export const quietIndexData = Symbol('quietIndexData');
+export const deleteIndexDebounce = Symbol('deleteIndexDebounce');
+export const quietTndex = Symbol('quietTndex');
+export const indexDebounce = Symbol('indexDebounce');
+export const processIndexedRequests = Symbol('processIndexedRequests');
+export const prepareRequestIndexData = Symbol('prepareRequestIndexData');
+export const storeIndexes = Symbol('storeIndexes');
+export const appendQueryParams = Symbol('appendQueryParams');
+export const generateId = Symbol('generateId');
+export const createIndexIfMissing = Symbol('createIndexIfMissing');
+export const getUrlObject = Symbol('getUrlObject');
+export const getAuthorityPath = Symbol('getAuthorityPath');
+export const getPathQuery = Symbol('getPathQuery');
+export const getQueryString = Symbol('getQueryString');
+export const removeRedundantIndexes = Symbol('removeRedundantIndexes');
+export const getIndexedDataAll = Symbol('getIndexedDataAll');
+export const searchIndexOf = Symbol('searchIndexOf');
+export const searchCasing = Symbol('searchCasing');
+export const nextCasing = Symbol('nextCasing');
+export const renindex = Symbol('renindex');
 
 export const STORE_NAME = 'request-index';
 export const STORE_VERSION = 1;
@@ -53,7 +81,7 @@ export function createSchema(e) {
 }
 
 /**
- * An element responsible for indexing and querying for URL data.
+ * An element responsible for indexing and querying for ARC request URL data.
  *
  * To index an URL it requires the following properties:
  * - url - the URL to index
@@ -71,74 +99,6 @@ export function createSchema(e) {
  *
  * The component automatically handles request update/delete events to index or
  * remove index of a request object.
- *
- * ## Usage
- *
- * ### Storing URL data
- *
- * ```javascript
- * const e = new CustomEvent('url-index-update', {
- *  composed: true,
- *  bubbles: true,
- *  cancelable: true,
- *  detail: {
- *    data: [{
- *      id: 'xxx',
- *      type: 'saved-requests',
- *      url: 'https://domain.com'
- *    }]
- *  }
- * });
- * this.dispatchEvent(e);
- * e.detail.result
- * .then((result) => {
- *  console.log(result);
- * });
- * ```
- *
- * or directly on the component:
- *
- * ```javascript
- * const node = document.querySelector('url-indexer');
- * node.index([{
- *  id: 'xxx',
- *  type: 'saved',
- *  url: 'https://domain.com'
- * }])
- * .then((result) => {});
- * ```
- *
- * ### Querying for data
- *
- * ```javascript
- * const e = new CustomEvent('url-index-query', {
- *  composed: true,
- *  bubbles: true,
- *  cancelable: true,
- *  detail: {
- *    q: 'https://...',
- *    type: 'saved', // optional
- *    detailed: false // Optional, default to `false`
- *  }
- * });
- * this.dispatchEvent(e);
- * e.detail.result
- * .then((result) => {
- *  console.log(result);
- * });
- * ```
- *
- * or direct call:
- *
- * ```javascript
- * const node = document.querySelector('url-indexer');
- * node.query('https://...', {
- *  type: 'saved-requests', // optional
- *  detailed: false // Optional, default to `false`
- * })
- * .then((result) => {});
- * ```
- * See query method for description of parameters.
  */
 export class UrlIndexer extends HTMLElement {
   /**
@@ -146,72 +106,75 @@ export class UrlIndexer extends HTMLElement {
    */
   constructor() {
     super();
-    this._indexUpdateHandler = this._indexUpdateHandler.bind(this);
-    this._indexQueryHandler = this._indexQueryHandler.bind(this);
-    this._requestChangeHandler = this._requestChangeHandler.bind(this);
-    this._requestDeleteHandler = this._requestDeleteHandler.bind(this);
-    this._deleteModelHandler = this._deleteModelHandler.bind(this);
+    this[indexUpdateHandler] = this[indexUpdateHandler].bind(this);
+    this[indexQueryHandler] = this[indexQueryHandler].bind(this);
+    this[requestChangeHandler] = this[requestChangeHandler].bind(this);
+    this[requestDeleteHandler] = this[requestDeleteHandler].bind(this);
+    this[deletemodelHandler] = this[deletemodelHandler].bind(this);
+
+    this[indexRequestQueueValue] = [];
+    this[deleteRequestQueueValue] = [];
   }
 
   connectedCallback() {
-    window.addEventListener('url-index-update', this._indexUpdateHandler);
-    window.addEventListener('url-index-query', this._indexQueryHandler);
-    window.addEventListener(
-      'request-object-changed',
-      this._requestChangeHandler
-    );
-    window.addEventListener(
-      'request-object-deleted',
-      this._requestDeleteHandler
-    );
-    window.addEventListener('datastore-destroyed', this._deleteModelHandler);
+    window.addEventListener(ArcModelEventTypes.UrlIndexer.update, this[indexUpdateHandler]);
+    window.addEventListener(ArcModelEventTypes.UrlIndexer.query, this[indexQueryHandler]);
+    window.addEventListener(ArcModelEventTypes.Request.State.update, this[requestChangeHandler]);
+    window.addEventListener(ArcModelEventTypes.Request.State.delete, this[requestDeleteHandler]);
+    window.addEventListener(ArcModelEventTypes.destroy, this[deletemodelHandler]);
   }
 
   disconnectedCallback() {
-    window.removeEventListener('url-index-update', this._indexUpdateHandler);
-    window.removeEventListener('url-index-query', this._indexQueryHandler);
-    window.removeEventListener(
-      'request-object-changed',
-      this._requestChangeHandler
-    );
-    window.removeEventListener(
-      'request-object-deleted',
-      this._requestDeleteHandler
-    );
-    window.removeEventListener('datastore-destroyed', this._deleteModelHandler);
+    window.removeEventListener(ArcModelEventTypes.UrlIndexer.update, this[indexUpdateHandler]);
+    window.removeEventListener(ArcModelEventTypes.UrlIndexer.query, this[indexQueryHandler]);
+    window.removeEventListener(ArcModelEventTypes.Request.State.update, this[requestChangeHandler]);
+    window.removeEventListener(ArcModelEventTypes.Request.State.delete, this[requestDeleteHandler]);
+    window.removeEventListener(ArcModelEventTypes.destroy, this[deletemodelHandler]);
   }
 
-  _indexUpdateHandler(e) {
+  /**
+   * @param {ARCUrlIndexUpdateEvent} e
+   */
+  [indexUpdateHandler](e) {
     if (e.defaultPrevented) {
       return;
     }
-    const { data } = e.detail;
-    e.detail.result = this.index(data);
+    const { requests } = e;
+    e.detail.result = this.index(requests);
   }
 
-  _indexQueryHandler(e) {
+  /**
+   * @param {ARCUrlIndexQueryEvent} e
+   */
+  [indexQueryHandler](e) {
     if (e.defaultPrevented) {
       return;
     }
     e.preventDefault();
-    const query = e.detail.q;
+    const { term, requestType, detailed } = e;
     const opts = {};
-    if (e.detail.type) {
-      opts.type = normalizeType(e.detail.type);
+    if (requestType) {
+      opts.type = normalizeRequestType(requestType);
     }
-    if (e.detail.detailed) {
-      opts.detailed = e.detail.detailed;
+    if (typeof detailed === 'boolean') {
+      opts.detailed = detailed;
     }
-    e.detail.result = this.query(query, opts);
+    e.detail.result = this.query(term, opts);
   }
 
-  _requestChangeHandler(e) {
+  /**
+   * @param {ARCRequestUpdatedEvent} e
+   */
+  [requestChangeHandler](e) {
     if (e.cancelable) {
       return;
     }
-    const r = e.detail.request;
-    const type = normalizeType(r.type);
-    this._indexDebounce(r._id, r.url, type);
+    const { changeRecord, requestType } = e;
+    const { id, item } = changeRecord;
+    const { url } = item;
+
+    const type = normalizeRequestType(requestType);
+    this[indexDebounce](id, url, type);
   }
 
   /**
@@ -223,35 +186,32 @@ export class UrlIndexer extends HTMLElement {
    * @param {string} url Request URL
    * @param {string} type Request type (saved or history)
    */
-  _indexDebounce(id, url, type) {
-    if (!this.__indexRequestQueue) {
-      this.__indexRequestQueue = [];
-    }
-    const index = this.__indexRequestQueue.findIndex((i) => i.id === id);
+  [indexDebounce](id, url, type) {
+    const index = this[indexRequestQueueValue].findIndex((i) => i.id === id);
     if (index !== -1) {
-      this.__indexRequestQueue[index].url = url;
-      this.__indexRequestQueue[index].type = type;
+      this[indexRequestQueueValue][index].url = url;
+      this[indexRequestQueueValue][index].type = type;
       return;
     }
-    if (this.__indexDebounce) {
-      clearTimeout(this.__indexDebounce);
+    if (this[indexDebounceValue]) {
+      clearTimeout(this[indexDebounceValue]);
     }
-    this.__indexRequestQueue.push({
+    this[indexRequestQueueValue].push({
       id,
       url,
       type,
     });
-    this.__indexDebounce = setTimeout(() => {
-      this.__indexDebounce = undefined;
-      const data = this.__indexRequestQueue;
-      this.__indexRequestQueue = undefined;
+    this[indexDebounceValue] = setTimeout(() => {
+      this[indexDebounceValue] = undefined;
+      const data = this[indexRequestQueueValue];
+      this[indexRequestQueueValue] = [];
       if (data && data.length) {
-        this.__quietTndex(data);
+        this[quietTndex](data);
       }
     }, 25);
   }
 
-  async __quietTndex(data) {
+  async [quietTndex](data) {
     try {
       await this.index(data);
     } catch (e) {
@@ -263,13 +223,14 @@ export class UrlIndexer extends HTMLElement {
    * Handler for `request-object-deleted` custom event.
    * It expects `id` property to be set on event detail object.
    * Cancelable events are ignored.
-   * @param {CustomEvent} e
+   * @param {ARCRequestDeletedEvent} e
    */
-  _requestDeleteHandler(e) {
+  [requestDeleteHandler](e) {
     if (e.cancelable) {
       return;
     }
-    this._deleteIndexDebounce(e.detail.id);
+    const { id } = e;
+    this[deleteIndexDebounce](id);
   }
 
   /**
@@ -279,28 +240,28 @@ export class UrlIndexer extends HTMLElement {
    *
    * @param {String} id Request ID
    */
-  _deleteIndexDebounce(id) {
-    if (!this.__deleteRequestQueue) {
-      this.__deleteRequestQueue = [];
+  [deleteIndexDebounce](id) {
+    if (!this[deleteRequestQueueValue]) {
+      this[deleteRequestQueueValue] = [];
     }
-    if (this.__deleteRequestQueue.indexOf(id) !== -1) {
+    if (this[deleteRequestQueueValue].indexOf(id) !== -1) {
       return;
     }
-    if (this.__deleteIndexDebounce) {
-      clearTimeout(this.__deleteIndexDebounce);
+    if (this[deleteIndexDebounceValue]) {
+      clearTimeout(this[deleteIndexDebounceValue]);
     }
-    this.__deleteRequestQueue.push(id);
-    this.__deleteIndexDebounce = setTimeout(() => {
-      this.__deleteIndexDebounce = undefined;
-      const data = this.__deleteRequestQueue;
-      this.__deleteRequestQueue = undefined;
+    this[deleteRequestQueueValue].push(id);
+    this[deleteIndexDebounceValue] = setTimeout(() => {
+      this[deleteIndexDebounceValue] = undefined;
+      const data = this[deleteRequestQueueValue];
+      this[deleteRequestQueueValue] = [];
       if (data && data.length) {
-        this.__quietIndexData(data);
+        this[quietIndexData](data);
       }
     }, 25);
   }
 
-  async __quietIndexData(data) {
+  async [quietIndexData](data) {
     try {
       await this.deleteIndexedData(data);
     } catch (e) {
@@ -308,44 +269,35 @@ export class UrlIndexer extends HTMLElement {
     }
   }
 
-  _deleteModelHandler(e) {
-    let store = e.detail.datastore;
-    if (!Array.isArray(store)) {
-      store = [store];
-    }
-    return this._deleteStores(store);
+  /**
+   * Handler for a event that destroys the application data.
+   * @param {ARCModelDeleteEvent} e
+   */
+  async [deletemodelHandler](e) {
+    const { stores } = e;
+    return this[deleteStores](stores);
   }
 
   /**
    * Removes indexed data from select stores.
+   *
    * @param {string[]} store A stores that being destroyed in the app.
    * @return {Promise<void>}
    */
-  async _deleteStores(store) {
-    try {
-      if (
-        store.indexOf('saved-requests') !== -1 ||
-        store.indexOf('saved') !== -1
-      ) {
-        await this.deleteIndexedType('saved');
-      }
-    } catch (_) {
-      // ...
+  async [deleteStores](store) {
+    const promises = [];
+    if (store.indexOf('saved-requests') !== -1 || store.indexOf('saved') !== -1) {
+      promises[promises.length] = this.deleteIndexedType('saved');
     }
-    try {
-      if (
-        store.indexOf('history-requests') !== -1 ||
-        store.indexOf('history') !== -1
-      ) {
-        await this.deleteIndexedType('history');
-      }
-    } catch (_) {
-      // ...
+    if (store.indexOf('history-requests') !== -1 || store.indexOf('history') !== -1) {
+      promises[promises.length] = this.deleteIndexedType('history');
     }
+    if (store.indexOf('all') !== -1 || store.indexOf('all') !== -1) {
+      promises[promises.length] = this.clearIndexedData();
+    }
+
     try {
-      if (store.indexOf('all') !== -1) {
-        await this.clearIndexedData();
-      }
+      await Promise.all(promises);
     } catch (_) {
       // ...
     }
@@ -391,18 +343,18 @@ export class UrlIndexer extends HTMLElement {
    */
   async index(requests) {
     const db = await this.openSearchStore();
-    const result = await this._getIndexedDataAll(
+    const result = await this[getIndexedDataAll](
       db,
       requests.map((i) => i.id)
     );
-    const data = this._processIndexedRequests(requests, result);
+    const data = this[processIndexedRequests](requests, result);
     if (data.index.length) {
-      await this._storeIndexes(db, data.index);
+      await this[storeIndexes](db, data.index);
     }
     if (data.remove.length) {
-      await this._removeRedundantIndexes(db, data.remove);
+      await this[removeRedundantIndexes](db, data.remove);
     }
-    this._notifyIndexFinished();
+    ArcModelEvents.UrlIndexer.State.finished(this);
   }
 
   /**
@@ -411,12 +363,12 @@ export class UrlIndexer extends HTMLElement {
    * @param {IndexableRequestMap} map
    * @return {ProcessedQueryResults}
    */
-  _processIndexedRequests(requests, map) {
+  [processIndexedRequests](requests, map) {
     const toIndex = [];
     const toRemove = [];
     requests.forEach((request) => {
       const indexed = map[request.id] || [];
-      const indexes = this._prepareRequestIndexData(request, indexed);
+      const indexes = this[prepareRequestIndexData](request, indexed);
       toIndex.splice(toIndex.length, 0, ...indexes);
       toRemove.splice(toRemove.length, 0, ...indexed);
     });
@@ -427,15 +379,6 @@ export class UrlIndexer extends HTMLElement {
     };
   }
 
-  _notifyIndexFinished() {
-    this.dispatchEvent(
-      new CustomEvent('request-indexing-finished', {
-        bubbles: true,
-        composed: true,
-      })
-    );
-  }
-
   /**
    * Removes indexed data for given requests.
    * @param {string[]} ids List of request ids to remove.
@@ -443,7 +386,7 @@ export class UrlIndexer extends HTMLElement {
    */
   async deleteIndexedData(ids) {
     const db = await this.openSearchStore();
-    const map = await this._getIndexedDataAll(db, ids);
+    const map = await this[getIndexedDataAll](db, ids);
     let items = [];
     Object.keys(map).forEach((rid) => {
       const list = map[rid];
@@ -452,7 +395,7 @@ export class UrlIndexer extends HTMLElement {
       }
     });
     if (items.length) {
-      await this._removeRedundantIndexes(db, items);
+      await this[removeRedundantIndexes](db, items);
     }
   }
 
@@ -523,11 +466,15 @@ export class UrlIndexer extends HTMLElement {
    * }
    * ```
    */
-  _getIndexedDataAll(db, ids) {
+  [getIndexedDataAll](db, ids) {
     return new Promise((resolve) => {
+      const result = /** @type IndexableRequestMap */ ({});
+      if (!db.objectStoreNames.contains('urls')) {
+        resolve(result);
+        return;
+      }
       const tx = db.transaction('urls', 'readonly');
       const store = tx.objectStore('urls');
-      const result = /** @type IndexableRequestMap */ ({});
       tx.onerror = () => {
         resolve(result);
       };
@@ -569,38 +516,38 @@ export class UrlIndexer extends HTMLElement {
    * @param {IndexableRequestInternal[]} indexed List of already indexed properties
    * @return {IndexableRequestInternal[]} A list of objects to store
    */
-  _prepareRequestIndexData(request, indexed) {
+  [prepareRequestIndexData](request, indexed) {
     const result = [];
     const { id, url } = request;
-    const type = normalizeType(request.type);
+    const type = normalizeRequestType(request.type);
     let parser;
     try {
       parser = new URL(url);
     } catch (_) {
       return [];
     }
-    const urlIndex = this._getUrlObject(request, indexed);
+    const urlIndex = this[getUrlObject](request, indexed);
     if (urlIndex) {
       urlIndex.fullUrl = 1;
       result[result.length] = urlIndex;
     }
 
-    const authorityIndex = this._getAuthorityPath(parser, id, type, indexed);
+    const authorityIndex = this[getAuthorityPath](parser, id, type, indexed);
     if (authorityIndex) {
       result[result.length] = authorityIndex;
     }
 
-    const pq = this._getPathQuery(parser, id, type, indexed);
+    const pq = this[getPathQuery](parser, id, type, indexed);
     if (pq) {
       result[result.length] = pq;
     }
 
-    const qs = this._getQueryString(parser, id, type, indexed);
+    const qs = this[getQueryString](parser, id, type, indexed);
     if (qs) {
       result[result.length] = qs;
     }
 
-    this._appendQueryParams(parser, id, type, indexed, result);
+    this[appendQueryParams](parser, id, type, indexed, result);
     return result;
   }
 
@@ -610,7 +557,7 @@ export class UrlIndexer extends HTMLElement {
    * @param {string} type Request type
    * @return {string}
    */
-  _generateId(url, type) {
+  [generateId](url, type) {
     return `${url}::${type}::${v4()}`;
   }
 
@@ -624,7 +571,7 @@ export class UrlIndexer extends HTMLElement {
    * @return {IndexableRequestInternal|undefined} Index object to store or `undefined` if already
    * indexed.
    */
-  _createIndexIfMissing(url, id, type, indexed) {
+  [createIndexIfMissing](url, id, type, indexed) {
     const lowerUrl = url.toLowerCase();
     const index = indexed.findIndex(
       (item) => item.url.toLowerCase() === lowerUrl
@@ -634,7 +581,7 @@ export class UrlIndexer extends HTMLElement {
       return undefined;
     }
     return {
-      id: this._generateId(lowerUrl, type),
+      id: this[generateId](lowerUrl, type),
       url,
       requestId: id,
       type,
@@ -651,8 +598,8 @@ export class UrlIndexer extends HTMLElement {
    * @return {IndexableRequestInternal|undefined} Object to store or `undefined` if the object
    * already exists.
    */
-  _getUrlObject(request, indexed) {
-    return this._createIndexIfMissing(
+  [getUrlObject](request, indexed) {
+    return this[createIndexIfMissing](
       request.url,
       request.id,
       request.type,
@@ -671,9 +618,9 @@ export class UrlIndexer extends HTMLElement {
    * @return {IndexableRequestInternal|undefined} Object to store or `undefined` if the object
    * already exists.
    */
-  _getAuthorityPath(parser, id, type, indexed) {
+  [getAuthorityPath](parser, id, type, indexed) {
     const url = parser.host + parser.pathname + parser.search;
-    return this._createIndexIfMissing(url, id, type, indexed);
+    return this[createIndexIfMissing](url, id, type, indexed);
   }
 
   /**
@@ -687,9 +634,9 @@ export class UrlIndexer extends HTMLElement {
    * @return {IndexableRequestInternal|undefined} Object to store or `undefined` if the object
    * already exists.
    */
-  _getPathQuery(parser, id, type, indexed) {
+  [getPathQuery](parser, id, type, indexed) {
     const url = parser.pathname + parser.search;
-    return this._createIndexIfMissing(url, id, type, indexed);
+    return this[createIndexIfMissing](url, id, type, indexed);
   }
 
   /**
@@ -703,13 +650,13 @@ export class UrlIndexer extends HTMLElement {
    * @return {IndexableRequestInternal|undefined} Object to store or `undefined` if the object
    * already exists.
    */
-  _getQueryString(parser, id, type, indexed) {
+  [getQueryString](parser, id, type, indexed) {
     let url = parser.search;
     if (!url || url === '?') {
       return undefined;
     }
     url = url.substr(1);
-    return this._createIndexIfMissing(url, id, type, indexed);
+    return this[createIndexIfMissing](url, id, type, indexed);
   }
 
   /**
@@ -722,14 +669,14 @@ export class UrlIndexer extends HTMLElement {
    * @param {IndexableRequestInternal[]} indexed Already indexed data.
    * @param {IndexableRequestInternal[]} target A list where to put generated data
    */
-  _appendQueryParams(parser, id, type, indexed, target) {
+  [appendQueryParams](parser, id, type, indexed, target) {
     parser.searchParams.forEach((value, name) => {
       const qstring = `${name}=${value}`;
-      const qindex = this._createIndexIfMissing(qstring, id, type, indexed);
+      const qindex = this[createIndexIfMissing](qstring, id, type, indexed);
       if (qindex) {
         target.push(qindex);
       }
-      const vindex = this._createIndexIfMissing(value, id, type, indexed);
+      const vindex = this[createIndexIfMissing](value, id, type, indexed);
       if (vindex) {
         target.push(vindex);
       }
@@ -744,7 +691,7 @@ export class UrlIndexer extends HTMLElement {
    * @return {Promise<void>}
     window
    */
-  _storeIndexes(db, indexes) {
+  [storeIndexes](db, indexes) {
     return new Promise((resolve, reject) => {
       const tx = db.transaction('urls', 'readwrite');
       const store = tx.objectStore('urls');
@@ -766,7 +713,7 @@ export class UrlIndexer extends HTMLElement {
    * @param {IndexableRequestInternal[]} items List of datastore index items.
    * @return {Promise<void>}
    */
-  _removeRedundantIndexes(db, items) {
+  [removeRedundantIndexes](db, items) {
     return new Promise((resolve, reject) => {
       const tx = db.transaction('urls', 'readwrite');
       const store = tx.objectStore('urls');
@@ -791,26 +738,26 @@ export class UrlIndexer extends HTMLElement {
    */
   async query(query, opts = {}) {
     const db = await this.openSearchStore();
-    const type = normalizeType(opts.type);
+    const type = normalizeRequestType(opts.type);
     if (opts.detailed) {
-      return this._searchIndexOf(db, query, type);
+      return this[searchIndexOf](db, query, type);
     }
-    return this._searchCasing(db, query, type);
+    return this[searchCasing](db, query, type);
   }
 
   /**
    * Performance search on the data store using `indexOf` on the primary key.
-   * This function is slower than `_searchCasing` but much, much faster than
+   * This function is slower than `[searchCasing]()` but much, much faster than
    * other ways to search for this data.
    * It allows to perform a search on the part of the url only like:
-   * `'*' + q + '*'` while `_searchCasing` only allows `q + '*'` type search.
+   * `'*' + q + '*'` while `[searchCasing]()` only allows `q + '*'` type search.
    *
    * @param {IDBDatabase} db Reference to the database
    * @param {string} q A string to search for
    * @param {string=} type A type of the request to include into results.
    * @return {Promise<IndexQueryResult>}
    */
-  _searchIndexOf(db, q, type) {
+  [searchIndexOf](db, q, type) {
     // console.debug('Performing search using "indexof" algorithm');
     const lowerNeedle = q.toLowerCase();
     return new Promise((resolve) => {
@@ -863,7 +810,7 @@ export class UrlIndexer extends HTMLElement {
    * https://www.codeproject.com/Articles/744986/How-to-do-some-magic-with-indexedDB
    * Distributed under Apache 2 license
    *
-   * This is much faster than `_searchIndexOf` function. However may not find
+   * This is much faster than `[searchIndexOf]()` function. However may not find
    * some results. For ARC it's a default search function.
    *
    * @param {IDBDatabase} db Reference to the database
@@ -871,7 +818,7 @@ export class UrlIndexer extends HTMLElement {
    * @param {string=} type A type of the request to include into results.
    * @return {Promise<IndexQueryResult>}
    */
-  _searchCasing(db, q, type) {
+  [searchCasing](db, q, type) {
     // console.debug('Performing search using "casing" algorithm');
     const lowerNeedle = q.toLowerCase();
     return new Promise((resolve) => {
@@ -916,7 +863,7 @@ export class UrlIndexer extends HTMLElement {
           return;
         }
         const upperNeedle = q.toUpperCase();
-        const nextNeedle = this._nextCasing(
+        const nextNeedle = this[nextCasing](
           keyUrl,
           keyUrl,
           upperNeedle,
@@ -938,7 +885,7 @@ export class UrlIndexer extends HTMLElement {
    * @param {string} lowerNeedle [description]
    * @return {string|undefined}
    */
-  _nextCasing(key, lowerKey, upperNeedle, lowerNeedle) {
+  [nextCasing](key, lowerKey, upperNeedle, lowerNeedle) {
     const length = Math.min(key.length, lowerNeedle.length);
     let llp = -1;
     for (let i = 0; i < length; ++i) {
@@ -996,7 +943,7 @@ export class UrlIndexer extends HTMLElement {
    * @return {Promise<void>}
    */
   async reindexSaved() {
-    return this._renindex('saved');
+    return this[renindex]('saved');
   }
 
   /**
@@ -1004,7 +951,7 @@ export class UrlIndexer extends HTMLElement {
    * @return {Promise<void>}
    */
   async reindexHistory() {
-    return this._renindex('history');
+    return this[renindex]('history');
   }
 
   /**
@@ -1012,7 +959,7 @@ export class UrlIndexer extends HTMLElement {
    * @param {string} type Either `saved` or `history`
    * @return {Promise<void>}
    */
-  async _renindex(type) {
+  async [renindex](type) {
     /* global PouchDB */
     const pdb = new PouchDB(`${type}-requests`);
     const response = await pdb.allDocs({ include_docs: true });

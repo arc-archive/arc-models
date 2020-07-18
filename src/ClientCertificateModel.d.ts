@@ -1,5 +1,11 @@
 import { ArcBaseModel } from './ArcBaseModel';
-import { Entity } from './types';
+import {
+  Entity,
+  ARCModelListOptions,
+  ARCModelListResult,
+  ARCEntityChangeRecord,
+  DeletedEntity,
+} from './types';
 
 export declare interface ARCCertificate {
   /**
@@ -109,22 +115,20 @@ export declare class ClientCertificateModel extends ArcBaseModel {
   /**
    * Lists certificates installed in the application.
    *
-   * Note, pagination is not enabled for this store. By calling this function
-   * it returns all certificates from the database.
-   *
-   * The list data only contain certificate's meta data. Certificate's content
-   * and password is kept in different store.
+   * @param opts Query options.
+   * @returns A promise resolved to a list of projects.
    */
-  list(): Promise<ARCCertificateIndex[]>;
+  list(opts?: ARCModelListOptions): Promise<ARCModelListResult<ARCCertificateIndex>>;
 
   /**
    * Reads clioent certificate full structure.
    * Returns certificate's meta data + cert + key.
    *
    * @param id Certificate's datastore id.
+   * @param rev Specific revision to read. Defaults to the latest revision.
    * @returns Promise resolved to a certificate object.
    */
-  get(id: string): Promise<ARCClientCertificate>;
+  get(id: string, rev?: string): Promise<ARCClientCertificate>;
 
   /**
    * Safely deletes certificate data from the data store.
@@ -137,7 +141,7 @@ export declare class ClientCertificateModel extends ArcBaseModel {
    * @param id Certificate's datastore id.
    * @returns Promise resolved when both entries are deleted.
    */
-  delete(id: string): Promise<void>;
+  delete(id: string): Promise<DeletedEntity>;
 
   /**
    * Inserts new client certificate object.
@@ -148,7 +152,7 @@ export declare class ClientCertificateModel extends ArcBaseModel {
    * id. Because this API operates on a single ID without reviews this won't
    * return the final object.
    */
-  insert(data: ARCClientCertificate): Promise<string>;
+  insert(data: ARCClientCertificate): Promise<ARCEntityChangeRecord<ARCClientCertificate>>;
 
   /**
    * Prepares certificate object to be stored in the data store.
@@ -186,10 +190,6 @@ export declare class ClientCertificateModel extends ArcBaseModel {
    * @returns Restored array view.
    */
   base64ToBuffer(str: string): Uint8Array;
-  _listHandler(e: CustomEvent): void;
-  _getHandler(e: CustomEvent): void;
-  _deleteHandler(e: CustomEvent): void;
-  _insertHandler(e: CustomEvent): void;
 
   /**
    * Override's delete model function to include the "data" store.

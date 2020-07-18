@@ -2,6 +2,7 @@ import { fixture, assert, oneEvent } from '@open-wc/testing';
 import { DataGenerator } from '@advanced-rest-client/arc-data-generator';
 import '../../auth-data-model.js';
 import { normalizeUrl, computeKey } from '../../src/AuthDataModel.js';
+import { ArcModelEventTypes } from '../../src/events/ArcModelEventTypes.js';
 
 /** @typedef {import('../../src/AuthDataModel').AuthDataModel} AuthDataModel */
 
@@ -73,28 +74,37 @@ describe('Authorization data model', () => {
       };
     });
 
+    it('returns change record', async () => {
+      const record = await element.update(url, method, dataObj);
+      assert.typeOf(record, 'object', 'returns an object');
+      assert.typeOf(record.rev, 'string', 'revision is set');
+      assert.equal(record.id, key, 'id is set');
+      assert.typeOf(record.item, 'object', 'item is set');
+    });
+
     it('creates a new object in the datastore', async () => {
       const result = await element.update(url, method, dataObj);
-      assert.typeOf(result._rev, 'string', '_rev is set');
-      assert.equal(result._id, key, '_id is set');
-      assert.equal(result.username, dataObj.username, 'username is set');
-      assert.equal(result.password, dataObj.password, 'password is set');
-      assert.equal(result.domain, dataObj.domain, 'username is set');
+      const { item } = result;
+      assert.typeOf(item._rev, 'string', '_rev is set');
+      assert.equal(item._id, key, '_id is set');
+      assert.equal(item.username, dataObj.username, 'username is set');
+      assert.equal(item.password, dataObj.password, 'password is set');
+      assert.equal(item.domain, dataObj.domain, 'username is set');
     });
 
     it('Updates created object', async () => {
       const result = await element.update(url, method, dataObj);
-      const originalRev = result._rev;
-      result.username = 'test-2';
-      const updated = await element.update(url, method, result);
-      assert.notEqual(updated._rev, originalRev, '_rev is regenerated');
-      assert.equal(updated._id, key, '_id is the same');
-      assert.equal(updated.username, 'test-2', 'Name is set');
+      const originalRev = result.rev;
+      result.item.username = 'test-2';
+      const updated = await element.update(url, method, result.item);
+      assert.notEqual(updated.rev, originalRev, '_rev is regenerated');
+      assert.equal(updated.id, key, '_id is the same');
+      assert.equal(updated.item.username, 'test-2', 'Name is set');
     });
 
-    it('dispatches project-object-changed custom event', async () => {
+    it('dispatches change event', async () => {
       element.update(url, method, dataObj);
-      await oneEvent(element, 'auth-data-changed');
+      await oneEvent(element, ArcModelEventTypes.AuthData.State.update);
     });
   });
 

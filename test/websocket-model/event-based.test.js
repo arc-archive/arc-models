@@ -1,574 +1,276 @@
-import { fixture, assert } from '@open-wc/testing';
+import { fixture, assert, html } from '@open-wc/testing';
 import { DataGenerator } from '@advanced-rest-client/arc-data-generator';
 import * as sinon from 'sinon';
 import '../../websocket-url-history-model.js';
+import { ArcModelEventTypes } from '../../src/events/ArcModelEventTypes.js';
+import { ArcModelEvents } from '../../src/events/ArcModelEvents.js';
 
 /* eslint-disable require-atomic-updates */
 /* eslint-disable no-param-reassign */
 /* eslint-disable no-unused-vars */
 
 /** @typedef {import('../../src/WebsocketUrlHistoryModel').WebsocketUrlHistoryModel} WebsocketUrlHistoryModel */
+/** @typedef {import('../../src/WebsocketUrlHistoryModel').ARCWebsocketUrlHistory} ARCWebsocketUrlHistory */
 
-describe('<websocket-url-history-model> - Events API', () => {
-  const generator = new DataGenerator();
+describe('WebsocketUrlHistoryModel - Events API', () => {
   /**
    * @return {Promise<WebsocketUrlHistoryModel>}
    */
   async function basicFixture() {
-    return fixture(
-      '<websocket-url-history-model></websocket-url-history-model>'
-    );
+    return fixture(html`<websocket-url-history-model></websocket-url-history-model>`);
   }
 
-  describe('Events API for websocket url history', () => {
-    function fireChanged(item) {
-      const e = new CustomEvent('websocket-url-history-changed', {
-        detail: {
-          item,
-          result: undefined,
-        },
-        bubbles: true,
-        composed: true,
-        cancelable: true,
-      });
-      document.body.dispatchEvent(e);
-      return e;
-    }
+  const generator = new DataGenerator();
 
-    describe('websocket-url-history-changed', () => {
-      afterEach(() => {
-        return generator.destroyWebsocketsData();
-      });
-
-      let element;
-      let dataObj;
-      beforeEach(async () => {
-        element = await basicFixture();
-        dataObj = {
-          _id: 'http://domain.com',
-          cnt: 1,
-          time: Date.now(),
-        };
-      });
-
-      it('Ignores non-cancellable event', () => {
-        const e = {
-          cancelable: false,
-          detail: {
-            item: dataObj,
-            result: undefined,
-          },
-        };
-        element._handleChange(e);
-        assert.isUndefined(e.detail.result);
-      });
-
-      it('Ignores cancelled event', () => {
-        const e = {
-          cancelable: true,
-          defaultPrevented: true,
-          detail: {
-            item: dataObj,
-            result: undefined,
-          },
-        };
-        element._handleChange(e);
-        assert.isUndefined(e.detail.result);
-      });
-
-      it('Ignores self dispatched events', () => {
-        const e = {
-          cancelable: true,
-          composedPath: () => {
-            return [element];
-          },
-          detail: {
-            item: dataObj,
-            result: undefined,
-          },
-        };
-        element._handleChange(e);
-        assert.isUndefined(e.detail.result);
-      });
-
-      it('Event is canceled', () => {
-        const e = fireChanged(dataObj);
-        assert.isTrue(e.defaultPrevented);
-        return e.detail.result;
-      });
-
-      it('Event detail contains "result" as promise', () => {
-        const e = fireChanged(dataObj);
-        assert.typeOf(e.detail.result, 'promise');
-        return e.detail.result;
-      });
-
-      it('Creates a new object in the datastore', () => {
-        const e = fireChanged(dataObj);
-        return e.detail.result.then((result) => {
-          assert.typeOf(result._rev, 'string', '_rev is set');
-          assert.typeOf(result._id, 'string', '_id is set');
-          assert.equal(result.cnt, dataObj.cnt, 'cnt is set');
-          assert.equal(result.time, dataObj.time, 'time is set');
-        });
-      });
-
-      it('Updates created object', () => {
-        let originalRev;
-        let originalId;
-        const e = fireChanged(dataObj);
-        return e.detail.result
-          .then((result) => {
-            originalRev = result._rev;
-            originalId = result._id;
-            result.cnt = 2;
-            const ev = fireChanged(result);
-            return ev.detail.result;
-          })
-          .then((result) => {
-            assert.notEqual(result._rev, originalRev, '_rev is regenerated');
-            assert.equal(result._id, originalId, '_id is the same');
-            assert.equal(result.cnt, 2, 'Name is set');
-          });
-      });
-
-      it('Rejects promise when save object is not set', async () => {
-        const e = fireChanged();
-        let called;
-        try {
-          await e.detail.result;
-        } catch (cause) {
-          assert.typeOf(cause, 'error');
-          called = true;
-        }
-        assert.isTrue(called);
-      });
-
-      it('Rejects promise when save object has no id', async () => {
-        const cp = { ...dataObj };
-        cp._id = undefined;
-        const e = fireChanged(cp);
-        let called;
-        try {
-          await e.detail.result;
-        } catch (cause) {
-          assert.typeOf(cause, 'error');
-          called = true;
-        }
-        assert.isTrue(called);
-      });
-
-      it('Handles exceptions', () => {
-        const e = {
-          cancelable: true,
-          composedPath: () => [],
-          preventDefault: () => {},
-          stopPropagation: () => {},
-          detail: {
-            item: dataObj,
-          },
-        };
-        element.update = () => {
-          return Promise.reject(new Error('test'));
-        };
-        let called = false;
-        element._handleChange(e);
-        return e.detail.result
-          .catch((cause) => {
-            if (cause.message === 'test') {
-              called = true;
-            }
-          })
-          .then(() => {
-            assert.isTrue(called);
-          });
-      });
+  describe(`${ArcModelEventTypes.WSUrlHistory.list} event`, () => {
+    before(async () => {
+      const model = await basicFixture();
+      const projects = /** @type ARCWebsocketUrlHistory[] */ (generator.generateUrlsData({ size: 30 }));
+      await model.db.bulkDocs(projects);
     });
 
-    describe('websocket-url-history-read', () => {
-      afterEach(() => {
-        return generator.destroyWebsocketsData();
-      });
-
-      let element;
-      let dataObj;
-      beforeEach(async () => {
-        element = await basicFixture();
-        dataObj = {
-          _id: 'http://domain.com',
-          cnt: 1,
-          time: Date.now(),
-        };
-        const e = fireChanged(dataObj);
-        dataObj = await e.detail.result;
-      });
-
-      function fire(id) {
-        const e = new CustomEvent('websocket-url-history-read', {
-          detail: {
-            url: id,
-            result: undefined,
-          },
-          bubbles: true,
-          composed: true,
-          cancelable: true,
-        });
-        document.body.dispatchEvent(e);
-        return e;
-      }
-
-      it('Ignores non-cancellable event', async () => {
-        const el = await basicFixture();
-        const e = {
-          cancelable: false,
-          detail: {
-            url: dataObj._id,
-          },
-        };
-        el._handleRead(e);
-        assert.isUndefined(e.detail.result);
-      });
-
-      it('Ignores cancelled event', async () => {
-        const el = await basicFixture();
-        const e = {
-          cancelable: true,
-          defaultPrevented: true,
-          detail: {
-            url: dataObj._id,
-          },
-        };
-        el._handleRead(e);
-        assert.isUndefined(e.detail.result);
-      });
-
-      it('Ignores self dispatched events', async () => {
-        const el = await basicFixture();
-        const e = {
-          cancelable: true,
-          composedPath: () => {
-            return [el];
-          },
-          detail: {
-            url: dataObj._id,
-          },
-        };
-        el._handleRead(e);
-        assert.isUndefined(e.detail.result);
-      });
-
-      it('Event is canceled', () => {
-        const e = fire(dataObj._id);
-        assert.isTrue(e.defaultPrevented);
-        return e.detail.result;
-      });
-
-      it('Event detail contains "result" as promise', () => {
-        const e = fire(dataObj._id);
-        assert.typeOf(e.detail.result, 'promise');
-        return e.detail.result;
-      });
-
-      it('Reads an object', () => {
-        const e = fire(dataObj._id);
-        return e.detail.result.then((result) => {
-          assert.equal(result._id, dataObj._id);
-        });
-      });
-
-      it('Rejects promise when no ID', async () => {
-        const e = fire();
-        let called;
-        try {
-          await e.detail.result;
-        } catch (cause) {
-          assert.typeOf(cause, 'error');
-          called = true;
-        }
-        assert.isTrue(called);
-      });
-
-      it('Returns undefined when no object', () => {
-        const e = fire('test-id-non-existing');
-        return e.detail.result.then((result) => {
-          assert.isUndefined(result);
-        });
-      });
-
-      it('Handles exceptions', () => {
-        element.read = () => {
-          return Promise.reject(new Error('test'));
-        };
-        const e = fire('test-id-non-existing');
-        let called = false;
-        return e.detail.result
-          .catch((cause) => {
-            if (cause.message === 'test') {
-              called = true;
-            }
-          })
-          .then(() => {
-            assert.isTrue(called);
-          });
-      });
+    let element = /** @type WebsocketUrlHistoryModel */ (null);
+    beforeEach(async () => {
+      element = await basicFixture();
     });
 
-    describe('websocket-url-history-query', () => {
-      afterEach(() => {
-        return generator.destroyWebsocketsData();
-      });
-
-      let element;
-      let dataObj;
-      beforeEach(async () => {
-        element = await basicFixture();
-        dataObj = {
-          _id: 'http://domain.com',
-          cnt: 1,
-          time: Date.now(),
-        };
-        const e = fireChanged(dataObj);
-        dataObj = await e.detail.result;
-      });
-
-      function fire(q) {
-        const e = new CustomEvent('websocket-url-history-query', {
-          detail: {
-            q,
-            result: undefined,
-          },
-          bubbles: true,
-          composed: true,
-          cancelable: true,
-        });
-        document.body.dispatchEvent(e);
-        return e;
-      }
-
-      it('Ignores non-cancellable event', () => {
-        const e = {
-          cancelable: false,
-          detail: {
-            q: 'test',
-          },
-        };
-        element._handleQuery(e);
-        assert.isUndefined(e.detail.result);
-      });
-
-      it('Ignores cancelled event', () => {
-        const e = {
-          cancelable: true,
-          defaultPrevented: true,
-          detail: {
-            q: 'test',
-          },
-        };
-        element._handleQuery(e);
-        assert.isUndefined(e.detail.result);
-      });
-
-      it('Ignores self dispatched events', () => {
-        const e = {
-          cancelable: true,
-          composedPath: () => {
-            return [element];
-          },
-          detail: {
-            q: 'test',
-          },
-        };
-        element._handleQuery(e);
-        assert.isUndefined(e.detail.result);
-      });
-
-      it('Event is canceled', () => {
-        const e = fire('http');
-        assert.isTrue(e.defaultPrevented);
-        return e.detail.result;
-      });
-
-      it('Event detail contains "result" as promise', () => {
-        const e = fire('http');
-        assert.typeOf(e.detail.result, 'promise');
-        return e.detail.result;
-      });
-
-      it('Returns a list of results', () => {
-        const e = fire('http');
-        return e.detail.result.then((result) => {
-          assert.typeOf(result, 'array', 'Result is an array');
-          assert.lengthOf(result, 1, 'Length is OK');
-        });
-      });
-
-      it('Returned items contains _time property', () => {
-        const e = fire('http');
-        return e.detail.result.then((result) => {
-          assert.typeOf(result[0]._time, 'number', '_time is a number');
-        });
-      });
-
-      it('Returns all items when no query', async () => {
-        const e = fire();
-        const result = await e.detail.result;
-        assert.typeOf(result, 'array', 'Result is an array');
-        assert.lengthOf(result, 1, 'Length is OK');
-      });
-
-      it('Handles exceptions', () => {
-        element.list = () => {
-          return Promise.reject(new Error('test'));
-        };
-        const e = fire('test-id-non-existing');
-        let called = false;
-        return e.detail.result
-          .catch((cause) => {
-            if (cause.message === 'test') {
-              called = true;
-            }
-          })
-          .then(() => {
-            assert.isTrue(called);
-          });
-      });
+    after(async () => {
+      await generator.destroyWebsocketsData();
     });
 
-    describe('websocket-url-history-list', () => {
-      afterEach(() => {
-        return generator.destroyWebsocketsData();
-      });
-
-      let element;
-      let dataObj;
-      beforeEach(async () => {
-        element = await basicFixture();
-        dataObj = {
-          _id: 'http://domain.com',
-          cnt: 1,
-          time: Date.now(),
-        };
-        const e = fireChanged(dataObj);
-        dataObj = await e.detail.result;
-      });
-
-      function fire() {
-        const e = new CustomEvent('websocket-url-history-list', {
-          detail: {
-            result: undefined,
-          },
-          bubbles: true,
-          composed: true,
-          cancelable: true,
-        });
-        document.body.dispatchEvent(e);
-        return e;
-      }
-
-      it('Ignores non-cancellable event', () => {
-        const e = {
-          cancelable: false,
-          detail: {},
-        };
-        element._handleQueryHistory(e);
-        assert.isUndefined(e.detail.result);
-      });
-
-      it('Ignores cancelled event', () => {
-        const e = {
-          cancelable: true,
-          defaultPrevented: true,
-          detail: {},
-        };
-        element._handleQueryHistory(e);
-        assert.isUndefined(e.detail.result);
-      });
-
-      it('Ignores self dispatched events', () => {
-        const e = {
-          cancelable: true,
-          composedPath: () => {
-            return [element];
-          },
-          detail: {},
-        };
-        element._handleQueryHistory(e);
-        assert.isUndefined(e.detail.result);
-      });
-
-      it('Event is canceled', () => {
-        const e = fire();
-        assert.isTrue(e.defaultPrevented);
-        return e.detail.result;
-      });
-
-      it('Event detail contains "result" as promise', () => {
-        const e = fire();
-        assert.typeOf(e.detail.result, 'promise');
-        return e.detail.result;
-      });
-
-      it('Returns a list of history objects', () => {
-        const e = fire();
-        return e.detail.result.then((result) => {
-          assert.typeOf(result, 'array', 'Result is an array');
-          assert.lengthOf(result, 1, 'Length is OK');
-        });
-      });
-
-      it('Returned items contains _time property', () => {
-        const e = fire();
-        return e.detail.result.then((result) => {
-          assert.typeOf(result[0]._time, 'number', '_time is a number');
-        });
-      });
-
-      it('Handles exceptions', () => {
-        element.list = () => {
-          return Promise.reject(new Error('test'));
-        };
-        const e = fire();
-        let called = false;
-        return e.detail.result
-          .catch((cause) => {
-            if (cause.message === 'test') {
-              called = true;
-            }
-          })
-          .then(() => {
-            assert.isTrue(called);
-          });
-      });
+    it('returns a query result for default parameters', async () => {
+      const result = await ArcModelEvents.WSUrlHistory.list(document.body);
+      assert.typeOf(result, 'object', 'result is an object');
+      assert.typeOf(result.nextPageToken, 'string', 'has page token');
+      assert.typeOf(result.items, 'array', 'has response items');
+      assert.lengthOf(result.items, element.defaultQueryOptions.limit, 'has default limit of items');
     });
 
-    describe('"destroy-model" event', () => {
-      function fire(models) {
-        const e = new CustomEvent('destroy-model', {
-          detail: {
-            models,
-            result: undefined,
-          },
-          bubbles: true,
-        });
-        document.body.dispatchEvent(e);
-        return e;
+    it('respects "limit" parameter', async () => {
+      const result = await ArcModelEvents.WSUrlHistory.list(document.body, {
+        limit: 5,
+      });
+      assert.lengthOf(result.items, 5);
+    });
+
+    it('respects "nextPageToken" parameter', async () => {
+      const result1 = await ArcModelEvents.WSUrlHistory.list(document.body, {
+        limit: 10,
+      });
+      const result2 = await ArcModelEvents.WSUrlHistory.list(document.body, {
+        nextPageToken: result1.nextPageToken,
+      });
+      assert.lengthOf(result2.items, 20);
+    });
+
+    it('does not set "nextPageToken" when no more results', async () => {
+      const result1 = await ArcModelEvents.WSUrlHistory.list(document.body, {
+        limit: 40,
+      });
+      const result2 = await ArcModelEvents.WSUrlHistory.list(document.body, {
+        nextPageToken: result1.nextPageToken,
+      });
+      assert.isUndefined(result2.nextPageToken);
+    });
+
+    it('adds midnight to an item when not there', async () => {
+      const entity = /** @type ARCWebsocketUrlHistory */ (generator.generateUrlObject());
+      entity._id = 'arc://custom-no-midnight/value';
+      delete entity.midnight;
+      await element.update(entity);
+      const result = await ArcModelEvents.WSUrlHistory.list(document.body, {
+        limit: 31,
+      });
+      const item = result.items.find((i) => i._id === entity._id);
+      assert.typeOf(item.midnight, 'number');
+    });
+
+    it('uses existing "midnight" value when set', async () => {
+      const entity = /** @type ARCWebsocketUrlHistory */ (generator.generateUrlObject());
+      entity._id = 'arc://custom-with-midnight/value';
+      entity.midnight = 100;
+      await element.update(entity);
+      const result = await ArcModelEvents.WSUrlHistory.list(document.body, {
+        limit: 32,
+      });
+      const item = result.items.find((i) => i._id === entity._id);
+      assert.equal(item.midnight, 100);
+    });
+  });
+
+  describe(`${ArcModelEventTypes.WSUrlHistory.insert} event`, () => {
+    let element = /** @type WebsocketUrlHistoryModel */ (null);
+    beforeEach(async () => {
+      element = await basicFixture();
+    });
+
+    afterEach(async () => {
+      await generator.destroyWebsocketsData();
+    });
+
+    it('returns the changelog', async () => {
+      const entity = /** @type ARCWebsocketUrlHistory */ (generator.generateUrlObject());
+      const result = await ArcModelEvents.WSUrlHistory.insert(document.body, entity._id);
+      assert.typeOf(result, 'object', 'returns an object');
+      assert.typeOf(result.id, 'string', 'has an id');
+      assert.typeOf(result.rev, 'string', 'has a rev');
+      assert.typeOf(result.item, 'object', 'has created object');
+      assert.isUndefined(result.oldRev, 'has no oldRev');
+    });
+
+    it('creates an item in the data store', async () => {
+      const entity = /** @type ARCWebsocketUrlHistory */ (generator.generateUrlObject());
+      await ArcModelEvents.WSUrlHistory.insert(document.body, entity._id);
+      const result = /** @type ARCWebsocketUrlHistory */ (await element.db.get(entity._id));
+      assert.typeOf(result, 'object', 'returns an object');
+      assert.equal(result._id, entity._id, 'has the id');
+      assert.typeOf(result._rev, 'string', 'has a rev');
+      assert.equal(result.cnt, 1, 'has default cnt property');
+      assert.typeOf(result.time, 'number', 'has time property');
+    });
+
+    it('updates the counter on the same item', async () => {
+      const entity = /** @type ARCWebsocketUrlHistory */ (generator.generateUrlObject());
+      await ArcModelEvents.WSUrlHistory.insert(document.body, entity._id);
+      await ArcModelEvents.WSUrlHistory.insert(document.body, entity._id);
+      const result = /** @type ARCWebsocketUrlHistory */ (await element.db.get(entity._id));
+      assert.equal(result.cnt, 2, 'has default cnt property');
+    });
+
+    it('dispatches change event', async () => {
+      const entity = /** @type ARCWebsocketUrlHistory */ (generator.generateUrlObject());
+      const spy = sinon.spy();
+      element.addEventListener(ArcModelEventTypes.WSUrlHistory.State.update, spy);
+      await ArcModelEvents.WSUrlHistory.insert(document.body, entity._id);
+      assert.isTrue(spy.calledOnce);
+    });
+
+    it('throws when no url', async () => {
+      let thrown = false;
+      try {
+        await ArcModelEvents.WSUrlHistory.insert(document.body, undefined);
+      } catch (_) {
+        thrown = true;
       }
+      assert.isTrue(thrown);
+    });
 
-      it('Deletes saved model', async () => {
-        await basicFixture();
-        const e = fire(['websocket-url-history']);
-        assert.typeOf(e.detail.result, 'array');
-        assert.lengthOf(e.detail.result, 1);
-        await Promise.all(e.detail.result);
-      });
+    it('adds midnight value', async () => {
+      const entity = /** @type ARCWebsocketUrlHistory */ (generator.generateUrlObject());
+      const result = await ArcModelEvents.WSUrlHistory.insert(document.body, entity._id);
+      assert.typeOf(result.item.midnight, 'number');
+    });
 
-      it('Calls delete functions', async () => {
-        const element = await basicFixture();
-        const spy = sinon.spy(element, 'deleteModel');
-        const e = fire(['websocket-url-history']);
-        assert.isTrue(spy.called, 'called the function');
-        await Promise.all(e.detail.result);
-      });
+    it('adds url value', async () => {
+      const entity = /** @type ARCWebsocketUrlHistory */ (generator.generateUrlObject());
+      delete entity.url;
+      const result = await ArcModelEvents.WSUrlHistory.insert(document.body, entity._id);
+      assert.typeOf(result.item.url, 'string');
+    });
+
+    it('lowercases the _id', async () => {
+      const url = 'https://API.domain.com';
+      const result = await ArcModelEvents.WSUrlHistory.insert(document.body, url);
+      assert.equal(result.id, url.toLowerCase());
+    });
+  });
+
+  describe(`${ArcModelEventTypes.WSUrlHistory.query} event`, () => {
+    let created = /** @type ARCWebsocketUrlHistory[] */ (null)
+    before(async () => {
+      const model = await basicFixture();
+      created = /** @type ARCWebsocketUrlHistory[] */ (generator.generateUrlsData({ size: 30 }));
+      await model.db.bulkDocs(created);
+    });
+
+    let element = /** @type WebsocketUrlHistoryModel */ (null);
+    beforeEach(async () => {
+      element = await basicFixture();
+    });
+
+    after(async () => {
+      await generator.destroyWebsocketsData();
+    });
+
+    it('returns a list of matched results', async () => {
+      const result = await ArcModelEvents.WSUrlHistory.query(document.body, 'http://');
+      assert.typeOf(result, 'array', 'result is an array');
+      assert.lengthOf(result, 30, 'has all results');
+    });
+
+    it('matches the URL', async () => {
+      const result = await ArcModelEvents.WSUrlHistory.query(document.body, created[0]._id);
+      assert.lengthOf(result, 1);
+    });
+
+    it('returns empty array when not found', async () => {
+      const result = await ArcModelEvents.WSUrlHistory.query(document.body, 'this will not exist');
+      assert.lengthOf(result, 0);
+    });
+
+    it('adds midnight to an item when not there', async () => {
+      const entity = /** @type ARCWebsocketUrlHistory */ (generator.generateUrlObject());
+      entity._id = 'arc://custom-no-midnight/value';
+      delete entity.midnight;
+      await element.update(entity);
+      const result = await ArcModelEvents.WSUrlHistory.query(document.body, entity._id);
+      const [item] = result;
+      assert.typeOf(item.midnight, 'number');
+    });
+
+    it('uses existing "midnight" value when set', async () => {
+      const entity = /** @type ARCWebsocketUrlHistory */ (generator.generateUrlObject());
+      entity._id = 'arc://custom-with-midnight/value';
+      entity.midnight = 100;
+      await element.update(entity);
+      const result = await ArcModelEvents.WSUrlHistory.query(document.body, entity._id);
+      const [item] = result;
+      assert.equal(item.midnight, 100);
+    });
+
+    it('adds url to an item when not there', async () => {
+      const entity = /** @type ARCWebsocketUrlHistory */ (generator.generateUrlObject());
+      entity._id = 'arc://custom-no-url/value';
+      delete entity.url;
+      await element.update(entity);
+      const result = await ArcModelEvents.WSUrlHistory.query(document.body, entity._id);
+      const [item] = result;
+      assert.typeOf(item.url, 'string');
+    });
+
+    it('uses existing "url" value when set', async () => {
+      const entity = /** @type ARCWebsocketUrlHistory */ (generator.generateUrlObject());
+      entity._id = 'arc://custom-with-url/value';
+      entity.url = 'https://API.domain.com';
+      await element.update(entity);
+      const result = await ArcModelEvents.WSUrlHistory.query(document.body, entity._id);
+      const [item] = result;
+      assert.equal(item.url, 'https://API.domain.com');
+    });
+
+    it('queries using lowercase keys', async () => {
+      await ArcModelEvents.WSUrlHistory.insert(document.body, 'https://API.domain.com');
+      const result = await ArcModelEvents.WSUrlHistory.query(document.body, 'https://api.DomaIN.com');
+      const [item] = result;
+      assert.equal(item.url, 'https://API.domain.com');
+    });
+  });
+
+  describe(`${ArcModelEventTypes.destroy} event`, () => {
+    beforeEach(async () => {
+      const created = /** @type ARCWebsocketUrlHistory[] */ (generator.generateUrlsData({ size: 30 }));
+      const model = await basicFixture();
+      await model.db.bulkDocs(created);
+    });
+
+    after(async () => {
+      await generator.destroyWebsocketsData();
+    });
+
+    it('deletes saved model', async () => {
+      await ArcModelEvents.destroy(document.body, ['websocket-url-history'])
+      const result = await generator.getDatastoreWebsocketsData();
+      assert.deepEqual(result, []);
     });
   });
 });
