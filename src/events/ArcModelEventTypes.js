@@ -123,7 +123,7 @@ export const ArcModelEventTypes = {
 Object.freeze(ArcModelEventTypes);
 Object.freeze(ArcModelEventTypes.Project);
 Object.freeze(ArcModelEventTypes.Project.State);
-Object.freeze(ArcModelEventTypes.Project);
+Object.freeze(ArcModelEventTypes.Request);
 Object.freeze(ArcModelEventTypes.Request.State);
 Object.freeze(ArcModelEventTypes.UrlIndexer);
 Object.freeze(ArcModelEventTypes.UrlIndexer.State);
