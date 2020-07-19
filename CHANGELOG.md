@@ -749,3 +749,28 @@
 * adding tests for event types [2cb60f5](https://github.com/advanced-rest-client/arc-models/commit/2cb60f59a40947ab871dbf61233f91a520b0b12e) by Pawel
 
 
+<a name="4.0.3"></a>
+## [4.0.3](https://github.com/advanced-rest-client/arc-models/compare/4.0.1...4.0.3) (2020-07-19)
+
+### Build
+
+* bumping version [0ba9440](https://github.com/advanced-rest-client/arc-models/commit/0ba94409760d67c03019d89eac1fd3fc1e233023) by Pawel
+
+
+### Update
+
+* [ci skip] automated merge master->stage. syncing main branches [1042ca1](https://github.com/advanced-rest-client/arc-models/commit/1042ca18639a8536eedad9783b35d992dc419e94) by Ci agent
+* [ci skip] automated merge master->stage. syncing main branches [db1b469](https://github.com/advanced-rest-client/arc-models/commit/db1b46996c23a6c897c51a332c02497229604907) by Ci agent
+
+
+### Features
+
+* adding project listAll function [b4cde69](https://github.com/advanced-rest-client/arc-models/commit/b4cde69f3eda92c605707c930d222aacda2c6bfb) by Pawel
+* adding midnight to ARCRequest definition [984ed94](https://github.com/advanced-rest-client/arc-models/commit/984ed9470db1fdfbc09225a38e447ee56b270e2f) by Pawel
+
+
+### Bug Fixes
+
+* closing database after performing high level tasks [2faf7af](https://github.com/advanced-rest-client/arc-models/commit/2faf7afc30778c81de33b92ce4d27bd55fe5f399) by Pawel
+
+
