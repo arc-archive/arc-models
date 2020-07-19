@@ -276,6 +276,49 @@ describe('ProjectModel', () => {
     });
   });
 
+  describe('listAll()', () => {
+    let created;
+    before(async () => {
+      const model = await basicFixture();
+      const projects = /** @type ARCProject[] */ (generator.generateProjects({ projectsSize: 30 }));
+      created = await model.postBulk(projects);
+    });
+
+    let element = /** @type ProjectModel */ (null);
+    beforeEach(async () => {
+      element = await basicFixture();
+    });
+
+    after(async () => {
+      await generator.destroySavedRequestData();
+    });
+
+    it('returns all projects', async () => {
+      const result = await element.listAll();
+      assert.typeOf(result, 'array', 'result is an array');
+      assert.lengthOf(result, 30, 'has all results');
+    });
+
+    it('returns only projects defined in keys', async () => {
+      const result = await element.listAll([created[0].id, created[1].id]);
+      assert.typeOf(result, 'array', 'result is an array');
+      assert.lengthOf(result, 2, 'has all results');
+    });
+
+    it('returns all when keys is empty', async () => {
+      const result = await element.listAll([]);
+      assert.typeOf(result, 'array', 'result is an array');
+      assert.lengthOf(result, 30, 'has all results');
+    });
+
+    it('returns empty array when empty', async () => {
+      await generator.destroySavedRequestData();
+      const result = await element.listAll();
+      assert.typeOf(result, 'array', 'result is an array');
+      assert.lengthOf(result, 0, 'has no results');
+    });
+  });
+
   describe('delete()', () => {
     let created = /** @type ARCEntityChangeRecord[] */ (null);
     before(async () => {

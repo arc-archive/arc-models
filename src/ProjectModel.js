@@ -25,6 +25,7 @@ import { ArcModelEvents } from './events/ArcModelEvents.js';
 /** @typedef {import('./events/ProjectEvents').ARCProjectUpdateBulkEvent} ARCProjectUpdateBulkEvent */
 /** @typedef {import('./events/ProjectEvents').ARCProjectDeleteEvent} ARCProjectDeleteEvent */
 /** @typedef {import('./events/ProjectEvents').ARCProjectListEvent} ARCProjectListEvent */
+/** @typedef {import('./events/ProjectEvents').ARCProjectListAllEvent} ARCProjectListAllEvent */
 /** @typedef {import('./types').ARCEntityChangeRecord} ARCEntityChangeRecord */
 /** @typedef {import('./types').ARCModelListResult} ARCModelListResult */
 /** @typedef {import('./types').ARCModelListOptions} ARCModelListOptions */
@@ -35,6 +36,7 @@ export const updateHandler = Symbol('updateHandler');
 export const updateBulkHandler = Symbol('updateBulkHandler');
 export const deleteHandler = Symbol('deleteHandler');
 export const listHandler = Symbol('listHandler');
+export const listAllHandler = Symbol('listAllHandler');
 export const normalizeProjects = Symbol('normalizeProjects');
 export const processUpdateBulkResponse = Symbol('processUpdateBulkResponse');
 
@@ -53,17 +55,39 @@ export class ProjectModel extends RequestBaseModel {
     this[updateHandler] = this[updateHandler].bind(this);
     this[deleteHandler] = this[deleteHandler].bind(this);
     this[listHandler] = this[listHandler].bind(this);
+    this[listAllHandler] = this[listAllHandler].bind(this);
     this[updateBulkHandler] = this[updateBulkHandler].bind(this);
   }
 
   /**
-   * Lists all project objects.
+   * Paginate project entities
    *
    * @param {ARCModelListOptions=} opts Query options.
    * @return {Promise<ARCModelListResult>} A promise resolved to a list of projects.
    */
   async list(opts={}) {
     return this.listEntities(this.projectDb, opts);
+  }
+
+  /**
+   * Lists all project entities.
+   *
+   * @param {string[]=} keys Project keys to read. When not set it reads all projects
+   * @return {Promise<ARCProject[]>} A promise resolved to a list of projects.
+   */
+  async listAll(keys) {
+    const opts = {
+      include_docs: true,
+    };
+    if (Array.isArray(keys) && keys.length) {
+      opts.keys = keys;
+    }
+    const response = await this.projectDb.allDocs(opts);
+    let items = [];
+    if (response && response.rows.length > 0) {
+      items = response.rows.map((item) => item.doc);
+    }
+    return items;
   }
 
   /**
@@ -142,6 +166,7 @@ export class ProjectModel extends RequestBaseModel {
     node.addEventListener(ArcModelEventTypes.Project.updateBulk, this[updateBulkHandler]);
     node.addEventListener(ArcModelEventTypes.Project.delete, this[deleteHandler]);
     node.addEventListener(ArcModelEventTypes.Project.list, this[listHandler]);
+    node.addEventListener(ArcModelEventTypes.Project.listAll, this[listAllHandler]);
   }
 
   /**
@@ -154,6 +179,7 @@ export class ProjectModel extends RequestBaseModel {
     node.removeEventListener(ArcModelEventTypes.Project.updateBulk, this[updateBulkHandler]);
     node.removeEventListener(ArcModelEventTypes.Project.delete, this[deleteHandler]);
     node.removeEventListener(ArcModelEventTypes.Project.list, this[listHandler]);
+    node.removeEventListener(ArcModelEventTypes.Project.listAll, this[listAllHandler]);
   }
 
   /**
@@ -285,7 +311,7 @@ export class ProjectModel extends RequestBaseModel {
   }
 
   /**
-   * Queries for a list of projects.
+   * Queries for a list of projects in pagination
    * @param {ARCProjectListEvent} e
    */
   [listHandler](e) {
@@ -300,5 +326,20 @@ export class ProjectModel extends RequestBaseModel {
       limit,
       nextPageToken,
     });
+  }
+
+  /**
+   * List all projects.
+   * @param {ARCProjectListAllEvent} e
+   */
+  [listAllHandler](e) {
+    if (e.defaultPrevented) {
+      return;
+    }
+    e.preventDefault();
+    e.stopPropagation();
+
+    const { keys } = e;
+    e.detail.result = this.listAll(keys);
   }
 }

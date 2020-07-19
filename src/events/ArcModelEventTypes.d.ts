@@ -8,6 +8,7 @@ declare interface ProjectEvents {
   update: string;
   delete: string;
   list: string;
+  listAll: string;
   updateBulk: string;
   State: ProjectStateEvents;
 }

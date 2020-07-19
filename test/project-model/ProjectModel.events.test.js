@@ -195,6 +195,48 @@ describe('ProjectModel', () => {
       });
     });
 
+    describe(`${ArcModelEventTypes.Project.listAll} event`, () => {
+      let created;
+      before(async () => {
+        const model = await basicFixture();
+        const projects = /** @type ARCProject[] */ (generator.generateProjects({ projectsSize: 30 }));
+        created = await model.postBulk(projects);
+      });
+
+      beforeEach(async () => {
+        await basicFixture();
+      });
+
+      after(async () => {
+        await generator.destroySavedRequestData();
+      });
+
+      it('returns all projects', async () => {
+        const result = await ArcModelEvents.Project.listAll(document.body);
+        assert.typeOf(result, 'array', 'result is an array');
+        assert.lengthOf(result, 30, 'has all results');
+      });
+
+      it('returns only projects defined in keys', async () => {
+        const result = await ArcModelEvents.Project.listAll(document.body, [created[0].id, created[1].id]);
+        assert.typeOf(result, 'array', 'result is an array');
+        assert.lengthOf(result, 2, 'has all results');
+      });
+
+      it('returns all when keys is empty', async () => {
+        const result = await ArcModelEvents.Project.listAll(document.body, []);
+        assert.typeOf(result, 'array', 'result is an array');
+        assert.lengthOf(result, 30, 'has all results');
+      });
+
+      it('returns empty array when empty', async () => {
+        await generator.destroySavedRequestData();
+        const result = await ArcModelEvents.Project.listAll(document.body);
+        assert.typeOf(result, 'array', 'result is an array');
+        assert.lengthOf(result, 0, 'has no results');
+      });
+    });
+
     describe(ArcModelEventTypes.Project.delete, () => {
       let created = /** @type ARCEntityChangeRecord[] */ (null);
       before(async () => {

@@ -91,6 +91,15 @@ declare interface ProjectFunctions {
    */
   list(target: EventTarget, opts?: ARCModelListOptions): Promise<ARCModelListResult<ARCProject>>;
 
+  /**
+   * Dispatches an event to list all project data.
+   *
+   * @param target A node on which to dispatch the event.
+   * @param keys Project keys to read. When not set it reads all projects
+   * @return List of projects.
+   */
+  listAll(target: EventTarget, keys?: string[]): Promise<ARCProject[]>;
+
   State: ProjectStateFunctions;
 }
 

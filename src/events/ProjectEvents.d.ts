@@ -5,6 +5,7 @@ import {
   ARCEntityDeletedEvent,
   ARCModelUpdateBulkEventDetail,
   ARCEntityListEvent,
+  ARCModelReadBulkEventDetail,
 } from './BaseEvents';
 import {
   ARCEntityChangeRecord,
@@ -106,6 +107,22 @@ export declare class ARCProjectListEvent extends ARCEntityListEvent<ARCProject> 
 }
 
 /**
+ * An event to be dispatched to list all projects data. Additionally it can be limited by
+ * passed keys.
+ */
+export declare class ARCProjectListAllEvent extends CustomEvent<ARCModelReadBulkEventDetail<ARCProject>> {
+  /**
+   * Project keys to read used to initialize the event
+   */
+  readonly keys: string[]|undefined;
+
+  /**
+   * @param keys Project keys to read. When not set it reads all projects
+   */
+  constructor(keys?: string[]);
+}
+
+/**
  * Dispatches an event handled by the data store to read the project metadata.
  *
  * @param target A node on which to dispatch the event.
@@ -151,6 +168,15 @@ export declare function deleteAction(target: EventTarget, id: string, rev?: stri
  * @returns Project list result.
  */
 export declare function listAction(target: EventTarget, opts?: ARCModelListOptions): Promise<ARCModelListResult<ARCProject>>;
+
+/**
+ * Dispatches an event to list all project data.
+ *
+ * @param target A node on which to dispatch the event.
+ * @param keys Project keys to read. When not set it reads all projects
+ * @return List of projects.
+ */
+export declare function listAllAction(target: EventTarget, keys?: string[]): Promise<ARCProject[]>;
 
 /**
  * Dispatches an event after a project was updated

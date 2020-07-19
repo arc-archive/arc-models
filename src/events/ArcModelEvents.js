@@ -41,6 +41,7 @@ export const ArcModelEvents = {
     updateBulk: ProjectEvents.updateBulkAction,
     delete: ProjectEvents.deleteAction,
     list: ProjectEvents.listAction,
+    listAll: ProjectEvents.listAllAction,
     State: {
       update: ProjectEvents.updatedState,
       delete: ProjectEvents.deletedState,

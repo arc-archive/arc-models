@@ -12,6 +12,7 @@ export const projectValue = Symbol('projectValue');
 export const projectIdValue = Symbol('projectIdValue');
 export const revisionValue = Symbol('revisionValue');
 export const changeRecordValue = Symbol('changeRecordValue');
+export const idsValue = Symbol('idsValue');
 
 /**
  * An event to be dispatched to read an ARC project from the data store.
@@ -187,6 +188,32 @@ export class ARCProjectListEvent extends ARCEntityListEvent {
 }
 
 /**
+ * An event to be dispatched to list all projects data. Additionally it can be limited by
+ * passed keys.
+ */
+export class ARCProjectListAllEvent extends CustomEvent {
+  /**
+   * @returns {string[]|undefined} Project keys to read used to initialize the event
+   */
+  get keys() {
+    return this[idsValue];
+  }
+
+  /**
+   * @param {string[]=} keys Project keys to read. When not set it reads all projects
+   */
+  constructor(keys) {
+    super(ArcModelEventTypes.Project.listAll, {
+      bubbles: true,
+      composed: true,
+      cancelable: true,
+      detail: {},
+    });
+    this[idsValue] = keys;
+  }
+}
+
+/**
  * Dispatches an event handled by the data store to read the project metadata.
  *
  * @param {EventTarget} target A node on which to dispatch the event.
@@ -249,6 +276,19 @@ export async function deleteAction(target, id, rev) {
  */
 export async function listAction(target, opts) {
   const e = new ARCProjectListEvent(opts);
+  target.dispatchEvent(e);
+  return e.detail.result;
+}
+
+/**
+ * Dispatches an event to list all project data.
+ *
+ * @param {EventTarget} target A node on which to dispatch the event.
+ * @param {string[]=} keys Project keys to read. When not set it reads all projects
+ * @return {Promise<ARCProject[]>} List of projects.
+ */
+export async function listAllAction(target, keys) {
+  const e = new ARCProjectListAllEvent(keys);
   target.dispatchEvent(e);
   return e.detail.result;
 }

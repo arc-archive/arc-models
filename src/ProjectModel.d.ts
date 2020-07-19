@@ -26,6 +26,14 @@ export declare class ProjectModel extends RequestBaseModel {
   list(opts?: ARCModelListOptions): Promise<ARCModelListResult<ARCProject>>;
 
   /**
+   * Lists all project entities.
+   *
+   * @param keys Project keys to read. When not set it reads all projects
+   * @returns A promise resolved to a list of projects.
+   */
+  listAll(keys?: string[]): Promise<ARCProject[]>;
+
+  /**
    * Updates project object taking care of `_rew` value read if missing.
    *
    * @param project Project object to update.
