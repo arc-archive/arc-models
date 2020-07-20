@@ -713,9 +713,9 @@ declare interface ArcModelEvents {
    *
    * @param target A node on which to dispatch the event.
    * @param stores A list of store names to affect
-   * @returns List of promises resolved when each store is destroyed
+   * @returns A promise resolved when all requested stores are deleted
    */
-  destroy(target: EventTarget, stores: string[]): Promise<void>[];
+  destroy(target: EventTarget, stores: string[]): Promise<void>;
   /**
    * Dispatches an event information the app that a store has been destroyed.
    *

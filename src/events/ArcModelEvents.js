@@ -16,7 +16,7 @@ export const ArcModelEvents = {
    *
    * @param {EventTarget} target A node on which to dispatch the event.
    * @param {string[]} stores A list of store names to affect
-   * @return {Promise<void>} List of promises resolved when each store is destroyed
+   * @return {Promise<void>} A promise resolved when all requested stores are deleted
    */
   destroy: async (target, stores) => {
     const e = new BaseEvents.ARCModelDeleteEvent(stores);
