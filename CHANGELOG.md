@@ -793,3 +793,22 @@
 * fixed type definition fot the destroy event [7e37a98](https://github.com/advanced-rest-client/arc-models/commit/7e37a98539fddc42146e0745992046d1655ab124) by Pawel
 
 
+<a name="4.0.5"></a>
+## [4.0.5](https://github.com/advanced-rest-client/arc-models/compare/4.0.3...4.0.5) (2020-07-20)
+
+### Update
+
+* [ci skip] automated merge master->stage. syncing main branches [b8a4315](https://github.com/advanced-rest-client/arc-models/commit/b8a4315d070f2b6ba578ede45fb876c60506b9d4) by Ci agent
+* [ci skip] automated merge master->stage. syncing main branches [08b7f2b](https://github.com/advanced-rest-client/arc-models/commit/08b7f2be945eb3a3fdf6e5fb50770961a123c492) by Ci agent
+
+
+### Features
+
+* adding normalization to request restore function [baf557d](https://github.com/advanced-rest-client/arc-models/commit/baf557d0eec5745d52357374fe80dac8edea2740) by Pawel
+
+
+### Bug Fixes
+
+* fixed type definition fot the destroy event [7e37a98](https://github.com/advanced-rest-client/arc-models/commit/7e37a98539fddc42146e0745992046d1655ab124) by Pawel
+
+
