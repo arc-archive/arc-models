@@ -774,3 +774,22 @@
 * closing database after performing high level tasks [2faf7af](https://github.com/advanced-rest-client/arc-models/commit/2faf7afc30778c81de33b92ce4d27bd55fe5f399) by Pawel
 
 
+<a name="4.0.4"></a>
+## [4.0.4](https://github.com/advanced-rest-client/arc-models/compare/4.0.2...4.0.4) (2020-07-20)
+
+### Update
+
+* [ci skip] automated merge master->stage. syncing main branches [08b7f2b](https://github.com/advanced-rest-client/arc-models/commit/08b7f2be945eb3a3fdf6e5fb50770961a123c492) by Ci agent
+* [ci skip] automated merge master->stage. syncing main branches [1042ca1](https://github.com/advanced-rest-client/arc-models/commit/1042ca18639a8536eedad9783b35d992dc419e94) by Ci agent
+
+
+### Features
+
+* adding project listAll function [b4cde69](https://github.com/advanced-rest-client/arc-models/commit/b4cde69f3eda92c605707c930d222aacda2c6bfb) by Pawel
+
+
+### Bug Fixes
+
+* fixed type definition fot the destroy event [7e37a98](https://github.com/advanced-rest-client/arc-models/commit/7e37a98539fddc42146e0745992046d1655ab124) by Pawel
+
+
