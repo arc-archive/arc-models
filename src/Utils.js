@@ -220,7 +220,7 @@ export async function revertDelete(db, items) {
     const record = {
       id: request.id,
       rev: request.value.rev,
-      item: request.doc,
+      item: normalizeRequest(request.doc),
       oldRev: items[i].rev,
     }
     records.push(record);

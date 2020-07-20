@@ -19,7 +19,6 @@ const generator = new DataGenerator();
 
 describe('Utils', () => {
   describe('normalizeRequest()', () => {
-
     it('Returns undefined when no request', () => {
       // @ts-ignore
       const result = normalizeRequest();
@@ -172,6 +171,9 @@ describe('Utils', () => {
       assert.equal(item.id, doc1._id, 'has the id of the restored object');
       assert.notEqual(item.rev, doc1._rev, 'has rev that is different');
       assert.include(item.rev, '3-', 'has updated rev');
+      delete item.item.midnight;
+      // @ts-ignore
+      delete doc1.midnight;
       assert.deepEqual(item.item, { ...doc1, _rev: item.rev }, 'has restored object');
       assert.equal(item.oldRev, doc1._rev, 'has old rev');
     });
