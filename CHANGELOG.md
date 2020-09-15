@@ -812,3 +812,19 @@
 * fixed type definition fot the destroy event [7e37a98](https://github.com/advanced-rest-client/arc-models/commit/7e37a98539fddc42146e0745992046d1655ab124) by Pawel
 
 
+<a name="4.1.0"></a>
+## [4.1.0](https://github.com/advanced-rest-client/arc-models/compare/4.0.4...4.1.0) (2020-09-15)
+
+### Update
+
+* adding i-e support [b02aec9](https://github.com/advanced-rest-client/arc-models/commit/b02aec9f23ea09afe5a7ae0ff18830ca4f8f0d01) by Pawel Psztyc
+* adding import-export logic [3cff461](https://github.com/advanced-rest-client/arc-models/commit/3cff46131f6a649c10dd6037ca8b60d267a21c41) by Pawel Psztyc
+* [ci skip] automated merge master->stage. syncing main branches [83658d8](https://github.com/advanced-rest-client/arc-models/commit/83658d8aae7f8e7db8a5473fd760ec3f348cb4d9) by Ci agent
+* [ci skip] automated merge master->stage. syncing main branches [b8a4315](https://github.com/advanced-rest-client/arc-models/commit/b8a4315d070f2b6ba578ede45fb876c60506b9d4) by Ci agent
+
+
+### Features
+
+* adding normalization to request restore function [baf557d](https://github.com/advanced-rest-client/arc-models/commit/baf557d0eec5745d52357374fe80dac8edea2740) by Pawel
+
+
