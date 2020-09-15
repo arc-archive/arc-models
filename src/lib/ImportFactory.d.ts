@@ -13,7 +13,7 @@ export declare function transformKeys<T>(items: T[]): T[];
 /**
  * A class that gives access to the datastore for ARC objects.
  */
-export declare class ImportDataStore {
+export declare class ImportFactory {
   historyIndexes?: IndexableRequest[];
   savedIndexes?: IndexableRequest[];
   /**

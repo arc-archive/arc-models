@@ -1,23 +1,14 @@
-import { assert, fixture } from '@open-wc/testing';
+import { assert } from '@open-wc/testing';
 import { DataGenerator } from '@advanced-rest-client/arc-data-generator';
 import { DataTestHelper } from './DataTestHelper.js';
-import '../arc-data-import.js';
-
-/** @typedef {import('../src/ArcDataImportElement.js').ArcDataImportElement} ArcDataImportElement */
+import { ImportNormalize } from '../../src/lib/ImportNormalize.js';
+import { ImportFactory } from '../../src/lib/ImportFactory.js';
 
 describe('Dexie legacy import', () => {
-  /**
-   * @return {Promise<ArcDataImportElement>}
-   */
-  async function basicFixture() {
-    return fixture(`<arc-data-import></arc-data-import>`);
-  }
-
   const generator = new DataGenerator();
 
   describe('Dexie import to datastore', () => {
     let originalData;
-    let element = /** @type ArcDataImportElement */ (null);
     let data;
     before(async () => {
       await generator.destroySavedRequestData();
@@ -30,13 +21,14 @@ describe('Dexie legacy import', () => {
     });
 
     beforeEach(async () => {
-      element = await basicFixture();
       data = generator.clone(originalData);
     });
 
     it('stores the data', async () => {
-      const parsed = await element.normalizeImportData(data);
-      const errors = await element.storeData(parsed);
+      const normalizer = new ImportNormalize();
+      const parsed = await normalizer.normalize(data);
+      const factory = new ImportFactory();
+      const errors = await factory.importData(parsed);
       assert.isUndefined(errors, 'has no data storing error');
       const requests = await generator.getDatastoreRequestData();
       assert.lengthOf(requests, 6, 'Has 6 requests');

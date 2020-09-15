@@ -1,22 +1,13 @@
-import { assert, fixture } from '@open-wc/testing';
+import { assert } from '@open-wc/testing';
 import { DataGenerator } from '@advanced-rest-client/arc-data-generator';
 import { DataTestHelper } from './DataTestHelper.js';
-import '../arc-data-import.js';
-
-/** @typedef {import('../src/ArcDataImportElement.js').ArcDataImportElement} ArcDataImportElement */
+import { ImportNormalize } from '../../src/lib/ImportNormalize.js';
+import { ImportFactory } from '../../src/lib/ImportFactory.js';
 
 describe('PouchDB import to datastore', () => {
-  /**
-   * @return {Promise<ArcDataImportElement>}
-   */
-  async function basicFixture() {
-    return fixture(`<arc-data-import></arc-data-import>`);
-  }
-
   const generator = new DataGenerator();
 
   let originalData;
-  let element;
   let data;
   before(async () => {
     const response = await DataTestHelper.getFile('pouch-data-export.json');
@@ -25,10 +16,11 @@ describe('PouchDB import to datastore', () => {
 
   describe('storing data', () => {
     beforeEach(async () => {
-      element = await basicFixture();
       data = generator.clone(originalData);
-      const parsed = await element.normalizeImportData(data);
-      const errors = await element.storeData(parsed);
+      const normalizer = new ImportNormalize();
+      const parsed = await normalizer.normalize(data);
+      const factory = new ImportFactory();
+      const errors = await factory.importData(parsed);
       assert.isUndefined(errors, 'No errors while importing');
     });
 
@@ -100,12 +92,14 @@ describe('PouchDB import to datastore', () => {
     });
 
     before(async () => {
-      element = await basicFixture();
-      const parsed = await element.normalizeImportData(generator.clone(originalData));
-      const errors = await element.storeData(parsed);
+      data = generator.clone(originalData);
+      const normalizer = new ImportNormalize();
+      const parsed = await normalizer.normalize(data);
+      const factory = new ImportFactory();
+      const errors = await factory.importData(parsed);
       assert.isUndefined(errors, 'No errors while importing');
-      const parsed2 = await element.normalizeImportData(generator.clone(originalData));
-      const errors2 = await element.storeData(parsed2);
+      const parsed2 = await normalizer.normalize(generator.clone(originalData));
+      const errors2 = await factory.importData(parsed2);
       assert.isUndefined(errors2, 'No errors while importing again');
     });
 

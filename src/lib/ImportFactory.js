@@ -18,15 +18,6 @@ the License.
 */
 import 'pouchdb/dist/pouchdb.js';
 import { v4 } from '@advanced-rest-client/uuid-generator';
-import {
-  isPostman,
-  isArcFile,
-  prepareImportObject,
-} from './ImportUtils.js';
-import { ArcLegacyTransformer } from '../transformers/ArcLegacyTransformer.js';
-import { ArcDexieTransformer } from '../transformers/ArcDexieTransformer.js';
-import { ArcPouchTransformer } from '../transformers/ArcPouchTransformer.js';
-import { PostmanDataTransformer } from '../transformers/PostmanDataTransformer.js';
 
 /* global PouchDB */
 
@@ -70,90 +61,7 @@ export function transformKeys(items) {
 /**
  * A class that gives access to the datastore for ARC objects.
  */
-export class ImportDataStore {
-  /**
-   * Transforms any previous ARC export file to the current export object.
-   *
-   * @param {string|object} data Data from the import file.
-   * @return {Promise<ArcExportObject>} Normalized data import object.
-   */
-  async normalize(data) {
-    data = prepareImportObject(data);
-    if (isPostman(data)) {
-      return this.normalizePostman(data);
-    }
-    if (isArcFile(data)) {
-      return this.normalizeArcData(data);
-    }
-    throw new Error('File not recognized');
-  }
-
-  /**
-   * Normalizes any previous and current ARC file expot data to common model.
-   *
-   * @param {object} data Imported data.
-   * @return {Promise<ArcExportObject>} A promise resolved to ARC data export object.
-   */
-  async normalizeArcData(data) {
-    switch (data.kind) {
-      case 'ARC#SavedHistoryDataExport':
-      case 'ARC#AllDataExport':
-      case 'ARC#SavedDataExport':
-      case 'ARC#SavedExport':
-      case 'ARC#HistoryDataExport':
-      case 'ARC#HistoryExport':
-      case 'ARC#Project':
-      case 'ARC#SessionCookies':
-      case 'ARC#HostRules':
-      case 'ARC#ProjectExport':
-        return this.normalizeArcPouchSystem(data);
-      case 'ARC#requestsDataExport':
-        return this.normalizeArcDexieSystem(data);
-      default:
-        return this.normalizeArcLegacyData(data);
-    }
-  }
-
-  /**
-   * Normalizes export data from the GWT system.
-   * @param {object} data Parsed data
-   * @return {Promise<ArcExportObject>} Normalized import object
-   */
-  normalizeArcLegacyData(data) {
-    const transformer = new ArcLegacyTransformer(data);
-    return transformer.transform();
-  }
-
-  /**
-   * Normalizes export data from Dexie powered data store.
-   * @param {object} data Parsed data
-   * @return {Promise<ArcExportObject>} Normalized import object
-   */
-  normalizeArcDexieSystem(data) {
-    const transformer = new ArcDexieTransformer(data);
-    return transformer.transform();
-  }
-
-  /**
-   * Normalizes ARC's data exported in PouchDB system
-   * @param {object} data Parsed data
-   * @return {Promise<ArcExportObject>} Normalized import object
-   */
-  normalizeArcPouchSystem(data) {
-    const transformer = new ArcPouchTransformer(data);
-    return transformer.transform();
-  }
-
-  /**
-   * Normalizes Postman data into ARC's data model.
-   * @param {object} data Parsed data
-   * @return {Promise<ArcExportObject>} Normalized import object
-   */
-  normalizePostman(data) {
-    const transformer = new PostmanDataTransformer();
-    return transformer.transform(data);
-  }
-
+export class ImportFactory {
   /**
    * Imports data into the data store.
    *

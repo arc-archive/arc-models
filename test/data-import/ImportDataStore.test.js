@@ -1,7 +1,7 @@
 import { assert } from '@open-wc/testing';
 import { DataGenerator } from '@advanced-rest-client/arc-data-generator';
 // import { DataTestHelper } from './DataTestHelper.js';
-import { ImportDataStore, transformKeys } from '../../src/lib/ImportDataStore.js';
+import { ImportFactory, transformKeys } from '../../src/lib/ImportFactory.js';
 
 /* global PouchDB */
 
@@ -56,7 +56,7 @@ describe('ImportDataStore', () => {
 
     it('stores the requests data', async () => {
       const item = genExportItem();
-      const store = new ImportDataStore();
+      const store = new ImportFactory();
       const result = await store.importRequests([item]);
       assert.isUndefined(result, 'Has no error messages');
       const stored = await generator.getDatastoreRequestData();
@@ -66,7 +66,7 @@ describe('ImportDataStore', () => {
 
     it('sets "savedIndexes"', async () => {
       const item = genExportItem();
-      const store = new ImportDataStore();
+      const store = new ImportFactory();
       await store.importRequests([item]);
       assert.lengthOf(store.savedIndexes, 1);
     });
@@ -81,7 +81,7 @@ describe('ImportDataStore', () => {
       request._rev = rev;
       await db.put(request);
 
-      const store = new ImportDataStore();
+      const store = new ImportFactory();
       await store.importRequests([exportItem]);
       const stored = await generator.getDatastoreRequestData();
       assert.notEqual(stored[0].name, 'test-item', 'has export request name');
@@ -102,7 +102,7 @@ describe('ImportDataStore', () => {
 
     it('stores the requests data', async () => {
       const item = genExportItem();
-      const store = new ImportDataStore();
+      const store = new ImportFactory();
       const result = await store.importHistory([item]);
       assert.isUndefined(result, 'Has no error messages');
       const stored = await generator.getDatastoreHistoryData();
@@ -112,7 +112,7 @@ describe('ImportDataStore', () => {
 
     it('sets "historyIndexes"', async () => {
       const item = genExportItem();
-      const store = new ImportDataStore();
+      const store = new ImportFactory();
       await store.importHistory([item]);
       assert.lengthOf(store.historyIndexes, 1);
     });
@@ -127,7 +127,7 @@ describe('ImportDataStore', () => {
       request._rev = rev;
       await db.put(request);
 
-      const store = new ImportDataStore();
+      const store = new ImportFactory();
       await store.importHistory([exportItem]);
       const stored = await generator.getDatastoreHistoryData();
       assert.notEqual(stored[0].url, 'test-item', 'has export value');
@@ -148,7 +148,7 @@ describe('ImportDataStore', () => {
 
     it('stores the data', async () => {
       const item = genExportItem();
-      const store = new ImportDataStore();
+      const store = new ImportFactory();
       const result = await store.importProjects([item]);
       assert.isUndefined(result, 'Has no error messages');
       const stored = await generator.getDatastoreProjectsData();
@@ -166,7 +166,7 @@ describe('ImportDataStore', () => {
       item._rev = rev;
       await db.put(item);
 
-      const store = new ImportDataStore();
+      const store = new ImportFactory();
       await store.importProjects([exportItem]);
       const stored = await generator.getDatastoreProjectsData();
       assert.notEqual(stored[0].name, 'test-item', 'has export request name');
@@ -187,7 +187,7 @@ describe('ImportDataStore', () => {
 
     it('stores the data', async () => {
       const item = genExportItem();
-      const store = new ImportDataStore();
+      const store = new ImportFactory();
       const result = await store.importWebsocketUrls([item]);
       assert.isUndefined(result, 'Has no error messages');
       const stored = await generator.getDatastoreWebsocketsData();
@@ -205,7 +205,7 @@ describe('ImportDataStore', () => {
       item._rev = rev;
       await db.put(item);
 
-      const store = new ImportDataStore();
+      const store = new ImportFactory();
       await store.importWebsocketUrls([exportItem]);
 
       const stored = await generator.getDatastoreWebsocketsData();
@@ -227,7 +227,7 @@ describe('ImportDataStore', () => {
 
     it('stores the data', async () => {
       const item = genExportItem();
-      const store = new ImportDataStore();
+      const store = new ImportFactory();
       const result = await store.importUrls([item]);
       assert.isUndefined(result, 'Has no error messages');
       const stored = await generator.getDatastoreUrlsData();
@@ -245,7 +245,7 @@ describe('ImportDataStore', () => {
       item._rev = rev;
       await db.put(item);
 
-      const store = new ImportDataStore();
+      const store = new ImportFactory();
       await store.importUrls([exportItem]);
 
       const stored = await generator.getDatastoreUrlsData();
@@ -267,7 +267,7 @@ describe('ImportDataStore', () => {
 
     it('stores the data', async () => {
       const item = genExportItem();
-      const store = new ImportDataStore();
+      const store = new ImportFactory();
       const result = await store.importAuthData([item]);
       assert.isUndefined(result, 'Has no error messages');
       const stored = await generator.getDatastoreAuthData();
@@ -285,7 +285,7 @@ describe('ImportDataStore', () => {
       item._rev = rev;
       await db.put(item);
 
-      const store = new ImportDataStore();
+      const store = new ImportFactory();
       await store.importAuthData([exportItem]);
 
       const stored = await generator.getDatastoreAuthData();
@@ -307,7 +307,7 @@ describe('ImportDataStore', () => {
 
     it('stores the data', async () => {
       const item = genExportItem();
-      const store = new ImportDataStore();
+      const store = new ImportFactory();
       const result = await store.importHostRules([item]);
       assert.isUndefined(result, 'Has no error messages');
       const stored = await generator.getDatastoreHostRulesData();
@@ -325,7 +325,7 @@ describe('ImportDataStore', () => {
       item._rev = rev;
       await db.put(item);
 
-      const store = new ImportDataStore();
+      const store = new ImportFactory();
       await store.importHostRules([exportItem]);
 
       const stored = await generator.getDatastoreHostRulesData();
@@ -347,7 +347,7 @@ describe('ImportDataStore', () => {
 
     it('stores the data', async () => {
       const item = genExportItem();
-      const store = new ImportDataStore();
+      const store = new ImportFactory();
       const result = await store.importVariables([item]);
       assert.isUndefined(result, 'Has no error messages');
       const stored = await generator.getDatastoreVariablesData();
@@ -365,7 +365,7 @@ describe('ImportDataStore', () => {
       item._rev = rev;
       await db.put(item);
 
-      const store = new ImportDataStore();
+      const store = new ImportFactory();
       await store.importVariables([exportItem]);
 
       const stored = await generator.getDatastoreVariablesData();

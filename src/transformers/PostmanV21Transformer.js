@@ -3,7 +3,7 @@
 
 import { dataValue } from './BaseTransformer.js';
 import { PostmanTransformer, paramValue } from './PostmanTransformer.js';
-import { aTimeout } from '../Utils.js';
+import { aTimeout } from '../lib/ImportUtils.js';
 
 export const currentItemValue = Symbol('currentItemValue');
 

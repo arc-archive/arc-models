@@ -422,4 +422,82 @@ describe('ExportProcessor', () => {
       assert.isTrue(result.loadToWorkspace);
     });
   });
+
+  describe('prepareItem()', () => {
+    describe('cookies', () => {
+      let data;
+      let instance = /** @type ExportProcessor */ (null);
+      beforeEach(async () => {
+        instance = new ExportProcessor(false);
+        const cookies = DataGenerator.generateCookiesData();
+        data = mockRev(cookies);
+      });
+
+      it('prepares cookie data', () => {
+        const result = instance.prepareItem('cookies', data);
+        assert.equal(result[0].kind, 'ARC#Cookie');
+      });
+    });
+
+    describe('clientcertificates', () => {
+      let data;
+      let instance = /** @type ExportProcessor */ (null);
+      beforeEach(async () => {
+        instance = new ExportProcessor(false);
+        let certs = DataGenerator.generateClientCertificates({
+          size: 2,
+        });
+        certs = mockRev(certs);
+        data = [];
+        certs.forEach((cert) => {
+          const item = cert;
+          const dataDoc = {
+            cert: DataGenerator.certificateToStore(item.cert),
+          };
+          delete item.cert;
+          if (item.key) {
+            dataDoc.key = DataGenerator.certificateToStore(item.key);
+            delete item.key;
+          }
+          item._id = `index-id-${Date.now()}`;
+          dataDoc._id = `data-id-${Date.now()}`;
+          item.dataKey = `data-${Date.now()}`;
+          data.push({ item, data: dataDoc });
+        });
+      });
+
+      it('prepares client certificates data', () => {
+        const result = instance.prepareItem('clientcertificates', data);
+        // const a = {
+        //   type: 'pem',
+        //   name: 'jiv',
+        //   created: 1600205772315,
+        //   dataKey: 'test-1600205772316',
+        //   key: undefined,
+        //   kind: 'ARC#ClientCertificate',
+        //   cert: {
+        //     data: 'caspa.',
+        //     passphrase: 'zolob'
+        //   },
+        //   pKey: {
+        //     data: ' dototovef uzdo fahobef tir.',
+        //     passphrase: 'bus'
+        // }};
+        assert.equal(result[0].kind, 'ARC#ClientCertificate');
+      });
+    });
+
+    describe('default', () => {
+      let instance = /** @type ExportProcessor */ (null);
+      beforeEach(async () => {
+        instance = new ExportProcessor(false);
+      });
+
+      it('returns undefined', () => {
+        // @ts-ignore
+        const result = instance.prepareItem('unknown', []);
+        assert.isUndefined(result);
+      });
+    });
+  });
 });

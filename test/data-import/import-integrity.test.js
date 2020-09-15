@@ -1,25 +1,18 @@
-import { assert, fixture } from '@open-wc/testing';
+import { assert } from '@open-wc/testing';
 import { DataGenerator } from '@advanced-rest-client/arc-data-generator';
 import { DataTestHelper } from './DataTestHelper.js';
-import '../arc-data-import.js';
-
-/** @typedef {import('../src/ArcDataImportElement.js').ArcDataImportElement} ArcDataImportElement */
+import { ImportNormalize } from '../../src/lib/ImportNormalize.js';
+import { ImportFactory } from '../../src/lib/ImportFactory.js';
 
 describe('Data integrity test', () => {
-  /**
-   * @return {Promise<ArcDataImportElement>}
-   */
-  async function basicFixture() {
-    return fixture(`<arc-data-import></arc-data-import>`);
-  }
-
   const generator = new DataGenerator();
 
   before(async () => {
     const data = await DataTestHelper.getFile('arc-13-data-export-2-2-2019.json');
-    const element = await basicFixture();
-    const parsed = await element.normalizeImportData(data);
-    const errors = await element.storeData(parsed);
+    const normalizer = new ImportNormalize();
+    const parsed = await normalizer.normalize(data);
+    const factory = new ImportFactory();
+    const errors = await factory.importData(parsed);
     assert.isUndefined(errors);
   });
 
