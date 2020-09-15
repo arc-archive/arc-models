@@ -1,0 +1,155 @@
+{
+	"version": 1,
+	"collections": [
+		{
+			"id": "80511f19-5014-4d44-88a8-7e6597105811",
+			"name": "Test collection",
+			"description": "My desc of collection",
+			"auth": {
+				"type": "oauth2",
+				"oauth2": [
+					{
+						"key": "accessToken",
+						"value": "test-token"
+					},
+					{
+						"key": "addTokenTo",
+						"value": "header"
+					}
+				]
+			},
+			"events": null,
+			"variables": [
+				{
+					"key": "myvar",
+					"value": "initValue",
+					"type": "text",
+					"disabled": false,
+					"description": ""
+				}
+			],
+			"order": [
+				"f6a538ac-0e8d-482e-8286-7812249f4e4e",
+				"2d569976-e3bc-45f7-a0a9-320b2a96f254"
+			],
+			"folders_order": [
+				"e6693065-17e1-4a9f-863c-feb8897f57df"
+			],
+			"folders": [
+				{
+					"id": "e6693065-17e1-4a9f-863c-feb8897f57df",
+					"name": "Inner folder",
+					"description": "Test folder 2",
+					"auth": null,
+					"events": null,
+					"collection": "80511f19-5014-4d44-88a8-7e6597105811",
+					"folder": null,
+					"order": [
+						"a2f72679-6693-43b6-995d-e542940073ce"
+					],
+					"folders_order": [],
+					"collectionId": "80511f19-5014-4d44-88a8-7e6597105811",
+					"folderId": "e6693065-17e1-4a9f-863c-feb8897f57df"
+				}
+			],
+			"requests": [
+				{
+					"id": "2d569976-e3bc-45f7-a0a9-320b2a96f254",
+					"name": "Request b",
+					"url": "http://httpbin.org/put?cAmElCaSe=TrUe",
+					"description": "Rb desc",
+					"data": [],
+					"dataMode": "raw",
+					"headerData": null,
+					"method": "PUT",
+					"pathVariableData": [],
+					"queryParams": [
+						{
+							"key": "cAmElCaSe",
+							"value": "TrUe",
+							"equals": true,
+							"description": "",
+							"enabled": true
+						}
+					],
+					"auth": null,
+					"events": null,
+					"folder": null,
+					"currentHelper": null,
+					"helperAttributes": null,
+					"collectionId": "80511f19-5014-4d44-88a8-7e6597105811",
+					"rawModeData": "{\n  \"a\":\"b\",\n  \"CamelValue\": \"test\"\n}",
+					"pathVariables": {}
+				},
+				{
+					"id": "a2f72679-6693-43b6-995d-e542940073ce",
+					"name": "https://docs.snapcraft.io/build-on-lxd/4157",
+					"url": "https://docs.snapcraft.io/build-on-lxd/4157",
+					"description": "",
+					"data": null,
+					"dataMode": null,
+					"headerData": null,
+					"method": "GET",
+					"pathVariableData": [],
+					"queryParams": [],
+					"auth": null,
+					"events": null,
+					"folder": "e6693065-17e1-4a9f-863c-feb8897f57df",
+					"currentHelper": null,
+					"helperAttributes": null,
+					"collectionId": "80511f19-5014-4d44-88a8-7e6597105811",
+					"pathVariables": {}
+				},
+				{
+					"id": "f6a538ac-0e8d-482e-8286-7812249f4e4e",
+					"name": "Request a",
+					"url": "http://httpbin.org/get",
+					"description": "Ra desc\t",
+					"data": null,
+					"dataMode": null,
+					"headerData": null,
+					"method": "GET",
+					"pathVariableData": [],
+					"queryParams": [],
+					"auth": null,
+					"events": null,
+					"folder": null,
+					"currentHelper": null,
+					"helperAttributes": null,
+					"collectionId": "80511f19-5014-4d44-88a8-7e6597105811",
+					"pathVariables": {}
+				}
+			]
+		}
+	],
+	"environments": [
+		{
+			"id": "58fd8770-761f-457b-999d-5a7638603f4a",
+			"name": "MyEnv",
+			"values": [
+				{
+					"key": "a",
+					"value": "aa",
+					"type": "text",
+					"description": "",
+					"enabled": true
+				}
+			]
+		},
+		{
+			"id": "09db4035-0560-42ae-8769-c08fd8ca4b6e",
+			"name": "My Workspace - globals",
+			"values": [
+				{
+					"key": "global",
+					"value": "1",
+					"type": "text",
+					"description": "",
+					"enabled": true
+				}
+			]
+		}
+	],
+	"headerPresets": [],
+	"globals": []
+}

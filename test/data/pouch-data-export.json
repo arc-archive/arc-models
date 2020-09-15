@@ -1,0 +1,231 @@
+{
+  "createdAt": "2017-09-25T20:54:48.615Z",
+  "version": "9.14.64.305",
+  "kind": "ARC#AllDataExport",
+  "requests": [
+    {
+      "headers": "x-test: true",
+      "method": "POST",
+      "name": "request-0",
+      "payload": "test-payload-0",
+      "type": "saved",
+      "url": "http://localhost:3000/api/test/0",
+      "updated": 1506371004395,
+      "kind": "ARC#RequestData"
+    },
+    {
+      "created": 1449004087420,
+      "headers": null,
+      "method": "GET",
+      "name": "test-reqyest",
+      "payload": null,
+      "type": "saved",
+      "url": "http://127.0.0.1:8888/",
+      "kind": "ARC#RequestData"
+    },
+    {
+      "url": "http://localhost:3000/sessions/",
+      "method": "GET",
+      "headers": "",
+      "payload": "",
+      "name": "Sessions API endpoint 1",
+      "type": "saved",
+      "updated": 1506374000371,
+      "_referenceLegacyProject": "c99b754d-74e4-44b0-a1b2-f5fe76f0180e",
+      "kind": "ARC#RequestData"
+    },
+    {
+      "type": "saved",
+      "headers": "",
+      "method": "GET",
+      "name": "Sessions API endpoint 2",
+      "payload": "",
+      "url": "http://localhost:3000/sessions/users/",
+      "updated": 1506374026004,
+      "_referenceLegacyProject": "a9jb754d-74e4-44b0-af75-f5fe76f0180e",
+      "kind": "ARC#RequestData"
+    },
+    {
+      "type": "saved",
+      "headers": "",
+      "method": "GET",
+      "name": "Client certificate",
+      "payload": "",
+      "url": "http://localhost:3000/client-cert/",
+      "updated": 1506374026004,
+      "auth": {
+        "id": "60547629-570a-4b4a-8529-55723cd3f80d"
+      },
+      "authType": "client certificate",
+      "kind": "ARC#RequestData"
+    }
+  ],
+  "projects": [
+    {
+    "name": "test-project-1",
+    "order": 0,
+    "created": 1506223472294,
+    "updated": 1506223472295,
+    "_referenceId": "c99b754d-74e4-44b0-a1b2-f5fe76f0180e",
+    "kind": "ARC#ProjectData"
+  }, {
+    "name": "test-project-2",
+    "order": 0,
+    "created": 1506223472295,
+    "updated": 1506223472296,
+    "_referenceId": "a9jb754d-74e4-44b0-af75-f5fe76f0180e",
+    "kind": "ARC#ProjectData"
+  }],
+  "history": [
+    {
+      "created": 1506223403380,
+      "updated": 1506223442093,
+      "method": "GET",
+      "url": "https://onet.pl",
+      "kind": "ARC#HistoryData"
+    },
+    {
+      "created": 1506371042634,
+      "updated": 1506371042634,
+      "headers": "accept: application/json\naccept-encoding: gzip, deflate\naccept-language: en-US,en;q=0.8\nuser-agent: Mozilla/5.0 (Macintosh; Intel Mac OS X 10_12_6) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/63.0.3218.0 Safari/537.36",
+      "method": "GET",
+      "payload": "",
+      "url": "http://www.wp.pl",
+      "kind": "ARC#HistoryData"
+    },
+    {
+      "created": 1506372769951,
+      "updated": 1506372787607,
+      "headers": "authorization: Basic dXNlcjpwYXNzd2Q=",
+      "method": "GET",
+      "payload": "",
+      "url": "https://httpbin.org/basic-auth/user/passwd",
+      "kind": "ARC#HistoryData"
+    }
+  ],
+  "websocket-url-history": [
+    {
+    "cnt": 1,
+    "time": 1506372512925,
+    "key": "wss://echo.websocket.org",
+    "kind": "ARC#WebsocketHistoryData"
+  }],
+  "url-history": [
+    {
+      "cnt": 1,
+      "time": 1506370997614,
+      "key": "http://localhost:3000/api/test",
+      "kind": "ARC#UrlHistoryData"
+    },
+    {
+      "cnt": 1,
+      "time": 1506371042126,
+      "key": "http://www.wp.pl",
+      "kind": "ARC#UrlHistoryData"
+    },
+    {
+      "cnt": 2,
+      "time": 1506372787600,
+      "key": "https://httpbin.org/basic-auth/user/passwd",
+      "kind": "ARC#UrlHistoryData"
+    },
+    {
+      "cnt": 2,
+      "time": 1506223441378,
+      "key": "https://onet.pl",
+      "kind": "ARC#UrlHistoryData"
+    },
+    {
+      "cnt": 1,
+      "time": 1506371036377,
+      "key": "www.wp.pl",
+      "kind": "ARC#UrlHistoryData"
+    }
+  ],
+  "variables": [{
+      "environment": "other env",
+      "enabled": true,
+      "variable": "other-var-2",
+      "value": "value-2",
+      "kind": "ARC#Variable"
+    },
+    {
+      "environment": "other env",
+      "enabled": true,
+      "variable": "other-var",
+      "value": "value-1",
+      "kind": "ARC#Variable"
+    },
+    {
+      "environment": "default",
+      "enabled": true,
+      "variable": "test-var",
+      "value": "default-env",
+      "kind": "ARC#Variable"
+    },
+    {
+      "environment": "test env",
+      "enabled": true,
+      "variable": "myVar",
+      "value": "varValue",
+      "kind": "ARC#Variable"
+    }
+  ],
+  "auth-data": [{
+    "encoded": "dXNlcjpwYXNzd2Q=",
+    "key": "basic/https%3A%2F%2Fhttpbin.org%2Fbasic-auth%2Fuser%2Fpasswd",
+    "kind": "ARC#AuthData"
+  }],
+  "cookies": [{
+      "max-age": 900,
+      "name": "fiv",
+      "value": "2.11.2",
+      "created": 1506371044551,
+      "lastAccess": 1506371044551,
+      "persistent": true,
+      "hostOnly": true,
+      "path": "/",
+      "httponly": null,
+      "domain": "wp.pl",
+      "expires": 1506371944551,
+      "maxAge": 900,
+      "key": "wp.pl/fiv/%2F",
+      "kind": "ARC#Cookie"
+    },
+    {
+      "name": "sgv",
+      "value": "1506371043",
+      "created": 1506371044551,
+      "lastAccess": 1506371044552,
+      "persistent": true,
+      "hostOnly": true,
+      "path": "/",
+      "domain": "wp.pl",
+      "expires": 1537907043000,
+      "key": "wp.pl/sgv/%2F",
+      "kind": "ARC#Cookie"
+    }
+  ],
+  "host-rules": [{
+    "from": "https://from",
+    "to": "http://to",
+    "enabled": true,
+    "comment": "test",
+    "key": "host-rule",
+    "kind": "ARC#HostRule"
+  }],
+  "client-certificates": [{
+    "name": "Bob pem",
+    "type": "pem",
+    "dataKey": "2bcf5d24-744b-4002-ad80-5e3b9bfead18",
+    "created": 1577999288834,
+    "key": "60547629-570a-4b4a-8529-55723cd3f80d",
+    "kind": "ARC#ClientCertificate",
+    "cert": {
+      "data": "-----BEGIN CERTIFICATE-----\nMIIEmDCCAoACCQCIkr6uvGEPMzANBgkqhkiG9w0BAQUFADAOMQwwCgYDVQQDDANC\nb2IwHhcNMjAwMTAyMjA1MDEzWhcNMjQxMjMxMjA1MDEzWjAOMQwwCgYDVQQDDANC\nb2IwggIiMA0GCSqGSIb3DQEBAQUAA4ICDwAwggIKAoICAQCvagIHUVSPr18ANBt1\nlyP3LfEGSqk2acEezCgoqS72NZV0HddFnlYCXOA4isKOrZfLL084yvbRtLRE5ViX\nS70h+6DGHWXng4q4c8b0lmVIWujb+OI7/K1gkN1QBLwIEH4sTMTruFR5OIE1WqXH\ncJ6f5s4SkPBBMPUe7j0QVOHKSk9lQ7NXSaL+byOlrIttR5BayJNapKaJdpsBJWk+\n/nmyDN+tC2sc5yYUer4xynQecyn9ZtyO5khgXideCWCfh4XAzLOjG6lk4W6M8ZRy\njs0UdmVWmcFXaRTgBuhbf1Lx+UN1fp/AJZ0DnuPi5ZYxUQQuY2I9Nkbte0jDGxLr\nmzbvk0DENslfJWnafNw+E1A50htM3qnW1ML1X9xp3F+pc0pNdphf4DTS/7Mby1We\n642h9FxNwfk+sx8wvWnJC2DyhvzIu+0i8LyANWTJfKbJBxxbzyfgseWucMbh8EGK\nKEciwEpl75kapDvM03FvT7U9D4myKr0q5/Y1Awrf7EaE1scv+KVLBqBGU66kMAg6\n9Ls+Mg7GQ2GEksYH//cr9uso+i9cdrN0VyLN6994QbfIlcG/uVEPW33y0ARMnY6O\nTVo3LVz3vOgG9mcgcYqzHToMhXbmPHH5YAUZLmifxiPrB2O+KlPnRroWaMXbJFrn\njp8QAgxeaQbRkCS+MWmtlVb9AQIDAQABMA0GCSqGSIb3DQEBBQUAA4ICAQAdX3z+\nnukc98d9P6WlF1PU5C3XXNnefLgTuN+GBVO7yfoCEvCJgi2Uqr43k77i06CRI4sQ\nN175TpK7B0pP2Z8c7UACJF+L1zipsiABJTvywWupl2/Jc8jVpm7cauopnGCSV4UZ\nRrKmjpTH+3CpOBtst8kf3Cpb4AZ0xapyE3Js8Pa+VzIxp6VVim5xxDUPermBpluL\nDzDZRTcQI9AW9mWhSvM6fYbZa1QAj6v0GQkPoO4Ew209lJa2Jp19mhTd2jkpggfV\nhMQD1A12BGvj6QzbEA18LyrJ/T6S+dhCaKt5dikU7zLI3fOHV5ncRzyPGItbgkfd\nfRGHpvdjsJcB2U95htSKXMp32meEHcarPM6IUu8LF7X5tnJbieItS0UzOdDfSxlS\nvAH/NBEY7xENM0HpAJq4XTyGiaAX6v01GjRTkuKfxk1FbZ7wI1+PTWmEfRZUfsW2\n117MEDagZ00LkWkzP1pfDMJ5PfoLI3TQrGRcdZxN5Hqb0ewXWG/MA5AgImElijRw\n0kkPoSJhYYcbvzpRv/asv3l5Bd90jpYdkvBCnVoVmawplkfdP5ihTorgxHzMU87I\nkulWdlLWuy9rn88Bu9Q/0Ml5soB0YAGg70/aoLHQDg73zCql0PA+hnuzX1vXoHbO\nhvJSWMG3B2MekNK6AvVxMwjOGz1yFraKSByUtw==\n-----END CERTIFICATE-----\n"
+    },
+    "pKey": {
+      "data": "-----BEGIN PRIVATE KEY-----\n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\nv69n3FJ6LbnqQlRwKKIqhH1iaoqfOA==\n-----END PRIVATE KEY-----\n"
+    }
+  }]
+}

@@ -1,0 +1,265 @@
+{
+	"info": {
+		"_postman_id": "80511f19-5014-4d44-88a8-7e6597105811",
+		"name": "Test collection",
+		"description": "My desc of collection",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"item": [
+		{
+			"name": "Inner folder",
+			"item": [
+				{
+					"name": "https://docs.snapcraft.io/build-on-lxd/4157",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": ""
+						},
+						"url": {
+							"raw": "https://docs.snapcraft.io/build-on-lxd/4157",
+							"protocol": "https",
+							"host": [
+								"docs",
+								"snapcraft",
+								"io"
+							],
+							"path": [
+								"build-on-lxd",
+								"4157"
+							]
+						}
+					},
+					"response": []
+				}
+			],
+			"description": "Test folder 2"
+		},
+		{
+			"name": "Request a",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": ""
+				},
+				"url": {
+					"raw": "http://httpbin.org/get",
+					"protocol": "http",
+					"host": [
+						"httpbin",
+						"org"
+					],
+					"path": [
+						"get"
+					]
+				},
+				"description": "Ra desc\t"
+			},
+			"response": []
+		},
+		{
+			"name": "Request b",
+			"request": {
+				"method": "PUT",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n  \"a\":\"b\",\n  \"CamelValue\": \"test\"\n}"
+				},
+				"url": {
+					"raw": "http://httpbin.org/put?cAmElCaSe=TrUe",
+					"protocol": "http",
+					"host": [
+						"httpbin",
+						"org"
+					],
+					"path": [
+						"put"
+					],
+					"query": [
+						{
+							"key": "cAmElCaSe",
+							"value": "TrUe"
+						}
+					]
+				},
+				"description": "Rb desc"
+			},
+			"response": []
+		},
+		{
+			"name": "PUT - form-data",
+			"protocolProfileBehavior": {
+				"disableBodyPruning": true
+			},
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"key": "Content-Type",
+						"name": "Content-Type",
+						"type": "text",
+						"value": "application/x-www-form-urlencoded"
+					}
+				],
+				"body": {
+					"mode": "urlencoded",
+					"urlencoded": [
+						{
+							"key": "c",
+							"value": "cv",
+							"type": "text"
+						},
+						{
+							"key": "d",
+							"value": "dv",
+							"type": "text"
+						}
+					]
+				},
+				"url": {
+					"raw": "http://httpbin.org/put",
+					"protocol": "http",
+					"host": [
+						"httpbin",
+						"org"
+					],
+					"path": [
+						"put"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "PUT - x-www",
+			"protocolProfileBehavior": {
+				"disableBodyPruning": true
+			},
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"key": "Content-Type",
+						"name": "Content-Type",
+						"value": "application/x-www-form-urlencoded",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "urlencoded",
+					"urlencoded": [
+						{
+							"key": "e",
+							"value": "ev",
+							"type": "text"
+						},
+						{
+							"key": "f",
+							"value": "fv",
+							"type": "text"
+						}
+					]
+				},
+				"url": {
+					"raw": "http://httpbin.org/put",
+					"protocol": "http",
+					"host": [
+						"httpbin",
+						"org"
+					],
+					"path": [
+						"put"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "PUT: raw + json",
+			"protocolProfileBehavior": {
+				"disableBodyPruning": true
+			},
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"key": "Content-Type",
+						"name": "Content-Type",
+						"value": "application/json",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n\t\"a\": \"b\"\n}"
+				},
+				"url": {
+					"raw": "http://httpbin.org/put",
+					"protocol": "http",
+					"host": [
+						"httpbin",
+						"org"
+					],
+					"path": [
+						"put"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "PUT: file",
+			"protocolProfileBehavior": {
+				"disableBodyPruning": true
+			},
+			"request": {
+				"method": "GET",
+				"header": [],
+				"body": {
+					"mode": "file",
+					"file": {}
+				},
+				"url": {
+					"raw": "http://httpbin.org/put",
+					"protocol": "http",
+					"host": [
+						"httpbin",
+						"org"
+					],
+					"path": [
+						"put"
+					]
+				}
+			},
+			"response": []
+		}
+	],
+	"auth": {
+		"type": "oauth2",
+		"oauth2": [
+			{
+				"key": "accessToken",
+				"value": "test-token",
+				"type": "string"
+			},
+			{
+				"key": "addTokenTo",
+				"value": "header",
+				"type": "string"
+			}
+		]
+	},
+	"variable": [
+		{
+			"id": "ef1a370c-d0f5-4a57-bfef-4f291485d335",
+			"key": "myvar",
+			"value": "initValue",
+			"type": "string"
+		}
+	]
+}

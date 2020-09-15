@@ -1,0 +1,335 @@
+{
+  "createdAt": "2019-02-02T21:58:25.467Z",
+  "version": "13.0.0-alpha.3",
+  "kind": "ARC#AllDataExport",
+  "requests": [{
+    "url": "https://anypoint.mulesoft.com/accounts/oauth2/authorize?client_id=123&redirect_uri=https%3A%2F%2Fauth.advancedrestclient.com%2Foauth-popup.html&response_type=token&state=TEST",
+    "method": "GET",
+    "requestActions": {
+      "variables": [{
+        "variable": "AnypointToken",
+        "action": "store-variable",
+        "value": "unused",
+        "enabled": true
+      }]
+    },
+    "responseActions": [{
+      "source": "response.url.hash.access_token",
+      "action": "store-variable",
+      "destination": "AnypointToken",
+      "enabled": true,
+      "conditions": [{
+        "source": "response.status",
+        "operator": "equal",
+        "condition": "200",
+        "enabled": true
+      }]
+    }],
+    "name": "Getting a token",
+    "description": "Test Description",
+    "projects": ["274229f0-0098-4366-b841-2ac1f90a152c"],
+    "type": "saved",
+    "updated": 1549144558828,
+    "created": 1549144558828,
+    "kind": "ARC#RequestData",
+    "key": "02ddc292-3987-43ec-b5cb-77fc4c5fbf5e"
+  }, {
+    "updated": 1545502946850,
+    "created": 1545363890469,
+    "headers": "Content-length: 2",
+    "method": "PUT",
+    "payload": "{}",
+    "url": "https://www.domain.com/customers",
+    "type": "saved",
+    "name": "Named",
+    "projects": [],
+    "kind": "ARC#RequestData",
+    "key": "c6f8ae77-0cd6-45a3-9b3e-db257a689048"
+  }, {
+    "updated": 1545678735788,
+    "created": 1545504554129,
+    "headers": "accept: */*",
+    "method": "GET",
+    "url": "http://httpbin.org/get",
+    "type": "saved",
+    "responseActions": [{
+      "source": "response.body.headers.Upgrade-Insecure-Requests",
+      "action": "store-variable",
+      "destination": "testVarStore",
+      "enabled": true
+    }],
+    "name": "GET httpbin",
+    "projects": [],
+    "kind": "ARC#RequestData",
+    "key": "c756e0fc-03fe-49ab-bdaf-6611dd8b1e59"
+  }, {
+    "headers": "X-GitHub-Delivery: 700014ee-bac4-11e8-9e51-b9764f61d62b",
+    "method": "POST",
+    "name": "Release component",
+    "payload": "",
+    "queryModel": [],
+    "type": "saved",
+    "updated": 1541015654292,
+    "url": "http://0.0.0.0:5243/build",
+    "created": 1537221534269,
+    "projects": ["2a412558-2798-4aea-92ff-74c200a9f250"],
+    "kind": "ARC#RequestData",
+    "key": "3ac8ca76-9b87-46b3-bc06-4014d85ef8ff"
+  }],
+  "projects": [{
+    "kind": "ARC#ProjectData",
+    "key": "274229f0-0098-4366-b841-2ac1f90a152c",
+    "created": 1549144167206,
+    "updated": 1549144167207,
+    "requests": ["02ddc292-3987-43ec-b5cb-77fc4c5fbf5e", "52cd4d6d-6ff4-43d4-b606-db86b566a187"],
+    "name": "Response actions",
+    "order": 0
+  }, {
+    "created": 1533404616012,
+    "name": "Orphan project",
+    "order": 1,
+    "requests": ["non-existing"],
+    "updated": 1542853491816,
+    "description": "Test description",
+    "kind": "ARC#ProjectData",
+    "key": "2a412558-2798-4aea-92ff-74c200a9f250"
+  }],
+  "history": [{
+    "updated": 1536913980281,
+    "created": 1536913980279,
+    "headers": "",
+    "method": "POST",
+    "payload": "Hello World",
+    "url": "http://httpbin.org/post",
+    "type": "history",
+    "kind": "ARC#HistoryData"
+  }, {
+    "updated": 1537582560850,
+    "created": 1537582560847,
+    "headers": "",
+    "method": "PUT",
+    "payload": "PUT payload",
+    "url": "http://httpbin.org/get",
+    "type": "history",
+    "kind": "ARC#HistoryData"
+  }, {
+    "updated": 1537676165327,
+    "created": 1537676165326,
+    "headers": "accept: */*",
+    "method": "HEAD",
+    "url": "http://httpbin.org/bytes/1024",
+    "type": "history",
+    "kind": "ARC#HistoryData"
+  }, {
+    "updated": 1537676271449,
+    "created": 1537676271447,
+    "headers": "",
+    "method": "GET",
+    "url": "http://httpbin.org/get",
+    "type": "history",
+    "kind": "ARC#HistoryData"
+  }, {
+    "updated": 1537676239263,
+    "created": 1537676239262,
+    "headers": "Accept: image/webp",
+    "method": "GET",
+    "url": "http://httpbin.org/image/webp",
+    "type": "history",
+    "kind": "ARC#HistoryData"
+  }, {
+    "updated": 1537676188561,
+    "created": 1537676188560,
+    "headers": "Accept: image/png",
+    "method": "GET",
+    "url": "http://httpbin.org/image",
+    "type": "history",
+    "kind": "ARC#HistoryData"
+  }, {
+    "updated": 1537676248048,
+    "created": 1537676248046,
+    "headers": "",
+    "method": "GET",
+    "url": "http://httpbin.org/uuid",
+    "type": "history",
+    "kind": "ARC#HistoryData"
+  }, {
+    "updated": 1538024448265,
+    "created": 1538024448264,
+    "headers": "",
+    "method": "GET",
+    "url": "http://httpbin.org/image",
+    "type": "history",
+    "kind": "ARC#HistoryData"
+  }],
+  "websocket-url-history": [{
+    "cnt": 2,
+    "time": 1545965532291,
+    "key": "ws://echo.websocket.org",
+    "kind": "ARC#WebsocketHistoryData"
+  }],
+  "url-history": [{
+    "cnt": 1,
+    "time": 1548030831473,
+    "url": "http://0.0.0.0:5243/status-change",
+    "key": "http://0.0.0.0:5243/status-change",
+    "kind": "ARC#UrlHistoryData"
+  }, {
+    "cnt": 13,
+    "time": 1548836696443,
+    "key": "http://0.0.0.0:5243/travis-build",
+    "kind": "ARC#UrlHistoryData"
+  }, {
+    "cnt": 9,
+    "time": 1547614683378,
+    "url": "http://localhost:8080/api/me/tokens/7c15048b-05ef-4869-b805-9f904d9caaf6",
+    "key": "http://localhost:8080/api/me/tokens/7c15048b-05ef-4869-b805-9f904d9caaf6",
+    "kind": "ARC#UrlHistoryData"
+  }, {
+    "cnt": 1,
+    "time": 1547614689919,
+    "url": "http://localhost:8080/api/me/tokens/b790efb5-d04b-46af-9c83-2522f552a656",
+    "key": "http://localhost:8080/api/me/tokens/b790efb5-d04b-46af-9c83-2522f552a656",
+    "kind": "ARC#UrlHistoryData"
+  }, {
+    "cnt": 9,
+    "time": 1547713012896,
+    "url": "http://localhost:8080/api/pubsub-test",
+    "key": "http://localhost:8080/api/pubsub-test",
+    "kind": "ARC#UrlHistoryData"
+  }, {
+    "cnt": 6,
+    "time": 1547592591246,
+    "url": "http://localhost:8080/api/test/48d622ab-9330-4a3a-bfbb-612cc414785d",
+    "key": "http://localhost:8080/api/test/48d622ab-9330-4a3a-bfbb-612cc414785d",
+    "kind": "ARC#UrlHistoryData"
+  }, {
+    "cnt": 7,
+    "time": 1549089646680,
+    "url": "https://www.domain.com/customers",
+    "key": "https://www.domain.com/customers",
+    "kind": "ARC#UrlHistoryData"
+  }],
+  "variables": [{
+    "variable": "AnypointToken",
+    "value": "abc",
+    "enabled": true,
+    "sysVar": false,
+    "environment": "default",
+    "key": "02e7246e-23ff-4ece-b5b1-e53756771a27",
+    "kind": "ARC#Variable"
+  }, {
+    "environment": "stage",
+    "enabled": true,
+    "variable": "var1",
+    "value": "stageVar1",
+    "key": "275db347-5276-4a8a-b930-32fa19b350de",
+    "kind": "ARC#Variable"
+  }, {
+    "environment": "default",
+    "enabled": true,
+    "variable": "varA",
+    "value": "valA",
+    "key": "41c215f0-5c2c-4b2d-966f-91ed31b33e2a",
+    "kind": "ARC#Variable"
+  }, {
+    "variable": "testVar",
+    "value": "1",
+    "enabled": true,
+    "sysVar": false,
+    "environment": "stage",
+    "key": "4568c7fd-38e3-452d-bec9-503ae78ca043",
+    "kind": "ARC#Variable"
+  }, {
+    "environment": "dev",
+    "enabled": true,
+    "variable": "var1",
+    "value": "devVar1",
+    "key": "55711491-4932-458e-8516-d8f773924a24",
+    "kind": "ARC#Variable"
+  }, {
+    "variable": "testVarStore",
+    "enabled": true,
+    "sysVar": false,
+    "environment": "stage",
+    "key": "d95a069c-363b-4ff0-92b4-bfcdccd61264",
+    "kind": "ARC#Variable"
+  }, {
+    "environment": "stage",
+    "enabled": true,
+    "variable": "nextPageToken",
+    "value": "CpABChIKB2NyZWF0ZWQSBwjX7KiNiC0SdmoZc35hZHZhbmNlZHJlc3RjbGllbnQtMTE1NXJICxIFR3JvdXAiDGFwaS1lbGVtZW50cwwLEglDb21wb25lbnQiD2FwaS1ib2R5LWVkaXRvcgwLEgdWZXJzaW9uIgYyLjAuMTEMogEOYXBpLWNvbXBvbmVudHMYACAB",
+    "key": "f2bc4871-8ab9-475f-8adc-ad6344930357",
+    "kind": "ARC#Variable"
+  }],
+  "auth-data": [{
+    "hash": "YTpi",
+    "username": "a",
+    "password": "b",
+    "key": "basic/https%3A%2F%2Fapi.domain.com%2Fsuite%2Fwebapi%2Fappian_api%2Fv1%2F",
+    "kind": "ARC#AuthData"
+  }],
+  "cookies": [{
+    "domain": ".api.domain.com",
+    "hostOnly": false,
+    "httpOnly": false,
+    "name": "JSESSIONID",
+    "path": "/suite",
+    "secure": false,
+    "session": false,
+    "value": "2EDD1ADE8ECE39ADEAA55F798301A71A.node1",
+    "expires": 8640000000000000,
+    "kind": "ARC#Cookie"
+  }, {
+    "domain": ".mulesoft.com",
+    "hostOnly": false,
+    "httpOnly": false,
+    "name": "utm_medium",
+    "path": "/login",
+    "secure": false,
+    "session": true,
+    "value": "",
+    "kind": "ARC#Cookie"
+  }, {
+    "domain": ".github.com",
+    "hostOnly": false,
+    "httpOnly": true,
+    "name": "logged_in",
+    "path": "/",
+    "secure": true,
+    "session": false,
+    "value": "yes",
+    "expires": 2166330170372.276,
+    "kind": "ARC#Cookie"
+  }, {
+    "domain": ".github.com",
+    "hostOnly": false,
+    "httpOnly": false,
+    "name": "has_recent_activity",
+    "path": "/",
+    "secure": false,
+    "session": false,
+    "value": "1",
+    "expires": 2169521701000,
+    "kind": "ARC#Cookie"
+  }, {
+    "domain": "localhost",
+    "hostOnly": true,
+    "httpOnly": false,
+    "name": "_ga",
+    "path": "/",
+    "secure": false,
+    "session": false,
+    "value": "GA1.1.1629603367.1547592678",
+    "expires": 1610683873000,
+    "kind": "ARC#Cookie"
+  }],
+  "host-rules": [{
+    "from": "domain.com",
+    "to": "0.0.0.0",
+    "enabled": true,
+    "comment": "",
+    "updated": 1549159400051,
+    "key": "b786cd3e-7f97-4fbb-be63-acdc6a7e5cd5",
+    "kind": "ARC#HostRule"
+  }]
+}

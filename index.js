@@ -125,3 +125,6 @@ export {
   ARCVariableDeletedEvent,
   ARCVariableListEvent,
 } from './src/events/VariableEvents.js';
+
+export { ExportProcessor } from './src/lib/ExportProcessor.js';
+export { ExportFactory } from './src/lib/ExportFactory.js';
