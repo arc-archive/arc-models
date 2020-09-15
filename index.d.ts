@@ -146,3 +146,8 @@ export {
   ARCVariableDeletedEvent,
   ARCVariableListEvent,
 } from './src/events/VariableEvents';
+export { ExportProcessor } from './src/lib/ExportProcessor';
+export { ExportFactory } from './src/lib/ExportFactory';
+export { ImportNormalize } from './src/lib/ImportNormalize';
+export { ImportFactory } from './src/lib/ImportFactory';
+export { isSingleRequest, isPostman, isArcFile, prepareImportObject, readFile, isOldImport, isObject } from './src/lib/ImportUtils';

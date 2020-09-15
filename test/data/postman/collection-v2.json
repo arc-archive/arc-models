@@ -1,0 +1,326 @@
+{
+	"variables": [],
+	"info": {
+		"name": "TestCollection v2",
+		"_postman_id": "c0a9562a-e1a3-5ecd-ef63-a4512f4fce44",
+		"description": "V2 description",
+		"schema": "https://schema.getpostman.com/json/collection/v2.0.0/collection.json"
+	},
+	"item": [
+		{
+			"name": "Sub-folder",
+			"description": "Sub description",
+			"item": [
+				{
+					"name": "url encoded",
+					"request": {
+						"url": {
+							"raw": "https://onet.pl/{{$randomInt}}?{{a}}={{bb}}&e=ff",
+							"protocol": "https",
+							"host": [
+								"onet",
+								"pl"
+							],
+							"path": [
+								"{{$randomInt}}"
+							],
+							"query": [
+								{
+									"key": "{{a}}",
+									"value": "{{bb}}",
+									"equals": true,
+									"description": ""
+								},
+								{
+									"key": "{{c}}",
+									"value": "dd",
+									"equals": true,
+									"description": "Test desc",
+									"disabled": true
+								},
+								{
+									"key": "e",
+									"value": "ff",
+									"equals": true,
+									"description": ""
+								}
+							],
+							"variable": []
+						},
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/x-www-form-urlencoded",
+								"description": ""
+							}
+						],
+						"body": {
+							"mode": "urlencoded",
+							"urlencoded": [
+								{
+									"key": "fd1",
+									"value": "{{v1}}",
+									"description": "",
+									"type": "text"
+								},
+								{
+									"key": "fd2",
+									"value": "2",
+									"description": "desc",
+									"type": "text",
+									"disabled": true
+								},
+								{
+									"key": "{{fd3}}",
+									"value": "3",
+									"description": "",
+									"type": "text"
+								}
+							]
+						},
+						"description": "Different description."
+					},
+					"response": []
+				},
+				{
+					"name": "header-with-variable",
+					"request": {
+						"url": {
+							"raw": "https://onet.pl/{{$randomInt}}?a=ase&sssss=ddddddd",
+							"protocol": "https",
+							"host": [
+								"onet",
+								"pl"
+							],
+							"path": [
+								"{{$randomInt}}"
+							],
+							"query": [
+								{
+									"key": "p1",
+									"value": "v1",
+									"equals": true,
+									"description": "test-param"
+								},
+								{
+									"key": "p2",
+									"value": "v2",
+									"equals": true,
+									"disabled": true
+								},
+								{
+									"key": "p3",
+									"value": "v3",
+									"equals": true,
+									"description": ""
+								}
+							],
+							"variable": []
+						},
+						"method": "GET",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/x-www-form-urlencoded",
+								"description": ""
+							},
+							{
+								"key": "Content-Length",
+								"value": "2",
+								"description": ""
+							},
+							{
+								"key": "x-test",
+								"value": "{{host}}",
+								"description": ""
+							},
+							{
+								"key": "x-disabled",
+								"value": "true",
+								"description": "",
+								"disabled": true
+							}
+						],
+						"body": {
+							"mode": "urlencoded",
+							"urlencoded": [
+								{
+									"key": "qwe",
+									"value": "qweqweqwe",
+									"description": "",
+									"type": "text"
+								},
+								{
+									"key": "qweqwe",
+									"value": "qweqweqweqw",
+									"description": "",
+									"type": "text",
+									"disabled": true
+								},
+								{
+									"key": "qweqwe",
+									"value": "cqwed wed w wef sdf wd",
+									"description": "",
+									"type": "text"
+								}
+							]
+						},
+						"description": "Different description."
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Binary value",
+			"request": {
+				"url": {
+					"raw": "https://onet.pl/{{$randomInt}}?a=b&e=f",
+					"protocol": "https",
+					"host": [
+						"onet",
+						"pl"
+					],
+					"path": [
+						"{{$randomInt}}"
+					],
+					"query": [
+						{
+							"key": "a",
+							"value": "b",
+							"equals": true,
+							"description": "test desc"
+						},
+						{
+							"key": "c",
+							"value": "{{host}}",
+							"equals": true,
+							"disabled": true
+						},
+						{
+							"key": "e",
+							"value": "f",
+							"equals": true,
+							"description": ""
+						}
+					],
+					"variable": []
+				},
+				"method": "PUT",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/x-www-form-urlencoded",
+						"description": ""
+					}
+				],
+				"body": {
+					"mode": "file",
+					"file": {
+						"src": ""
+					}
+				},
+				"description": "Request description - binary"
+			},
+			"response": []
+		},
+		{
+			"name": "Raw value",
+			"request": {
+				"url": {
+					"raw": "https://onet.pl/{{$randomInt}}?a=bbb&e=fff",
+					"protocol": "https",
+					"host": [
+						"onet",
+						"pl"
+					],
+					"path": [
+						"{{$randomInt}}"
+					],
+					"query": [
+						{
+							"key": "a",
+							"value": "bbb",
+							"equals": true,
+							"description": ""
+						},
+						{
+							"key": "c",
+							"value": "ddd",
+							"equals": true,
+							"disabled": true
+						},
+						{
+							"key": "e",
+							"value": "fff",
+							"equals": true,
+							"description": "Test desc"
+						}
+					],
+					"variable": []
+				},
+				"method": "PUT",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/x-www-form-urlencoded",
+						"description": ""
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "some {{raw}} value"
+				},
+				"description": "Request description - raw"
+			},
+			"response": []
+		},
+		{
+			"name": "Form Data value",
+			"request": {
+				"url": "https://postman-echo.com/delay/3",
+				"method": "PUT",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/x-www-form-urlencoded",
+						"description": ""
+					}
+				],
+				"body": {
+					"mode": "formdata",
+					"formdata": [
+						{
+							"key": "fb1",
+							"value": "v1",
+							"description": "test",
+							"type": "text"
+						},
+						{
+							"key": "fb2",
+							"value": "{{v2}}",
+							"description": "",
+							"type": "text",
+							"disabled": true
+						},
+						{
+							"key": "fb3",
+							"value": "v3",
+							"description": "",
+							"type": "text"
+						},
+						{
+							"key": "fb4",
+							"description": "",
+							"type": "file",
+							"src": "16x16.png"
+						}
+					]
+				},
+				"description": "Request description - FormData"
+			},
+			"response": []
+		}
+	]
+}

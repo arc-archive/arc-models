@@ -1,0 +1,137 @@
+{
+	"id": "e4638c4e-1a37-9b63-4db3-4ad8c3516706",
+	"name": "TestCollection",
+	"description": "Some description",
+	"order": [],
+	"folders": [
+		{
+			"name": "API #1",
+			"description": "",
+			"collectionId": "e4638c4e-1a37-9b63-4db3-4ad8c3516706",
+			"order": [
+				"6995f0d5-4c47-8bbd-de3c-1cd357e6a99d",
+				"2246fd9b-169a-7051-c3e2-d2137ab90ede"
+			],
+			"owner": 0,
+			"folders_order": [],
+			"id": "7d17f336-81a8-f73d-f9da-9872c6a8ab29"
+		}
+	],
+	"folders_order": [
+		"7d17f336-81a8-f73d-f9da-9872c6a8ab29"
+	],
+	"timestamp": 1518549355798,
+	"owner": 0,
+	"public": false,
+	"requests": [
+		{
+			"id": "2246fd9b-169a-7051-c3e2-d2137ab90ede",
+			"headers": "h1: h1v\n//h2: h2v\nh3: {{h3v}}\n",
+			"headerData": [
+				{
+					"key": "{{h1}}",
+					"value": "{{h1v}}",
+					"description": "Test headers",
+					"enabled": true
+				},
+				{
+					"key": "{{h2}}",
+					"value": "h2v",
+					"description": null,
+					"enabled": false
+				},
+				{
+					"key": "h3",
+					"value": "h3v",
+					"description": "",
+					"enabled": true
+				}
+			],
+			"url": "https://onet.pl/{{$randomInt}}",
+			"queryParams": [
+				{
+					"key": "{{p1}}",
+					"value": "{{v1}}",
+					"equals": true,
+					"description": "Test description",
+					"enabled": true
+				},
+				{
+					"key": "{{p1}}",
+					"value": "v2",
+					"equals": true,
+					"description": null,
+					"enabled": false
+				},
+				{
+					"key": "p3",
+					"value": "v3",
+					"equals": true,
+					"description": "",
+					"enabled": true
+				}
+			],
+			"preRequestScript": null,
+			"pathVariables": {},
+			"pathVariableData": [],
+			"method": "GET",
+			"data": null,
+			"dataMode": "params",
+			"tests": null,
+			"currentHelper": "normal",
+			"helperAttributes": {},
+			"time": 1518549678426,
+			"name": "ONET NAME",
+			"description": "Test",
+			"collectionId": "e4638c4e-1a37-9b63-4db3-4ad8c3516706",
+			"responses": []
+		},
+		{
+			"id": "6995f0d5-4c47-8bbd-de3c-1cd357e6a99d",
+			"headers": "h1: h1v\n//h2: h2v\nh3: {{h3v}}",
+			"headerData": [],
+			"url": "https://domain.com/accounts/{{login}}",
+			"queryParams": [],
+			"preRequestScript": null,
+			"pathVariables": {},
+			"pathVariableData": [],
+			"method": "POST",
+			"data": [
+				{
+					"key": "{{param}}",
+					"value": "{{value}}",
+					"description": "",
+					"type": "text",
+					"enabled": true
+				},
+				{
+					"key": "other",
+					"value": "pval",
+					"description": "",
+					"type": "text",
+					"enabled": false
+				},
+				{
+					"key": "enabled",
+					"value": "{{cloudhubApi}}",
+					"description": "",
+					"type": "text",
+					"enabled": true
+				}
+			],
+			"dataMode": "params",
+			"tests": null,
+			"currentHelper": "basicAuth",
+			"helperAttributes": {
+				"id": "basic",
+				"username": "sdfsdf",
+				"password": "sdfsdfsdf"
+			},
+			"time": 1518549661105,
+			"name": "https://domain.com/accounts/{{login}}",
+			"description": "",
+			"collectionId": "e4638c4e-1a37-9b63-4db3-4ad8c3516706",
+			"responses": []
+		}
+	]
+}

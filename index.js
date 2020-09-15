@@ -125,3 +125,9 @@ export {
   ARCVariableDeletedEvent,
   ARCVariableListEvent,
 } from './src/events/VariableEvents.js';
+
+export { ExportProcessor } from './src/lib/ExportProcessor.js';
+export { ExportFactory } from './src/lib/ExportFactory.js';
+export { ImportNormalize } from './src/lib/ImportNormalize.js';
+export { ImportFactory } from './src/lib/ImportFactory.js';
+export { isSingleRequest, isPostman, isArcFile, prepareImportObject, readFile, isOldImport, isObject } from './src/lib/ImportUtils.js';

@@ -1,0 +1,28 @@
+{
+  "id": "90a0d920-d5c2-95b7-70e2-c659da58294f",
+  "name": "TestEnvironment",
+  "values": [
+    {
+      "enabled": true,
+      "key": "var1",
+      "value": "value",
+      "type": "text"
+    },
+    {
+      "enabled": true,
+      "key": "var2",
+      "value": "test {{var1}}",
+      "type": "text"
+    },
+    {
+      "enabled": false,
+      "key": "var3",
+      "value": "test-3",
+      "type": "text"
+    }
+  ],
+  "timestamp": 1512788139783,
+  "_postman_variable_scope": "environment",
+  "_postman_exported_at": "2018-02-13T01:42:25.304Z",
+  "_postman_exported_using": "Postman/5.5.1"
+}
