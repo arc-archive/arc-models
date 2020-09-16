@@ -58,8 +58,8 @@ export declare interface HTTPRequest {
    */
   payload?: string|File|Buffer|ArrayBuffer|FormData;
   /**
-   * ARCs internal transformation of a native FormData into a struct that
-   * can be stored in the data store. This is used internally by ther model
+   * ARCs internal transformation of a native FormData into a structure that
+   * can be stored in the data store. This is used internally by their model
    * and when requesting ARC request object this is restored to the original
    * format.
    */

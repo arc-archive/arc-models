@@ -305,7 +305,7 @@ export async function deleteEnvironmentAction(target, id) {
 }
 
 /**
- * Dispatches an event to list the environemnts data.
+ * Dispatches an event to list the environments data.
  *
  * @param {EventTarget} target A node on which to dispatch the event.
  * @param {ARCVariablesListOptions=} opts Query options.

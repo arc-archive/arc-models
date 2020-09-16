@@ -55,7 +55,7 @@ export declare class ARCHistoryUrlListEvent extends ARCEntityListEvent<ARCUrlHis
 }
 
 /**
- * An event dispatched by the UI when querying for a list of hostory URLs
+ * An event dispatched by the UI when querying for a list of history URLs
  */
 export declare class ARCHistoryUrlQueryEvent extends CustomEvent<ARCModelReadBulkEventDetail<ARCUrlHistory>> {
   /**

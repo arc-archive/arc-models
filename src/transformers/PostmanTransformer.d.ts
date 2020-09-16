@@ -1,6 +1,6 @@
 import {BaseTransformer} from './BaseTransformer.js';
 
-export const postamVarRegex: RegExp;
+export const postmanVarRegex: RegExp;
 
 /**
  * Replacer function for regex replace to be used to replace variables
@@ -26,7 +26,7 @@ export declare class PostmanTransformer extends BaseTransformer {
   /**
    * Computes body value for Postman's v1 body definition.
    *
-   * @param item Postam v1 model.
+   * @param item Postman v1 model.
    * @returns Body value
    */
   computeBodyOld(item: object): string;
@@ -35,7 +35,7 @@ export declare class PostmanTransformer extends BaseTransformer {
    * Computes body as a FormData data model.
    * This function sets `multipart` property on the item.
    *
-   * @param item Postam v1 model.
+   * @param item Postman v1 model.
    * @returns Body value. Always empty string.
    */
   computeFormDataBody(item: any): string;
@@ -43,17 +43,17 @@ export declare class PostmanTransformer extends BaseTransformer {
   /**
    * Computes body as a URL encoded data model.
    *
-   * @param item Postam v1 model.
+   * @param item Postman v1 model.
    * @returns Body value.
    */
   computeUrlEncodedBody(item: object): string;
 
   /**
-   * Replaces any occurence of {{STRING}} with ARC's variables syntax.
+   * Replaces any occurrence of {{STRING}} with ARC's variables syntax.
    *
    * @param str A string value to check for variables.
    * @returns The same string with ARC's variables syntax
    */
   ensureVariablesSyntax(str: string): string;
-  ensureVarsRecursevily<T>(obj: T): T;
+  ensureVarsRecursively<T>(obj: T): T;
 }

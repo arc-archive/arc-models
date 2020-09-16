@@ -12,7 +12,7 @@ import { PostmanTransformer } from './PostmanTransformer.js';
 /** @typedef {import('./PostmanV1Transformer').PostmanFolder} PostmanFolder */
 
 /**
- * Transforms Postamn v1 collections to ARC import object.
+ * Transforms Postman v1 collections to ARC import object.
  */
 export class PostmanV1Transformer extends PostmanTransformer {
   /**
@@ -33,7 +33,7 @@ export class PostmanV1Transformer extends PostmanTransformer {
   }
 
   /**
-   * Creates the project model baqsed on Postman collections
+   * Creates the project model based on Postman collections
    *
    * @return {ExportArcProjects} Arc project data model.
    */

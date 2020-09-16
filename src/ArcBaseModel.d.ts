@@ -75,7 +75,7 @@ export declare class ArcBaseModel extends HTMLElement {
   deleteModel(name?: string): Promise<void>;
 
   /**
-   * Checks if event can be processed giving it's cancelation status or if
+   * Checks if event can be processed giving it's cancellation status or if
    * it was dispatched by current element.
    *
    * @param e Event to test

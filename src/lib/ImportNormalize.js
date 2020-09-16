@@ -38,7 +38,7 @@ export class ImportNormalize {
   }
 
   /**
-   * Normalizes any previous and current ARC file expot data to common model.
+   * Normalizes any previous and current ARC file export data to common model.
    *
    * @param {object} data Imported data.
    * @return {Promise<ArcExportObject>} A promise resolved to ARC data export object.

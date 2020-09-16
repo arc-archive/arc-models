@@ -12,7 +12,7 @@ export const storesValue = Symbol('storesValue');
 
 /**
  * An event dispatched by the store after deleting an entity.
- * Chect the event type to learn which type of an entity was deleted.
+ * Check the event type to learn which type of an entity was deleted.
  */
 export class ARCEntityDeletedEvent extends Event {
   /**

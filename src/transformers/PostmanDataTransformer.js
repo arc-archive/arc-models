@@ -7,6 +7,9 @@ import { PostmanV2Transformer } from './PostmanV2Transformer.js';
 import { PostmanV21Transformer } from './PostmanV21Transformer.js';
 
 export class PostmanDataTransformer {
+  /**
+   * @param {any} data 
+   */
   transform(data) {
     const version = this.recognizeVersion(data);
     let instance;

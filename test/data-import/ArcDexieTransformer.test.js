@@ -45,7 +45,7 @@ describe('ArcDexieTransformer', () => {
 
     it('sets values on the requests', () => {
       let request = result.requests[0];
-      assert.equal(request.url, 'hrttp://localhost:8080/url2');
+      assert.equal(request.url, 'http://localhost:8080/url2');
       assert.equal(request.method, 'GET');
       assert.equal(request.headers, '');
       assert.equal(request.payload, '');
@@ -89,7 +89,7 @@ describe('ArcDexieTransformer', () => {
       assert.strictEqual(project.order, 0, 'order is set');
     });
 
-    it('Associate requests with porojects', () => {
+    it('Associate requests with projects', () => {
       assert.isUndefined(result.requests[0].projects);
       assert.isUndefined(result.requests[1].projects);
       assert.typeOf(result.requests[2].projects[0], 'string');
@@ -178,7 +178,7 @@ describe('ArcDexieTransformer', () => {
 
     it('Request values are set', () => {
       let request = result.requests[0];
-      assert.equal(request.url, 'hrttp://localhost:8080/url2');
+      assert.equal(request.url, 'http://localhost:8080/url2');
       assert.equal(request.method, 'GET');
       assert.equal(request.headers, '');
       assert.equal(request.payload, '');

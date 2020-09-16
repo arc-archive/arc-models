@@ -39,7 +39,7 @@ export const handleConflictedItem = Symbol('handleConflictedItem');
 export const insertGeneric = Symbol('insertGeneric');
 
 /**
- * Export objects have `key` property instead of `_id`. This ensures the keys are coppied to
+ * Export objects have `key` property instead of `_id`. This ensures the keys are copied to
  * PouchDB's id.
  *
  * @param {object[]} items
@@ -109,8 +109,8 @@ export class ImportFactory {
     if (exportObj.variables && exportObj.variables.length) {
       const result = await this.importVariables(exportObj.variables);
       handleInfo(result);
-      const eresult = await this.importEnvironments(exportObj.variables);
-      handleInfo(eresult);
+      const eResult = await this.importEnvironments(exportObj.variables);
+      handleInfo(eResult);
     }
     const hr = exportObj.hostrules;
     if (hr && hr.length) {

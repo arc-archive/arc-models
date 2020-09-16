@@ -44,7 +44,7 @@ export declare interface PostmanFolder {
 }
 
 /**
- * Transforms Postamn v1 collections to ARC import object.
+ * Transforms Postman v1 collections to ARC import object.
  */
 export declare class PostmanV1Transformer extends PostmanTransformer {
   /**
@@ -55,7 +55,7 @@ export declare class PostmanV1Transformer extends PostmanTransformer {
   transform(): Promise<DataExport.ArcExportObject>;
 
   /**
-   * Creates the project model baqsed on Postman collections
+   * Creates the project model based on Postman collections
    *
    * @returns Arc project data model.
    */

@@ -69,7 +69,7 @@ export class ArcBaseModel extends HTMLElement {
    * Override this value to change the query options like limit of the results in one call.
    *
    * This is query options passed to the PouchDB `allDocs` function. Note that it will not
-   * set `include_docs` option. A conviniet shortcut is to set the the `includeDocs` property
+   * set `include_docs` option. A convinced shortcut is to set the the `includeDocs` property
    * and the directive will be added automatically.
    *
    * @type {Object}
@@ -180,7 +180,7 @@ export class ArcBaseModel extends HTMLElement {
   }
 
   /**
-   * Notifies the application that the model has been removed and data sestroyed.
+   * Notifies the application that the model has been removed and data destroyed.
    *
    * @param {string} store The name of the deleted store
    */
@@ -211,7 +211,7 @@ export class ArcBaseModel extends HTMLElement {
   }
 
   /**
-   * Checks if event can be processed giving it's cancelation status or if
+   * Checks if event can be processed giving it's cancellation status or if
    * it was dispatched by current element.
    * @param {Event|CustomEvent} e  Event to test
    * @return {boolean} True if event is already cancelled or dispatched by self.

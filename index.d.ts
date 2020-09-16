@@ -84,7 +84,7 @@ export {
   ARCHostRuleUpdatedEvent,
   ARCHostRuleDeleteEvent,
   ARCHostRuleDeletedEvent,
-  ARCHostRuletListEvent,
+  ARCHostRulesListEvent,
 } from './src/events/HostRuleEvents';
 
 export {

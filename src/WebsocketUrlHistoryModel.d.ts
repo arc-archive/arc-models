@@ -32,7 +32,7 @@ export const listHandler: symbol;
 export const queryHandler: symbol;
 
 /**
- * Gives an access to the WebScoket entities.
+ * Gives an access to the WebSocket entities.
  */
 export declare class WebsocketUrlHistoryModel extends ArcBaseModel {
   constructor();

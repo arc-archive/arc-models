@@ -22,5 +22,5 @@ export declare class ArcPouchTransformer extends BaseTransformer {
   transformProjects(projects: DataExport.ExportArcProjects[]): DataExport.ExportArcProjects[];
   transformRequests(requests: DataExport.ExportArcSavedRequest[], projects: DataExport.ExportArcProjects[]): DataExport.ExportArcSavedRequest[];
   transformHistory(history: DataExport.ExportArcHistoryRequest[]): DataExport.ExportArcHistoryRequest[];
-  tranformClientCertificates(items: DataExport.ExportArcClientCertificateData[]): DataExport.ExportArcClientCertificateData[];
+  transformClientCertificates(items: DataExport.ExportArcClientCertificateData[]): DataExport.ExportArcClientCertificateData[];
 }

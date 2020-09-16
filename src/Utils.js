@@ -8,7 +8,7 @@
 /** @typedef {import('./types').ARCEntityChangeRecord} ARCEntityChangeRecord */
 
 /**
- * Computes past mindnight for given timestamp.
+ * Computes past midnight for given timestamp.
  *
  * @param {number} time Timestamp
  * @return {number} Time reduced to midnight.
@@ -44,7 +44,7 @@ export function cancelEvent(e) {
 }
 
 /**
- * Normalizes various historical labels for the request to a curently used values.
+ * Normalizes various historical labels for the request to a currently used values.
  *
  * @param {string} type `saved-requests`, `saved`, `history-requests`, `history`, `legacy-projects`, or `projects`
  * @return {string} `saved`, `history`, or `projects`

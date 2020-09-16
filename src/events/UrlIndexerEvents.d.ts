@@ -29,7 +29,7 @@ export declare class ARCUrlIndexUpdateEvent extends CustomEvent<ARCModelVoidResu
 
 
 /**
- * An event dispatched by the UI when querying the reqiuests URL index data.
+ * An event dispatched by the UI when querying the requests URL index data.
  */
 export declare class ARCUrlIndexQueryEvent extends CustomEvent<ARCModelReadEventDetail<IndexQueryResult>> {
   /**

@@ -39,10 +39,10 @@ import { ArcModelEvents } from './events/ArcModelEvents.js';
 export const envReadHandler = Symbol('envReadHandler');
 export const envUpdateHandler = Symbol('envUpdateHandler');
 export const envDeleteHandler = Symbol('envDeleteHandler');
-export const envListeHandler = Symbol('envListeHandler');
+export const envListHandler = Symbol('envListHandler');
 export const varUpdateHandler = Symbol('varUpdateHandler');
 export const varDeleteHandler = Symbol('varDeleteHandler');
-export const varListeHandler = Symbol('varListeHandler');
+export const varListHandler = Symbol('varListHandler');
 export const updateEnvironmentName = Symbol('updateEnvironmentName');
 export const deleteEnvironmentVariables = Symbol('deleteEnvironmentVariables');
 export const deleteEnvironmentsModel = Symbol('deleteEnvironmentsModel');
@@ -76,10 +76,10 @@ export class VariablesModel extends ArcBaseModel {
     this[envReadHandler] = this[envReadHandler].bind(this);
     this[envUpdateHandler] = this[envUpdateHandler].bind(this);
     this[envDeleteHandler] = this[envDeleteHandler].bind(this);
-    this[envListeHandler] = this[envListeHandler].bind(this);
+    this[envListHandler] = this[envListHandler].bind(this);
     this[varUpdateHandler] = this[varUpdateHandler].bind(this);
     this[varDeleteHandler] = this[varDeleteHandler].bind(this);
-    this[varListeHandler] = this[varListeHandler].bind(this);
+    this[varListHandler] = this[varListHandler].bind(this);
   }
 
   /**
@@ -163,7 +163,7 @@ export class VariablesModel extends ArcBaseModel {
    *
    * If this is current environment it also changes its name.
    *
-   * @param {string} oldName Name of the environment befoe the change
+   * @param {string} oldName Name of the environment before the change
    * @param {ARCEnvironment} data Updated data store entry
    * @return {Promise<void>}
    */
@@ -482,10 +482,10 @@ export class VariablesModel extends ArcBaseModel {
     node.addEventListener(ArcModelEventTypes.Environment.read, this[envReadHandler]);
     node.addEventListener(ArcModelEventTypes.Environment.update, this[envUpdateHandler]);
     node.addEventListener(ArcModelEventTypes.Environment.delete, this[envDeleteHandler]);
-    node.addEventListener(ArcModelEventTypes.Environment.list, this[envListeHandler]);
+    node.addEventListener(ArcModelEventTypes.Environment.list, this[envListHandler]);
     node.addEventListener(ArcModelEventTypes.Variable.update, this[varUpdateHandler]);
     node.addEventListener(ArcModelEventTypes.Variable.delete, this[varDeleteHandler]);
-    node.addEventListener(ArcModelEventTypes.Variable.list, this[varListeHandler]);
+    node.addEventListener(ArcModelEventTypes.Variable.list, this[varListHandler]);
   }
 
   _detachListeners(node) {
@@ -493,10 +493,10 @@ export class VariablesModel extends ArcBaseModel {
     node.removeEventListener(ArcModelEventTypes.Environment.read, this[envReadHandler]);
     node.removeEventListener(ArcModelEventTypes.Environment.update, this[envUpdateHandler]);
     node.removeEventListener(ArcModelEventTypes.Environment.delete, this[envDeleteHandler]);
-    node.removeEventListener(ArcModelEventTypes.Environment.list, this[envListeHandler]);
+    node.removeEventListener(ArcModelEventTypes.Environment.list, this[envListHandler]);
     node.removeEventListener(ArcModelEventTypes.Variable.update, this[varUpdateHandler]);
     node.removeEventListener(ArcModelEventTypes.Variable.delete, this[varDeleteHandler]);
-    node.removeEventListener(ArcModelEventTypes.Variable.list, this[varListeHandler]);
+    node.removeEventListener(ArcModelEventTypes.Variable.list, this[varListHandler]);
   }
 
   /**
@@ -554,7 +554,7 @@ export class VariablesModel extends ArcBaseModel {
    *
    * @param {ARCEnvironmentListEvent} e
    */
-  [envListeHandler](e) {
+  [envListHandler](e) {
     if (e.defaultPrevented) {
       return;
     }
@@ -609,7 +609,7 @@ export class VariablesModel extends ArcBaseModel {
    *
    * @param {ARCVariableListEvent} e
    */
-  [varListeHandler](e) {
+  [varListHandler](e) {
     if (e.defaultPrevented) {
       return;
     }

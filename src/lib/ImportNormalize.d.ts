@@ -20,7 +20,7 @@ export declare class ImportNormalize {
   normalize(data: string|object): Promise<DataExport.ArcExportObject>;
 
   /**
-   * Normalizes any previous and current ARC file expot data to common model.
+   * Normalizes any previous and current ARC file export data to common model.
    *
    * @param data Imported data.
    * @returns A promise resolved to ARC data export object.

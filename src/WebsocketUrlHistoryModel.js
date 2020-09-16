@@ -28,7 +28,7 @@ import { ArcModelEvents } from './events/ArcModelEvents.js';
 /* eslint-disable no-await-in-loop */
 
 /**
- * Sotring functions for url history
+ * Sorting functions for url history
  * @param {ARCWebsocketUrlHistory} a
  * @param {ARCWebsocketUrlHistory} b
  * @return {number}
@@ -58,7 +58,7 @@ export const listHandler = Symbol('listHandler');
 export const queryHandler = Symbol('queryHandler');
 
 /**
- * Gives an access to the WebScoket entities.
+ * Gives an access to the WebSocket entities.
  */
 export class WebsocketUrlHistoryModel extends ArcBaseModel {
   constructor() {

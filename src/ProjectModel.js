@@ -91,7 +91,7 @@ export class ProjectModel extends RequestBaseModel {
   }
 
   /**
-   * Updates or creats a project object.
+   * Updates or creates a project object.
    *
    * @param {ARCProject} project Project object to update.
    * @return {Promise<ARCEntityChangeRecord>}
@@ -121,7 +121,7 @@ export class ProjectModel extends RequestBaseModel {
   }
 
   /**
-   * Link to `#readProject()` for API's consistency
+   * Link to `#readProject()` for API consistency
    *
    * @param {string} id The ID of the datastore entry.
    * @param {string=} rev Specific revision to read. Defaults to the latest revision.
@@ -132,7 +132,7 @@ export class ProjectModel extends RequestBaseModel {
   }
 
   /**
-   * Link to `#removeProject()` for API's consistency
+   * Link to `#removeProject()` for API consistency
    *
    * @param {string} id The ID of the datastore entry.
    * @param {string=} rev Specific revision to read. Defaults to latest revision.

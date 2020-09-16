@@ -2,7 +2,7 @@ import { ARCSavedRequest, ARCHistoryRequest } from './RequestTypes';
 import { DeletedEntity, ARCEntityChangeRecord } from './types';
 
 /**
- * Computes past mindnight for given timestamp.
+ * Computes past midnight for given timestamp.
  *
  * @param time Timestamp
  * @returns Time reduced to midnight.
@@ -23,7 +23,7 @@ export declare function computeTime(item: object): object;
 export declare function cancelEvent(e: Event|CustomEvent): void;
 
 /**
- * Normalizes various historical labels for the request to a curently used values.
+ * Normalizes various historical labels for the request to a currently used values.
  *
  * @param type `saved-requests`, `saved`, `history-requests`,`history`, `legacy-projects`, or `projects`
  * @returns `saved`, `history`, or `projects`

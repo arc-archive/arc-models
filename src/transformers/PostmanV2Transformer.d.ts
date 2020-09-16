@@ -97,11 +97,11 @@ export declare interface PostmanV2 {
 }
 
 /**
- * Transforms Postamn v2 collections to ARC import object.
+ * Transforms Postman v2 collections to ARC import object.
  */
 export declare class PostmanV2Transformer extends PostmanTransformer {
 
-  chounkSize: number;
+  chunkSize: number;
   [currentItemValue]: number;
 
   /**
@@ -135,7 +135,7 @@ export declare class PostmanV2Transformer extends PostmanTransformer {
   /**
    * Extracts all requests in order from postman v2 collection.
    *
-   * @param data List of Postamn V2 collection `item`.
+   * @param data List of Postman V2 collection `item`.
    * (why it's called item and not items?)
    * @param result Array where to append results.
    * @returns Promise resolved when all objects are computed.
@@ -145,7 +145,7 @@ export declare class PostmanV2Transformer extends PostmanTransformer {
   /**
    * Computes ARC request out of Postman v2 item.
    *
-   * @param item Postamn v2 item.
+   * @param item Postman v2 item.
    * @returns ARC request object.
    */
   computeArcRequest(item: PostmanItem): DataExport.ExportArcSavedRequest;

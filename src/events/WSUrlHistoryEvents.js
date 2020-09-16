@@ -72,7 +72,7 @@ export class ARCWSUrlListEvent extends ARCEntityListEvent {
 }
 
 /**
- * An event dispatched by the UI when querying for a list of hostiry URLs
+ * An event dispatched by the UI when querying for a list of history URLs
  */
 export class ARCWSUrlQueryEvent extends CustomEvent {
   /**

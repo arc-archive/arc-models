@@ -41,7 +41,7 @@ export declare class ProjectModel extends RequestBaseModel {
   post(project: ARCProject): Promise<ARCEntityChangeRecord<ARCProject>>;
 
   /**
-   * Link to `#readProject()` for API's consistency
+   * Link to `#readProject()` for API consistency
    *
    * @param id The ID of the datastore entry.
    * @param rev Specific revision to read. Defaults to the latest revision.
@@ -50,7 +50,7 @@ export declare class ProjectModel extends RequestBaseModel {
   get(id: string, rev?: string): Promise<ARCProject>;
 
   /**
-   * Link to `#removeProject()` for API's consistency
+   * Link to `#removeProject()` for API consistency
    *
    * @param  id The ID of the datastore entry.
    * @param rev Specific revision to read. Defaults to latest revision.

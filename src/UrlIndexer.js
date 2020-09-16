@@ -44,7 +44,7 @@ export const deletemodelHandler = Symbol('deletemodelHandler');
 export const deleteStores = Symbol('deleteStores');
 export const quietIndexData = Symbol('quietIndexData');
 export const deleteIndexDebounce = Symbol('deleteIndexDebounce');
-export const quietTndex = Symbol('quietTndex');
+export const quietIndex = Symbol('quietIndex');
 export const indexDebounce = Symbol('indexDebounce');
 export const processIndexedRequests = Symbol('processIndexedRequests');
 export const prepareRequestIndexData = Symbol('prepareRequestIndexData');
@@ -61,7 +61,7 @@ export const getIndexedDataAll = Symbol('getIndexedDataAll');
 export const searchIndexOf = Symbol('searchIndexOf');
 export const searchCasing = Symbol('searchCasing');
 export const nextCasing = Symbol('nextCasing');
-export const renindex = Symbol('renindex');
+export const reindex = Symbol('reindex');
 
 export const STORE_NAME = 'request-index';
 export const STORE_VERSION = 1;
@@ -178,9 +178,9 @@ export class UrlIndexer extends HTMLElement {
   }
 
   /**
-   * Calles index function with debouncer.
+   * Calls index function with debouncer.
    * The debouncer runs the queue after 25 ms. Bulk operations should be called
-   * onece unless there's a lot of data to process.
+   * once unless there's a lot of data to process.
    *
    * @param {string} id Request ID
    * @param {string} url Request URL
@@ -206,12 +206,12 @@ export class UrlIndexer extends HTMLElement {
       const data = this[indexRequestQueueValue];
       this[indexRequestQueueValue] = [];
       if (data && data.length) {
-        this[quietTndex](data);
+        this[quietIndex](data);
       }
     }, 25);
   }
 
-  async [quietTndex](data) {
+  async [quietIndex](data) {
     try {
       await this.index(data);
     } catch (e) {
@@ -234,9 +234,9 @@ export class UrlIndexer extends HTMLElement {
   }
 
   /**
-   * Calles deleteIndexedData function with debouncer.
+   * Calls deleteIndexedData function with debouncer.
    * The debouncer runs the queue after 25 ms. Bulk operations should be called
-   * onece unless there's a lot of data to process.
+   * once unless there's a lot of data to process.
    *
    * @param {String} id Request ID
    */
@@ -463,7 +463,7 @@ export class UrlIndexer extends HTMLElement {
   }
 
   /**
-   * Retreives index data for requests.
+   * Retrieves index data for requests.
    * @param {IDBDatabase} db Database reference
    * @param {string[]} ids List of request ids
    * @return {Promise<IndexableRequestMap>} A map where keys are request IDs and values are
@@ -684,14 +684,14 @@ export class UrlIndexer extends HTMLElement {
    */
   [appendQueryParams](parser, id, type, indexed, target) {
     parser.searchParams.forEach((value, name) => {
-      const qstring = `${name}=${value}`;
-      const qindex = this[createIndexIfMissing](qstring, id, type, indexed);
-      if (qindex) {
-        target.push(qindex);
+      const qString = `${name}=${value}`;
+      const qIndex = this[createIndexIfMissing](qString, id, type, indexed);
+      if (qIndex) {
+        target.push(qIndex);
       }
-      const vindex = this[createIndexIfMissing](value, id, type, indexed);
-      if (vindex) {
-        target.push(vindex);
+      const vIndex = this[createIndexIfMissing](value, id, type, indexed);
+      if (vIndex) {
+        target.push(vIndex);
       }
     });
   }
@@ -771,7 +771,7 @@ export class UrlIndexer extends HTMLElement {
    * @return {Promise<IndexQueryResult>}
    */
   [searchIndexOf](db, q, type) {
-    // console.debug('Performing search using "indexof" algorithm');
+    // console.debug('Performing search using "indexOf" algorithm');
     const lowerNeedle = q.toLowerCase();
     return new Promise((resolve) => {
       // performance.mark('search-key-scan-2-start');
@@ -964,7 +964,7 @@ export class UrlIndexer extends HTMLElement {
    * @return {Promise<void>}
    */
   async reindexSaved() {
-    return this[renindex]('saved');
+    return this[reindex]('saved');
   }
 
   /**
@@ -972,7 +972,7 @@ export class UrlIndexer extends HTMLElement {
    * @return {Promise<void>}
    */
   async reindexHistory() {
-    return this[renindex]('history');
+    return this[reindex]('history');
   }
 
   /**
@@ -980,7 +980,7 @@ export class UrlIndexer extends HTMLElement {
    * @param {string} type Either `saved` or `history`
    * @return {Promise<void>}
    */
-  async [renindex](type) {
+  async [reindex](type) {
     /* global PouchDB */
     const pdb = new PouchDB(`${type}-requests`);
     const response = await pdb.allDocs({ include_docs: true });

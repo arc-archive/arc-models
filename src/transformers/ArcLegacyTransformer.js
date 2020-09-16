@@ -27,7 +27,7 @@ export function isSingleRequest(data) {
 
 
 /**
- * Transforms the first ARC data object to curent schema.
+ * Transforms the first ARC data object to current schema.
  */
 export class ArcLegacyTransformer extends BaseTransformer {
   /**
@@ -68,7 +68,7 @@ export class ArcLegacyTransformer extends BaseTransformer {
   /**
    * Returns a list of projects from a legacy export file.
    *
-   * Each project will have nevely generated ID to not make conflicts with
+   * Each project will have newly generated ID to not make conflicts with
    * existing projects. Old project id is moved to the `originId` property.
    *
    * @param {LegacyProject[]} projects List of legacy project objects

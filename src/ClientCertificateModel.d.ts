@@ -91,15 +91,15 @@ export declare interface ARCCertificateIndex extends Entity {
  * The certificates are located in the `client-certificates-data` store.
  * Content is not stored with the listing data for performance.
  *
- * `clientCertificate` struct
+ * `clientCertificate` structure
  * - `type` {String} - Certificate type. Either p12 or pem. Required.
- * - `cert` {Array<Certificate>} or {Cetrificate} - Certificate or list of certificates to use. Required.
- * - `key` {Array<Certificate>} or {Cetrificate} - Key for pem certificate. Optional.
+ * - `cert` {Array<Certificate>} or {Certificate} - Certificate or list of certificates to use. Required.
+ * - `key` {Array<Certificate>} or {Certificate} - Key for pem certificate. Optional.
  * - `name` {String} - Custom name of the certificate. Optional.
  * - `created` {Number} - Timestamp when the certificate was inserted into the data store.
  * Required when returning a result. Auto-generated when inserting.
  *
- * `Certificate` struct
+ * `Certificate` structure
  * - `data` {String} or {ArrayBuffer} or {Buffer} The certificate to use. Required.
  * The p12 type certificate must be a Buffer. The `get()` method always returns
  * original data type.
@@ -121,7 +121,7 @@ export declare class ClientCertificateModel extends ArcBaseModel {
   list(opts?: ARCModelListOptions): Promise<ARCModelListResult<ARCCertificateIndex>>;
 
   /**
-   * Reads clioent certificate full structure.
+   * Reads client certificate full structure.
    * Returns certificate's meta data + cert + key.
    *
    * @param id Certificate's datastore id.
@@ -148,7 +148,7 @@ export declare class ClientCertificateModel extends ArcBaseModel {
    * See class description for data structure.
    *
    * @param data Data to insert.
-   * @returns Unlike other models, rromise resolved to inserted
+   * @returns Unlike other models, a promise resolved to inserted
    * id. Because this API operates on a single ID without reviews this won't
    * return the final object.
    */
@@ -162,7 +162,7 @@ export declare class ClientCertificateModel extends ArcBaseModel {
    * function to recognize what to do with the data.
    *
    * Note, for optimization, PEM keys should be strings as the content of the
-   * certificate is already a base62 string. To spare dounble base64 convertion
+   * certificate is already a base62 string. To spare double base64 conversion
    * use string data.
    *
    * @param cert Certificate definition. See class description.
@@ -178,7 +178,7 @@ export declare class ClientCertificateModel extends ArcBaseModel {
   certificateFromStore(cert: ARCCertificate|ARCCertificate[]): ARCCertificate|ARCCertificate[];
 
   /**
-   * Converts incomming data to base64 string.
+   * Converts incoming data to base64 string.
    *
    * @returns Safe to store string.
    */

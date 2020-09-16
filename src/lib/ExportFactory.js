@@ -31,11 +31,11 @@ function getDatabaseName(key) {
  */
 export class ExportFactory {
   /**
-   * @param {number=} [dbChunk=1000] The size of datastore read operation in a signle fetch.
+   * @param {number=} [dbChunk=1000] The size of datastore read operation in a single fetch.
    */
   constructor(dbChunk=1000) {
     /**
-     * The size of datastore read operation in a signle fetch.
+     * The size of datastore read operation in a single fetch.
      * @type {Number}
      */
     this.dbChunk = dbChunk;
@@ -50,10 +50,10 @@ export class ExportFactory {
     const dataKeys = /** @type ExportKey[] */ (Object.keys(data));
     const ps = dataKeys.map((key) => this.prepareExportData(key, data));
     const results = await Promise.all(ps);
-    const ccindex = results.findIndex(({key}) => key === 'clientcertificates');
-    let ccdata;
-    if (ccindex > -1) {
-      ccdata = results[ccindex].data;
+    const ccIndex = results.findIndex(({key}) => key === 'clientcertificates');
+    let ccData;
+    if (ccIndex > -1) {
+      ccData = results[ccIndex].data;
     }
     const hasSaved = dataKeys.includes('saved');
     if (hasSaved && !dataKeys.includes('projects')) {
@@ -65,14 +65,14 @@ export class ExportFactory {
     let addCc = [];
     if (hasSaved) {
       const index = results.findIndex(({key}) => key === 'saved');
-      const ccs = await processRequestsArray(results[index].data, ccdata);
+      const ccs = await processRequestsArray(results[index].data, ccData);
       if (ccs) {
         addCc = addCc.concat(ccs);
       }
     }
     if (dataKeys.includes('history')) {
       const index = results.findIndex(({key}) => key === 'history');
-      const ccs = await processRequestsArray(results[index].data, ccdata);
+      const ccs = await processRequestsArray(results[index].data, ccData);
       if (ccs) {
         addCc = addCc.concat(ccs);
       }

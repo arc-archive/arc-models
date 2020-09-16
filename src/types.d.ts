@@ -30,7 +30,7 @@ export declare interface ARCEntityChangeRecord<T> {
   id: string;
   /**
    * The revision of the updated entity.
-   * It is not set when old revisison is unavailable (new entity is created).
+   * It is not set when old revision is unavailable (new entity is created).
    */
   oldRev?: string;
   /**
@@ -88,7 +88,7 @@ export declare interface ARCModelListResult<T> {
 }
 
 /**
- * Event detail ovject for data store query result object.
+ * Event detail object for data store query result object.
  */
 export declare interface ARCModelListResultDetail<T> {
   result: Promise<ARCModelListResult<T>>;

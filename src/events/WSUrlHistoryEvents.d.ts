@@ -55,7 +55,7 @@ export declare class ARCWSUrlListEvent extends ARCEntityListEvent<ARCWebsocketUr
 }
 
 /**
- * An event dispatched by the UI when querying for a list of hostiry URLs
+ * An event dispatched by the UI when querying for a list of history URLs
  */
 export declare class ARCWSUrlQueryEvent extends CustomEvent<ARCModelReadBulkEventDetail<ARCWebsocketUrlHistory>> {
   /**

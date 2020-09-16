@@ -6,7 +6,7 @@ import {
   ARCHostRuleUpdatedEvent,
   ARCHostRuleDeleteEvent,
   ARCHostRuleDeletedEvent,
-  ARCHostRuletListEvent,
+  ARCHostRulesListEvent,
 } from '../../src/events/HostRuleEvents.js';
 import { ArcModelEventTypes } from '../../src/events/ArcModelEventTypes.js';
 
@@ -169,11 +169,11 @@ describe('HostRuleEvents', () => {
     });
   });
 
-  describe('ARCHostRuletListEvent', () => {
+  describe('ARCHostRulesListEvent', () => {
     const opts = { limit: 5, nextPageToken: 'test-page-token' };
 
     it('has readonly limit property', () => {
-      const e = new ARCHostRuletListEvent(opts);
+      const e = new ARCHostRulesListEvent(opts);
       assert.deepEqual(e.limit, opts.limit);
       assert.throws(() => {
         // @ts-ignore
@@ -182,7 +182,7 @@ describe('HostRuleEvents', () => {
     });
 
     it('has readonly nextPageToken property', () => {
-      const e = new ARCHostRuletListEvent(opts);
+      const e = new ARCHostRulesListEvent(opts);
       assert.deepEqual(e.nextPageToken, opts.nextPageToken);
       assert.throws(() => {
         // @ts-ignore
@@ -191,7 +191,7 @@ describe('HostRuleEvents', () => {
     });
 
     it('has the correct type', () => {
-      const e = new ARCHostRuletListEvent(opts);
+      const e = new ARCHostRulesListEvent(opts);
       assert.equal(e.type, ArcModelEventTypes.HostRules.list);
     });
   });

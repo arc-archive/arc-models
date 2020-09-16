@@ -48,7 +48,7 @@ describe('ExportFactory', () => {
         assert.lengthOf(projects, 50, 'has all projects');
       });
 
-      it('has ARCRequest proeprties on a request entity', async () => {
+      it('has ARCRequest properties on a request entity', async () => {
         const result = await factory.getExportData({
           saved: true,
         });
@@ -60,7 +60,7 @@ describe('ExportFactory', () => {
         assert.typeOf(request.url, 'string', 'has the url');
       });
 
-      it('has ARCProject proeprties on a request entity', async () => {
+      it('has ARCProject properties on a request entity', async () => {
         const result = await factory.getExportData({
           saved: true,
         });
@@ -109,7 +109,7 @@ describe('ExportFactory', () => {
         assert.lengthOf(projects, 100, 'has all requests');
       });
 
-      it('has ARCProject proeprties on a request entity', async () => {
+      it('has ARCProject properties on a request entity', async () => {
         const result = await factory.getExportData({
           projects: true,
         });
@@ -157,7 +157,7 @@ describe('ExportFactory', () => {
         assert.lengthOf(history, 100, 'has all history');
       });
 
-      it('has ARCHisotryRequest properties on a request entity', async () => {
+      it('has ARCHistoryRequest properties on a request entity', async () => {
         const result = await factory.getExportData({
           history: true,
         });
@@ -547,7 +547,7 @@ describe('ExportFactory', () => {
       factory = new ExportFactory();
     });
 
-    it('processes data resular store data', async () => {
+    it('processes data url history store data', async () => {
       const data = {
         urlhistory: true,
       };

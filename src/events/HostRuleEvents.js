@@ -151,7 +151,7 @@ export class ARCHostRuleDeletedEvent extends ARCEntityDeletedEvent {
 /**
  * An event dispatched by the UI when requesting a list of host rules
  */
-export class ARCHostRuletListEvent extends ARCEntityListEvent {
+export class ARCHostRulesListEvent extends ARCEntityListEvent {
   /**
    * @param {ARCModelListOptions=} opts Query options.
    */
@@ -205,7 +205,7 @@ export async function updatedState(target, record) {
  * @return {Promise<ARCModelListResult>} Promise resolved to list of results
  */
 export async function listAction(target, opts) {
-  const e = new ARCHostRuletListEvent(opts);
+  const e = new ARCHostRulesListEvent(opts);
   target.dispatchEvent(e);
   return e.detail.result;
 }

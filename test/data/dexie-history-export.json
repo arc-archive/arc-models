@@ -387,7 +387,7 @@
         "pages": [
           {
             "startedDateTime": "2017-09-25T18:56:50.364Z",
-            "id": "GET:hrttp://localhost:8080/url1-0",
+            "id": "GET:http://localhost:8080/url1-0",
             "title": "Regular request",
             "pageTimings": {
               "onLoad": -1,
@@ -416,7 +416,7 @@
         "entries": [
           {
             "startedDateTime": "2017-09-25T18:56:50.364Z",
-            "pageref": "GET:hrttp://localhost:8080/url1-0",
+            "pageref": "GET:http://localhost:8080/url1-0",
             "time": -1,
             "timings": {
               "blocked": -1,
@@ -432,7 +432,7 @@
             },
             "request": {
               "method": "GET",
-              "url": "hrttp://localhost:8080/url1",
+              "url": "http://localhost:8080/url1",
               "httpVersion": "HTTP/1.1",
               "headersSize": 76,
               "bodySize": 0,
@@ -791,7 +791,7 @@
     },
     {
       "order": 0,
-      "url": "hrttp://localhost:8080/url2",
+      "url": "http://localhost:8080/url2",
       "method": "GET",
       "type": "saved",
       "updateTime": 1506365783981,
@@ -813,7 +813,7 @@
         "pages": [
           {
             "startedDateTime": "2017-09-25T18:56:15.233Z",
-            "id": "GET:hrttp://localhost:8080/url2-0",
+            "id": "GET:http://localhost:8080/url2-0",
             "title": "Request in project",
             "pageTimings": {
               "onLoad": -1,
@@ -824,7 +824,7 @@
         "entries": [
           {
             "startedDateTime": "2017-09-25T18:56:15.233Z",
-            "pageref": "GET:hrttp://localhost:8080/url2-0",
+            "pageref": "GET:http://localhost:8080/url2-0",
             "time": -1,
             "timings": {
               "blocked": -1,
@@ -840,7 +840,7 @@
             },
             "request": {
               "method": "GET",
-              "url": "hrttp://localhost:8080/url2",
+              "url": "http://localhost:8080/url2",
               "httpVersion": "HTTP/1.1",
               "headersSize": 76,
               "bodySize": 0,

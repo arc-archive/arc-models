@@ -96,7 +96,7 @@ export class ARCProjectUpdateBulkEvent extends CustomEvent {
   }
 
   /**
-   * @return {ARCProject[]} A liost of projects that are being updated.
+   * @return {ARCProject[]} A list of projects that are being updated.
    */
   get projects() {
     return this[projectValue];

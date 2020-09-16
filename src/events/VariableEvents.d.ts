@@ -220,7 +220,7 @@ export declare function updateEnvironmentAction(target: EventTarget, item: ARCEn
 export declare function deleteEnvironmentAction(target: EventTarget, id: string): Promise<DeletedEntity>;
 
 /**
- * Dispatches an event to list the environemnts data.
+ * Dispatches an event to list the environments data.
  *
  * @param target A node on which to dispatch the event.
  * @param opts Query options.

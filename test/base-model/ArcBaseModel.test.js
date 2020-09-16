@@ -20,14 +20,14 @@ describe('ArcBaseModel', () => {
   }
 
   describe('Basics', () => {
-    it('Sets store name in contructor', async () => {
+    it('Sets store name in constructor', async () => {
       const element = /** @type {TestModel} */ (await fixture(
         '<test-model></test-model>'
       ));
       assert.equal(element.name, STORE_NAME);
     });
 
-    it('Sets reviews limit in contructor', async () => {
+    it('Sets reviews limit in constructor', async () => {
       const element = /** @type {TestModel} */ (await fixture(
         '<test-model></test-model>'
       ));
@@ -427,7 +427,7 @@ describe('ArcBaseModel', () => {
       assert.isFalse(element.called);
     });
 
-    it('Reseives on self', () => {
+    it('Receives on self', () => {
       element.eventsTarget = element;
       fire('test-event', false, element);
       assert.isTrue(element.calledOnce);

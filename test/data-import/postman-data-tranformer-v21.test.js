@@ -85,9 +85,13 @@ describe('PostmanV21Transformer', () => {
       it('Marks items enabled / disabled', () => {
         const arcItem = /** @type ExportArcSavedRequest */ ({});
         transformer.formDataBody(item.request.body.formdata, arcItem);
+        // @ts-ignore
         assert.isTrue(arcItem.multipart[0].enabled);
+        // @ts-ignore
         assert.isFalse(arcItem.multipart[1].enabled);
+        // @ts-ignore
         assert.isTrue(arcItem.multipart[2].enabled);
+        // @ts-ignore
         assert.isTrue(arcItem.multipart[3].enabled);
       });
 
@@ -117,14 +121,14 @@ describe('PostmanV21Transformer', () => {
         item = jsonData.item[0].item[0].request.body.urlencoded;
       });
 
-      let shalowCopy;
+      let shallowCopy;
       beforeEach(() => {
         transformer = new PostmanV21Transformer(jsonData);
-        shalowCopy = Array.from(item, (i) => { return { ...i } });
+        shallowCopy = Array.from(item, (i) => { return { ...i } });
       });
 
       it('computes body value', () => {
-        const result = transformer.urlEncodedBody(shalowCopy);
+        const result = transformer.urlEncodedBody(shallowCopy);
         assert.equal(result, 'fd1=${v1}&${fd3}=3');
       });
     });
@@ -178,15 +182,15 @@ describe('PostmanV21Transformer', () => {
       item = jsonData.item[0].item[1];
     });
 
-    let shalowCopy;
+    let shallowCopy;
     describe('computeHeaders()', () => {
       beforeEach(() => {
         transformer = new PostmanV21Transformer(jsonData);
-        shalowCopy = Array.from(headers, (i) => { return { ...i } });
+        shallowCopy = Array.from(headers, (i) => { return { ...i } });
       });
 
       it('Computes headers value', () => {
-        const result = transformer.computeHeaders(shalowCopy);
+        const result = transformer.computeHeaders(shallowCopy);
         let compare = 'Content-Type: application/x-www-form-urlencoded\n';
         compare += 'Content-Length: 2\n';
         compare += 'x-test: {{host}}';
@@ -194,7 +198,7 @@ describe('PostmanV21Transformer', () => {
       });
 
       it('Computes variables from headers', () => {
-        const result = transformer.ensureVarsRecursevily(shalowCopy);
+        const result = transformer.ensureVarsRecursively(shallowCopy);
         assert.equal(result[2].value, '${host}');
       });
     });
@@ -202,11 +206,11 @@ describe('PostmanV21Transformer', () => {
     describe('computeArcRequest()', () => {
       beforeEach(() => {
         transformer = new PostmanV21Transformer(jsonData);
-        shalowCopy = { ...item };
+        shallowCopy = { ...item };
       });
 
       it('Computes headers value', () => {
-        const result = transformer.computeArcRequest(shalowCopy);
+        const result = transformer.computeArcRequest(shallowCopy);
         let compare = 'Content-Type: application/x-www-form-urlencoded\n';
         compare += 'Content-Length: 2\n';
         compare += 'x-test: ${host}';
@@ -219,7 +223,7 @@ describe('PostmanV21Transformer', () => {
     let transformer = /** @type PostmanV21Transformer */ (null);
     let jsonData;
     let item;
-    let shalowCopy;
+    let shallowCopy;
     before(async () => {
       const response = await DataTestHelper.getFile('postman/collection-21.json');
       jsonData = JSON.parse(response);
@@ -228,11 +232,11 @@ describe('PostmanV21Transformer', () => {
 
     beforeEach(() => {
       transformer = new PostmanV21Transformer(jsonData);
-      shalowCopy = { ...item };
+      shallowCopy = { ...item };
     });
 
     it('URL is computed', () => {
-      const result = transformer.computeArcRequest(shalowCopy);
+      const result = transformer.computeArcRequest(shallowCopy);
       const compare = 'https://onet.pl/${random()}?${a}=${bb}&e=ff';
       assert.equal(result.url, compare);
     });
@@ -242,7 +246,7 @@ describe('PostmanV21Transformer', () => {
     let transformer = /** @type PostmanV21Transformer */ (null);
     let jsonData;
     let item;
-    let shalowCopy;
+    let shallowCopy;
     before(async () => {
       const response = await DataTestHelper.getFile('postman/collection-21.json');
       jsonData = JSON.parse(response);
@@ -251,52 +255,52 @@ describe('PostmanV21Transformer', () => {
 
     beforeEach(() => {
       transformer = new PostmanV21Transformer(jsonData);
-      shalowCopy = { ...item };
+      shallowCopy = { ...item };
     });
 
     it('Creates an object', () => {
-      const result = transformer.computeArcRequest(shalowCopy);
+      const result = transformer.computeArcRequest(shallowCopy);
       assert.typeOf(result, 'object');
     });
 
     it('Name is set', () => {
-      const result = transformer.computeArcRequest(shalowCopy);
+      const result = transformer.computeArcRequest(shallowCopy);
       assert.equal(result.name, 'url encoded');
     });
 
     it('url is set', () => {
-      const result = transformer.computeArcRequest(shalowCopy);
+      const result = transformer.computeArcRequest(shallowCopy);
       assert.equal(result.url, 'https://onet.pl/${random()}?${a}=${bb}&e=ff');
     });
 
     it('method is set', () => {
-      const result = transformer.computeArcRequest(shalowCopy);
+      const result = transformer.computeArcRequest(shallowCopy);
       assert.equal(result.method, 'PUT');
     });
 
     it('headers is set', () => {
-      const result = transformer.computeArcRequest(shalowCopy);
+      const result = transformer.computeArcRequest(shallowCopy);
       assert.equal(result.headers, 'Content-Type: application/x-www-form-urlencoded');
     });
 
     it('payload is set', () => {
-      const result = transformer.computeArcRequest(shalowCopy);
+      const result = transformer.computeArcRequest(shallowCopy);
       assert.equal(result.payload, 'fd1=${v1}&${fd3}=3');
     });
 
     it('created and updated are set', () => {
-      const result = transformer.computeArcRequest(shalowCopy);
+      const result = transformer.computeArcRequest(shallowCopy);
       assert.typeOf(result.created, 'number');
       assert.typeOf(result.updated, 'number');
     });
 
     it('type is "saved"', () => {
-      const result = transformer.computeArcRequest(shalowCopy);
+      const result = transformer.computeArcRequest(shallowCopy);
       assert.equal(result.type, 'saved');
     });
 
     it('project is set on request', () => {
-      const result = transformer.computeArcRequest(shalowCopy);
+      const result = transformer.computeArcRequest(shallowCopy);
       assert.equal(result.projects[0], jsonData.info._postman_id);
     });
 
@@ -311,7 +315,7 @@ describe('PostmanV21Transformer', () => {
       let cmp = 'url%20encoded/https%3A%2F%2Fonet.pl%2F%24%7Brandom()%7D';
       cmp += '%3F%24%7Ba%7D%3D%24%7Bbb%7D%26e%3Dff/put/';
       cmp += '04da3a01-4bf2-43d2-9d15-8f6ce26d0e8f';
-      const result = transformer.computeArcRequest(shalowCopy);
+      const result = transformer.computeArcRequest(shallowCopy);
       assert.equal(result.key, cmp);
     });
   });

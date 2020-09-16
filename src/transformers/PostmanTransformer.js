@@ -3,7 +3,7 @@
 
 import { BaseTransformer } from './BaseTransformer.js';
 
-export const postamVarRegex = /\{\{(.*?)\}\}/gim;
+export const postmanVarRegex = /\{\{(.*?)\}\}/gim;
 
 /**
  * Replacer function for regex replace to be used to replace variables
@@ -46,7 +46,7 @@ export class PostmanTransformer extends BaseTransformer {
   /**
    * Computes body value for Postman's v1 body definition.
    *
-   * @param {object} item Postam v1 model.
+   * @param {object} item Postman v1 model.
    * @return {string} Body value
    */
   computeBodyOld(item) {
@@ -68,7 +68,7 @@ export class PostmanTransformer extends BaseTransformer {
    * Computes body as a FormData data model.
    * This function sets `multipart` property on the item.
    *
-   * @param {any} item Postam v1 model.
+   * @param {any} item Postman v1 model.
    * @return {string} Body value. Always empty string.
    */
   computeFormDataBody(item) {
@@ -76,7 +76,7 @@ export class PostmanTransformer extends BaseTransformer {
       return '';
     }
     const multipart = [];
-    item.data = this.ensureVarsRecursevily(item.data);
+    item.data = this.ensureVarsRecursively(item.data);
     item.data.forEach((data) => {
       const obj = {
         enabled: data.enabled,
@@ -93,14 +93,14 @@ export class PostmanTransformer extends BaseTransformer {
   /**
    * Computes body as a URL encoded data model.
    *
-   * @param {object} item Postam v1 model.
+   * @param {object} item Postman v1 model.
    * @return {string} Body value.
    */
   computeUrlEncodedBody(item) {
     if (!item.data || !item.data.length) {
       return '';
     }
-    item.data = this.ensureVarsRecursevily(item.data);
+    item.data = this.ensureVarsRecursively(item.data);
     return item.data.map((obj) => {
       const name = paramValue(obj.key);
       const value = paramValue(obj.value);
@@ -109,7 +109,7 @@ export class PostmanTransformer extends BaseTransformer {
   }
 
   /**
-   * Replaces any occurence of {{STRING}} with ARC's variables syntax.
+   * Replaces any occurrence of {{STRING}} with ARC's variables syntax.
    *
    * @param {string} str A string value to check for variables.
    * @return {string} The same string with ARC's variables syntax
@@ -120,18 +120,18 @@ export class PostmanTransformer extends BaseTransformer {
     }
     // https://jsperf.com/regex-replace-with-test-conditions
     if (str.indexOf('{{') !== -1) {
-      str = str.replace(postamVarRegex, variablesReplacerFunction);
+      str = str.replace(postmanVarRegex, variablesReplacerFunction);
     }
     return str;
   }
 
-  ensureVarsRecursevily(obj) {
+  ensureVarsRecursively(obj) {
     if (Array.isArray(obj)) {
-      return obj.map((item) => this.ensureVarsRecursevily(item));
+      return obj.map((item) => this.ensureVarsRecursively(item));
     }
     if (obj === Object(obj)) {
       Object.keys(obj).forEach((key) => {
-        obj[key] = this.ensureVarsRecursevily(obj[key]);
+        obj[key] = this.ensureVarsRecursively(obj[key]);
       });
       return obj;
     }

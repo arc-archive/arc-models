@@ -72,7 +72,7 @@ export class ARCHistoryUrlListEvent extends ARCEntityListEvent {
 }
 
 /**
- * An event dispatched by the UI when querying for a list of hostiry URLs
+ * An event dispatched by the UI when querying for a list of history URLs
  */
 export class ARCHistoryUrlQueryEvent extends CustomEvent {
   /**

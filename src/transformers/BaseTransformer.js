@@ -32,10 +32,10 @@ export class BaseTransformer {
     const url = (item.url || 'https://').toLowerCase();
     const method = (item.method || 'GET').toLowerCase();
 
-    const ename = encodeURIComponent(name);
-    const eurl = encodeURIComponent(url);
+    const eName = encodeURIComponent(name);
+    const eUrl = encodeURIComponent(url);
 
-    let id = `${ename}/${eurl}/${method}`;
+    let id = `${eName}/${eUrl}/${method}`;
     if (projectId) {
       id += `/${projectId}`;
     }

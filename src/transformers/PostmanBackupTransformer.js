@@ -18,7 +18,7 @@ import { PostmanTransformer } from './PostmanTransformer.js';
 /** @typedef {import('./PostmanBackupTransformer').PostmanVariable} PostmanVariable */
 
 /**
- * Transformer for Postamn backup file.
+ * Transformer for Postman backup file.
  */
 export class PostmanBackupTransformer extends PostmanTransformer {
   /**

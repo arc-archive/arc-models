@@ -96,7 +96,7 @@ export declare class ARCHostRuleDeletedEvent extends ARCEntityDeletedEvent {
 /**
  * An event dispatched by the UI when requesting a list of host rules
  */
-export declare class ARCHostRuletListEvent extends ARCEntityListEvent<ARCHostRule> {
+export declare class ARCHostRulesListEvent extends ARCEntityListEvent<ARCHostRule> {
   /**
    * @param {ARCModelListOptions=} opts Query options.
    */

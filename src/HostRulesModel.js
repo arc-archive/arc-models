@@ -28,7 +28,7 @@ import { ArcModelEvents } from './events/ArcModelEvents.js';
 /** @typedef {import('./events/HostRuleEvents').ARCHostRuleUpdateEvent} ARCHostRuleUpdateEvent */
 /** @typedef {import('./events/HostRuleEvents').ARCHostRuleUpdateBulkEvent} ARCHostRuleUpdateBulkEvent */
 /** @typedef {import('./events/HostRuleEvents').ARCHostRuleDeleteEvent} ARCHostRuleDeleteEvent */
-/** @typedef {import('./events/HostRuleEvents').ARCHostRuletListEvent} ARCHostRuletListEvent */
+/** @typedef {import('./events/HostRuleEvents').ARCHostRulesListEvent} ARCHostRulesListEvent */
 
 export const updateHandler = Symbol('updateHandler');
 export const updateBulkHandler = Symbol('updateBulkHandler');
@@ -241,7 +241,7 @@ export class HostRulesModel extends ArcBaseModel {
   }
 
   /**
-   * @param {ARCHostRuletListEvent} e
+   * @param {ARCHostRulesListEvent} e
    */
   [listHandler](e) {
     if (e.defaultPrevented) {

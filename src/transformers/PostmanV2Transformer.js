@@ -19,7 +19,7 @@ export const currentItemValue = Symbol('currentItemValue');
 /** @typedef {import('@advanced-rest-client/arc-types').DataExport.ArcExportObject} ArcExportObject */
 
 /**
- * Transforms Postamn v2 collections to ARC import object.
+ * Transforms Postman v2 collections to ARC import object.
  */
 export class PostmanV2Transformer extends PostmanTransformer {
   /**
@@ -28,7 +28,7 @@ export class PostmanV2Transformer extends PostmanTransformer {
    */
   constructor(data) {
     super(data);
-    this.chounkSize = 200;
+    this.chunkSize = 200;
     this[currentItemValue] = 0;
   }
 
@@ -92,7 +92,7 @@ export class PostmanV2Transformer extends PostmanTransformer {
   /**
    * Extracts all requests in order from postman v2 collection.
    *
-   * @param {(PostmanItem|PostmanItemGroup)[]} data List of Postamn V2 collection `item`.
+   * @param {(PostmanItem|PostmanItemGroup)[]} data List of Postman V2 collection `item`.
    * (why it's called item and not items?)
    * @param {ExportArcSavedRequest[]=} result Array where to append results.
    * @return {Promise<ExportArcSavedRequest[]>} Promise resolved when all objects are computed.
@@ -112,7 +112,7 @@ export class PostmanV2Transformer extends PostmanTransformer {
     const arcRequest = this.computeArcRequest(/** @type PostmanItem */ (item));
     result.push(arcRequest);
     const currIt = this[currentItemValue];
-    if (currIt === this.chounkSize) {
+    if (currIt === this.chunkSize) {
       await aTimeout(16);
       this[currentItemValue] = 0;
       return this.extractRequestsV2(data, result);
@@ -124,7 +124,7 @@ export class PostmanV2Transformer extends PostmanTransformer {
   /**
    * Computes ARC request out of Postman v2 item.
    *
-   * @param {PostmanItem} item Postamn v2 item.
+   * @param {PostmanItem} item Postman v2 item.
    * @return {ExportArcSavedRequest} ARC request object.
    */
   computeArcRequest(item) {
@@ -141,7 +141,7 @@ export class PostmanV2Transformer extends PostmanTransformer {
     url = this.ensureVariablesSyntax(url);
     let method = request.method || 'GET';
     method = this.ensureVariablesSyntax(method);
-    const header = this.ensureVarsRecursevily(request.header);
+    const header = this.ensureVarsRecursively(request.header);
     const time = Date.now();
     const result = /** @type ExportArcSavedRequest */ ({
       kind: 'ARC#RequestData',
@@ -210,7 +210,7 @@ export class PostmanV2Transformer extends PostmanTransformer {
     if (!Array.isArray(items)) {
       return '';
     }
-    const body = this.ensureVarsRecursevily(items);
+    const body = this.ensureVarsRecursively(items);
     item.multipart = body.map((data) => {
       const obj = {
         enabled: !data.disabled,
@@ -235,7 +235,7 @@ export class PostmanV2Transformer extends PostmanTransformer {
     }
     const result = [];
     const model = [];
-    const body = this.ensureVarsRecursevily(items);
+    const body = this.ensureVarsRecursively(items);
     body.forEach((data) => {
       const name = paramValue(data.key);
       const value = paramValue(data.value);

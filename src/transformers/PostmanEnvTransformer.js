@@ -62,7 +62,7 @@ export class PostmanEnvTransformer extends PostmanTransformer {
    */
   genId(item) {
     const env = encodeURIComponent(item.environment);
-    const evar = encodeURIComponent(item.variable);
-    return `postman-var-${env}-${evar}`;
+    const eVar = encodeURIComponent(item.variable);
+    return `postman-var-${env}-${eVar}`;
   }
 }

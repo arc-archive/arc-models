@@ -2,7 +2,7 @@
 /* eslint-disable no-plusplus */
 /**
  * User can export single request in ARC. In this case ARC opens new tab
- * rather actualy imports the data. This function tests if this is the case.
+ * rather actually imports the data. This function tests if this is the case.
  * @param {object} data Normalized import data
  * @return {boolean}
  */

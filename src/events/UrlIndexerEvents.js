@@ -30,16 +30,16 @@ export class ARCUrlIndexUpdateEvent extends CustomEvent {
   }
 
   /**
-   * @return {IndexableRequest} List of requests to index.
+   * @return {IndexableRequest[]} List of requests to index.
    */
   get requests() {
-    return this[requestsValue];
+    return /** @type IndexableRequest[] */ (this[requestsValue]);
   }
 }
 
 
 /**
- * An event dispatched by the UI when querying the reqiuests URL index data.
+ * An event dispatched by the UI when querying the requests URL index data.
  */
 export class ARCUrlIndexQueryEvent extends CustomEvent {
   /**

@@ -402,9 +402,9 @@ describe('<client-certificate-model> events based', () => {
     });
 
     it('clears the data', async () => {
-      const [certsbefore, databefore] = await generator.getDatastoreClientCertificates();
-      assert.lengthOf(certsbefore, 10, 'has index');
-      assert.lengthOf(databefore, 10, 'has data');
+      const [certsBefore, dataBefore] = await generator.getDatastoreClientCertificates();
+      assert.lengthOf(certsBefore, 10, 'has index');
+      assert.lengthOf(dataBefore, 10, 'has data');
       await ArcModelEvents.destroy(document.body, ['client-certificates']);
       const [certs, data] = await generator.getDatastoreClientCertificates();
       assert.lengthOf(certs, 0, 'index is cleared');

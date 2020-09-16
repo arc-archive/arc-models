@@ -74,7 +74,7 @@ export declare class ArcDexieTransformer extends BaseTransformer {
   transform(): Promise<DataExport.ArcExportObject>;
 
   /**
-   * In new structure projects do not have a refference to request ids. It's
+   * In new structure projects do not have a reference to request ids. It's
    * the other way around in previous system.
    * It's a bad pattern for object stores but it must suffice for now.
    *
@@ -108,7 +108,7 @@ export declare class ArcDexieTransformer extends BaseTransformer {
    * event loop and ANR screen won't appear.
    *
    * @param requests List of requests from the import.
-   * @param done A callkback function to be called when ready.
+   * @param done A callback function to be called when ready.
    * @param saved Final list of saved requests
    * @param history Final list of history items.
    */
@@ -116,7 +116,7 @@ export declare class ArcDexieTransformer extends BaseTransformer {
   parseHistoryItem(item: DexieRequest): RequestProcessItem;
   parseSavedItem(item: DexieRequest): RequestProcessItem;
   parseDriveItem(item: DexieRequest): RequestProcessItem;
-  parseHarHeders(arr: Header[]): string;
+  parseHarHeaders(arr: Header[]): string;
 
   /**
    * Associate requests with project data.

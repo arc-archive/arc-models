@@ -78,7 +78,7 @@ export class ArcPouchTransformer extends BaseTransformer {
     }
     const ccs = /** @type ExportArcClientCertificateData[] */ (data['client-certificates'] || data.clientcertificates);
     if (ccs && ccs.length) {
-      data.clientcertificates = this.tranformClientCertificates(ccs);
+      data.clientcertificates = this.transformClientCertificates(ccs);
     }
     return data;
   }
@@ -152,14 +152,14 @@ export class ArcPouchTransformer extends BaseTransformer {
   }
 
   /**
-   * Transformes ARC's client certificate export object into intermediate structure
+   * Transforms ARC's client certificate export object into intermediate structure
    * used by the import panel.
    *
    * @param {ExportArcClientCertificateData[]} items [description]
    * @return {ExportArcClientCertificateData[]} A list of certificates to import. In each element
    * first item is the index data and the second is the certificates data.
    */
-  tranformClientCertificates(items) {
+  transformClientCertificates(items) {
     const result = [];
     items.forEach((item) => {
       if (item.kind !== 'ARC#ClientCertificate') {

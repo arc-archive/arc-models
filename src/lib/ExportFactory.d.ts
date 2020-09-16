@@ -4,13 +4,13 @@ import { DataExport } from '@advanced-rest-client/arc-types';
  */
 export declare class ExportFactory {
   /**
-   * The size of datastore read operation in a signle fetch.
+   * The size of datastore read operation in a single fetch.
    * @type {Number}
    */
   dbChunk: 1000;
 
   /**
-   * @param dbChunk The size of datastore read operation in a signle fetch.
+   * @param dbChunk The size of datastore read operation in a single fetch.
    */
   constructor(dbChunk?: number);
 

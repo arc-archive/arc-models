@@ -103,7 +103,7 @@ export declare interface PostmanArcCollection {
 }
 
 /**
- * Transformer for Postamn backup file.
+ * Transformer for Postman backup file.
  */
 export declare class PostmanBackupTransformer extends PostmanTransformer {
 

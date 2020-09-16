@@ -47,7 +47,7 @@ export class ArcDexieTransformer extends BaseTransformer {
   }
 
   /**
-   * In new structure projects do not have a refference to request ids. It's
+   * In new structure projects do not have a reference to request ids. It's
    * the other way around in previous system.
    * It's a bad pattern for object stores but it must suffice for now.
    *
@@ -170,7 +170,7 @@ export class ArcDexieTransformer extends BaseTransformer {
     const entry = entries[entries.length - 1];
     if (entry) {
       const harRequest = entry.request;
-      obj.headers = this.parseHarHeders(harRequest.headers);
+      obj.headers = this.parseHarHeaders(harRequest.headers);
       obj.payload = harRequest.postData.text;
       let t = new Date(entry.startedDateTime).getTime();
       if (Number.isNaN(t)) {
@@ -218,7 +218,7 @@ export class ArcDexieTransformer extends BaseTransformer {
       }
       if (entry) {
         const harRequest = entry.request;
-        obj.headers = this.parseHarHeders(harRequest.headers);
+        obj.headers = this.parseHarHeaders(harRequest.headers);
         obj.payload = harRequest.postData.text;
         let t = new Date(entry.startedDateTime).getTime();
         if (Number.isNaN(t)) {
@@ -249,7 +249,7 @@ export class ArcDexieTransformer extends BaseTransformer {
    * @param {Header[]} arr
    * @return {string}
    */
-  parseHarHeders(arr) {
+  parseHarHeaders(arr) {
     if (!arr || !arr.length) {
       return '';
     }

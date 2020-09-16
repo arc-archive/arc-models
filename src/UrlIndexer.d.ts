@@ -205,7 +205,7 @@ export declare class UrlIndexer extends HTMLElement {
    * @param query The query
    * @param opts Search options:
    * - type (string: saved || history): Request type
-   * - detailed (Booelan): If set it uses slower algorithm but performs full
+   * - detailed (Boolean): If set it uses slower algorithm but performs full
    * search on the index. When false it only uses filer like query + '*'.
    */
   query(query: string, opts?: IndexQueryOptions): Promise<IndexQueryResult>;

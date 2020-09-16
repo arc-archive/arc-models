@@ -19,11 +19,11 @@ export declare const queryStore: symbol;
  *
  * Requests are stored as a "history" and "saved" requests. The history
  * request is stored each time a HTTP request in the application is made.
- * The "saved" request is a spoecial type that has additional metadata
+ * The "saved" request is a special type that has additional metadata
  * like name, description, or project ID.
  *
- * This model offers standard CRUD operation on both saved and hostory stores.
- * Seach function requires passing the "type" parameter which is either `saved`
+ * This model offers standard CRUD operation on both saved and history stores.
+ * Search function requires passing the "type" parameter which is either `saved`
  * or `history` which corresponds to the corresponding request type.
  *
  * ## Querying for data
@@ -142,7 +142,7 @@ export declare class RequestModel extends RequestBaseModel {
   revertRemove(type: string, items: DeletedEntity[]): Promise<ARCEntityChangeRecord<ARCHistoryRequest|ARCSavedRequest>[]>;
 
   /**
-   * Stores a history obvject in the data store, taking care of `_rev`
+   * Stores a history object in the data store, taking care of `_rev`
    * property read.
    *
    * @param request The request object to store
@@ -159,7 +159,7 @@ export declare class RequestModel extends RequestBaseModel {
    * @param request ArcRequest object
    * @param opts Save request object. Currently only `isDrive`
    * is supported
-   * @returns A promise resilved to updated request object.
+   * @returns A promise resolved to updated request object.
    */
   saveRequest(request: ARCHistoryRequest|ARCSavedRequest, opts?: SaveARCRequestOptions): Promise<ARCEntityChangeRecord<ARCHistoryRequest|ARCSavedRequest>>;
 
@@ -256,7 +256,7 @@ export declare class RequestModel extends RequestBaseModel {
   querySaved(q: string, ignore?: string[]): Promise<(ARCHistoryRequest|ARCSavedRequest)[]>;
 
   /**
-   * Performs data inding using PouchDB api.
+   * Performs data indexing using PouchDB api.
    * This is not the same as URL indexing using `url-indexer`.
    *
    * @param type Data type - saved or history.

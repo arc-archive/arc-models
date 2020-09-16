@@ -413,7 +413,7 @@ describe('ExportProcessor', () => {
       assert.equal(result.kind, 'ARC#test');
     });
 
-    it('has loadToWorkspace proeprty', () => {
+    it('has loadToWorkspace property', () => {
       const result = instance.createExportObject([], {
         appVersion: '123',
         skipImport: true,
@@ -468,21 +468,6 @@ describe('ExportProcessor', () => {
 
       it('prepares client certificates data', () => {
         const result = instance.prepareItem('clientcertificates', data);
-        // const a = {
-        //   type: 'pem',
-        //   name: 'jiv',
-        //   created: 1600205772315,
-        //   dataKey: 'test-1600205772316',
-        //   key: undefined,
-        //   kind: 'ARC#ClientCertificate',
-        //   cert: {
-        //     data: 'caspa.',
-        //     passphrase: 'zolob'
-        //   },
-        //   pKey: {
-        //     data: ' dototovef uzdo fahobef tir.',
-        //     passphrase: 'bus'
-        // }};
         assert.equal(result[0].kind, 'ARC#ClientCertificate');
       });
     });

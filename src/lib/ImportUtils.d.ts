@@ -1,6 +1,6 @@
 /**
  * User can export single request in ARC. In this case ARC opens new tab
- * rather actualy imports the data. This function tests if this is the case.
+ * rather actually imports the data. This function tests if this is the case.
  * @param data Normalized import data
  */
 export declare function isSingleRequest(data: object): boolean;

@@ -5,7 +5,7 @@ export const handleConflictedItem: unique symbol;
 export const insertGeneric: unique symbol;
 
 /**
- * Export objects have `key` property instead of `_id`. This ensures the keys are coppied to
+ * Export objects have `key` property instead of `_id`. This ensures the keys are copied to
  * PouchDB's id.
  */
 export declare function transformKeys<T>(items: T[]): T[];

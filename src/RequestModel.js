@@ -70,11 +70,11 @@ export const queryStore = Symbol('queryStore');
  *
  * Requests are stored as a "history" and "saved" requests. The history
  * request is stored each time a HTTP request in the application is made.
- * The "saved" request is a spoecial type that has additional metadata
+ * The "saved" request is a special type that has additional metadata
  * like name, description, or project ID.
  *
- * This model offers standard CRUD operation on both saved and hostory stores.
- * Seach function requires passing the "type" parameter which is either `saved`
+ * This model offers standard CRUD operation on both saved and history stores.
+ * Search function requires passing the "type" parameter which is either `saved`
  * or `history` which corresponds to the corresponding request type.
  *
  * ## Querying for data
@@ -178,7 +178,7 @@ export class RequestModel extends RequestBaseModel {
   /**
    * Updates / saves the request object in the datastore.
    *
-   * Note, this method only works on the meta data. When handling request obejct
+   * Note, this method only works on the meta data. When handling request object
    * store action, which includes payload processing and project association, please,
    * use `saveRequest` or `saveHistory` functions.
    *
@@ -460,7 +460,7 @@ export class RequestModel extends RequestBaseModel {
    * @param {ARCHistoryRequest|ARCSavedRequest} request ArcRequest object
    * @param {SaveARCRequestOptions=} opts Save request object. Currently only `isDrive`
    * is supported
-   * @return {Promise<ARCEntityChangeRecord>} A promise resilved to updated request object.
+   * @return {Promise<ARCEntityChangeRecord>} A promise resolved to updated request object.
    */
   async saveRequest(request, opts = {}) {
     let typed = /** @type ARCSavedRequest */ (request);
@@ -615,10 +615,10 @@ export class RequestModel extends RequestBaseModel {
     if (!q) {
       throw new Error('The "q" property is missing.');
     }
-    const urlSearechResults = await this.queryUrlData(q, type, detailed);
-    const ignore = urlSearechResults.map((item) => item._id);
+    const urlSearchResults = await this.queryUrlData(q, type, detailed);
+    const ignore = urlSearchResults.map((item) => item._id);
     const result = await this.queryPouchDb(q, type, ignore);
-    return urlSearechResults.concat(result);
+    return urlSearchResults.concat(result);
   }
 
   /**

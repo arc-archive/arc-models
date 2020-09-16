@@ -92,7 +92,6 @@ export const ArcModelEvents = {
     read: CertificatesEvents.readAction,
     list: CertificatesEvents.listAction,
     delete: CertificatesEvents.deleteAction,
-    // update: 'modelclientcertificateupdate',
     insert: CertificatesEvents.insertAction,
     State: {
       update: CertificatesEvents.updatedState,
@@ -100,7 +99,6 @@ export const ArcModelEvents = {
     },
   },
   WSUrlHistory: {
-    // read: 'modelwsurlhistoryread',
     list: WSUrlHistoryEvents.listAction,
     insert: WSUrlHistoryEvents.insertAction,
     query: WSUrlHistoryEvents.queryAction,
@@ -109,7 +107,6 @@ export const ArcModelEvents = {
     },
   },
   UrlHistory: {
-    // read: 'modelwsurlhistoryread',
     list: UrlHistoryEvents.listAction,
     insert: UrlHistoryEvents.insertAction,
     query: UrlHistoryEvents.queryAction,
