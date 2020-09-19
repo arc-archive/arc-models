@@ -16,7 +16,7 @@ import {
 function getDatabaseName(key) {
   switch (key) {
     case 'history': return 'history-requests';
-    case 'saved': return 'saved-requests';
+    case 'requests': return 'saved-requests';
     case 'websocketurlhistory': return 'websocket-url-history';
     case 'urlhistory': return 'url-history';
     case 'authdata': return 'auth-data';
@@ -55,7 +55,7 @@ export class ExportFactory {
     if (ccIndex > -1) {
       ccData = results[ccIndex].data;
     }
-    const hasSaved = dataKeys.includes('saved');
+    const hasSaved = dataKeys.includes('requests');
     if (hasSaved && !dataKeys.includes('projects')) {
       results.push({
         key: 'projects',
@@ -64,7 +64,7 @@ export class ExportFactory {
     }
     let addCc = [];
     if (hasSaved) {
-      const index = results.findIndex(({key}) => key === 'saved');
+      const index = results.findIndex(({key}) => key === 'requests');
       const ccs = await processRequestsArray(results[index].data, ccData);
       if (ccs) {
         addCc = addCc.concat(ccs);
