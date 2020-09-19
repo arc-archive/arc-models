@@ -4,7 +4,7 @@ import { DataTestHelper } from './DataTestHelper.js';
 import { ImportNormalize } from '../../src/lib/ImportNormalize.js';
 import { ImportFactory } from '../../src/lib/ImportFactory.js';
 
-describe('Postamn import to datastore - backup data', () => {
+describe('Postman import to datastore - backup data', () => {
   const generator = new DataGenerator();
 
   let originalData;
@@ -17,7 +17,6 @@ describe('Postamn import to datastore - backup data', () => {
   after(async () => {
     await generator.destroySavedRequestData();
     await generator.destroyVariablesData();
-    await generator.destroyHeadersData();
   });
 
   beforeEach(async () => {

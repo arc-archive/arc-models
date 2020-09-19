@@ -7,7 +7,7 @@ import { ImportFactory } from '../../src/lib/ImportFactory.js';
 describe('postman-data-import-v1-test', () => {
   const generator = new DataGenerator();
 
-  describe('Postamn import to datastore - v1', () => {
+  describe('Postman import to datastore - v1', () => {
     let originalData;
     let data;
     before(async () => {
@@ -18,7 +18,6 @@ describe('postman-data-import-v1-test', () => {
     after(async () => {
       await generator.destroySavedRequestData();
       await generator.destroyVariablesData();
-      await generator.destroyHeadersData();
     });
 
     beforeEach(async () => {

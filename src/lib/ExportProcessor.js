@@ -73,7 +73,7 @@ export class ExportProcessor {
       case 'history': return this.prepareHistoryDataList(values);
       case 'hostrules': return this.prepareHostRulesData(values);
       case 'projects': return this.prepareProjectsList(values);
-      case 'saved': return this.prepareRequestsList(values);
+      case 'requests': return this.prepareRequestsList(values);
       case 'urlhistory': return this.prepareUrlHistoryData(values);
       case 'variables': return this.prepareVariablesData(values);
       case 'websocketurlhistory': return this.prepareWsUrlHistoryData(values);
@@ -183,7 +183,7 @@ export class ExportProcessor {
       const value = /** @type ExportArcVariable */ (item);
       if (!value.environment) {
         // PouchDB creates some views in the main datastore and it is added to
-        // get all docs function without any reason. It should be eleminated
+        // get all docs function without any reason. It should be eliminated
         return;
       }
       value.key = item._id;
