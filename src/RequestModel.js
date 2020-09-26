@@ -118,9 +118,7 @@ export class RequestModel extends RequestBaseModel {
     this[deletemodelHandler] = this[deletemodelHandler].bind(this);
     this[listHandler] = this[listHandler].bind(this);
     this[queryHandler] = this[queryHandler].bind(this);
-    this[projectlistHandler] = this[projectlistHandler].bind(
-      this
-    );
+    this[projectlistHandler] = this[projectlistHandler].bind(this);
   }
 
   /**

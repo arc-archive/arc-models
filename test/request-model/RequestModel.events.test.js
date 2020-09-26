@@ -60,7 +60,6 @@ describe('RequestModel Events API', () => {
 
     it('returns a request', async () => {
       const result = await ArcModelEvents.Request.read(document.body, 'saved', requests[0]._id);
-      delete result.midnight;
       assert.deepEqual(result, requests[0]);
     });
 
@@ -188,8 +187,6 @@ describe('RequestModel Events API', () => {
 
     it('returns a list of requests', async () => {
       const result = await ArcModelEvents.Request.readBulk(document.body, 'saved', [requests[0]._id, requests[1]._id]);
-      delete result[0].midnight;
-      delete result[1].midnight;
       assert.deepEqual(result, [requests[0], requests[1]]);
     });
 
@@ -441,7 +438,7 @@ describe('RequestModel Events API', () => {
     });
 
     it('throws when no requestType when constructing the event', async () => {
-      const requests = /** @type ARCSavedRequest[] */ (generator.generateSavedRequestData());
+      const requests = /** @type ARCSavedRequest[] */ (generator.generateSavedRequestData().requests);
       let thrown = false;
       try {
         await ArcModelEvents.Request.updateBulk(document.body, undefined, requests);
@@ -889,7 +886,7 @@ describe('RequestModel Events API', () => {
       assert.lengthOf(projects, 1, 'has created project');
     });
 
-    it('throws when unknwon type', async () => {
+    it('throws when unknown type', async () => {
       const request = /** @type ARCSavedRequest */ (generator.generateSavedItem());
       let thrown = false;
       try {

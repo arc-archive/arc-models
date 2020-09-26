@@ -100,6 +100,38 @@ declare interface ProjectFunctions {
    */
   listAll(target: EventTarget, keys?: string[]): Promise<ARCProject[]>;
 
+  /**
+   * Moves a request to a project and removes the request from other projects.
+   *
+   * @param target A node on which to dispatch the event.
+   * @param projectId The target project id
+   * @param requestId The request that is being moved/copied
+   * @param requestType The request type
+   * @returns Promise resolved when the operation commits.
+   */
+  moveTo(target: EventTarget, projectId: string, requestId: string, requestType: string): Promise<void>;
+
+  /**
+   * Adds a request to a project.
+   *
+   * @param target A node on which to dispatch the event.
+   * @param projectId The target project id
+   * @param requestId The request that is being moved/copied
+   * @param requestType The request type
+   * @returns Promise resolved when the operation commits.
+   */
+  addTo(target: EventTarget, projectId: string, requestId: string, requestType: string): Promise<void>;
+
+  /**
+   * Removes a request from a project.
+   *
+   * @param target A node on which to dispatch the event.
+   * @param projectId The target project id
+   * @param requestId The request that is being moved/copied
+   * @returns Promise resolved when the operation commits.
+   */
+  removeFrom(target: EventTarget, projectId: string, requestId: string): Promise<void>;
+
   State: ProjectStateFunctions;
 }
 

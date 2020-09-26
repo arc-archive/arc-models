@@ -10,6 +10,9 @@ declare interface ProjectEvents {
   list: string;
   listAll: string;
   updateBulk: string;
+  moveTo: string;
+  addTo: string;
+  removeFrom: string;
   State: ProjectStateEvents;
 }
 

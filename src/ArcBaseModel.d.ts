@@ -1,3 +1,4 @@
+import { ARCEntityChangeRecord } from './ArcBaseModel';
 import { ARCModelListOptions, ARCModelListResult } from './types';
 
 export declare interface DefaultQueryOptions extends Object {
@@ -6,8 +7,9 @@ export declare interface DefaultQueryOptions extends Object {
   include_docs: boolean;
 }
 
-export declare const deletemodelHandler: symbol;
-export declare const notifyDestroyed: symbol;
+export declare const deletemodelHandler: unique symbol;
+export declare const notifyDestroyed: unique symbol;
+export declare const createChangeRecord: unique symbol;
 
 /**
  * A base class for all models.
@@ -105,4 +107,12 @@ export declare class ArcBaseModel extends HTMLElement {
    * @returns A promise resolved to a list of entities.
    */
   listEntities<T>(db: PouchDB.Database, opts?: ARCModelListOptions): Promise<ARCModelListResult<T>>;
+
+  /**
+   * Generates a change record for an update operation
+   * @param item Changed entity
+   * @param response The data store response
+   * @param oldRev The revision before the change
+   */
+  [createChangeRecord]<T>(item: T, response: PouchDB.Core.Response, oldRev?: string): ARCEntityChangeRecord<T>;
 }

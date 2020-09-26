@@ -51,7 +51,6 @@ describe('RequestModel', () => {
 
       it('returns an item with specified revision', async () => {
         const result = await model.get(type, requests[0]._id, requests[0]._rev);
-        delete result.midnight;
         assert.deepEqual(result, requests[0]);
       });
 
@@ -111,7 +110,6 @@ describe('RequestModel', () => {
 
       it('returns an item with specified revision', async () => {
         const result = await model.get(type, requests[0]._id, requests[0]._rev);
-        delete result.midnight;
         assert.deepEqual(result, requests[0]);
       });
 
@@ -229,13 +227,13 @@ describe('RequestModel', () => {
       assert.typeOf(result.item._rev, 'string');
     });
 
-    it('adds "updated" proeprty', async () => {
+    it('adds "updated" property', async () => {
       const request = /** @type ARCSavedRequest */ (generator.generateSavedItem());
       const result = await model.post('saved', request);
       assert.typeOf(result.item.updated, 'number');
     });
 
-    it('adds "created" proeprty', async () => {
+    it('adds "created" property', async () => {
       const request = /** @type ARCSavedRequest */ (generator.generateSavedItem());
       delete request.created;
       const result = await model.post('saved', request);
@@ -248,7 +246,7 @@ describe('RequestModel', () => {
       request.legacyProject = 'test-123';
       const result = await model.post('saved', request);
       const updated = /** @type ARCSavedRequest */ (result.item);
-      assert.equal(updated.projects[0], 'test-123', 'has an item on the proejct');
+      assert.equal(updated.projects[0], 'test-123', 'has an item on the project');
       // @ts-ignore
       assert.isUndefined(updated.legacyProject, 'legacyProject is removed');
     });
@@ -345,14 +343,14 @@ describe('RequestModel', () => {
       assert.equal(result[0].id, requests[0]._id);
     });
 
-    it('adds "updated" proeprty', async () => {
+    it('adds "updated" property', async () => {
       const insert = /** @type InsertSavedResult */ (generator.generateSavedRequestData());
       const requests = /** @type ARCSavedRequest[] */ (insert.requests);
       const result = await model.postBulk('saved', requests);
       assert.typeOf(result[0].item.updated, 'number');
     });
 
-    it('adds "created" proeprty', async () => {
+    it('adds "created" property', async () => {
       const insert = /** @type InsertSavedResult */ (generator.generateSavedRequestData());
       const requests = /** @type ARCSavedRequest[] */ (insert.requests);
       delete requests[0].created;
@@ -368,7 +366,7 @@ describe('RequestModel', () => {
       delete requests[0].projects;
       const result = await model.postBulk('saved', requests);
       const updated = /** @type ARCSavedRequest */ (result[0].item);
-      assert.equal(updated.projects[0], 'test-123', 'has an item on the proejct');
+      assert.equal(updated.projects[0], 'test-123', 'has an item on the project');
       // @ts-ignore
       assert.isUndefined(updated.legacyProject, 'legacyProject is removed');
     });
@@ -484,7 +482,7 @@ describe('RequestModel', () => {
     it('removes a request from a project', async () => {
       const request = requests[3];
       const { projects } = request;
-      assert.isAbove(projects.length, 0, 'request has proejcts');
+      assert.isAbove(projects.length, 0, 'request has project');
       await model.delete(type, request._id);
       const [projectId] = projects;
       const project = await model.readProject(projectId);
@@ -494,7 +492,7 @@ describe('RequestModel', () => {
     it('dispatches updated state event on project', async () => {
       const request = requests[4];
       const { projects } = request;
-      assert.isAbove(projects.length, 0, 'request has proejcts');
+      assert.isAbove(projects.length, 0, 'request has project');
       model.delete(type, request._id);
       // @ts-ignore
       const { changeRecord } = await oneEvent(model, ArcModelEventTypes.Project.State.update);

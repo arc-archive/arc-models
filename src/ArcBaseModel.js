@@ -21,9 +21,11 @@ import { ArcModelEvents } from './events/ArcModelEvents.js';
 /** @typedef {import('./types').ARCModelListResult} ARCModelListResult */
 /** @typedef {import('./types').ARCModelListOptions} ARCModelListOptions */
 /** @typedef {import('./events/BaseEvents').ARCModelDeleteEvent} ARCModelDeleteEvent */
+/** @typedef {import('./types').ARCEntityChangeRecord} ARCEntityChangeRecord */
 
 export const deletemodelHandler = Symbol('deletemodelHandler');
 export const notifyDestroyed = Symbol('notifyDestroyed');
+export const createChangeRecord = Symbol('createChangeRecord');
 
 /**
  * A base class for all models.
@@ -290,5 +292,26 @@ export class ArcBaseModel extends HTMLElement {
       items,
       nextPageToken: token,
     }
+  }
+
+  /**
+   * Generates a change record for an update operation
+   * @param {any} item Changed entity
+   * @param {PouchDB.Core.Response} response The data store response
+   * @param {string=} oldRev The revision before the change
+   * @returns {ARCEntityChangeRecord}
+   */
+  [createChangeRecord](item, response, oldRev) {
+    // eslint-disable-next-line no-param-reassign
+    item._rev = response.rev;
+    const result = {
+      id: item._id,
+      rev: response.rev,
+      item,
+    }
+    if (oldRev) {
+      result.oldRev = oldRev;
+    }
+    return result;
   }
 }

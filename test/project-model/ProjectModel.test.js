@@ -1,14 +1,19 @@
 import { fixture, assert, oneEvent } from '@open-wc/testing';
 import { DataGenerator } from '@advanced-rest-client/arc-data-generator';
+import { v4 } from '@advanced-rest-client/uuid-generator';
 import * as sinon from 'sinon';
 import '../../project-model.js';
+import '../../request-model.js';
 import { ArcModelEventTypes } from '../../src/events/ArcModelEventTypes.js';
 import { normalizeProjects } from '../../src/ProjectModel.js';
 
 /** @typedef {import('../../src/ProjectModel').ProjectModel} ProjectModel */
+/** @typedef {import('../../index').RequestModel} RequestModel */
 /** @typedef {import('../../src/events/ProjectEvents').ARCProjectUpdatedEvent} ARCProjectUpdatedEvent */
 /** @typedef {import('../../src/events/ProjectEvents').ARCProjectDeleteEvent} ARCProjectDeleteEvent */
 /** @typedef {import('../../src/RequestTypes').ARCProject} ARCProject */
+/** @typedef {import('../../src/RequestTypes').ARCSavedRequest} ARCSavedRequest */
+/** @typedef {import('../../src/RequestTypes').ARCHistoryRequest} ARCHistoryRequest */
 /** @typedef {import('../../src/types').ARCEntityChangeRecord} ARCEntityChangeRecord */
 
 describe('ProjectModel', () => {
@@ -17,6 +22,13 @@ describe('ProjectModel', () => {
    */
   async function basicFixture() {
     return fixture('<project-model></project-model>');
+  }
+
+  /**
+   * @return {Promise<RequestModel>}
+   */
+  async function requestFixture() {
+    return fixture('<request-model></request-model>');
   }
 
   const generator = new DataGenerator();
@@ -431,6 +443,281 @@ describe('ProjectModel', () => {
       project.created = 10;
       const result = model[normalizeProjects]([project]);
       assert.equal(result[0].created, 10);
+    });
+  });
+
+  describe('addRequest()', () => {
+    let projectModel = /** @type ProjectModel */ (null);
+    let requestModel = /** @type RequestModel */ (null);
+    before(async () => {
+      projectModel = await basicFixture();
+      requestModel = await requestFixture();
+    });
+
+    after(async () => {
+      await generator.destroySavedRequestData();
+    });
+
+    it('adds request to a project', async () => {
+      const request = /** @type ARCSavedRequest */ (generator.generateSavedItem());
+      const project = /** @type ARCProject */ (generator.createProjectObject());
+      const pRecord = await projectModel.updateProject(project);
+      const rRecord = await requestModel.post('saved', request);
+      await projectModel.addRequest(pRecord.id, rRecord.id, 'saved');
+      const dbRequest = /** @type ARCSavedRequest */ (await requestModel.get('saved', rRecord.id));
+      const { projects } = dbRequest;
+      assert.deepEqual(projects, [pRecord.id]);
+    });
+
+    it('adds project to the request', async () => {
+      const request = /** @type ARCSavedRequest */ (generator.generateSavedItem());
+      const project = /** @type ARCProject */ (generator.createProjectObject());
+      const pRecord = await projectModel.updateProject(project);
+      const rRecord = await requestModel.post('saved', request);
+      await projectModel.addRequest(pRecord.id, rRecord.id, 'saved');
+      const dbProject = await projectModel.get(pRecord.id);
+      const { requests } = dbProject;
+      assert.deepEqual(requests, [rRecord.id]);
+    });
+
+    it('adds request to a project only once', async () => {
+      const request = /** @type ARCSavedRequest */ (generator.generateSavedItem());
+      const project = /** @type ARCProject */ (generator.createProjectObject());
+      const pRecord = await projectModel.updateProject(project);
+      const rRecord = await requestModel.post('saved', request);
+      // @ts-ignore
+      rRecord.item.projects = [pRecord.id];
+      await requestModel.post('saved', rRecord.item);
+
+      await projectModel.addRequest(pRecord.id, rRecord.id, 'saved');
+      const dbRequest = /** @type ARCSavedRequest */ (await requestModel.get('saved', rRecord.id));
+      const { projects } = dbRequest;
+      assert.deepEqual(projects, [pRecord.id]);
+    });
+
+    it('adds project to the request only once', async () => {
+      const request = /** @type ARCSavedRequest */ (generator.generateSavedItem());
+      const project = /** @type ARCProject */ (generator.createProjectObject());
+      const pRecord = await projectModel.updateProject(project);
+      const rRecord = await requestModel.post('saved', request);
+
+      pRecord.item.requests = [rRecord.id];
+      await projectModel.post(pRecord.item);
+
+      await projectModel.addRequest(pRecord.id, rRecord.id, 'saved');
+      const dbProject = await projectModel.get(pRecord.id);
+      const { requests } = dbProject;
+      assert.deepEqual(requests, [rRecord.id]);
+    });
+
+    it('transforms history request to saved request', async () => {
+      const request = /** @type ARCHistoryRequest */ (generator.generateHistoryObject());
+      const project = /** @type ARCProject */ (generator.createProjectObject());
+      const pRecord = await projectModel.updateProject(project);
+      const rRecord = await requestModel.post('history', request);
+      
+      const spy = sinon.spy();
+      projectModel.addEventListener(ArcModelEventTypes.Request.State.update, spy);
+
+      await projectModel.addRequest(pRecord.id, rRecord.id, 'history');
+      const { changeRecord } = spy.args[0][0];
+
+      const dbRequest = /** @type ARCSavedRequest */ (await requestModel.get('saved', changeRecord.id));
+      assert.equal(dbRequest.name, 'Unnamed request');
+      assert.equal(dbRequest.type, 'saved');
+      const { projects } = dbRequest;
+      assert.deepEqual(projects, [pRecord.id]);
+    });
+  });
+
+  describe('moveRequest()', () => {
+    let projectModel = /** @type ProjectModel */ (null);
+    let requestModel = /** @type RequestModel */ (null);
+    before(async () => {
+      projectModel = await basicFixture();
+      requestModel = await requestFixture();
+    });
+
+    after(async () => {
+      await generator.destroySavedRequestData();
+    });
+
+    it('removes the request from an existing projects', async () => {
+      const request = /** @type ARCSavedRequest */ (generator.generateSavedItem());
+      request._id = v4();
+      const sourceProject = /** @type ARCProject */ (generator.createProjectObject());
+      sourceProject._id = v4();
+      const targetProject = /** @type ARCProject */ (generator.createProjectObject());
+      targetProject._id = v4();
+      sourceProject.requests = [request._id];
+      request.projects = [sourceProject._id];
+      await projectModel.updateProject(sourceProject);
+      await projectModel.updateProject(targetProject);
+      await requestModel.post('saved', request);
+      await projectModel.moveRequest(targetProject._id, request._id, 'saved');
+      const project = await projectModel.get(sourceProject._id);
+      assert.deepEqual(project.requests, []);
+    });
+
+    it('adds the request to another project', async () => {
+      const request = /** @type ARCSavedRequest */ (generator.generateSavedItem());
+      request._id = v4();
+      const sourceProject = /** @type ARCProject */ (generator.createProjectObject());
+      sourceProject._id = v4();
+      const targetProject = /** @type ARCProject */ (generator.createProjectObject());
+      targetProject._id = v4();
+      sourceProject.requests = [request._id];
+      request.projects = [sourceProject._id];
+      await projectModel.updateProject(sourceProject);
+      await projectModel.updateProject(targetProject);
+      await requestModel.post('saved', request);
+      await projectModel.moveRequest(targetProject._id, request._id, 'saved');
+      const project = await projectModel.get(targetProject._id);
+      assert.deepEqual(project.requests, [request._id]);
+    });
+
+    it('replaces projects in the request', async () => {
+      const request = /** @type ARCSavedRequest */ (generator.generateSavedItem());
+      request._id = v4();
+      const sourceProject = /** @type ARCProject */ (generator.createProjectObject());
+      sourceProject._id = v4();
+      const targetProject = /** @type ARCProject */ (generator.createProjectObject());
+      targetProject._id = v4();
+      sourceProject.requests = [request._id];
+      request.projects = [sourceProject._id];
+      await projectModel.updateProject(sourceProject);
+      await projectModel.updateProject(targetProject);
+      await requestModel.post('saved', request);
+      await projectModel.moveRequest(targetProject._id, request._id, 'saved');
+      const dbRequest = /** @type ARCSavedRequest */ (await requestModel.get('saved', request._id));
+      assert.deepEqual(dbRequest.projects, [targetProject._id]);
+    });
+
+    it('adds to a target project only once', async () => {
+      const request = /** @type ARCSavedRequest */ (generator.generateSavedItem());
+      request._id = v4();
+      const sourceProject = /** @type ARCProject */ (generator.createProjectObject());
+      sourceProject._id = v4();
+      const targetProject = /** @type ARCProject */ (generator.createProjectObject());
+      targetProject._id = v4();
+      sourceProject.requests = [request._id];
+      targetProject.requests = [request._id];
+      request.projects = [sourceProject._id];
+      await projectModel.updateProject(sourceProject);
+      await projectModel.updateProject(targetProject);
+      await requestModel.post('saved', request);
+      await projectModel.moveRequest(targetProject._id, request._id, 'saved');
+      const project = await projectModel.get(targetProject._id);
+      assert.deepEqual(project.requests, [request._id]);
+    });
+
+    it('adds non-project request to a project', async () => {
+      const request = /** @type ARCSavedRequest */ (generator.generateSavedItem());
+      request._id = v4();
+      const sourceProject = /** @type ARCProject */ (generator.createProjectObject());
+      sourceProject._id = v4();
+      const targetProject = /** @type ARCProject */ (generator.createProjectObject());
+      targetProject._id = v4();
+      await projectModel.updateProject(sourceProject);
+      await projectModel.updateProject(targetProject);
+      await requestModel.post('saved', request);
+      await projectModel.moveRequest(targetProject._id, request._id, 'saved');
+      const project = await projectModel.get(targetProject._id);
+      assert.deepEqual(project.requests, [request._id]);
+      const dbRequest = /** @type ARCSavedRequest */ (await requestModel.get('saved', request._id));
+      assert.deepEqual(dbRequest.projects, [targetProject._id]);
+    });
+
+    it('adds history request to a project', async () => {
+      const request = /** @type ARCHistoryRequest */ (generator.generateHistoryObject());
+      request._id = v4();
+      const targetProject = /** @type ARCProject */ (generator.createProjectObject());
+      targetProject._id = v4();
+      await projectModel.updateProject(targetProject);
+      await requestModel.post('history', request);
+
+      const spy = sinon.spy();
+      projectModel.addEventListener(ArcModelEventTypes.Request.State.update, spy);
+      await projectModel.moveRequest(targetProject._id, request._id, 'history');
+
+      const { changeRecord } = spy.args[0][0];
+
+      const dbRequest = /** @type ARCSavedRequest */ (await requestModel.get('saved', changeRecord.id));
+      assert.equal(dbRequest.name, 'Unnamed request');
+      assert.equal(dbRequest.type, 'saved');
+      const { projects } = dbRequest;
+      assert.deepEqual(projects, [targetProject._id]);
+
+      const project = await projectModel.get(targetProject._id);
+      assert.deepEqual(project.requests, [request._id]);
+    });
+  });
+
+  describe('removeRequest()', () => {
+    let projectModel = /** @type ProjectModel */ (null);
+    let requestModel = /** @type RequestModel */ (null);
+    before(async () => {
+      projectModel = await basicFixture();
+      requestModel = await requestFixture();
+    });
+
+    after(async () => {
+      await generator.destroySavedRequestData();
+    });
+
+    it('removes the request from a projects', async () => {
+      const request = /** @type ARCSavedRequest */ (generator.generateSavedItem());
+      request._id = v4();
+      const sourceProject = /** @type ARCProject */ (generator.createProjectObject());
+      sourceProject._id = v4();
+      sourceProject.requests = [request._id];
+      request.projects = [sourceProject._id];
+      await projectModel.updateProject(sourceProject);
+      await requestModel.post('saved', request);
+      await projectModel.removeRequest(sourceProject._id, request._id);
+      const project = await projectModel.get(sourceProject._id);
+      assert.deepEqual(project.requests, []);
+    });
+
+    it('removes the project from the request', async () => {
+      const request = /** @type ARCSavedRequest */ (generator.generateSavedItem());
+      request._id = v4();
+      const sourceProject = /** @type ARCProject */ (generator.createProjectObject());
+      sourceProject._id = v4();
+      sourceProject.requests = [request._id];
+      request.projects = [sourceProject._id];
+      await projectModel.updateProject(sourceProject);
+      await requestModel.post('saved', request);
+      await projectModel.removeRequest(sourceProject._id, request._id);
+      const dbRequest = /** @type ARCSavedRequest */ (await requestModel.get('saved', request._id));
+      assert.deepEqual(dbRequest.projects, []);
+    });
+
+    it('ignores when the project has no requests', async () => {
+      const request = /** @type ARCSavedRequest */ (generator.generateSavedItem());
+      request._id = v4();
+      const sourceProject = /** @type ARCProject */ (generator.createProjectObject());
+      sourceProject._id = v4();
+      request.projects = [sourceProject._id];
+      await projectModel.updateProject(sourceProject);
+      await requestModel.post('saved', request);
+      await projectModel.removeRequest(sourceProject._id, request._id);
+      const project = await projectModel.get(sourceProject._id);
+      assert.deepEqual(project.requests, []);
+    });
+
+    it('ignores when the request has no projects', async () => {
+      const request = /** @type ARCSavedRequest */ (generator.generateSavedItem());
+      request._id = v4();
+      const sourceProject = /** @type ARCProject */ (generator.createProjectObject());
+      sourceProject._id = v4();
+      sourceProject.requests = [request._id];
+      request.projects = [];
+      await projectModel.updateProject(sourceProject);
+      await requestModel.post('saved', request);
+      await projectModel.removeRequest(sourceProject._id, request._id);
+      const dbRequest = /** @type ARCSavedRequest */ (await requestModel.get('saved', request._id));
+      assert.deepEqual(dbRequest.projects, []);
     });
   });
 });

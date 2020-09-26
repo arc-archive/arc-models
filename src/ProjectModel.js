@@ -14,6 +14,7 @@ the License.
 import { RequestBaseModel } from './RequestBaseModel.js';
 import { ArcModelEventTypes } from './events/ArcModelEventTypes.js';
 import { ArcModelEvents } from './events/ArcModelEvents.js';
+import { createChangeRecord } from './ArcBaseModel.js';
 
 /* eslint-disable class-methods-use-this */
 /* eslint-disable no-continue */
@@ -26,10 +27,12 @@ import { ArcModelEvents } from './events/ArcModelEvents.js';
 /** @typedef {import('./events/ProjectEvents').ARCProjectDeleteEvent} ARCProjectDeleteEvent */
 /** @typedef {import('./events/ProjectEvents').ARCProjectListEvent} ARCProjectListEvent */
 /** @typedef {import('./events/ProjectEvents').ARCProjectListAllEvent} ARCProjectListAllEvent */
+/** @typedef {import('./events/ProjectEvents').ARCProjectMoveEvent} ARCProjectMoveEvent */
 /** @typedef {import('./types').ARCEntityChangeRecord} ARCEntityChangeRecord */
 /** @typedef {import('./types').ARCModelListResult} ARCModelListResult */
 /** @typedef {import('./types').ARCModelListOptions} ARCModelListOptions */
 /** @typedef {import('./types').DeletedEntity} DeletedEntity */
+/** @typedef {import('./RequestTypes').ARCSavedRequest} ARCSavedRequest */
 
 export const readHandler = Symbol('readHandler');
 export const updateHandler = Symbol('updateHandler');
@@ -37,6 +40,9 @@ export const updateBulkHandler = Symbol('updateBulkHandler');
 export const deleteHandler = Symbol('deleteHandler');
 export const listHandler = Symbol('listHandler');
 export const listAllHandler = Symbol('listAllHandler');
+export const moveToHandler = Symbol('moveToHandler');
+export const addToHandler = Symbol('addToHandler');
+export const removeFromHandler = Symbol('removeFromHandler');
 export const normalizeProjects = Symbol('normalizeProjects');
 export const processUpdateBulkResponse = Symbol('processUpdateBulkResponse');
 
@@ -57,6 +63,9 @@ export class ProjectModel extends RequestBaseModel {
     this[listHandler] = this[listHandler].bind(this);
     this[listAllHandler] = this[listAllHandler].bind(this);
     this[updateBulkHandler] = this[updateBulkHandler].bind(this);
+    this[moveToHandler] = this[moveToHandler].bind(this);
+    this[addToHandler] = this[addToHandler].bind(this);
+    this[removeFromHandler] = this[removeFromHandler].bind(this);
   }
 
   /**
@@ -157,6 +166,117 @@ export class ProjectModel extends RequestBaseModel {
   }
 
   /**
+   * Adds a request to a project.
+   * @param {string} pid Project id
+   * @param {string} rid Request id
+   * @param {string} type Request type
+   * @returns {Promise<void>}
+   */
+  async addRequest(pid, rid, type) {
+    // handle project first
+    const project = await this.readProject(pid);
+    if (!project.requests) {
+      project.requests = /** @type string[] */ ([]);
+    }
+    if (!project.requests.includes(rid)) {
+      project.requests.push(rid);
+      await this.updateProject(project);
+    }
+
+    const requestDb = this.getDatabase(type);
+    const request = /** @type ARCSavedRequest */ (await requestDb.get(rid));
+    const isHistory = type === 'history';
+    let copy = /** @type ARCSavedRequest */ (null);
+    if (isHistory) {
+      copy = this.historyToSaved(request);
+    } else {
+      copy = /** @type ARCSavedRequest */ (this.normalizeRequestWithTime(request));
+    }
+    const oldRev = copy._rev;
+    if (!copy.projects) {
+      copy.projects = /** @type string[] */ ([]);
+    }
+    if (!copy.projects.includes(pid)) {
+      copy.projects.push(pid);
+      const response = await this.savedDb.put(copy);
+      const record = this[createChangeRecord](copy, response, oldRev);
+      ArcModelEvents.Request.State.update(this, type, record);
+    }
+  }
+
+  /**
+   * Moves a request to a project.
+   * @param {string} pid Target project id
+   * @param {string} rid Request id
+   * @param {string} type Request type
+   * @returns {Promise<void>}
+   */
+  async moveRequest(pid, rid, type) {
+    // handle project first
+    const project = await this.readProject(pid);
+    if (!project.requests) {
+      project.requests = /** @type string[] */ ([]);
+    }
+    if (!project.requests.includes(rid)) {
+      project.requests.push(rid);
+      await this.updateProject(project);
+    }
+
+    const requestDb = this.getDatabase(type);
+    const request = /** @type ARCSavedRequest */ (await requestDb.get(rid));
+    const isHistory = type === 'history';
+    let copy = /** @type ARCSavedRequest */ (null);
+    if (isHistory) {
+      copy = this.historyToSaved(request);
+    } else {
+      copy = /** @type ARCSavedRequest */ (this.normalizeRequestWithTime(request));
+      await this.removeFromProjects(copy);
+      copy.projects = undefined;
+    }
+    const oldRev = copy._rev;
+    if (!copy.projects) {
+      copy.projects = /** @type string[] */ ([]);
+    }
+    if (!copy.projects.includes(pid)) {
+      copy.projects.push(pid);
+      const response = await this.savedDb.put(copy);
+      const record = this[createChangeRecord](copy, response, oldRev);
+      ArcModelEvents.Request.State.update(this, type, record);
+    }
+  }
+
+  /**
+   * Removes request from a project
+   * @param {string} pid Project id
+   * @param {string} rid Request id
+   * @returns {Promise<void>}
+   */
+  async removeRequest(pid, rid) {
+    const project = await this.readProject(pid);
+    if (!project.requests) {
+      project.requests = /** @type string[] */ ([]);
+    }
+    const request = /** @type ARCSavedRequest */ (await this.savedDb.get(rid));
+    if (!request.projects) {
+      request.projects = /** @type string[] */ ([]);
+    }
+    if (request.projects.includes(pid)) {
+      const index = request.projects.indexOf(pid);
+      request.projects.splice(index, 1);
+      const oldRev = request._id;
+      const copy = /** @type ARCSavedRequest */ (this.normalizeRequestWithTime(request));
+      const response = await this.savedDb.put(copy);
+      const record = this[createChangeRecord](copy, response, oldRev);
+      ArcModelEvents.Request.State.update(this, 'saved', record);
+    }
+    if (project.requests.includes(rid)) {
+      const index = project.requests.indexOf(pid);
+      project.requests.splice(index, 1);
+      await this.updateProject(project);
+    }
+  }
+
+  /**
    * @param {EventTarget} node
    */
   _attachListeners(node) {
@@ -167,6 +287,9 @@ export class ProjectModel extends RequestBaseModel {
     node.addEventListener(ArcModelEventTypes.Project.delete, this[deleteHandler]);
     node.addEventListener(ArcModelEventTypes.Project.list, this[listHandler]);
     node.addEventListener(ArcModelEventTypes.Project.listAll, this[listAllHandler]);
+    node.addEventListener(ArcModelEventTypes.Project.moveTo, this[moveToHandler]);
+    node.addEventListener(ArcModelEventTypes.Project.addTo, this[addToHandler]);
+    node.addEventListener(ArcModelEventTypes.Project.removeFrom, this[removeFromHandler]);
   }
 
   /**
@@ -180,6 +303,9 @@ export class ProjectModel extends RequestBaseModel {
     node.removeEventListener(ArcModelEventTypes.Project.delete, this[deleteHandler]);
     node.removeEventListener(ArcModelEventTypes.Project.list, this[listHandler]);
     node.removeEventListener(ArcModelEventTypes.Project.listAll, this[listAllHandler]);
+    node.removeEventListener(ArcModelEventTypes.Project.moveTo, this[moveToHandler]);
+    node.removeEventListener(ArcModelEventTypes.Project.addTo, this[addToHandler]);
+    node.removeEventListener(ArcModelEventTypes.Project.removeFrom, this[removeFromHandler]);
   }
 
   /**
@@ -341,5 +467,44 @@ export class ProjectModel extends RequestBaseModel {
 
     const { keys } = e;
     e.detail.result = this.listAll(keys);
+  }
+
+  /** 
+   * @param {ARCProjectMoveEvent} e
+   */
+  [moveToHandler](e) {
+    if (e.defaultPrevented) {
+      return;
+    }
+    e.preventDefault();
+    e.stopPropagation();
+    const { projectId, requestId, requestType } = e;
+    e.detail.result = this.moveRequest(projectId, requestId, requestType);
+  }
+
+  /** 
+   * @param {ARCProjectMoveEvent} e
+   */
+  [addToHandler](e) {
+    if (e.defaultPrevented) {
+      return;
+    }
+    e.preventDefault();
+    e.stopPropagation();
+    const { projectId, requestId, requestType } = e;
+    e.detail.result = this.addRequest(projectId, requestId, requestType);
+  }
+
+  /** 
+   * @param {ARCProjectMoveEvent} e
+   */
+  [removeFromHandler](e) {
+    if (e.defaultPrevented) {
+      return;
+    }
+    e.preventDefault();
+    e.stopPropagation();
+    const { projectId, requestId } = e;
+    e.detail.result = this.removeRequest(projectId, requestId);
   }
 }

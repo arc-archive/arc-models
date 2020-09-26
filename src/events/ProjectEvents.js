@@ -13,6 +13,8 @@ export const projectIdValue = Symbol('projectIdValue');
 export const revisionValue = Symbol('revisionValue');
 export const changeRecordValue = Symbol('changeRecordValue');
 export const idsValue = Symbol('idsValue');
+export const requestIdValue = Symbol('requestIdValue');
+export const requestTypeValue = Symbol('requestTypeValue');
 
 /**
  * An event to be dispatched to read an ARC project from the data store.
@@ -214,6 +216,50 @@ export class ARCProjectListAllEvent extends CustomEvent {
 }
 
 /**
+ * This is an event that performs request copy/move/remove operations on a project
+ */
+export class ARCProjectMoveEvent extends CustomEvent {
+  /**
+   * @returns {string} The target project id
+   */
+  get projectId() {
+    return this[projectIdValue];
+  }
+
+  /**
+   * @returns {string} The target project id
+   */
+  get requestId() {
+    return this[requestIdValue];
+  }
+
+  /**
+   * @returns {string} The target project id
+   */
+  get requestType() {
+    return this[requestTypeValue];
+  }
+
+  /**
+   * @param {string} type The event type
+   * @param {string} projectId The target project id
+   * @param {string} requestId The request that is being moved/copied
+   * @param {string} requestType The request type
+   */
+  constructor(type, projectId, requestId, requestType) {
+    super(type, {
+      bubbles: true,
+      composed: true,
+      cancelable: true,
+      detail: {},
+    });
+    this[projectIdValue] = projectId;
+    this[requestIdValue] = requestId;
+    this[requestTypeValue] = requestType;
+  }
+}
+
+/**
  * Dispatches an event handled by the data store to read the project metadata.
  *
  * @param {EventTarget} target A node on which to dispatch the event.
@@ -289,6 +335,50 @@ export async function listAction(target, opts) {
  */
 export async function listAllAction(target, keys) {
   const e = new ARCProjectListAllEvent(keys);
+  target.dispatchEvent(e);
+  return e.detail.result;
+}
+
+/**
+ * Moves a request to a project and removes the request from other projects.
+ *
+ * @param {EventTarget} target A node on which to dispatch the event.
+ * @param {string} projectId The target project id
+ * @param {string} requestId The request that is being moved/copied
+ * @param {string} requestType The request type
+ * @return {Promise<void>} Promise resolved when the operation commits.
+ */
+export async function moveToAction(target, projectId, requestId, requestType) {
+  const e = new ARCProjectMoveEvent(ArcModelEventTypes.Project.moveTo, projectId, requestId, requestType);
+  target.dispatchEvent(e);
+  return e.detail.result;
+}
+
+/**
+ * Adds a request to a project.
+ *
+ * @param {EventTarget} target A node on which to dispatch the event.
+ * @param {string} projectId The target project id
+ * @param {string} requestId The request that is being moved/copied
+ * @param {string} requestType The request type
+ * @return {Promise<void>} Promise resolved when the operation commits.
+ */
+export async function addToAction(target, projectId, requestId, requestType) {
+  const e = new ARCProjectMoveEvent(ArcModelEventTypes.Project.addTo, projectId, requestId, requestType);
+  target.dispatchEvent(e);
+  return e.detail.result;
+}
+
+/**
+ * Removes a request from a project.
+ *
+ * @param {EventTarget} target A node on which to dispatch the event.
+ * @param {string} projectId The target project id
+ * @param {string} requestId The request that is being moved/copied
+ * @return {Promise<void>} Promise resolved when the operation commits.
+ */
+export async function removeFromAction(target, projectId, requestId) {
+  const e = new ARCProjectMoveEvent(ArcModelEventTypes.Project.removeFrom, projectId, requestId, 'saved');
   target.dispatchEvent(e);
   return e.detail.result;
 }

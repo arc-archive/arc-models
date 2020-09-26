@@ -1,5 +1,5 @@
 import { ArcBaseModel } from './ArcBaseModel';
-import { ARCProject } from './RequestTypes';
+import { ARCProject, ARCHistoryRequest, ARCSavedRequest } from './RequestTypes';
 import { ARCEntityChangeRecord, DeletedEntity } from './types';
 
 /**
@@ -53,4 +53,25 @@ export declare class RequestBaseModel extends ArcBaseModel {
    * @returns Promise resolved to a new `_rev` property of deleted object.
    */
   removeProject(id: string, rev?: string): Promise<DeletedEntity>;
+
+  /**
+   * Transforms a history request to a saved request object
+   */
+  historyToSaved(history: ARCHistoryRequest): ARCSavedRequest;
+
+  /**
+   * Normalizes the request to a common request object and updates time values (updated, midnight)
+   * @param request The request to normalize
+   * @param setMidnight Whether the `midnight` property should be set.
+   * @returns Updated request
+   */
+  normalizeRequestWithTime<T extends ARCHistoryRequest|ARCSavedRequest>(request: T, setMidnight?: boolean): T;
+
+  /**
+   * Removes the request from all projects it is added to.
+   * Note, this does not update request itself!
+   * @param request The request to process 
+   * @returns Change record for each changed project.
+   */
+  removeFromProjects(request: ARCSavedRequest): Promise<ARCEntityChangeRecord<ARCProject>[]>
 }

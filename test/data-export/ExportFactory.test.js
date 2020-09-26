@@ -32,16 +32,16 @@ describe('ExportFactory', () => {
 
       it('has "requests" object in the response', async () => {
         const result = await factory.getExportData({
-          saved: true,
+          requests: true,
         });
-        const saved = getData(result, 'saved');
-        assert.typeOf(saved, 'array', 'has array of requests');
-        assert.lengthOf(saved, 100, 'has all requests');
+        const requests = getData(result, 'requests');
+        assert.typeOf(requests, 'array', 'has array of requests');
+        assert.lengthOf(requests, 100, 'has all requests');
       });
 
       it('adds "projects" automatically', async () => {
         const result = await factory.getExportData({
-          saved: true,
+          requests: true,
         });
         const projects = getData(result, 'projects');
         assert.typeOf(projects, 'array', 'has array of requests');
@@ -50,10 +50,10 @@ describe('ExportFactory', () => {
 
       it('has ARCRequest properties on a request entity', async () => {
         const result = await factory.getExportData({
-          saved: true,
+          requests: true,
         });
-        const saved = getData(result, 'saved');
-        const [request] = saved;
+        const requests = getData(result, 'requests');
+        const [request] = requests;
         assert.typeOf(request._id, 'string', 'has the _id');
         assert.typeOf(request._rev, 'string', 'has the _rev');
         assert.typeOf(request.name, 'string', 'has the name');
@@ -62,7 +62,7 @@ describe('ExportFactory', () => {
 
       it('has ARCProject properties on a request entity', async () => {
         const result = await factory.getExportData({
-          saved: true,
+          requests: true,
         });
         const projects = getData(result, 'projects');
         const [project] = projects;
@@ -77,10 +77,10 @@ describe('ExportFactory', () => {
           projectsSize: 1,
         });
         const result = await factory.getExportData({
-          saved: true,
+          requests: true,
         });
-        const saved = getData(result, 'saved');
-        assert.lengthOf(saved, 4100, 'has all requests');
+        const requests = getData(result, 'requests');
+        assert.lengthOf(requests, 4100, 'has all requests');
       });
     });
 

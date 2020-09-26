@@ -5,7 +5,8 @@ import {
   ARCEntityDeletedEvent,
   ARCModelUpdateBulkEventDetail,
   ARCEntityListEvent,
-  ARCModelReadBulkEventDetail,
+  ARCModelReadBulkEventDetail, 
+  ARCModelVoidResultEventDetail,
 } from './BaseEvents';
 import {
   ARCEntityChangeRecord,
@@ -14,6 +15,11 @@ import {
   DeletedEntity,
 } from '../types';
 import { ARCProject } from '../RequestTypes';
+
+export declare const projectIdValue: unique symbol;
+export declare const requestIdValue: unique symbol;
+export declare const requestTypeValue: unique symbol;
+
 /**
  * Project read event
  */
@@ -122,6 +128,35 @@ export declare class ARCProjectListAllEvent extends CustomEvent<ARCModelReadBulk
   constructor(keys?: string[]);
 }
 
+
+/**
+ * This is an event that performs request copy/move/remove operations on a project
+ */
+export class ARCProjectMoveEvent extends CustomEvent<ARCModelVoidResultEventDetail> {
+  /**
+   * The target project id
+   */
+  readonly projectId: string;
+
+  /**
+   * The target project id
+   */
+  readonly requestId: string;
+
+  /**
+   * The target project id
+   */
+  readonly requestType: string;
+
+  /**
+   * @param type The event type
+   * @param projectId The target project id
+   * @param requestId The request that is being moved/copied
+   * @param requestType The request type
+   */
+  constructor(type: string, projectId: string, requestId: string, requestType: string);
+}
+
 /**
  * Dispatches an event handled by the data store to read the project metadata.
  *
@@ -177,6 +212,38 @@ export declare function listAction(target: EventTarget, opts?: ARCModelListOptio
  * @return List of projects.
  */
 export declare function listAllAction(target: EventTarget, keys?: string[]): Promise<ARCProject[]>;
+
+/**
+ * Moves a request to a project and removes the request from other projects.
+ *
+ * @param target A node on which to dispatch the event.
+ * @param projectId The target project id
+ * @param requestId The request that is being moved/copied
+ * @param requestType The request type
+ * @returns Promise resolved when the operation commits.
+ */
+export declare function moveToAction(target: EventTarget, projectId: string, requestId: string, requestType: string): Promise<void>;
+
+/**
+ * Adds a request to a project.
+ *
+ * @param target A node on which to dispatch the event.
+ * @param projectId The target project id
+ * @param requestId The request that is being moved/copied
+ * @param requestType The request type
+ * @returns Promise resolved when the operation commits.
+ */
+export declare function addToAction(target: EventTarget, projectId: string, requestId: string, requestType: string): Promise<void>;
+
+/**
+ * Removes a request from a project.
+ *
+ * @param target A node on which to dispatch the event.
+ * @param projectId The target project id
+ * @param requestId The request that is being moved/copied
+ * @returns Promise resolved when the operation commits.
+ */
+export declare function removeFromAction(target: EventTarget, projectId: string, requestId: string): Promise<void>;
 
 /**
  * Dispatches an event after a project was updated

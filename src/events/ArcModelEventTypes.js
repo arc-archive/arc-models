@@ -8,6 +8,9 @@ export const ArcModelEventTypes = {
     delete: 'modelprojectdelete',
     list: 'modelprojectlist',
     listAll: 'modelprojectlistall',
+    moveTo: 'modelprojectmoveto',
+    addTo: 'modelprojectaddto',
+    removeFrom: 'modelprojectremovefrom',
     State: {
       update: 'modelstateprojectchange',
       delete: 'modelstateprojectdelete',

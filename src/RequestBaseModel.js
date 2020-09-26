@@ -11,11 +11,11 @@ WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
 License for the specific language governing permissions and limitations under
 the License.
 */
-import { ArcBaseModel, deletemodelHandler, notifyDestroyed } from './ArcBaseModel.js';
+import { ArcBaseModel, deletemodelHandler, notifyDestroyed, createChangeRecord } from './ArcBaseModel.js';
 import 'pouchdb/dist/pouchdb.js';
 import '@advanced-rest-client/pouchdb-quick-search/dist/pouchdb.quick-search.min.js';
 import { ArcModelEvents } from './events/ArcModelEvents.js';
-import { normalizeRequestType } from './Utils.js';
+import { generateHistoryId, normalizeRequest, normalizeRequestType } from './Utils.js';
 
 /* global PouchQuickSearch */
 /* eslint-disable class-methods-use-this */
@@ -27,6 +27,8 @@ if (typeof PouchDB !== 'undefined' && typeof PouchQuickSearch !== 'undefined') {
 }
 
 /** @typedef {import('./RequestTypes').ARCProject} ARCProject */
+/** @typedef {import('./RequestTypes').ARCSavedRequest} ARCSavedRequest */
+/** @typedef {import('./RequestTypes').ARCHistoryRequest} ARCHistoryRequest */
 /** @typedef {import('./types').ARCEntityChangeRecord} ARCEntityChangeRecord */
 /** @typedef {import('./types').DeletedEntity} DeletedEntity */
 /** @typedef {import('./events/BaseEvents').ARCModelDeleteEvent} ARCModelDeleteEvent */
@@ -130,17 +132,9 @@ export class RequestBaseModel extends ArcBaseModel {
     copy.updated = Date.now();
     const oldRev = copy._rev;
     const response = await this.projectDb.put(copy);
-    copy._rev = response.rev;
-    const result = {
-      id: copy._id,
-      rev: response.rev,
-      item: copy,
-    }
-    if (oldRev) {
-      result.oldRev = oldRev;
-    }
-    ArcModelEvents.Project.State.update(this, result);
-    return result;
+    const record = this[createChangeRecord](copy, response, oldRev);
+    ArcModelEvents.Project.State.update(this, record);
+    return record;
   }
 
   /**
@@ -165,5 +159,72 @@ export class RequestBaseModel extends ArcBaseModel {
       id,
       rev: response.rev,
     };
+  }
+
+  /**
+   * Transforms a history request to a saved request object
+   * @param {ARCHistoryRequest} history 
+   * @returns {ARCSavedRequest}
+   */
+  historyToSaved(history) {
+    const copy = /** @type ARCSavedRequest */({ ...history });
+    copy.type = 'saved';
+    delete copy._id;
+    delete copy._rev;
+    copy.name = 'Unnamed request';
+    copy._id = generateHistoryId(copy);
+    // @ts-ignore
+    return this.normalizeRequestWithTime(copy, true);
+  }
+
+  /**
+   * Normalizes the request to a common request object and updates time values (updated, midnight)
+   * @param {ARCHistoryRequest|ARCSavedRequest} request The request to normalize
+   * @param {boolean=} setMidnight Whether the `midnight` property should be set.
+   * @returns {ARCHistoryRequest|ARCSavedRequest} Updated request
+   */
+  normalizeRequestWithTime(request, setMidnight=false) {
+    const updated = Date.now();
+    const timeValues = { updated };
+    if (setMidnight) {
+      const day = new Date(updated);
+      day.setHours(0, 0, 0, 0);
+      timeValues.midnight = day.getTime();
+    }
+    return normalizeRequest({ ...request, ...timeValues });
+  }
+
+  /**
+   * Removes the request from all projects it is added to.
+   * Note, this does not update request itself!
+   * @param {ARCSavedRequest} request The request to process 
+   * @returns {Promise<ARCEntityChangeRecord[]>} Change record for each changed project.
+   */
+  async removeFromProjects(request) {
+    const { projects, _id: id } = request;
+    if (!Array.isArray(projects) || !projects.length) {
+      return [];
+    }
+    const response = await this.projectDb.allDocs({
+      include_docs: true,
+      keys: projects,
+    });
+    const updates = [];
+    response.rows.forEach((doc) => {
+      const project = /** @type ARCProject */ (doc.doc);
+      if (!project) {
+        return;
+      }
+      const { requests } = project;
+      if (!Array.isArray(requests) || !requests.length) {
+        return;
+      }
+      if (requests.includes(id)) {
+        const index = requests.indexOf(id);
+        requests.splice(index, 1);
+        updates.push(this.updateProject(project));
+      }
+    });
+    return Promise.all(updates);
   }
 }

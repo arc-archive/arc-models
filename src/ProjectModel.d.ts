@@ -1,14 +1,19 @@
+import { ARCProjectDeleteEvent, ARCProjectListAllEvent, ARCProjectListEvent, ARCProjectMoveEvent, ARCProjectReadEvent, ARCProjectUpdateBulkEvent, ARCProjectUpdateEvent } from './events/ProjectEvents.js';
 import { RequestBaseModel } from './RequestBaseModel.js';
 import { ARCProject } from './RequestTypes';
 import { ARCEntityChangeRecord, ARCModelListResult, ARCModelListOptions } from './types';
 
-export const readHandler: symbol;
-export const updateHandler: symbol;
-export const updateBulkHandler: symbol;
-export const deleteHandler: symbol;
-export const listHandler: symbol;
-export const normalizeProjects: symbol;
-export const processUpdateBulkResponse: symbol;
+export declare const readHandler: unique symbol;
+export declare const updateHandler: unique symbol;
+export declare const updateBulkHandler: unique symbol;
+export declare const deleteHandler: unique symbol;
+export declare const listHandler: unique symbol;
+export declare const listAllHandler: unique symbol;
+export declare const moveToHandler: unique symbol;
+export declare const addToHandler: unique symbol;
+export declare const removeFromHandler: unique symbol;
+export declare const normalizeProjects: unique symbol;
+export declare const processUpdateBulkResponse: unique symbol;
 
 /**
  * A model to access projects data in Advanced REST Client.
@@ -65,7 +70,82 @@ export declare class ProjectModel extends RequestBaseModel {
    */
   postBulk(projects: ARCProject[]): Promise<ARCEntityChangeRecord<ARCProject>[]>;
 
+  /**
+   * Adds a request to a project.
+   * @param pid Project id
+   * @param rid Request id
+   * @param type Request type
+   */
+  addRequest(pid: string, rid: string, type: string): Promise<void>;
+
+  /**
+   * Moves a request to a project.
+   * @param pid Project id
+   * @param rid Request id
+   * @param type Request type
+   */
+  moveRequest(pid: string, rid: string, type: string): Promise<void>;
+
+  /**
+   * Removes request from a project
+   * @param pid Project id
+   * @param rid Request id
+   */
+  removeRequest(pid: string, rid: string): Promise<void>;
 
   _attachListeners(node: EventTarget): void;
   _detachListeners(node: EventTarget): void;
+
+  /**
+   * Handler for project read event request.
+   */
+  [readHandler](e: ARCProjectReadEvent): void;
+
+  /**
+   * Handles project save / update
+   */
+  [updateHandler](e: ARCProjectUpdateEvent): void;
+
+  /**
+   * Handler for `project-update-bulk` custom event.
+   */
+  [updateBulkHandler](e: ARCProjectUpdateBulkEvent): void;
+
+  /**
+   * Normalizes projects list to common model.
+   * It updates `updated` property to current time.
+   * If an item is not an object then it is removed.
+   *
+   * @param projects List of projects.
+   */
+  [normalizeProjects](projects: ARCProject[]): ARCProject[];
+
+  /**
+   * Processes datastore response after calling `updateBulk()` function.
+   * @param projects List of requests to update.
+   * @param responses PouchDB response
+   * @returns List of projects with updated `_id` and `_rew`
+   */
+  [processUpdateBulkResponse](projects: ARCProject[], responses: (PouchDB.Core.Response|PouchDB.Core.Error)[]): ARCEntityChangeRecord<ARCProject>[];
+
+  /**
+   * Removes a project from the data store.
+   */
+  [deleteHandler](e: ARCProjectDeleteEvent): void;
+
+  /**
+   * Queries for a list of projects in pagination
+   */
+  [listHandler](e: ARCProjectListEvent): void;
+
+  /**
+   * List all projects.
+   */
+  [listAllHandler](e: ARCProjectListAllEvent): void;
+
+  [moveToHandler](e: ARCProjectMoveEvent): void;
+
+  [addToHandler](e: ARCProjectMoveEvent): void;
+
+  [removeFromHandler](e: ARCProjectMoveEvent): void;
 }

@@ -20,6 +20,10 @@ describe('ArcModelEventTypes', () => {
       ['updateBulk', 'modelprojectupdatebulk'],
       ['delete', 'modelprojectdelete'],
       ['list', 'modelprojectlist'],
+      ['listAll', 'modelprojectlistall'],
+      ['moveTo', 'modelprojectmoveto'],
+      ['addTo', 'modelprojectaddto'],
+      ['removeFrom', 'modelprojectremovefrom'],
     ].forEach(([prop, value]) => {
       it(`has ${prop} property`, () => {
         assert.equal(ArcModelEventTypes.Project[prop], value);
