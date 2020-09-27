@@ -29,6 +29,7 @@
   "dependencies": {
     "@advanced-rest-client/arc-electron-payload-processor": "^0.4.0",
     "@advanced-rest-client/pouchdb-quick-search": "^2.0.3",
+    "@advanced-rest-client/url-parser": "^3.1.0",
     "@advanced-rest-client/uuid-generator": "^3.1.0",
     "@types/pouchdb": "^6.4.0",
     "pouchdb": "^7.2.2"
