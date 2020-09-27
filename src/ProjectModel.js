@@ -170,16 +170,21 @@ export class ProjectModel extends RequestBaseModel {
    * @param {string} pid Project id
    * @param {string} rid Request id
    * @param {string} type Request type
+   * @param {number=} position The index at which to add the request. Default to the last position
    * @returns {Promise<void>}
    */
-  async addRequest(pid, rid, type) {
+  async addRequest(pid, rid, type, position) {
     // handle project first
     const project = await this.readProject(pid);
     if (!project.requests) {
       project.requests = /** @type string[] */ ([]);
     }
     if (!project.requests.includes(rid)) {
-      project.requests.push(rid);
+      if (typeof position === 'number') {
+        project.requests.splice(position, 0, rid);
+      } else {
+        project.requests.push(rid);
+      }
       await this.updateProject(project);
     }
 
@@ -209,16 +214,21 @@ export class ProjectModel extends RequestBaseModel {
    * @param {string} pid Target project id
    * @param {string} rid Request id
    * @param {string} type Request type
+   * @param {number=} position The index at which to add the request. Default to the last position
    * @returns {Promise<void>}
    */
-  async moveRequest(pid, rid, type) {
+  async moveRequest(pid, rid, type, position) {
     // handle project first
     const project = await this.readProject(pid);
     if (!project.requests) {
       project.requests = /** @type string[] */ ([]);
     }
     if (!project.requests.includes(rid)) {
-      project.requests.push(rid);
+      if (typeof position === 'number') {
+        project.requests.splice(position, 0, rid);
+      } else {
+        project.requests.push(rid);
+      }
       await this.updateProject(project);
     }
 
@@ -478,8 +488,8 @@ export class ProjectModel extends RequestBaseModel {
     }
     e.preventDefault();
     e.stopPropagation();
-    const { projectId, requestId, requestType } = e;
-    e.detail.result = this.moveRequest(projectId, requestId, requestType);
+    const { projectId, requestId, requestType, position } = e;
+    e.detail.result = this.moveRequest(projectId, requestId, requestType, position);
   }
 
   /** 
@@ -491,8 +501,8 @@ export class ProjectModel extends RequestBaseModel {
     }
     e.preventDefault();
     e.stopPropagation();
-    const { projectId, requestId, requestType } = e;
-    e.detail.result = this.addRequest(projectId, requestId, requestType);
+    const { projectId, requestId, requestType, position } = e;
+    e.detail.result = this.addRequest(projectId, requestId, requestType, position);
   }
 
   /** 

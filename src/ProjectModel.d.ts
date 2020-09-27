@@ -75,16 +75,18 @@ export declare class ProjectModel extends RequestBaseModel {
    * @param pid Project id
    * @param rid Request id
    * @param type Request type
+   * @param position The index at which to add the request. Default to the last position
    */
-  addRequest(pid: string, rid: string, type: string): Promise<void>;
+  addRequest(pid: string, rid: string, type: string, position?: number): Promise<void>;
 
   /**
    * Moves a request to a project.
    * @param pid Project id
    * @param rid Request id
    * @param type Request type
+   * @param position The index at which to add the request. Default to the last position
    */
-  moveRequest(pid: string, rid: string, type: string): Promise<void>;
+  moveRequest(pid: string, rid: string, type: string, position?: number): Promise<void>;
 
   /**
    * Removes request from a project

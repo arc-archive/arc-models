@@ -339,6 +339,22 @@ describe('ProjectModel', () => {
         const { requests } = dbProject;
         assert.deepEqual(requests, [rRecord.id]);
       });
+
+      it('adds request to a project at specified position', async () => {
+        const request = /** @type ARCSavedRequest */ (generator.generateSavedItem());
+        request._id = v4();
+        const project = /** @type ARCProject */ (generator.createProjectObject());
+        project._id = v4();
+        project.requests = ['a', 'b', 'c', 'd', 'e'];
+        await projectModel.updateProject(project);
+        await requestModel.post('saved', request);
+        
+        await ArcModelEvents.Project.addTo(document.body, project._id, request._id, 'saved', 2);
+
+        const dbProject = await projectModel.get(project._id);
+        const { requests } = dbProject;
+        assert.deepEqual(requests, ['a', 'b', request._id, 'c', 'd', 'e']);
+      });
     });
 
     describe(`${ArcModelEventTypes.Project.moveTo} event`, () => {
@@ -408,6 +424,26 @@ describe('ProjectModel', () => {
 
         const dbRequest = /** @type ARCSavedRequest */ (await requestModel.get('saved', request._id));
         assert.deepEqual(dbRequest.projects, [targetProject._id]);
+      });
+
+      it('adds the request at specific position', async () => {
+        const request = /** @type ARCSavedRequest */ (generator.generateSavedItem());
+        request._id = v4();
+        const sourceProject = /** @type ARCProject */ (generator.createProjectObject());
+        sourceProject._id = v4();
+        const targetProject = /** @type ARCProject */ (generator.createProjectObject());
+        targetProject._id = v4();
+        sourceProject.requests = [request._id];
+        targetProject.requests = ['a', 'b', 'c', 'd', 'e'];
+        request.projects = [sourceProject._id];
+        await projectModel.updateProject(sourceProject);
+        await projectModel.updateProject(targetProject);
+        await requestModel.post('saved', request);
+  
+        await ArcModelEvents.Project.moveTo(document.body, targetProject._id, request._id, 'saved', 3);
+        
+        const project = await projectModel.get(targetProject._id);
+        assert.deepEqual(project.requests, ['a', 'b', 'c', request._id, 'd', 'e']);
       });
     });
   

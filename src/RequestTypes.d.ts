@@ -29,10 +29,6 @@ export declare interface ARCProject extends Entity {
    */
   description?: string;
   error?: boolean;
-  /**
-   * Order of the request in the project. Contains a list of request ids.
-   */
-  itemsOrder?: string[];
 }
 
 export declare interface MultipartTransformer {

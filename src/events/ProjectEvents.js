@@ -15,6 +15,7 @@ export const changeRecordValue = Symbol('changeRecordValue');
 export const idsValue = Symbol('idsValue');
 export const requestIdValue = Symbol('requestIdValue');
 export const requestTypeValue = Symbol('requestTypeValue');
+export const positionValue = Symbol('requestTypeValue');
 
 /**
  * An event to be dispatched to read an ARC project from the data store.
@@ -241,12 +242,20 @@ export class ARCProjectMoveEvent extends CustomEvent {
   }
 
   /**
+   * @returns {number} The index at which to add the request.
+   */
+  get position() {
+    return this[positionValue];
+  }
+
+  /**
    * @param {string} type The event type
    * @param {string} projectId The target project id
    * @param {string} requestId The request that is being moved/copied
    * @param {string} requestType The request type
+   * @param {number=} position The index at which to add the request. When not set it add the request to the end of the list.
    */
-  constructor(type, projectId, requestId, requestType) {
+  constructor(type, projectId, requestId, requestType, position) {
     super(type, {
       bubbles: true,
       composed: true,
@@ -256,6 +265,7 @@ export class ARCProjectMoveEvent extends CustomEvent {
     this[projectIdValue] = projectId;
     this[requestIdValue] = requestId;
     this[requestTypeValue] = requestType;
+    this[positionValue] = position;
   }
 }
 
@@ -346,10 +356,11 @@ export async function listAllAction(target, keys) {
  * @param {string} projectId The target project id
  * @param {string} requestId The request that is being moved/copied
  * @param {string} requestType The request type
+ * @param {number=} position The index at which to add the request. When not set it add the request to the end of the list.
  * @return {Promise<void>} Promise resolved when the operation commits.
  */
-export async function moveToAction(target, projectId, requestId, requestType) {
-  const e = new ARCProjectMoveEvent(ArcModelEventTypes.Project.moveTo, projectId, requestId, requestType);
+export async function moveToAction(target, projectId, requestId, requestType, position) {
+  const e = new ARCProjectMoveEvent(ArcModelEventTypes.Project.moveTo, projectId, requestId, requestType, position);
   target.dispatchEvent(e);
   return e.detail.result;
 }
@@ -361,10 +372,11 @@ export async function moveToAction(target, projectId, requestId, requestType) {
  * @param {string} projectId The target project id
  * @param {string} requestId The request that is being moved/copied
  * @param {string} requestType The request type
+ * @param {number=} position The index at which to add the request. When not set it add the request to the end of the list.
  * @return {Promise<void>} Promise resolved when the operation commits.
  */
-export async function addToAction(target, projectId, requestId, requestType) {
-  const e = new ARCProjectMoveEvent(ArcModelEventTypes.Project.addTo, projectId, requestId, requestType);
+export async function addToAction(target, projectId, requestId, requestType, position) {
+  const e = new ARCProjectMoveEvent(ArcModelEventTypes.Project.addTo, projectId, requestId, requestType, position);
   target.dispatchEvent(e);
   return e.detail.result;
 }

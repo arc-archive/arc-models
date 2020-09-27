@@ -107,9 +107,10 @@ declare interface ProjectFunctions {
    * @param projectId The target project id
    * @param requestId The request that is being moved/copied
    * @param requestType The request type
+   * @param position The index at which to add the request. When not set it add the request to the end of the list.
    * @returns Promise resolved when the operation commits.
    */
-  moveTo(target: EventTarget, projectId: string, requestId: string, requestType: string): Promise<void>;
+  moveTo(target: EventTarget, projectId: string, requestId: string, requestType: string, position?: number): Promise<void>;
 
   /**
    * Adds a request to a project.
@@ -118,9 +119,10 @@ declare interface ProjectFunctions {
    * @param projectId The target project id
    * @param requestId The request that is being moved/copied
    * @param requestType The request type
+   * @param position The index at which to add the request. When not set it add the request to the end of the list.
    * @returns Promise resolved when the operation commits.
    */
-  addTo(target: EventTarget, projectId: string, requestId: string, requestType: string): Promise<void>;
+  addTo(target: EventTarget, projectId: string, requestId: string, requestType: string, position?: number): Promise<void>;
 
   /**
    * Removes a request from a project.

@@ -65,11 +65,6 @@ export declare interface ARCProjectFolder extends EntityTiming {
    */
   description?: string;
   /**
-   * An order of the items that can be put in a project or a folder.
-   * This includes folders and requests
-   */
-  itemsOrder?: string[];
-  /**
    * List of folders in this project / folder
    */
   folders?: ARCProjectFolder[];

@@ -147,14 +147,20 @@ export class ARCProjectMoveEvent extends CustomEvent<ARCModelVoidResultEventDeta
    * The target project id
    */
   readonly requestType: string;
+  
+  /**
+   * The index at which to add the request.
+   */
+  readonly position?: number;
 
   /**
    * @param type The event type
    * @param projectId The target project id
    * @param requestId The request that is being moved/copied
    * @param requestType The request type
+   * @param position The index at which to add the request. When not set it add the request to the end of the list.
    */
-  constructor(type: string, projectId: string, requestId: string, requestType: string);
+  constructor(type: string, projectId: string, requestId: string, requestType: string, position?: number);
 }
 
 /**
@@ -220,9 +226,10 @@ export declare function listAllAction(target: EventTarget, keys?: string[]): Pro
  * @param projectId The target project id
  * @param requestId The request that is being moved/copied
  * @param requestType The request type
+ * @param position The index at which to add the request. When not set it add the request to the end of the list.
  * @returns Promise resolved when the operation commits.
  */
-export declare function moveToAction(target: EventTarget, projectId: string, requestId: string, requestType: string): Promise<void>;
+export declare function moveToAction(target: EventTarget, projectId: string, requestId: string, requestType: string, position?: number): Promise<void>;
 
 /**
  * Adds a request to a project.
@@ -231,9 +238,10 @@ export declare function moveToAction(target: EventTarget, projectId: string, req
  * @param projectId The target project id
  * @param requestId The request that is being moved/copied
  * @param requestType The request type
+ * @param position The index at which to add the request. When not set it add the request to the end of the list.
  * @returns Promise resolved when the operation commits.
  */
-export declare function addToAction(target: EventTarget, projectId: string, requestId: string, requestType: string): Promise<void>;
+export declare function addToAction(target: EventTarget, projectId: string, requestId: string, requestType: string, position?: number): Promise<void>;
 
 /**
  * Removes a request from a project.
