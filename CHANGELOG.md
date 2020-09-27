@@ -852,3 +852,27 @@
 * fixing linter errors [e512add](https://github.com/advanced-rest-client/arc-models/commit/e512add4e7078a77cf1a2c9354a03ac4433ce4aa) by Pawel
 
 
+<a name="4.1.6"></a>
+## [4.1.6](https://github.com/advanced-rest-client/arc-models/compare/4.1.0...4.1.6) (2020-09-27)
+
+### Update
+
+* [ci skip] automated merge master->stage. syncing main branches [6e74836](https://github.com/advanced-rest-client/arc-models/commit/6e748366c325a9a279203d9b1ab2a479533fc6c2) by Ci agent
+* updating dependencies [2db92d8](https://github.com/advanced-rest-client/arc-models/commit/2db92d81310fe253e50a5cfe3e9031b0a7c9c11e) by Pawel
+* [ci skip] automated merge master->stage. syncing main branches [55cf442](https://github.com/advanced-rest-client/arc-models/commit/55cf4425cac78f6ec2a552eacda099778a00112d) by Ci agent
+
+
+### Features
+
+* adding base definition for future API projects [4c4183c](https://github.com/advanced-rest-client/arc-models/commit/4c4183c463af58e4f2292234ac4ccb2f192cf24f) by Pawel
+* adding order to project items [4e72862](https://github.com/advanced-rest-client/arc-models/commit/4e72862c70531cfb1e8529c3c2d13517c6e094ad) by Pawel
+* adding project request manipulation functions [330c6e5](https://github.com/advanced-rest-client/arc-models/commit/330c6e54560997f881ac134270079024c3fb9423) by Pawel
+
+
+### Bug Fixes
+
+* fixing export key name [eb7f76c](https://github.com/advanced-rest-client/arc-models/commit/eb7f76cc03aaf79e970d65c525f68f3dae62e1d8) by Pawel
+* fixing export variable name [c53d0b5](https://github.com/advanced-rest-client/arc-models/commit/c53d0b5f420e7913bb87d125088029d9c68fb68b) by Pawel
+* fixing linter errors [e512add](https://github.com/advanced-rest-client/arc-models/commit/e512add4e7078a77cf1a2c9354a03ac4433ce4aa) by Pawel
+
+
