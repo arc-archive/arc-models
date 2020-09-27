@@ -892,3 +892,23 @@
 * adding order to project items [4e72862](https://github.com/advanced-rest-client/arc-models/commit/4e72862c70531cfb1e8529c3c2d13517c6e094ad) by Pawel
 
 
+<a name="4.1.9"></a>
+## [4.1.9](https://github.com/advanced-rest-client/arc-models/compare/4.1.6...4.1.9) (2020-09-27)
+
+### Update
+
+* [ci skip] automated merge master->stage. syncing main branches [be4f7b3](https://github.com/advanced-rest-client/arc-models/commit/be4f7b32bdbdfef88336800782d743dbc19b0598) by Ci agent
+* [ci skip] automated merge master->stage. syncing main branches [bec789b](https://github.com/advanced-rest-client/arc-models/commit/bec789bcb9386cd2c855a3d1d36896f93654a467) by Ci agent
+
+
+### Features
+
+* making project id optional when adding a project [d804131](https://github.com/advanced-rest-client/arc-models/commit/d8041313e784a8bc899b6db677f3761c53197e8c) by Pawel
+* adding position to project move [4752723](https://github.com/advanced-rest-client/arc-models/commit/4752723ee53ef2f80448f61de2f0f99d5eacd5b1) by Pawel
+
+
+### Bug Fixes
+
+* minor fixes [136c7e3](https://github.com/advanced-rest-client/arc-models/commit/136c7e35eed21338b537aa1f6681e79c28155f0d) by Pawel
+
+
