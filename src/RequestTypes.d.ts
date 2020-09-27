@@ -1,7 +1,7 @@
 import { Entity } from './types';
 
 /**
- * The definition of the ARC project data entity.
+ * The definition of the ARC project data entity up to version 16
  */
 export declare interface ARCProject extends Entity {
   /**
@@ -29,6 +29,10 @@ export declare interface ARCProject extends Entity {
    */
   description?: string;
   error?: boolean;
+  /**
+   * Order of the request in the project. Contains a list of request ids.
+   */
+  itemsOrder?: string[];
 }
 
 export declare interface MultipartTransformer {

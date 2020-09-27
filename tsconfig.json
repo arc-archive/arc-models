@@ -19,6 +19,7 @@
   },
   "include": [
     "**/*.js",
+    "**/*.ts",
     "node_modules/@open-wc/**/*.js"
   ],
   "exclude": ["node_modules/!(@open-wc)"]
