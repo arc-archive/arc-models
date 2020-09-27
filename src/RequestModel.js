@@ -153,7 +153,7 @@ export class RequestModel extends RequestBaseModel {
    * @param {ARCRequestRestoreOptions=} opts Restoration options.
    * @return {Promise<(ARCHistoryRequest|ARCSavedRequest)[]>}
    */
-  async getBulk(type, keys, opts) {
+  async getBulk(type, keys, opts={}) {
     const db = this.getDatabase(type);
     const response = await db.allDocs({
       include_docs: true,
@@ -163,6 +163,9 @@ export class RequestModel extends RequestBaseModel {
     response.rows.forEach((item) => {
       let request = item.doc;
       if (!request) {
+        if (opts.preserveOrder) {
+          requests[requests.length] = undefined;
+        }
         return;
       }
       if (opts && opts.restorePayload) {

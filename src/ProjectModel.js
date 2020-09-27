@@ -174,20 +174,6 @@ export class ProjectModel extends RequestBaseModel {
    * @returns {Promise<void>}
    */
   async addRequest(pid, rid, type, position) {
-    // handle project first
-    const project = await this.readProject(pid);
-    if (!project.requests) {
-      project.requests = /** @type string[] */ ([]);
-    }
-    if (!project.requests.includes(rid)) {
-      if (typeof position === 'number') {
-        project.requests.splice(position, 0, rid);
-      } else {
-        project.requests.push(rid);
-      }
-      await this.updateProject(project);
-    }
-
     const requestDb = this.getDatabase(type);
     const request = /** @type ARCSavedRequest */ (await requestDb.get(rid));
     const isHistory = type === 'history';
@@ -197,6 +183,21 @@ export class ProjectModel extends RequestBaseModel {
     } else {
       copy = /** @type ARCSavedRequest */ (this.normalizeRequestWithTime(request));
     }
+
+    // project has to be handled after the request to make sure it has the correct id
+    const project = await this.readProject(pid);
+    if (!project.requests) {
+      project.requests = /** @type string[] */ ([]);
+    }
+    if (!project.requests.includes(copy._id)) {
+      if (typeof position === 'number') {
+        project.requests.splice(position, 0, copy._id);
+      } else {
+        project.requests.push(copy._id);
+      }
+      await this.updateProject(project);
+    }
+    
     const oldRev = copy._rev;
     if (!copy.projects) {
       copy.projects = /** @type string[] */ ([]);
@@ -218,20 +219,6 @@ export class ProjectModel extends RequestBaseModel {
    * @returns {Promise<void>}
    */
   async moveRequest(pid, rid, type, position) {
-    // handle project first
-    const project = await this.readProject(pid);
-    if (!project.requests) {
-      project.requests = /** @type string[] */ ([]);
-    }
-    if (!project.requests.includes(rid)) {
-      if (typeof position === 'number') {
-        project.requests.splice(position, 0, rid);
-      } else {
-        project.requests.push(rid);
-      }
-      await this.updateProject(project);
-    }
-
     const requestDb = this.getDatabase(type);
     const request = /** @type ARCSavedRequest */ (await requestDb.get(rid));
     const isHistory = type === 'history';
@@ -243,6 +230,21 @@ export class ProjectModel extends RequestBaseModel {
       await this.removeFromProjects(copy);
       copy.projects = undefined;
     }
+
+    // project has to be handled after the request to make sure it has the correct id
+    const project = await this.readProject(pid);
+    if (!project.requests) {
+      project.requests = /** @type string[] */ ([]);
+    }
+    if (!project.requests.includes(copy._id)) {
+      if (typeof position === 'number') {
+        project.requests.splice(position, 0, copy._id);
+      } else {
+        project.requests.push(copy._id);
+      }
+      await this.updateProject(project);
+    }
+    
     const oldRev = copy._rev;
     if (!copy.projects) {
       copy.projects = /** @type string[] */ ([]);

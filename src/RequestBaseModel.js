@@ -11,11 +11,12 @@ WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
 License for the specific language governing permissions and limitations under
 the License.
 */
+import { v4 } from '@advanced-rest-client/uuid-generator';
 import { ArcBaseModel, deletemodelHandler, notifyDestroyed, createChangeRecord } from './ArcBaseModel.js';
 import 'pouchdb/dist/pouchdb.js';
 import '@advanced-rest-client/pouchdb-quick-search/dist/pouchdb.quick-search.min.js';
 import { ArcModelEvents } from './events/ArcModelEvents.js';
-import { generateHistoryId, normalizeRequest, normalizeRequestType } from './Utils.js';
+import { normalizeRequest, normalizeRequestType } from './Utils.js';
 
 /* global PouchQuickSearch */
 /* eslint-disable class-methods-use-this */
@@ -168,11 +169,10 @@ export class RequestBaseModel extends ArcBaseModel {
    */
   historyToSaved(history) {
     const copy = /** @type ARCSavedRequest */({ ...history });
-    copy.type = 'saved';
-    delete copy._id;
+    copy.type = 'saved';    
     delete copy._rev;
     copy.name = 'Unnamed request';
-    copy._id = generateHistoryId(copy);
+    copy._id = v4();
     // @ts-ignore
     return this.normalizeRequestWithTime(copy, true);
   }

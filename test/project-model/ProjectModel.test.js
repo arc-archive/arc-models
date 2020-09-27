@@ -680,7 +680,7 @@ describe('ProjectModel', () => {
       assert.deepEqual(projects, [targetProject._id]);
 
       const project = await projectModel.get(targetProject._id);
-      assert.deepEqual(project.requests, [request._id]);
+      assert.deepEqual(project.requests, [changeRecord.id]);
     });
   });
 

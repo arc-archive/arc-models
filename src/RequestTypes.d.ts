@@ -128,4 +128,10 @@ export declare interface ARCRequestRestoreOptions {
    * When set the payload is transformed to the original object
    */
   restorePayload?: boolean;
+  /**
+   * When performing a bulk read operation it preserves order
+   * or requested items by key by adding `undefined` to the indexes that
+   * failed to read
+   */
+  preserveOrder?: boolean;
 }
