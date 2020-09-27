@@ -876,3 +876,19 @@
 * fixing linter errors [e512add](https://github.com/advanced-rest-client/arc-models/commit/e512add4e7078a77cf1a2c9354a03ac4433ce4aa) by Pawel
 
 
+<a name="4.1.7"></a>
+## [4.1.7](https://github.com/advanced-rest-client/arc-models/compare/4.1.5...4.1.7) (2020-09-27)
+
+### Update
+
+* [ci skip] automated merge master->stage. syncing main branches [bec789b](https://github.com/advanced-rest-client/arc-models/commit/bec789bcb9386cd2c855a3d1d36896f93654a467) by Ci agent
+* [ci skip] automated merge master->stage. syncing main branches [6e74836](https://github.com/advanced-rest-client/arc-models/commit/6e748366c325a9a279203d9b1ab2a479533fc6c2) by Ci agent
+
+
+### Features
+
+* adding position to project move [4752723](https://github.com/advanced-rest-client/arc-models/commit/4752723ee53ef2f80448f61de2f0f99d5eacd5b1) by Pawel
+* adding base definition for future API projects [4c4183c](https://github.com/advanced-rest-client/arc-models/commit/4c4183c463af58e4f2292234ac4ccb2f192cf24f) by Pawel
+* adding order to project items [4e72862](https://github.com/advanced-rest-client/arc-models/commit/4e72862c70531cfb1e8529c3c2d13517c6e094ad) by Pawel
+
+
