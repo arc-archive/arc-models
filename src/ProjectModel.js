@@ -11,6 +11,7 @@ WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
 License for the specific language governing permissions and limitations under
 the License.
 */
+import { v4 } from '@advanced-rest-client/uuid-generator';
 import { RequestBaseModel } from './RequestBaseModel.js';
 import { ArcModelEventTypes } from './events/ArcModelEventTypes.js';
 import { ArcModelEvents } from './events/ArcModelEvents.js';
@@ -109,12 +110,9 @@ export class ProjectModel extends RequestBaseModel {
     if (!project) {
       throw new Error('The argument is missing');
     }
-    if (!project._id) {
-      throw new Error('The "id" property of the project is missing');
-    }
     const db = this.projectDb;
     let item = { ...project };
-    if (!item._rev) {
+    if (item._id && !item._rev) {
       try {
         const doc = await db.get(item._id);
         item = { ...doc, ...item };
@@ -125,6 +123,8 @@ export class ProjectModel extends RequestBaseModel {
           return undefined;
         }
       }
+    } else if (!item._id) {
+      item._id = v4();
     }
     return this.updateProject(item);
   }

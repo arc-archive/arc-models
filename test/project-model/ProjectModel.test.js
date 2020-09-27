@@ -115,16 +115,11 @@ describe('ProjectModel', () => {
       assert.isTrue(thrown);
     });
 
-    it('throws when no project id', async () => {
+    it('generates a project id', async () => {
       const project = /** @type ARCProject */ (generator.createProjectObject());
       delete project._id;
-      let thrown = false;
-      try {
-        await element.post(project);
-      } catch (e) {
-        thrown = true;
-      }
-      assert.isTrue(thrown);
+      const record = await element.post(project);
+      assert.typeOf(record.id, 'string');
     });
 
     it('updates already existing item with the rev value', async () => {
