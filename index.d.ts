@@ -17,7 +17,7 @@ export { ClientCertificateModel, ARCCertificate, ARCClientCertificate, ARCCertif
 export { HostRulesModel, ARCHostRuleCreate, ARCHostRule } from './src/HostRulesModel';
 export { ProjectModel } from './src/ProjectModel';
 export { RequestModel } from './src/RequestModel';
-export { RestApiModel } from './src/RestApiModel';
+export { RestApiModel, ARCRestApiIndex, ARCRestApi } from './src/RestApiModel';
 export { ARCProject, HTTPRequest, ARCRequest, ARCHistoryRequest, ARCSavedRequest, SaveARCRequestOptions, ARCRequestRestoreOptions } from './src/RequestTypes';
 export { UrlHistoryModel, ARCUrlHistory } from './src/UrlHistoryModel';
 export { UrlIndexer, IndexableRequest, IndexQueryOptions, IndexQueryResult } from './src/UrlIndexer';
