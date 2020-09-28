@@ -45,14 +45,22 @@ export declare class RequestBaseModel extends ArcBaseModel {
   updateProject(project: ARCProject): Promise<ARCEntityChangeRecord<ARCProject>>;
 
   /**
-   * Removed an object from the datastore.
-   * This function fires `project-object-deleted` event.
+   * Removes a project entity from the data store.
+   * It also calls `removeProjectRequests()` to clean up requests.
    *
    * @param id The ID of the datastore entry.
-   * @param rev Specific revision to read. Defaults to latest revision.
-   * @returns Promise resolved to a new `_rev` property of deleted object.
    */
-  removeProject(id: string, rev?: string): Promise<DeletedEntity>;
+  removeProject(id: string): Promise<DeletedEntity>;
+
+  /**
+   * Removes requests associated with the project.
+   * Requests that are association with only one project are deleted.
+   * Requests that are association with more than one project are updated
+   * to remove project reference.
+   * 
+   * Note, the project is not updated.
+   */
+  removeProjectRequests(id: string): Promise<void>;
 
   /**
    * Transforms a history request to a saved request object

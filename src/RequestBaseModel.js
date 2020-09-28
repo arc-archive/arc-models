@@ -139,27 +139,72 @@ export class RequestBaseModel extends ArcBaseModel {
   }
 
   /**
-   * Removes a project from the datastore.
+   * Removes a project entity from the data store.
+   * It also calls `removeProjectRequests()` to clean up requests.
    *
    * @param {string} id The ID of the datastore entry.
-   * @param {string=} rev Specific revision to read. Defaults to latest revision.
-   * @return {Promise<DeletedEntity>} Promise resolved to a new `_rev` property of deleted object.
+   * @return {Promise<DeletedEntity>}
    */
-  async removeProject(id, rev) {
+  async removeProject(id) {
     if (!id) {
       throw new Error('Missing project "id" property.');
     }
-    let winningRev = rev;
-    if (!winningRev) {
-      const obj = await this.readProject(id);
-      winningRev = obj._rev;
-    }
-    const response = await this.projectDb.remove(id, winningRev);
+    await this.removeProjectRequests(id);
+    const obj = await this.readProject(id);
+    const response = await this.projectDb.remove(id, obj._rev);
     ArcModelEvents.Project.State.delete(this, id, response.rev);
     return {
       id,
       rev: response.rev,
     };
+  }
+
+  /**
+   * Removes requests associated with the project.
+   * Requests that are association with only one project are deleted.
+   * Requests that are association with more than one project are updated
+   * to remove project reference.
+   * 
+   * Note, the project is not updated.
+   * 
+   * @param {string} id
+   */
+  async removeProjectRequests(id) {
+    const project = await this.readProject(id);
+    const { requests, _id } = project;
+    if (!Array.isArray(requests) || !requests.length) {
+      return;
+    }
+    const items = /** @type ARCSavedRequest[] */ (await ArcModelEvents.Request.readBulk(this, 'saved', requests, {
+      preserveOrder: true,
+    }));
+    const remove = [];
+    const update = [];
+    items.forEach((request) => {
+      if (!request) {
+        return;
+      }
+      const { projects } = request;
+      if (!Array.isArray(projects) || !projects.length) {
+        return;
+      }
+      if (!projects.includes(_id)) {
+        return;
+      }
+      if (projects.length > 1) {
+        const rIndex = projects.indexOf(_id);
+        projects.splice(rIndex, 1);
+        update.push(request);
+      } else {
+        remove.push(request._id);
+      }
+    });
+    if (remove.length) {
+      await ArcModelEvents.Request.deleteBulk(this, 'saved', remove);
+    }
+    if (update.length) {
+      await ArcModelEvents.Request.updateBulk(this, 'saved', update);
+    }
   }
 
   /**

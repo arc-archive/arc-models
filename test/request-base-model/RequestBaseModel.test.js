@@ -4,9 +4,12 @@ import { DataGenerator } from '@advanced-rest-client/arc-data-generator';
 import { RequestBaseModel } from '../../src/RequestBaseModel.js';
 import { ArcModelEventTypes } from '../../src/events/ArcModelEventTypes.js';
 import { ArcModelEvents } from '../../src/events/ArcModelEvents.js';
+import '../../request-model.js';
 
 /** @typedef {import('../../src/RequestTypes').ARCProject} ARCProject */
+/** @typedef {import('../../src/RequestTypes').ARCSavedRequest} ARCSavedRequest */
 /** @typedef {import('../../src/types').ARCEntityChangeRecord} ARCEntityChangeRecord */
+/** @typedef {import('../../').RequestModel} RequestModel */
 
 class RequestTestModel extends RequestBaseModel {
   constructor() {
@@ -22,6 +25,13 @@ describe('RequestBaseModel', () => {
    */
   async function basicFixture() {
     return fixture('<request-test-model></request-test-model>');
+  }
+
+  /**
+   * @return {Promise<RequestModel>}
+   */
+  async function requestModelFixture() {
+    return fixture('<request-model></request-model>');
   }
 
   describe('get savedDb()', () => {
@@ -243,12 +253,6 @@ describe('RequestBaseModel', () => {
       assert.deepEqual(list, []);
     });
 
-    it('removes object from the datastore with revision', async () => {
-      await element.removeProject(record.id, record.rev);
-      const list = await generator.getDatastoreProjectsData();
-      assert.deepEqual(list, []);
-    });
-
     it('dispatches the state event', async () => {
       const spy = sinon.spy();
       element.addEventListener(ArcModelEventTypes.Project.State.delete, spy);
@@ -274,6 +278,134 @@ describe('RequestBaseModel', () => {
         thrown = true;
       }
       assert.isTrue(thrown);
+    });
+
+    it('calls removeProjectRequests()', async () => {
+      const spy = sinon.spy(element, 'removeProjectRequests');
+      await element.removeProject(record.id);
+      assert.isTrue(spy.called);
+    });
+  });
+
+  describe('removeProjectRequests()', () => {
+    after(() => {
+      return generator.destroySavedRequestData();
+    });
+
+    let baseModel = /** @type {RequestTestModel} */ (null);
+    let requestModel = /** @type {RequestModel} */ (null);
+    beforeEach(async () => {
+      baseModel = await basicFixture();
+      requestModel = await requestModelFixture();
+    });
+
+    it('does nothing when project has no requests', async () => {
+      const project = /** @type ARCProject */ (generator.createProjectObject());
+      const rec = await baseModel.updateProject(project);
+      const spyRequestsDelete = sinon.spy();
+      const spyRequestsUpdate = sinon.spy();
+      baseModel.addEventListener(ArcModelEventTypes.Request.deleteBulk, spyRequestsDelete);
+      baseModel.addEventListener(ArcModelEventTypes.Request.updateBulk, spyRequestsUpdate);
+      await baseModel.removeProjectRequests(rec.id);
+      assert.isFalse(spyRequestsDelete.called);
+      assert.isFalse(spyRequestsUpdate.called);
+    });
+
+    it('removes requests exclusive for the project', async () => {
+      const request = /** @type ARCSavedRequest */ (generator.generateSavedItem());
+      request._id = `request-${Date.now()}`
+      const project = /** @type ARCProject */ (generator.createProjectObject());
+      project._id = `project-${Date.now()}`
+      project.requests = [request._id];
+      request.projects = [project._id];
+      await baseModel.updateProject(project);
+      await requestModel.post('saved', request);
+      const spyRequestsDelete = sinon.spy();
+      const spyRequestsUpdate = sinon.spy();
+      baseModel.addEventListener(ArcModelEventTypes.Request.deleteBulk, spyRequestsDelete);
+      baseModel.addEventListener(ArcModelEventTypes.Request.updateBulk, spyRequestsUpdate);
+      await baseModel.removeProjectRequests(project._id);
+      assert.isTrue(spyRequestsDelete.called, 'remove request event called');
+      assert.isFalse(spyRequestsUpdate.called, 'update request event not called');
+
+      let thrown = false;
+      try {
+        await requestModel.get('saved', request._id);
+      } catch (e) {
+        thrown = true;
+      }
+      assert.isTrue(thrown, 'request does not exist in the data store');
+    });
+
+    it('updates requests with more than one project', async () => {
+      const request = /** @type ARCSavedRequest */ (generator.generateSavedItem());
+      request._id = `request-${Date.now()}`
+      const project = /** @type ARCProject */ (generator.createProjectObject());
+      project._id = `project-${Date.now()}`
+      project.requests = [request._id];
+      request.projects = [project._id, 'other'];
+      await baseModel.updateProject(project);
+      await requestModel.post('saved', request);
+      const spyRequestsDelete = sinon.spy();
+      const spyRequestsUpdate = sinon.spy();
+      baseModel.addEventListener(ArcModelEventTypes.Request.deleteBulk, spyRequestsDelete);
+      baseModel.addEventListener(ArcModelEventTypes.Request.updateBulk, spyRequestsUpdate);
+      await baseModel.removeProjectRequests(project._id);
+      assert.isFalse(spyRequestsDelete.called, 'remove request event not called');
+      assert.isTrue(spyRequestsUpdate.called, 'update request event called');
+      const dbRequest = await requestModel.get('saved', request._id);
+      // @ts-ignore
+      assert.deepEqual(dbRequest.projects, ['other']);
+    });
+
+    it('ignores unknown requests', async () => {
+      const project = /** @type ARCProject */ (generator.createProjectObject());
+      project._id = `project-${Date.now()}`
+      project.requests = ['a', 'b', 'c'];
+      await baseModel.updateProject(project);
+      const spyRequestsDelete = sinon.spy();
+      const spyRequestsUpdate = sinon.spy();
+      baseModel.addEventListener(ArcModelEventTypes.Request.deleteBulk, spyRequestsDelete);
+      baseModel.addEventListener(ArcModelEventTypes.Request.updateBulk, spyRequestsUpdate);
+      await baseModel.removeProjectRequests(project._id);
+      assert.isFalse(spyRequestsDelete.called, 'remove request event not called');
+      assert.isFalse(spyRequestsUpdate.called, 'update request event not called');
+    });
+
+    it('ignores when request has no projects', async () => {
+      const request = /** @type ARCSavedRequest */ (generator.generateSavedItem());
+      request._id = `request-${Date.now()}`
+      const project = /** @type ARCProject */ (generator.createProjectObject());
+      project._id = `project-${Date.now()}`
+      project.requests = [request._id];
+      delete request.projects;
+      await baseModel.updateProject(project);
+      await requestModel.post('saved', request);
+      const spyRequestsDelete = sinon.spy();
+      const spyRequestsUpdate = sinon.spy();
+      baseModel.addEventListener(ArcModelEventTypes.Request.deleteBulk, spyRequestsDelete);
+      baseModel.addEventListener(ArcModelEventTypes.Request.updateBulk, spyRequestsUpdate);
+      await baseModel.removeProjectRequests(project._id);
+      assert.isFalse(spyRequestsDelete.called, 'remove request event not called');
+      assert.isFalse(spyRequestsUpdate.called, 'update request event not called');
+    });
+
+    it('ignores when request has only other projects', async () => {
+      const request = /** @type ARCSavedRequest */ (generator.generateSavedItem());
+      request._id = `request-${Date.now()}`
+      const project = /** @type ARCProject */ (generator.createProjectObject());
+      project._id = `project-${Date.now()}`
+      project.requests = [request._id];
+      request.projects = ['a', 'b', 'c'];
+      await baseModel.updateProject(project);
+      await requestModel.post('saved', request);
+      const spyRequestsDelete = sinon.spy();
+      const spyRequestsUpdate = sinon.spy();
+      baseModel.addEventListener(ArcModelEventTypes.Request.deleteBulk, spyRequestsDelete);
+      baseModel.addEventListener(ArcModelEventTypes.Request.updateBulk, spyRequestsUpdate);
+      await baseModel.removeProjectRequests(project._id);
+      assert.isFalse(spyRequestsDelete.called, 'remove request event not called');
+      assert.isFalse(spyRequestsUpdate.called, 'update request event not called');
     });
   });
 
