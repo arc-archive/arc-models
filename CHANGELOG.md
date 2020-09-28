@@ -912,3 +912,24 @@
 * minor fixes [136c7e3](https://github.com/advanced-rest-client/arc-models/commit/136c7e35eed21338b537aa1f6681e79c28155f0d) by Pawel
 
 
+<a name="4.1.11"></a>
+## [4.1.11](https://github.com/advanced-rest-client/arc-models/compare/4.1.7...4.1.11) (2020-09-28)
+
+### Update
+
+* adding missing types export [bb2ae5a](https://github.com/advanced-rest-client/arc-models/commit/bb2ae5ad37feebad216a363eb04c49567e7716d6) by Pawel
+* [ci skip] automated merge master->stage. syncing main branches [ef8101f](https://github.com/advanced-rest-client/arc-models/commit/ef8101fd767e4a7a35c14fc1975f4349bf2a65c2) by Ci agent
+* [ci skip] automated merge master->stage. syncing main branches [be4f7b3](https://github.com/advanced-rest-client/arc-models/commit/be4f7b32bdbdfef88336800782d743dbc19b0598) by Ci agent
+
+
+### Features
+
+* cleaning requests when removing project [a270429](https://github.com/advanced-rest-client/arc-models/commit/a2704294c36d5f3aa1f1658b9e3ca9b9f8463257) by Pawel
+* making project id optional when adding a project [d804131](https://github.com/advanced-rest-client/arc-models/commit/d8041313e784a8bc899b6db677f3761c53197e8c) by Pawel
+
+
+### Bug Fixes
+
+* minor fixes [136c7e3](https://github.com/advanced-rest-client/arc-models/commit/136c7e35eed21338b537aa1f6681e79c28155f0d) by Pawel
+
+
