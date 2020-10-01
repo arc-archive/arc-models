@@ -148,37 +148,37 @@ describe('UrlIndexer', () => {
       });
 
       it('clears saved via saved-requests type', async () => {
-        await ArcModelEvents.destroy(document.body, ['saved-requests']);
+        await ArcModelEvents.destroyed(document.body, 'saved-requests');
         const data = await DbHelper.readAllIndexes();
         assert.lengthOf(data, 3);
       });
 
       it('clears saved via saved type', async () => {
-        await ArcModelEvents.destroy(document.body, ['saved']);
+        await ArcModelEvents.destroyed(document.body, 'saved');
         const data = await DbHelper.readAllIndexes();
         assert.lengthOf(data, 3);
       });
 
       it('clears history via history-requests type', async () => {
-        await ArcModelEvents.destroy(document.body, ['history-requests']);
+        await ArcModelEvents.destroyed(document.body, 'history-requests');
         const data = await DbHelper.readAllIndexes();
         assert.lengthOf(data, 3);
       });
 
       it('clears saved via history type', async () => {
-        await ArcModelEvents.destroy(document.body, ['history']);
+        await ArcModelEvents.destroyed(document.body, 'history');
         const data = await DbHelper.readAllIndexes();
         assert.lengthOf(data, 3);
       });
 
       it('clears all requests', async () => {
-        await ArcModelEvents.destroy(document.body, ['all']);
+        await ArcModelEvents.destroyed(document.body, 'all');
         const data = await DbHelper.readAllIndexes();
         assert.lengthOf(data, 0);
       });
 
       it('ignores other data stores', async () => {
-        await ArcModelEvents.destroy(document.body, ['other']);
+        await ArcModelEvents.destroyed(document.body, 'other');
         const data = await DbHelper.readAllIndexes();
         assert.lengthOf(data, 6);
       });

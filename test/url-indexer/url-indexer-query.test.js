@@ -4,8 +4,6 @@ import { DbHelper } from './db-helper.js';
 import { ArcModelEvents } from '../../src/events/ArcModelEvents.js';
 import { UrlIndexer } from '../../index.js';
 
-/** @typedef {import('../../src/UrlIndexer').UrlIndexer} UrlIndexer */
-
 describe('UrlIndexer', () => {
   /**
    * @return {Promise<UrlIndexer>}

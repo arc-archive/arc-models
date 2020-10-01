@@ -24,7 +24,7 @@ import { ArcModelEvents } from './events/ArcModelEvents.js';
 /** @typedef {import('./UrlIndexer').IndexQueryResult} IndexQueryResult */
 /** @typedef {import('./events/RequestEvents').ARCRequestUpdatedEvent} ARCRequestUpdatedEvent */
 /** @typedef {import('./events/RequestEvents').ARCRequestDeletedEvent} ARCRequestDeletedEvent */
-/** @typedef {import('./events/BaseEvents').ARCModelDeleteEvent} ARCModelDeleteEvent */
+/** @typedef {import('./events/BaseEvents').ARCModelStateDeleteEvent} ARCModelStateDeleteEvent */
 /** @typedef {import('./events/UrlIndexerEvents').ARCUrlIndexUpdateEvent} ARCUrlIndexUpdateEvent */
 /** @typedef {import('./events/UrlIndexerEvents').ARCUrlIndexQueryEvent} ARCUrlIndexQueryEvent */
 
@@ -121,7 +121,7 @@ export class UrlIndexer extends HTMLElement {
     window.addEventListener(ArcModelEventTypes.UrlIndexer.query, this[indexQueryHandler]);
     window.addEventListener(ArcModelEventTypes.Request.State.update, this[requestChangeHandler]);
     window.addEventListener(ArcModelEventTypes.Request.State.delete, this[requestDeleteHandler]);
-    window.addEventListener(ArcModelEventTypes.destroy, this[deletemodelHandler]);
+    window.addEventListener(ArcModelEventTypes.destroyed, this[deletemodelHandler]);
   }
 
   disconnectedCallback() {
@@ -129,7 +129,7 @@ export class UrlIndexer extends HTMLElement {
     window.removeEventListener(ArcModelEventTypes.UrlIndexer.query, this[indexQueryHandler]);
     window.removeEventListener(ArcModelEventTypes.Request.State.update, this[requestChangeHandler]);
     window.removeEventListener(ArcModelEventTypes.Request.State.delete, this[requestDeleteHandler]);
-    window.removeEventListener(ArcModelEventTypes.destroy, this[deletemodelHandler]);
+    window.removeEventListener(ArcModelEventTypes.destroyed, this[deletemodelHandler]);
   }
 
   /**
@@ -271,36 +271,28 @@ export class UrlIndexer extends HTMLElement {
 
   /**
    * Handler for a event that destroys the application data.
-   * @param {ARCModelDeleteEvent} e
+   * @param {ARCModelStateDeleteEvent} e
    */
   async [deletemodelHandler](e) {
-    const { stores } = e;
-    return this[deleteStores](stores);
+    const { store } = e;
+    return this[deleteStores](store);
   }
 
   /**
    * Removes indexed data from select stores.
    *
-   * @param {string[]} store A stores that being destroyed in the app.
+   * @param {string} store A stores that has been destroyed in the app.
    * @return {Promise<void>}
    */
   async [deleteStores](store) {
-    const promises = [];
-    if (store.indexOf('saved-requests') !== -1 || store.indexOf('saved') !== -1) {
-      promises[promises.length] = this.deleteIndexedType('saved');
+    const ps = [];
+    if (['saved-requests', 'saved', 'all'].includes(store)) {
+      ps[ps.length] = this.deleteIndexedType('saved');
     }
-    if (store.indexOf('history-requests') !== -1 || store.indexOf('history') !== -1) {
-      promises[promises.length] = this.deleteIndexedType('history');
+    if (['history-requests', 'history', 'all'].includes(store)) {
+      ps[ps.length] = this.deleteIndexedType('history');
     }
-    if (store.indexOf('all') !== -1 || store.indexOf('all') !== -1) {
-      promises[promises.length] = this.clearIndexedData();
-    }
-
-    try {
-      await Promise.all(promises);
-    } catch (_) {
-      // ...
-    }
+    return Promise.all(ps);
   }
 
   //

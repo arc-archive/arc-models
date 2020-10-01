@@ -1,7 +1,7 @@
 {
   "name": "@advanced-rest-client/arc-models",
   "description": "Event based access to ARC datastores",
-  "version": "4.1.11",
+  "version": "4.1.12",
   "license": "Apache-2.0",
   "main": "index.js",
   "module": "index.js",
@@ -36,7 +36,7 @@
   },
   "devDependencies": {
     "@advanced-rest-client/arc-data-generator": "^3.1.9",
-    "@advanced-rest-client/arc-demo-helper": "^2.1.4",
+    "@advanced-rest-client/arc-demo-helper": "^2.2.0",
     "@advanced-rest-client/arc-types": "^0.1.8",
     "@advanced-rest-client/testing-karma-sl": "^1.4.2",
     "@anypoint-web-components/anypoint-button": "^1.1.1",
@@ -56,7 +56,7 @@
     "husky": "^4.3.0",
     "lint-staged": "^10.4.0",
     "prettier": "^2.1.2",
-    "sinon": "^9.0.3",
+    "sinon": "^9.1.0",
     "typescript": "^4.0.3",
     "typescript-lit-html-plugin": "^0.9.0"
   },
