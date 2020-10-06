@@ -956,3 +956,32 @@
 * minor fixes [136c7e3](https://github.com/advanced-rest-client/arc-models/commit/136c7e35eed21338b537aa1f6681e79c28155f0d) by Pawel
 
 
+<a name="4.2.0"></a>
+## [4.2.0](https://github.com/advanced-rest-client/arc-models/compare/4.1.7...4.2.0) (2020-10-06)
+
+### Update
+
+* [ci skip] automated merge master->stage. syncing main branches [25df632](https://github.com/advanced-rest-client/arc-models/commit/25df6320f6fd7418b3426518fd646f5cf9e14d22) by Ci agent
+* [ci skip] automated merge master->stage. syncing main branches [f4bdb6b](https://github.com/advanced-rest-client/arc-models/commit/f4bdb6b71ff77a641a0b26f495557e345bf8ec79) by Ci agent
+* adding missing types export [bb2ae5a](https://github.com/advanced-rest-client/arc-models/commit/bb2ae5ad37feebad216a363eb04c49567e7716d6) by Pawel
+* [ci skip] automated merge master->stage. syncing main branches [ef8101f](https://github.com/advanced-rest-client/arc-models/commit/ef8101fd767e4a7a35c14fc1975f4349bf2a65c2) by Ci agent
+* [ci skip] automated merge master->stage. syncing main branches [be4f7b3](https://github.com/advanced-rest-client/arc-models/commit/be4f7b32bdbdfef88336800782d743dbc19b0598) by Ci agent
+
+
+### Features
+
+* cleaning requests when removing project [a270429](https://github.com/advanced-rest-client/arc-models/commit/a2704294c36d5f3aa1f1658b9e3ca9b9f8463257) by Pawel
+* making project id optional when adding a project [d804131](https://github.com/advanced-rest-client/arc-models/commit/d8041313e784a8bc899b6db677f3761c53197e8c) by Pawel
+
+
+### Bug Fixes
+
+* fixing url indexer destory event handling [41b8393](https://github.com/advanced-rest-client/arc-models/commit/41b83930de701756ef0034eca327df1eb679a601) by Pawel Psztyc
+* minor fixes [136c7e3](https://github.com/advanced-rest-client/arc-models/commit/136c7e35eed21338b537aa1f6681e79c28155f0d) by Pawel
+
+
+### Refactor
+
+* moving types to arc-types [acd8d7a](https://github.com/advanced-rest-client/arc-models/commit/acd8d7ae53396323194074ecc594bf3a190a2e36) by Pawel
+
+
