@@ -16,12 +16,12 @@ import { normalizeRequestType } from './Utils.js';
 import { ArcModelEventTypes } from './events/ArcModelEventTypes.js';
 import { ArcModelEvents } from './events/ArcModelEvents.js';
 
-/** @typedef {import('./UrlIndexer').IndexableRequest} IndexableRequest */
+/** @typedef {import('@advanced-rest-client/arc-types').Indexer.IndexableRequest} IndexableRequest */
 /** @typedef {import('./UrlIndexer').IndexableRequestInternal} IndexableRequestInternal */
 /** @typedef {import('./UrlIndexer').IndexableRequestMap} IndexableRequestMap */
 /** @typedef {import('./UrlIndexer').ProcessedQueryResults} ProcessedQueryResults */
-/** @typedef {import('./UrlIndexer').IndexQueryOptions} IndexQueryOptions */
-/** @typedef {import('./UrlIndexer').IndexQueryResult} IndexQueryResult */
+/** @typedef {import('@advanced-rest-client/arc-types').Indexer.IndexQueryOptions} IndexQueryOptions */
+/** @typedef {import('@advanced-rest-client/arc-types').Indexer.IndexQueryResult} IndexQueryResult */
 /** @typedef {import('./events/RequestEvents').ARCRequestUpdatedEvent} ARCRequestUpdatedEvent */
 /** @typedef {import('./events/RequestEvents').ARCRequestDeletedEvent} ARCRequestDeletedEvent */
 /** @typedef {import('./events/BaseEvents').ARCModelStateDeleteEvent} ARCModelStateDeleteEvent */
@@ -292,7 +292,7 @@ export class UrlIndexer extends HTMLElement {
     if (['history-requests', 'history', 'all'].includes(store)) {
       ps[ps.length] = this.deleteIndexedType('history');
     }
-    return Promise.all(ps);
+    await Promise.all(ps);
   }
 
   //

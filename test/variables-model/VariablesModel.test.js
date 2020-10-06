@@ -6,8 +6,8 @@ import '../../variables-model.js';
 import { ArcModelEventTypes } from '../../src/events/ArcModelEventTypes.js';
 
 /** @typedef {import('../../src/VariablesModel').VariablesModel} VariablesModel */
-/** @typedef {import('../../src/VariablesModel').ARCEnvironment} ARCEnvironment */
-/** @typedef {import('../../src/VariablesModel').ARCVariable} ARCVariable */
+/** @typedef {import('@advanced-rest-client/arc-types').Variable.ARCVariable} ARCVariable */
+/** @typedef {import('@advanced-rest-client/arc-types').Variable.ARCEnvironment} ARCEnvironment */
 
 describe('VariablesModel', () => {
   const generator = new DataGenerator();
@@ -274,7 +274,7 @@ describe('VariablesModel', () => {
         assert.isTrue(thrown);
       });
 
-      it('removes envrionemt variables', async () => {
+      it('removes environment variables', async () => {
         const variable = /** @type ARCVariable */ (generator.generateVariableObject());
         variable.environment = created.name;
         const response1 = await element.variableDb.post(variable);
@@ -406,7 +406,7 @@ describe('VariablesModel', () => {
         const record = await element.updateVariable(entity);
         const result = await element.variableDb.get(record.id);
         assert.typeOf(result, 'object');
-        assert.equal(result.variable, entity.variable);
+        assert.equal(result.name, entity.variable);
         assert.equal(result.value, entity.value);
         assert.equal(result.environment, entity.environment);
       });
@@ -448,6 +448,7 @@ describe('VariablesModel', () => {
       let created = /** @type ARCVariable[] */ (null);
       beforeEach(async () => {
         element = await basicFixture();
+        // @ts-ignore
         created = await generator.insertVariablesData({
           size: 1,
         });
@@ -496,6 +497,7 @@ describe('VariablesModel', () => {
       let element = /** @type VariablesModel */ (null);
       let created = /** @type ARCVariable[] */ (null);
       beforeEach(async () => {
+        // @ts-ignore
         created = await generator.insertVariablesData({
           size: 32,
         });
@@ -505,7 +507,7 @@ describe('VariablesModel', () => {
         await element.updateVariable(entity);
         await element.updateVariable({
           environment: '',
-          variable: 'x',
+          name: 'x',
           value: 'y',
           enabled: true,
         });
@@ -540,6 +542,7 @@ describe('VariablesModel', () => {
       let element = /** @type VariablesModel */ (null);
       let created = /** @type ARCVariable[] */ (null);
       beforeEach(async () => {
+        // @ts-ignore
         created = await generator.insertVariablesData({
           size: 32,
         });

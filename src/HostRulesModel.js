@@ -20,7 +20,7 @@ import { ArcModelEvents } from './events/ArcModelEvents.js';
 /* eslint-disable no-continue */
 /* eslint-disable no-param-reassign */
 
-/** @typedef {import('./HostRulesModel').ARCHostRule} ARCHostRule */
+/** @typedef {import('@advanced-rest-client/arc-types').HostRule.ARCHostRule} ARCHostRule */
 /** @typedef {import('./types').ARCEntityChangeRecord} ARCEntityChangeRecord */
 /** @typedef {import('./types').DeletedEntity} DeletedEntity */
 /** @typedef {import('./types').ARCModelListResult} ARCModelListResult */

@@ -1,6 +1,6 @@
-import { UrlParser } from '@advanced-rest-client/url-parser';
+import { UrlParser } from '@advanced-rest-client/arc-url';
 
-/** @typedef {import('./ApiTypes').ApiType} ApiType */
+/** @typedef {import('@advanced-rest-client/arc-types').ApiTypes.ApiType} ApiType */
 /** @typedef {import('./ApiHttpUrl').ApiHttpUrl} ApiHttpUrlInput */
 
 export class ApiHttpUrl {

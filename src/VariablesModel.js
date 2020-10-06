@@ -20,8 +20,8 @@ import { ArcModelEvents } from './events/ArcModelEvents.js';
 /* eslint-disable no-plusplus */
 /* eslint-disable no-continue */
 
-/** @typedef {import('./VariablesModel').ARCEnvironment} ARCEnvironment */
-/** @typedef {import('./VariablesModel').ARCVariable} ARCVariable */
+/** @typedef {import('@advanced-rest-client/arc-types').Variable.ARCEnvironment} ARCEnvironment */
+/** @typedef {import('@advanced-rest-client/arc-types').Variable.ARCVariable} ARCVariable */
 /** @typedef {import('./types').ARCEntityChangeRecord} ARCEntityChangeRecord */
 /** @typedef {import('./types').DeletedEntity} DeletedEntity */
 /** @typedef {import('./types').ARCModelListResult} ARCModelListResult */
@@ -299,6 +299,9 @@ export class VariablesModel extends ArcBaseModel {
         return;
       }
       if (doc.environment.toLowerCase() === q) {
+        if (!doc.name) {
+          doc.name = doc.variable;
+        }
         items.push(doc);
       }
     });
@@ -342,6 +345,9 @@ export class VariablesModel extends ArcBaseModel {
       }
       const { doc } = item;
       if (String(doc.environment).toLowerCase() === q) {
+        if (!doc.name) {
+          doc.name = doc.variable;
+        }
         items.push(doc);
         lastKey = item.key;
       }
@@ -366,11 +372,15 @@ export class VariablesModel extends ArcBaseModel {
    * @return {Promise<ARCEntityChangeRecord>} Promise resolved to the variable change record
    */
   async updateVariable(data) {
-    if (!data.variable) {
-      const m = "Can't create a variable without the variable property";
+    const entity = { ...data };
+    if (!entity.name) {
+      entity.name = entity.variable;
+    }
+    delete entity.variable;
+    if (!entity.name) {
+      const m = "Can't create a variable without the \"name\" property";
       throw new Error(m);
     }
-    const entity = { ...data };
     const db = this.variableDb;
     let oldRev;
     if (entity._id) {

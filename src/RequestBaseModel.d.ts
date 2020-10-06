@@ -1,5 +1,5 @@
 import { ArcBaseModel } from './ArcBaseModel';
-import { ARCProject, ARCHistoryRequest, ARCSavedRequest } from './RequestTypes';
+import { Project, ArcRequest } from '@advanced-rest-client/arc-types';
 import { ARCEntityChangeRecord, DeletedEntity } from './types';
 
 /**
@@ -33,7 +33,7 @@ export declare class RequestBaseModel extends ArcBaseModel {
    * revision.
    * @returns Promise resolved to a datastore object.
    */
-  readProject(id: string, rev?: string): Promise<ARCProject>;
+  readProject(id: string, rev?: string): Promise<Project.ARCProject>;
 
   /**
    * Updates / saves a project object in the datastore.
@@ -42,7 +42,7 @@ export declare class RequestBaseModel extends ArcBaseModel {
    * @param project A project to save / update
    * @returns Resolved promise to project object with updated `_rev`
    */
-  updateProject(project: ARCProject): Promise<ARCEntityChangeRecord<ARCProject>>;
+  updateProject(project: Project.ARCProject): Promise<ARCEntityChangeRecord<Project.ARCProject>>;
 
   /**
    * Removes a project entity from the data store.
@@ -65,7 +65,7 @@ export declare class RequestBaseModel extends ArcBaseModel {
   /**
    * Transforms a history request to a saved request object
    */
-  historyToSaved(history: ARCHistoryRequest): ARCSavedRequest;
+  historyToSaved(history: ArcRequest.ARCHistoryRequest): ArcRequest.ARCSavedRequest;
 
   /**
    * Normalizes the request to a common request object and updates time values (updated, midnight)
@@ -73,7 +73,7 @@ export declare class RequestBaseModel extends ArcBaseModel {
    * @param setMidnight Whether the `midnight` property should be set.
    * @returns Updated request
    */
-  normalizeRequestWithTime<T extends ARCHistoryRequest|ARCSavedRequest>(request: T, setMidnight?: boolean): T;
+  normalizeRequestWithTime<T extends ArcRequest.ARCHistoryRequest|ArcRequest.ARCSavedRequest>(request: T, setMidnight?: boolean): T;
 
   /**
    * Removes the request from all projects it is added to.
@@ -81,5 +81,5 @@ export declare class RequestBaseModel extends ArcBaseModel {
    * @param request The request to process 
    * @returns Change record for each changed project.
    */
-  removeFromProjects(request: ARCSavedRequest): Promise<ARCEntityChangeRecord<ARCProject>[]>
+  removeFromProjects(request: ArcRequest.ARCSavedRequest): Promise<ARCEntityChangeRecord<Project.ARCProject>[]>
 }

@@ -1,6 +1,6 @@
+import { Project } from '@advanced-rest-client/arc-types';
 import { ARCProjectDeleteEvent, ARCProjectListAllEvent, ARCProjectListEvent, ARCProjectMoveEvent, ARCProjectReadEvent, ARCProjectUpdateBulkEvent, ARCProjectUpdateEvent } from './events/ProjectEvents.js';
 import { RequestBaseModel } from './RequestBaseModel.js';
-import { ARCProject } from './RequestTypes';
 import { ARCEntityChangeRecord, ARCModelListResult, ARCModelListOptions } from './types';
 
 export declare const readHandler: unique symbol;
@@ -28,7 +28,7 @@ export declare class ProjectModel extends RequestBaseModel {
    * @param opts Query options.
    * @returns A promise resolved to a list of projects.
    */
-  list(opts?: ARCModelListOptions): Promise<ARCModelListResult<ARCProject>>;
+  list(opts?: ARCModelListOptions): Promise<ARCModelListResult<Project.ARCProject>>;
 
   /**
    * Lists all project entities.
@@ -36,14 +36,14 @@ export declare class ProjectModel extends RequestBaseModel {
    * @param keys Project keys to read. When not set it reads all projects
    * @returns A promise resolved to a list of projects.
    */
-  listAll(keys?: string[]): Promise<ARCProject[]>;
+  listAll(keys?: string[]): Promise<Project.ARCProject[]>;
 
   /**
    * Updates project object taking care of `_rew` value read if missing.
    *
    * @param project Project object to update.
    */
-  post(project: ARCProject): Promise<ARCEntityChangeRecord<ARCProject>>;
+  post(project: Project.ARCProject): Promise<ARCEntityChangeRecord<Project.ARCProject>>;
 
   /**
    * Link to `#readProject()` for API consistency
@@ -52,7 +52,7 @@ export declare class ProjectModel extends RequestBaseModel {
    * @param rev Specific revision to read. Defaults to the latest revision.
    * @returns Promise resolved to a datastore object.
    */
-  get(id: string, rev?: string): Promise<ARCProject>;
+  get(id: string, rev?: string): Promise<Project.ARCProject>;
 
   /**
    * Link to `#removeProject()` for API consistency
@@ -68,7 +68,7 @@ export declare class ProjectModel extends RequestBaseModel {
    *
    * @param projects List of requests to update.
    */
-  postBulk(projects: ARCProject[]): Promise<ARCEntityChangeRecord<ARCProject>[]>;
+  postBulk(projects: Project.ARCProject[]): Promise<ARCEntityChangeRecord<Project.ARCProject>[]>;
 
   /**
    * Adds a request to a project.
@@ -120,7 +120,7 @@ export declare class ProjectModel extends RequestBaseModel {
    *
    * @param projects List of projects.
    */
-  [normalizeProjects](projects: ARCProject[]): ARCProject[];
+  [normalizeProjects](projects: Project.ARCProject[]): Project.ARCProject[];
 
   /**
    * Processes datastore response after calling `updateBulk()` function.
@@ -128,7 +128,7 @@ export declare class ProjectModel extends RequestBaseModel {
    * @param responses PouchDB response
    * @returns List of projects with updated `_id` and `_rew`
    */
-  [processUpdateBulkResponse](projects: ARCProject[], responses: (PouchDB.Core.Response|PouchDB.Core.Error)[]): ARCEntityChangeRecord<ARCProject>[];
+  [processUpdateBulkResponse](projects: Project.ARCProject[], responses: (PouchDB.Core.Response|PouchDB.Core.Error)[]): ARCEntityChangeRecord<Project.ARCProject>[];
 
   /**
    * Removes a project from the data store.

@@ -1,5 +1,5 @@
 import {RequestBaseModel} from './RequestBaseModel';
-import {ARCSavedRequest, ARCHistoryRequest, SaveARCRequestOptions, ARCRequestRestoreOptions, ARCProject} from './RequestTypes';
+import { Project, ArcRequest } from '@advanced-rest-client/arc-types';
 import {DeletedEntity, ARCEntityChangeRecord, ARCModelListResult, ARCModelListOptions,} from './types';
 
 export declare const syncProjects: symbol;
@@ -11,7 +11,6 @@ export declare const deleteBulkHandler: symbol;
 export declare const undeleteBulkHandler: symbol;
 export declare const storeHandler: symbol;
 export declare const sortRequestProjectOrder: symbol;
-export declare const saveGoogleDrive: symbol;
 export declare const queryStore: symbol;
 
 /**
@@ -58,7 +57,7 @@ export declare class RequestModel extends RequestBaseModel {
    * @param opts Restoration options.
    * @returns Promise resolved to a request object.
    */
-  get(type: string, id: string, rev?: string, opts?: ARCRequestRestoreOptions): Promise<ARCHistoryRequest|ARCSavedRequest>|null;
+  get(type: string, id: string, rev?: string, opts?: ArcRequest.ARCRequestRestoreOptions): Promise<ArcRequest.ARCHistoryRequest|ArcRequest.ARCSavedRequest>|null;
 
   /**
    * The same as `get()` but for a list of requests.
@@ -68,7 +67,7 @@ export declare class RequestModel extends RequestBaseModel {
    * @param opts Additional options. Currently only `restorePayload`
    * is supported
    */
-  getBulk(type: string, keys: string[], opts?: ARCRequestRestoreOptions): Promise<(ARCHistoryRequest|ARCSavedRequest)[]>;
+  getBulk(type: string, keys: string[], opts?: ArcRequest.ARCRequestRestoreOptions): Promise<(ArcRequest.ARCHistoryRequest|ArcRequest.ARCSavedRequest)[]>;
 
   /**
    * Updates / saves the request object in the datastore.
@@ -81,7 +80,7 @@ export declare class RequestModel extends RequestBaseModel {
    * @param request An object to save / update
    * @returns A promise resolved to the change record
    */
-  post(type: string, request: ARCHistoryRequest|ARCSavedRequest): Promise<ARCEntityChangeRecord<ARCHistoryRequest|ARCSavedRequest>>;
+  post(type: string, request: ArcRequest.ARCHistoryRequest|ArcRequest.ARCSavedRequest): Promise<ARCEntityChangeRecord<ArcRequest.ARCHistoryRequest|ArcRequest.ARCSavedRequest>>;
 
   /**
    * Updates more than one request in a bulk.
@@ -90,7 +89,7 @@ export declare class RequestModel extends RequestBaseModel {
    * @param requests List of requests to update.
    * @returns List of PouchDB responses to each insert
    */
-  postBulk(type: string, requests: (ARCHistoryRequest|ARCSavedRequest)[]): Promise<ARCEntityChangeRecord<ARCHistoryRequest|ARCSavedRequest>[]>;
+  postBulk(type: string, requests: (ArcRequest.ARCHistoryRequest|ArcRequest.ARCSavedRequest)[]): Promise<ARCEntityChangeRecord<ArcRequest.ARCHistoryRequest|ArcRequest.ARCSavedRequest>[]>;
 
   /**
    * Removed an object from the datastore.
@@ -126,7 +125,7 @@ export declare class RequestModel extends RequestBaseModel {
    * @param requestIds List of requests to remove from project
    * @returns Promise resolved when the operation finishes.
    */
-  removeRequestsFromProject(project: ARCProject, requestIds: string[]): Promise<void>;
+  removeRequestsFromProject(project: Project.ARCProject, requestIds: string[]): Promise<void>;
 
   /**
    * Reverts deleted items.
@@ -139,29 +138,7 @@ export declare class RequestModel extends RequestBaseModel {
    * @returns Resolved promise with restored objects. Objects have
    * updated `_rev` property.
    */
-  revertRemove(type: string, items: DeletedEntity[]): Promise<ARCEntityChangeRecord<ARCHistoryRequest|ARCSavedRequest>[]>;
-
-  /**
-   * Stores a history object in the data store, taking care of `_rev`
-   * property read.
-   *
-   * @param request The request object to store
-   * @returns A promise resolved to the updated request object.
-   */
-  saveHistory(request: ARCHistoryRequest): Promise<ARCEntityChangeRecord<ARCHistoryRequest>>;
-
-  /**
-   * Saves a request into a data store.
-   * It handles payload to string conversion, handles types, and syncs request
-   * with projects. Use `update()` method only if you are storing already
-   * prepared request object to the store.
-   *
-   * @param request ArcRequest object
-   * @param opts Save request object. Currently only `isDrive`
-   * is supported
-   * @returns A promise resolved to updated request object.
-   */
-  saveRequest(request: ARCHistoryRequest|ARCSavedRequest, opts?: SaveARCRequestOptions): Promise<ARCEntityChangeRecord<ARCHistoryRequest|ARCSavedRequest>>;
+  revertRemove(type: string, items: DeletedEntity[]): Promise<ARCEntityChangeRecord<ArcRequest.ARCHistoryRequest|ArcRequest.ARCSavedRequest>[]>;
 
   /**
    * Performs a query for the request data.
@@ -173,7 +150,7 @@ export declare class RequestModel extends RequestBaseModel {
    * @param opts Query options.
    * @returns A promise resolved to a query result for requests.
    */
-  list(type: string, opts?: ARCModelListOptions): Promise<ARCModelListResult<ARCHistoryRequest|ARCSavedRequest>>;
+  list(type: string, opts?: ARCModelListOptions): Promise<ARCModelListResult<ArcRequest.ARCHistoryRequest|ArcRequest.ARCSavedRequest>>;
 
   /**
    * Saves requests with project data.
@@ -186,7 +163,7 @@ export declare class RequestModel extends RequestBaseModel {
    * is supported
    * @returns A promise resolved to updated request object
    */
-  saveRequestProject(request: ARCSavedRequest|ARCHistoryRequest, projects?: string[], options?: SaveARCRequestOptions): Promise<ARCEntityChangeRecord<ARCHistoryRequest|ARCSavedRequest>>;
+  saveRequestProject(request: ArcRequest.ARCSavedRequest|ArcRequest.ARCHistoryRequest, projects?: string[]): Promise<ARCEntityChangeRecord<ArcRequest.ARCHistoryRequest|ArcRequest.ARCSavedRequest>>;
 
   /**
    * Create projects from project names.
@@ -210,7 +187,7 @@ export declare class RequestModel extends RequestBaseModel {
    * search on the index. When false it only uses filer like query + '*'.
    * @returns Promise resolved to the list of requests.
    */
-  query(q: string, type?: string, detailed?: boolean): Promise<(ARCHistoryRequest|ARCSavedRequest)[]>;
+  query(q: string, type?: string, detailed?: boolean): Promise<(ArcRequest.ARCHistoryRequest|ArcRequest.ARCSavedRequest)[]>;
 
   /**
    * Performs a query on the URL index data.
@@ -222,7 +199,7 @@ export declare class RequestModel extends RequestBaseModel {
    * search on the index. When false it only uses filer like query + '*'.
    * @returns Promise resolved to the list of requests.
    */
-  queryUrlData(q: String|null, type: String|null, detailed: Boolean|null): Promise<Array<object|null>|null>;
+  queryUrlData(q: string, type: string, detailed: boolean): Promise<(ArcRequest.ARCHistoryRequest|ArcRequest.ARCSavedRequest)[]>;
 
   /**
    * Performs a query on the request and/or history data store.
@@ -235,7 +212,7 @@ export declare class RequestModel extends RequestBaseModel {
    * @param ignore List of IDs to ignore.
    * @returns Promise resolved to the list of requests.
    */
-  queryPouchDb(q: string, type?: string, ignore?: string[]): Promise<(ARCHistoryRequest|ARCSavedRequest)[]>;
+  queryPouchDb(q: string, type?: string, ignore?: string[]): Promise<(ArcRequest.ARCHistoryRequest|ArcRequest.ARCSavedRequest)[]>;
 
   /**
    * Queries history store using PouchDB quick search plugin (full text search).
@@ -244,7 +221,7 @@ export declare class RequestModel extends RequestBaseModel {
    * @param ignore List of IDs to ignore.
    * @returns Promise resolved to the list of requests.
    */
-  queryHistory(q: string, ignore?: string[]): Promise<(ARCHistoryRequest|ARCSavedRequest)[]>;
+  queryHistory(q: string, ignore?: string[]): Promise<(ArcRequest.ARCHistoryRequest|ArcRequest.ARCSavedRequest)[]>;
 
   /**
    * Queries Saved store using PouchDB quick search plugin (full text search).
@@ -253,7 +230,7 @@ export declare class RequestModel extends RequestBaseModel {
    * @param ignore List of IDs to ignore.
    * @returns Promise resolved to the list of requests.
    */
-  querySaved(q: string, ignore?: string[]): Promise<(ARCHistoryRequest|ARCSavedRequest)[]>;
+  querySaved(q: string, ignore?: string[]): Promise<(ArcRequest.ARCHistoryRequest|ArcRequest.ARCSavedRequest)[]>;
 
   /**
    * Performs data indexing using PouchDB api.
@@ -278,14 +255,14 @@ export declare class RequestModel extends RequestBaseModel {
    * @param opts Additional options. Currently only `restorePayload`
    * is supported
    */
-  readProjectRequests(id: string, opts?: ARCRequestRestoreOptions): Promise<(ARCHistoryRequest|ARCSavedRequest)[]>;
+  readProjectRequests(id: string, opts?: ArcRequest.ARCRequestRestoreOptions): Promise<(ArcRequest.ARCHistoryRequest|ArcRequest.ARCSavedRequest)[]>;
 
   /**
    * Reads requests data related to the project from a legacy system.
    *
    * @param id Project id
    */
-  readProjectRequestsLegacy(id: string): Promise<(ARCHistoryRequest|ARCSavedRequest)[]>;
+  readProjectRequestsLegacy(id: string): Promise<(ArcRequest.ARCHistoryRequest|ArcRequest.ARCSavedRequest)[]>;
 
   /**
    * Adds event listeners.

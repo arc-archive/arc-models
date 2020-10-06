@@ -7,11 +7,11 @@ import '../../request-model.js';
 import { ArcModelEventTypes } from '../../src/events/ArcModelEventTypes.js';
 import { ArcModelEvents } from '../../src/events/ArcModelEvents.js';
 
-/** @typedef {import('../../src/ProjectModel').ProjectModel} ProjectModel */
+/** @typedef {import('../../index').ProjectModel} ProjectModel */
 /** @typedef {import('../../index').RequestModel} RequestModel */
-/** @typedef {import('../../src/RequestTypes').ARCProject} ARCProject */
-/** @typedef {import('../../src/RequestTypes').ARCSavedRequest} ARCSavedRequest */
-/** @typedef {import('../../src/RequestTypes').ARCHistoryRequest} ARCHistoryRequest */
+/** @typedef {import('@advanced-rest-client/arc-types').Project.ARCProject} ARCProject */
+/** @typedef {import('@advanced-rest-client/arc-types').ArcRequest.ARCSavedRequest} ARCSavedRequest */
+/** @typedef {import('@advanced-rest-client/arc-types').ArcRequest.ARCHistoryRequest} ARCHistoryRequest */
 /** @typedef {import('../../src/types').ARCEntityChangeRecord} ARCEntityChangeRecord */
 
 describe('ProjectModel', () => {

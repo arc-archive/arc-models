@@ -8,7 +8,7 @@ import {
 } from '../../src/events/UrlHistoryEvents.js';
 import { ArcModelEventTypes } from '../../src/events/ArcModelEventTypes.js';
 
-/** @typedef {import('../../src/UrlHistoryModel').ARCUrlHistory} ARCUrlHistory */
+/** @typedef {import('@advanced-rest-client/arc-types').UrlHistory.ARCUrlHistory} ARCUrlHistory */
 
 describe('UrlHistoryEvents', () => {
   const generator = new DataGenerator();

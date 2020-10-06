@@ -7,7 +7,7 @@ import { ArcModelEventTypes } from '../../src/events/ArcModelEventTypes.js';
 import { ArcModelEvents } from '../../src/events/ArcModelEvents.js';
 
 /** @typedef {import('../../src/ClientCertificateModel').ClientCertificateModel} ClientCertificateModel */
-/** @typedef {import('../../src/ClientCertificateModel').ARCCertificate} ARCCertificate */
+/** @typedef {import('@advanced-rest-client/arc-types').ClientCertificate.Certificate} Certificate */
 
 describe('<client-certificate-model> events based', () => {
   const generator = new DataGenerator();
@@ -121,6 +121,7 @@ describe('<client-certificate-model> events based', () => {
 
       let element = /** @type ClientCertificateModel */ (null);
       beforeEach(async () => {
+        // eslint-disable-next-line no-unused-vars
         element = await basicFixture();
       });
 
@@ -131,7 +132,7 @@ describe('<client-certificate-model> events based', () => {
 
       it('has the certificate', async () => {
         const doc = await ArcModelEvents.ClientCertificate.read(document.body, id);
-        const certificate = /** @type ARCCertificate */ (doc.cert);
+        const certificate = /** @type Certificate */ (doc.cert);
         assert.typeOf(certificate, 'object', 'certificate is set');
         assert.typeOf(certificate.data, 'string', 'certificate data is set');
         assert.typeOf(certificate.passphrase, 'string', 'passphrase is set');
@@ -139,7 +140,7 @@ describe('<client-certificate-model> events based', () => {
 
       it('has the key', async () => {
         const doc = await ArcModelEvents.ClientCertificate.read(document.body, id);
-        const info = /** @type ARCCertificate */ (doc.key);
+        const info = /** @type Certificate */ (doc.key);
         assert.typeOf(info, 'object', 'certificate is set');
         assert.typeOf(info.data, 'string', 'certificate data is set');
         assert.typeOf(info.passphrase, 'string', 'passphrase is set');
@@ -154,16 +155,6 @@ describe('<client-certificate-model> events based', () => {
           err = e;
         }
         assert.equal(err.message, 'The "id" argument is missing');
-      });
-
-      it('returns a document for a specific revision', async () => {
-        const doc = await element.db.get(id);
-        doc.name = 'updated-name';
-        const response = await element.db.put(doc);
-        const result = await ArcModelEvents.ClientCertificate.read(document.body, id, doc._rev);
-        assert.typeOf(result, 'object', 'returns an object');
-        assert.notEqual(result.name, 'updated-name', 'has previous version');
-        assert.notEqual(result._rev, response.rev, 'has previous revision');
       });
 
       it('ignores the event when cancelled', async () => {
@@ -201,7 +192,7 @@ describe('<client-certificate-model> events based', () => {
 
       it('has the certificate', async () => {
         const doc = await ArcModelEvents.ClientCertificate.read(document.body, id);
-        const info = /** @type ARCCertificate */ (doc.cert);
+        const info = /** @type Certificate */ (doc.cert);
         assert.typeOf(info, 'object', 'certificate is set');
         assert.typeOf(info.data, 'Uint8Array', 'certificate data is set');
         assert.typeOf(info.passphrase, 'string', 'passphrase is set');
@@ -209,7 +200,7 @@ describe('<client-certificate-model> events based', () => {
 
       it('has the key', async () => {
         const doc = await ArcModelEvents.ClientCertificate.read(document.body, id);
-        const info = /** @type ARCCertificate */ (doc.key);
+        const info = /** @type Certificate */ (doc.key);
         assert.typeOf(info, 'object', 'certificate is set');
         assert.typeOf(info.data, 'Uint8Array', 'certificate data is set');
         assert.typeOf(info.passphrase, 'string', 'passphrase is set');
@@ -327,7 +318,7 @@ describe('<client-certificate-model> events based', () => {
       });
       const record = await ArcModelEvents.ClientCertificate.insert(document.body, item);
       const doc = await element.get(record.id);
-      const info = /** @type ARCCertificate */ (doc.cert);
+      const info = /** @type Certificate */ (doc.cert);
       assert.typeOf(info, 'object', 'certificate is set');
       assert.typeOf(info.data, 'Uint8Array', 'certificate data is set');
       assert.typeOf(info.passphrase, 'string', 'passphrase is set');

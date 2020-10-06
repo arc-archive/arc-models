@@ -46,7 +46,7 @@ export class PostmanEnvTransformer extends PostmanTransformer {
         kind: 'ARC#VariableData',
         environment: envName,
         enabled: !!item.enabled,
-        variable: item.key,
+        name: item.key,
         value: this.ensureVariablesSyntax(item.value),
         key: undefined,
       };
@@ -62,7 +62,7 @@ export class PostmanEnvTransformer extends PostmanTransformer {
    */
   genId(item) {
     const env = encodeURIComponent(item.environment);
-    const eVar = encodeURIComponent(item.variable);
+    const eVar = encodeURIComponent(item.name);
     return `postman-var-${env}-${eVar}`;
   }
 }

@@ -1,72 +1,11 @@
+import { ClientCertificate } from '@advanced-rest-client/arc-types';
 import { ArcBaseModel } from './ArcBaseModel';
 import {
-  Entity,
   ARCModelListOptions,
   ARCModelListResult,
   ARCEntityChangeRecord,
   DeletedEntity,
 } from './types';
-
-export declare interface ARCCertificate {
-  /**
-   * The certificate to use.
-   * The `p12` type certificate must be a Buffer.
-   * The model's `get()` method always returns original data type.
-   */
-  data: string|ArrayBuffer|Buffer|Uint8Array;
-  /**
-   * A passphrase to use to unlock the certificate.
-   */
-  passphrase?: string;
-  /**
-   * The original data type of the certificate.
-   */
-  type?: string;
-}
-
-export declare interface ARCClientCertificate extends Entity {
-  /**
-   * Certificate type. Either `p12` or `pem`.
-   */
-  type: string;
-  /**
-   * Certificate or list of certificates to use.
-   */
-  cert: ARCCertificate|ARCCertificate[];
-  /**
-   * Key for the `pem` type certificate.
-   */
-  key?: ARCCertificate|ARCCertificate[];
-  /**
-   * Custom name of the certificate.
-   */
-  name?: string;
-  /**
-   * Timestamp when the certificate was inserted into the data store.
-   * Required when returning a result. Auto-generated when inserting.
-   */
-  created?: number;
-  /**
-   * Model's internal key. Not exposed through the API.
-   */
-  dataKey?: string;
-}
-
-export declare interface ARCCertificateIndex extends Entity {
-  /**
-   * Certificate type. Either `p12` or `pem`.
-   */
-  type: string;
-  /**
-   * Custom name of the certificate.
-   */
-  name: string;
-  /**
-   * Timestamp when the certificate was inserted into the data store.
-   * Required when returning a result. Auto-generated when inserting.
-   */
-  created: number;
-}
 
 /**
  * Events based access to client-certificates data store.
@@ -118,17 +57,16 @@ export declare class ClientCertificateModel extends ArcBaseModel {
    * @param opts Query options.
    * @returns A promise resolved to a list of projects.
    */
-  list(opts?: ARCModelListOptions): Promise<ARCModelListResult<ARCCertificateIndex>>;
+  list(opts?: ARCModelListOptions): Promise<ARCModelListResult<ClientCertificate.ARCCertificateIndex>>;
 
   /**
    * Reads client certificate full structure.
    * Returns certificate's meta data + cert + key.
    *
    * @param id Certificate's datastore id.
-   * @param rev Specific revision to read. Defaults to the latest revision.
    * @returns Promise resolved to a certificate object.
    */
-  get(id: string, rev?: string): Promise<ARCClientCertificate>;
+  get(id: string): Promise<ClientCertificate.ClientCertificate>;
 
   /**
    * Safely deletes certificate data from the data store.
@@ -152,7 +90,7 @@ export declare class ClientCertificateModel extends ArcBaseModel {
    * id. Because this API operates on a single ID without reviews this won't
    * return the final object.
    */
-  insert(data: ARCClientCertificate): Promise<ARCEntityChangeRecord<ARCClientCertificate>>;
+  insert(data: ClientCertificate.ClientCertificate): Promise<ARCEntityChangeRecord<ClientCertificate.ARCClientCertificate>>;
 
   /**
    * Prepares certificate object to be stored in the data store.
@@ -167,7 +105,7 @@ export declare class ClientCertificateModel extends ArcBaseModel {
    *
    * @param cert Certificate definition. See class description.
    */
-  certificateToStore(cert: ARCCertificate|ARCCertificate[]): ARCCertificate|ARCCertificate[];
+  certificateToStore(cert: ClientCertificate.Certificate|ClientCertificate.Certificate[]): ClientCertificate.Certificate|ClientCertificate.Certificate[];
 
   /**
    * Restores certificate object to it's original values after reading it from
@@ -175,7 +113,7 @@ export declare class ClientCertificateModel extends ArcBaseModel {
    *
    * @param cert Restored certificate definition.
    */
-  certificateFromStore(cert: ARCCertificate|ARCCertificate[]): ARCCertificate|ARCCertificate[];
+  certificateFromStore(cert: ClientCertificate.Certificate|ClientCertificate.Certificate[]): ClientCertificate.Certificate|ClientCertificate.Certificate[];
 
   /**
    * Converts incoming data to base64 string.

@@ -1,4 +1,4 @@
-/* eslint-disable max-classes-per-file */
+import { HostRule } from '@advanced-rest-client/arc-types';
 import {
   ARCEntityDeletedEvent,
   ARCEntityListEvent,
@@ -12,38 +12,35 @@ import {
   ARCModelListResult,
   DeletedEntity,
 } from '../types';
-import {
-  ARCHostRule,
-} from '../HostRulesModel';
 
 /**
  * An event dispatched to the store to update a host rule entity.
  */
-export declare class ARCHostRuleUpdateEvent extends CustomEvent<ARCModelUpdateEventDetail<ARCHostRule>> {
+export declare class ARCHostRuleUpdateEvent extends CustomEvent<ARCModelUpdateEventDetail<HostRule.ARCHostRule>> {
   /**
    * The rule object to save / update
    */
-  readonly rule: ARCHostRule;
+  readonly rule: HostRule.ARCHostRule;
 
   /**
    * @param rule The rule object to save / update
    */
-  constructor(rule: ARCHostRule);
+  constructor(rule: HostRule.ARCHostRule);
 }
 
 /**
  * An event dispatched to the store to update a host rule entities in a bulk operation
  */
-export declare class ARCHostRuleUpdateBulkEvent extends CustomEvent<ARCModelUpdateBulkEventDetail<ARCHostRule>> {
+export declare class ARCHostRuleUpdateBulkEvent extends CustomEvent<ARCModelUpdateBulkEventDetail<HostRule.ARCHostRule>> {
   /**
-   * @return {ARCHostRule[]} The rule object to save / update
+   * @return The rule object to save / update
    */
-  readonly rules: ARCHostRule[];
+  readonly rules: HostRule.ARCHostRule[];
 
   /**
-   * @param {ARCHostRule[]} rules The rule object to save / update
+   * @param rules The rule object to save / update
    */
-  constructor(rules: ARCHostRule[]);
+  constructor(rules: HostRule.ARCHostRule[]);
 }
 
 /**
@@ -51,14 +48,14 @@ export declare class ARCHostRuleUpdateBulkEvent extends CustomEvent<ARCModelUpda
  */
 export declare class ARCHostRuleUpdatedEvent extends Event {
   /**
-   * @return {ARCEntityChangeRecord} Change record
+   * @return Change record
    */
-  readonly changeRecord: ARCEntityChangeRecord<ARCHostRule>;
+  readonly changeRecord: ARCEntityChangeRecord<HostRule.ARCHostRule>;
 
   /**
-   * @param {ARCEntityChangeRecord} record The rule change record
+   * @param record The rule change record
    */
-  constructor(record: ARCEntityChangeRecord<ARCHostRule>);
+  constructor(record: ARCEntityChangeRecord<HostRule.ARCHostRule>);
 }
 
 /**
@@ -66,18 +63,18 @@ export declare class ARCHostRuleUpdatedEvent extends Event {
  */
 export declare class ARCHostRuleDeleteEvent extends CustomEvent<ARCModelDeleteEventDetail> {
   /**
-   * @return {string} Rule id used to initialize the event
+   * @return Rule id used to initialize the event
    */
   readonly id: string;
 
   /**
-   * @return {string|undefined} A revision ID to delete
+   * @return A revision ID to delete
    */
   readonly rev: string;
 
   /**
-   * @param {string} id Request id
-   * @param {string=} rev A revision ID to delete
+   * @param id Request id
+   * @param rev A revision ID to delete
    */
   constructor(id: string, rev?: string);
 }
@@ -87,8 +84,8 @@ export declare class ARCHostRuleDeleteEvent extends CustomEvent<ARCModelDeleteEv
  */
 export declare class ARCHostRuleDeletedEvent extends ARCEntityDeletedEvent {
   /**
-   * @param {string} id Host rule id
-   * @param {string} rev An updated revision ID of the deleted object.
+   * @param id Host rule id
+   * @param rev An updated revision ID of the deleted object.
    */
   constructor(id: string, rev: string);
 }
@@ -96,9 +93,9 @@ export declare class ARCHostRuleDeletedEvent extends ARCEntityDeletedEvent {
 /**
  * An event dispatched by the UI when requesting a list of host rules
  */
-export declare class ARCHostRulesListEvent extends ARCEntityListEvent<ARCHostRule> {
+export declare class ARCHostRulesListEvent extends ARCEntityListEvent<HostRule.ARCHostRule> {
   /**
-   * @param {ARCModelListOptions=} opts Query options.
+   * @param opts Query options.
    */
   constructor(opts?: ARCModelListOptions);
 }
@@ -110,7 +107,7 @@ export declare class ARCHostRulesListEvent extends ARCEntityListEvent<ARCHostRul
  * @param rule The rule object to save / update
  * @returns Promise resolved to a the change record
  */
-export declare function updateAction(target: EventTarget, rule: ARCHostRule): Promise<ARCEntityChangeRecord<ARCHostRule>>;
+export declare function updateAction(target: EventTarget, rule: HostRule.ARCHostRule): Promise<ARCEntityChangeRecord<HostRule.ARCHostRule>>;
 
 /**
  * Dispatches an event handled by the data store to update host rule entities in bulk
@@ -119,15 +116,15 @@ export declare function updateAction(target: EventTarget, rule: ARCHostRule): Pr
  * @param rules The rules to save / update
  * @returns Promise resolved to a the list of a change record
  */
-export declare function updateActionBulk(target: EventTarget, rules: ARCHostRule[]): Promise<ARCEntityChangeRecord<ARCHostRule>[]>;
+export declare function updateActionBulk(target: EventTarget, rules: HostRule.ARCHostRule[]): Promise<ARCEntityChangeRecord<HostRule.ARCHostRule>[]>;
 
 /**
  * Dispatches an event informing about a change in the host rules model.
  *
- * @param {EventTarget} target A node on which to dispatch the event.
- * @param {ARCEntityChangeRecord} record Host rules change record.
+ * @param target A node on which to dispatch the event.
+ * @param record Host rules change record.
  */
-export declare function updatedState(target: EventTarget, record: ARCEntityChangeRecord<ARCHostRule>): void;
+export declare function updatedState(target: EventTarget, record: ARCEntityChangeRecord<HostRule.ARCHostRule>): void;
 
 /**
  * Dispatches an event handled by the data store to read a host rules data.
@@ -136,7 +133,7 @@ export declare function updatedState(target: EventTarget, record: ARCEntityChang
  * @param opts List options.
  * @returns Promise resolved to list of results
  */
-export declare function listAction(target: EventTarget, opts?: ARCModelListOptions): Promise<ARCModelListResult<ARCHostRule>>;
+export declare function listAction(target: EventTarget, opts?: ARCModelListOptions): Promise<ARCModelListResult<HostRule.ARCHostRule>>;
 
 /**
  * Dispatches an event handled by the data store to delete an ARC request from the store.

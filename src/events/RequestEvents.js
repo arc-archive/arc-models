@@ -5,10 +5,9 @@ import { ARCEntityDeletedEvent, ARCEntityListEvent } from './BaseEvents.js';
 /** @typedef {import('./RequestEvents').ARCRequestEventRequestOptions} ARCRequestEventRequestOptions */
 /** @typedef {import('../types').ARCEntityChangeRecord} ARCEntityChangeRecord */
 /** @typedef {import('../types').DeletedEntity} DeletedEntity */
-/** @typedef {import('../RequestTypes').ARCSavedRequest} ARCSavedRequest */
-/** @typedef {import('../RequestTypes').ARCHistoryRequest} ARCHistoryRequest */
-/** @typedef {import('../RequestTypes').SaveARCRequestOptions} SaveARCRequestOptions */
-/** @typedef {import('../RequestTypes').ARCRequestRestoreOptions} ARCRequestRestoreOptions */
+/** @typedef {import('@advanced-rest-client/arc-types').ArcRequest.ARCSavedRequest} ARCSavedRequest */
+/** @typedef {import('@advanced-rest-client/arc-types').ArcRequest.ARCHistoryRequest} ARCHistoryRequest */
+/** @typedef {import('@advanced-rest-client/arc-types').ArcRequest.ARCRequestRestoreOptions} ARCRequestRestoreOptions */
 /** @typedef {import('../types').ARCModelListOptions} ARCModelListOptions */
 /** @typedef {import('../types').ARCModelListResult} ARCModelListResult */
 
@@ -170,9 +169,8 @@ export class ARCRequestStoreEvent extends CustomEvent {
    * @param {ARCHistoryRequest|ARCSavedRequest} request An ARC request to update.
    * @param {string[]=} projects List of project names to create with this request
    * and attach it to the request object. Only relevant for `saved` type.
-   * @param {SaveARCRequestOptions=} opts Save request options.  Only relevant for `saved` type.
    */
-  constructor(requestType, request, projects, opts) {
+  constructor(requestType, request, projects) {
     if (!requestType) {
       throw new Error('The requestType is missing.');
     }
@@ -188,7 +186,6 @@ export class ARCRequestStoreEvent extends CustomEvent {
     this[requestValue] = request;
     this[typeValue] = requestType;
     this[projectsValue] = projects;
-    this[optionsValue] = opts;
   }
 
   /**
@@ -203,13 +200,6 @@ export class ARCRequestStoreEvent extends CustomEvent {
    */
   get requestType() {
     return this[typeValue];
-  }
-
-  /**
-   * @return {SaveARCRequestOptions|undefined} ARC request store options.
-   */
-  get opts() {
-    return this[optionsValue];
   }
 
   /**
@@ -639,11 +629,10 @@ export async function updateAction(target, requestType, request) {
  * @param {ARCHistoryRequest|ARCSavedRequest} request An ARC request to update.
  * @param {string[]=} projects List of project names to create with this request
  * and attach it to the request object. Only relevant for `saved` type.
- * @param {SaveARCRequestOptions=} opts Save request options.  Only relevant for `saved` type.
  * @return {Promise<ARCEntityChangeRecord>} Promise resolved to a change record
  */
-export async function storeAction(target, requestType, request, projects, opts) {
-  const e = new ARCRequestStoreEvent(requestType, request, projects, opts);
+export async function storeAction(target, requestType, request, projects) {
+  const e = new ARCRequestStoreEvent(requestType, request, projects);
   target.dispatchEvent(e);
   return e.detail.result;
 }

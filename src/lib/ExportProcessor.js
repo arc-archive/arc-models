@@ -14,14 +14,14 @@
 /** @typedef {import('@advanced-rest-client/arc-types').DataExport.ArcNativeDataExport} ArcNativeDataExport */
 /** @typedef {import('@advanced-rest-client/arc-types').DataExport.ArcExportClientCertificateData} ArcExportClientCertificateData */
 /** @typedef {import('@advanced-rest-client/arc-types').DataExport.ExportArcClientCertificateData} ExportArcClientCertificateData */
-/** @typedef {import('../RequestTypes').ARCSavedRequest} ARCSavedRequest */
-/** @typedef {import('../RequestTypes').ARCHistoryRequest} ARCHistoryRequest */
-/** @typedef {import('../AuthDataModel').ARCAuthData} ARCAuthData */
-/** @typedef {import('../WebsocketUrlHistoryModel').ARCWebsocketUrlHistory} ARCWebsocketUrlHistory */
-/** @typedef {import('../HostRulesModel').ARCHostRule} ARCHostRule */
-/** @typedef {import('../UrlHistoryModel').ARCUrlHistory} ARCUrlHistory */
-/** @typedef {import('../VariablesModel').ARCVariable} ARCVariable */
-/** @typedef {import('../RequestTypes').ARCProject} ARCProject */
+/** @typedef {import('@advanced-rest-client/arc-types').Project.ARCProject} ARCProject */
+/** @typedef {import('@advanced-rest-client/arc-types').ArcRequest.ARCSavedRequest} ARCSavedRequest */
+/** @typedef {import('@advanced-rest-client/arc-types').ArcRequest.ARCHistoryRequest} ARCHistoryRequest */
+/** @typedef {import('@advanced-rest-client/arc-types').AuthData.ARCAuthData} ARCAuthData */
+/** @typedef {import('@advanced-rest-client/arc-types').UrlHistory.ARCWebsocketUrlHistory} ARCWebsocketUrlHistory */
+/** @typedef {import('@advanced-rest-client/arc-types').UrlHistory.ARCUrlHistory} ARCUrlHistory */
+/** @typedef {import('@advanced-rest-client/arc-types').HostRule.ARCHostRule} ARCHostRule */
+/** @typedef {import('@advanced-rest-client/arc-types').Variable.ARCVariable} ARCVariable */
 
 /**
  * A class that processes ARC data to create a standard export object.
@@ -185,6 +185,10 @@ export class ExportProcessor {
         // PouchDB creates some views in the main datastore and it is added to
         // get all docs function without any reason. It should be eliminated
         return;
+      }
+      if (value.variable) {
+        value.name = value.variable;
+        delete value.variable;
       }
       value.key = item._id;
       delete value._rev;

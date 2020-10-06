@@ -5,8 +5,8 @@ import { ARCEntityDeletedEvent, ARCEntityListEvent } from './BaseEvents.js';
 /** @typedef {import('../types').ARCEntityChangeRecord} ARCEntityChangeRecord */
 /** @typedef {import('../types').ARCModelListResult} ARCModelListResult */
 /** @typedef {import('../types').DeletedEntity} DeletedEntity */
-/** @typedef {import('../VariablesModel').ARCVariable} ARCVariable */
-/** @typedef {import('../VariablesModel').ARCEnvironment} ARCEnvironment */
+/** @typedef {import('@advanced-rest-client/arc-types').Variable.ARCVariable} ARCVariable */
+/** @typedef {import('@advanced-rest-client/arc-types').Variable.ARCEnvironment} ARCEnvironment */
 /** @typedef {import('./VariableEvents').ARCVariablesListOptions} ARCVariablesListOptions */
 
 export const nameValue = Symbol('projectValue');

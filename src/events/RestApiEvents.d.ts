@@ -1,3 +1,4 @@
+import { ARCRestApi, ARCRestApiIndex } from '@advanced-rest-client/arc-types/src/models/RestApi';
 import {
   ARCModelReadEventDetail,
   ARCModelUpdateEventDetail,
@@ -12,7 +13,6 @@ import {
   ARCModelListResult,
   DeletedEntity,
 } from '../types';
-import { ARCRestApi, ARCRestApiIndex } from '../RestApiModel';
 
 export const entityValue: symbol;
 export const dataValue: symbol;

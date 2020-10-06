@@ -6,8 +6,8 @@ import { ARCEntityDeletedEvent, ARCEntityListEvent } from './BaseEvents.js';
 /** @typedef {import('../types').ARCModelListOptions} ARCModelListOptions */
 /** @typedef {import('../types').ARCModelListResult} ARCModelListResult */
 /** @typedef {import('../types').DeletedEntity} DeletedEntity */
-/** @typedef {import('../RestApiModel').ARCRestApiIndex} ARCRestApiIndex */
-/** @typedef {import('../RestApiModel').ARCRestApi} ARCRestApi */
+/** @typedef {import('@advanced-rest-client/arc-types').RestApi.ARCRestApiIndex} ARCRestApiIndex */
+/** @typedef {import('@advanced-rest-client/arc-types').RestApi.ARCRestApi} ARCRestApi */
 
 export const entityValue = Symbol('entityValue');
 export const dataValue = Symbol('dataValue');

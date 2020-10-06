@@ -8,8 +8,8 @@ import { ArcModelEventTypes } from '../../src/events/ArcModelEventTypes.js';
 /* eslint-disable prefer-destructuring */
 
 /** @typedef {import('../../src/RestApiModel').RestApiModel} RestApiModel */
-/** @typedef {import('../../src/RestApiModel').ARCRestApiIndex} ARCRestApiIndex */
-/** @typedef {import('../../src/RestApiModel').ARCRestApi} ARCRestApi */
+/** @typedef {import('@advanced-rest-client/arc-types').RestApi.ARCRestApiIndex} ARCRestApiIndex */
+/** @typedef {import('@advanced-rest-client/arc-types').RestApi.ARCRestApi} ARCRestApi */
 
 describe('RestApiModel', () => {
   const generator = new DataGenerator();
@@ -280,8 +280,8 @@ describe('RestApiModel', () => {
         const { latest, versions } = doc;
         await element.removeVersion(indexEntity._id, latest);
         const index = await element.indexDb.get(indexEntity._id);
-        assert.notEqual(index.latest, latest, 'lastest is updated');
-        assert.include(versions, index.latest, 'lastest is one of the versions');
+        assert.notEqual(index.latest, latest, 'latest is updated');
+        assert.include(versions, index.latest, 'latest is one of the versions');
       });
     });
 

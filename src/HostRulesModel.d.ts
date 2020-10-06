@@ -1,38 +1,11 @@
+import { HostRule } from '@advanced-rest-client/arc-types';
 import {ArcBaseModel} from './ArcBaseModel.js';
 import {
-  Entity,
   ARCEntityChangeRecord,
   DeletedEntity,
   ARCModelListOptions,
   ARCModelListResult,
 } from './types';
-
-export declare interface ARCHostRuleCreate extends Entity {
-  /**
-   * A source host
-   */
-  from: string;
-  /**
-   * A destination host
-   */
-  to: string;
-  /**
-   * Whether the rule is enabled
-   */
-  enabled: boolean;
-  /**
-   * Optional comment to the rule
-   */
-  comment?: string;
-}
-
-export declare interface ARCHostRule extends ARCHostRuleCreate {
-  /**
-   * The timestamp when the rule was updated the last time.
-   * This value is created by the model. Not accepted when creating an entity.
-   */
-  updated?: number;
-}
 
 /**
  * Model for host rules.
@@ -62,7 +35,7 @@ export declare class HostRulesModel extends ArcBaseModel {
    * @param rev Specific revision to read. Defaults to latest revision.
    * @returns Promise resolved to a datastore object.
    */
-  read(id: string, rev?: string): Promise<ARCHostRule>;
+  read(id: string, rev?: string): Promise<HostRule.ARCHostRule>;
 
   /**
    * Updates / saves the host rule object in the datastore.
@@ -71,7 +44,7 @@ export declare class HostRulesModel extends ArcBaseModel {
    * @param rule A rule object to save / update
    * @returns Resolved promise to updated object with updated `_rev`
    */
-  update(rule: ARCHostRule): Promise<ARCEntityChangeRecord<ARCHostRule>>;
+  update(rule: HostRule.ARCHostRule): Promise<ARCEntityChangeRecord<HostRule.ARCHostRule>>;
 
   /**
    * Updates / saves the host rule object in the datastore.
@@ -80,7 +53,7 @@ export declare class HostRulesModel extends ArcBaseModel {
    * @param rules List of rules to save / update
    * @returns Resolved promise to the result of Pouch DB operation
    */
-  updateBulk(rules: ARCHostRule[]): Promise<ARCEntityChangeRecord<ARCHostRule>[]>;
+  updateBulk(rules: HostRule.ARCHostRule[]): Promise<ARCEntityChangeRecord<HostRule.ARCHostRule>[]>;
 
   /**
    * Removed an object from the datastore.
@@ -97,5 +70,5 @@ export declare class HostRulesModel extends ArcBaseModel {
    *
    * @returns Promise resolved to list of the host rules
    */
-  list(opts?: ARCModelListOptions): Promise<ARCModelListResult<ARCHostRule>>;
+  list(opts?: ARCModelListOptions): Promise<ARCModelListResult<HostRule.ARCHostRule>>;
 }

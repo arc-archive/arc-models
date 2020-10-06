@@ -15,7 +15,7 @@ import {
 } from '../../src/events/VariableEvents.js';
 import { ArcModelEventTypes } from '../../src/events/ArcModelEventTypes.js';
 
-/** @typedef {import('../../src/VariablesModel').ARCVariable} ARCVariable */
+/** @typedef {import('@advanced-rest-client/arc-types').Variable.ARCVariable} ARCVariable */
 
 describe('VariableEvents', () => {
   const generator = new DataGenerator();

@@ -11,8 +11,6 @@ import {
 } from '../../src/events/CertificatesEvents.js';
 import { ArcModelEventTypes } from '../../src/events/ArcModelEventTypes.js';
 
-/** @typedef {import('../../src/AuthDataModel').AuthDataModel} AuthDataModel */
-
 describe('CertificatesEvents', () => {
   const generator = new DataGenerator();
 

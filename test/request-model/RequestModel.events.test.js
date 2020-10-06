@@ -8,9 +8,9 @@ import '../../request-model.js';
 /* eslint-disable prefer-destructuring */
 
 /** @typedef {import('../../index').RequestModel} RequestModel */
-/** @typedef {import('../../src/RequestTypes').ARCHistoryRequest} ARCHistoryRequest */
-/** @typedef {import('../../src/RequestTypes').ARCSavedRequest} ARCSavedRequest */
-/** @typedef {import('../../src/RequestTypes').ARCProject} ARCProject */
+/** @typedef {import('@advanced-rest-client/arc-types').Project.ARCProject} ARCProject */
+/** @typedef {import('@advanced-rest-client/arc-types').ArcRequest.ARCSavedRequest} ARCSavedRequest */
+/** @typedef {import('@advanced-rest-client/arc-types').ArcRequest.ARCHistoryRequest} ARCHistoryRequest */
 /** @typedef {import('@advanced-rest-client/arc-data-generator').InsertSavedResult} InsertSavedResult */
 
 describe('RequestModel Events API', () => {

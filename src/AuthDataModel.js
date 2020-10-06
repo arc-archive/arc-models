@@ -15,7 +15,7 @@ import { ArcBaseModel } from './ArcBaseModel.js';
 import { ArcModelEventTypes } from './events/ArcModelEventTypes.js';
 import { ArcModelEvents } from './events/ArcModelEvents.js';
 
-/** @typedef {import('./AuthDataModel').ARCAuthData} ARCAuthData */
+/** @typedef {import('@advanced-rest-client/arc-types').AuthData.ARCAuthData} ARCAuthData */
 /** @typedef {import('./events/AuthDataEvents').ARCAuthDataUpdateEvent} ARCAuthDataUpdateEvent */
 /** @typedef {import('./events/AuthDataEvents').ARCAuthDataQueryEvent} ARCAuthDataQueryEvent */
 /** @typedef {import('./types').ARCEntityChangeRecord} ARCEntityChangeRecord */
@@ -71,12 +71,18 @@ export class AuthDataModel extends ArcBaseModel {
     this[updateHandler] = this[updateHandler].bind(this);
   }
 
+  /**
+   * @param {EventTarget} node
+   */
   _attachListeners(node) {
     super._attachListeners(node);
     node.addEventListener(ArcModelEventTypes.AuthData.query, this[queryHandler]);
     node.addEventListener(ArcModelEventTypes.AuthData.update, this[updateHandler]);
   }
 
+  /**
+   * @param {EventTarget} node
+   */
   _detachListeners(node) {
     super._detachListeners(node);
     node.removeEventListener(ArcModelEventTypes.AuthData.query, this[queryHandler]);

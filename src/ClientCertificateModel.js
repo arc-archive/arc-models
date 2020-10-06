@@ -11,16 +11,17 @@ WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
 License for the specific language governing permissions and limitations under
 the License.
 */
-import { ArcBaseModel } from './ArcBaseModel.js';
+import { ArcBaseModel, createChangeRecord } from './ArcBaseModel.js';
 import { ArcModelEventTypes } from './events/ArcModelEventTypes.js';
 import { ArcModelEvents } from './events/ArcModelEvents.js';
 
 /* eslint-disable class-methods-use-this */
 /* eslint-disable no-param-reassign */
 
-/** @typedef {import('./ClientCertificateModel').ARCClientCertificate} ARCClientCertificate */
-/** @typedef {import('./ClientCertificateModel').ARCCertificateIndex} ARCCertificateIndex */
-/** @typedef {import('./ClientCertificateModel').ARCCertificate} ARCCertificate */
+/** @typedef {import('@advanced-rest-client/arc-types').ClientCertificate.ARCClientCertificate} ARCClientCertificate */
+/** @typedef {import('@advanced-rest-client/arc-types').ClientCertificate.ARCCertificateIndex} ARCCertificateIndex */
+/** @typedef {import('@advanced-rest-client/arc-types').ClientCertificate.Certificate} Certificate */
+/** @typedef {import('@advanced-rest-client/arc-types').ClientCertificate.ClientCertificate} ClientCertificate */
 /** @typedef {import('./events/CertificatesEvents').ARCClientCertificateInsertEvent} ARCClientCertificateInsertEvent */
 /** @typedef {import('./events/CertificatesEvents').ARCClientCertificateReadEvent} ARCClientCertificateReadEvent */
 /** @typedef {import('./events/CertificatesEvents').ARCClientCertificateDeleteEvent} ARCClientCertificateDeleteEvent */
@@ -90,6 +91,9 @@ export class ClientCertificateModel extends ArcBaseModel {
     return new PouchDB('client-certificates-data');
   }
 
+  /**
+   * @param {EventTarget} node
+   */
   _attachListeners(node) {
     super._attachListeners(node);
     node.addEventListener(ArcModelEventTypes.ClientCertificate.list, this[listHandler]);
@@ -98,6 +102,9 @@ export class ClientCertificateModel extends ArcBaseModel {
     node.addEventListener(ArcModelEventTypes.ClientCertificate.insert, this[insertHandler]);
   }
 
+  /**
+   * @param {EventTarget} node
+   */
   _detachListeners(node) {
     super._detachListeners(node);
     node.removeEventListener(ArcModelEventTypes.ClientCertificate.list, this[listHandler]);
@@ -124,28 +131,27 @@ export class ClientCertificateModel extends ArcBaseModel {
    * Reads client certificate full structure.
    * Returns certificate's meta data + cert + key.
    * @param {String} id Certificate's datastore id.
-   * @param {string=} rev Specific revision to read. Defaults to the latest revision.
-   * @return {Promise<ARCClientCertificate>} Promise resolved to a certificate object.
+   * @return {Promise<ClientCertificate>} Promise resolved to a certificate object.
    */
-  async get(id, rev) {
+  async get(id) {
     if (!id) {
       throw new Error('The "id" argument is missing');
     }
-    const opts = {};
-    if (rev) {
-      opts.rev = rev;
-    }
-    const doc = await this.db.get(id, opts);
-    const { dataKey } = doc;
-    const data = await this.dataDb.get(dataKey);
-    delete data._id;
-    delete data._rev;
-    delete doc.dataKey;
-    doc.cert = this.certificateFromStore(data.cert);
+    const index = /** @type ARCCertificateIndex */ (await this.db.get(id));
+    const { dataKey, _id: indexId } = index;
+    const dataId = dataKey || indexId;
+    const data = /** @type ARCClientCertificate */ (await this.dataDb.get(dataId));
+
+    const result = /** @type ClientCertificate */ ({
+      cert: this.certificateFromStore(data.cert),
+      name: index.name,
+      created: index.created,
+      type: index.type,
+    });
     if (data.key) {
-      doc.key = this.certificateFromStore(data.key);
+      result.key = this.certificateFromStore(data.key);
     }
-    return doc;
+    return result;
   }
 
   /**
@@ -164,12 +170,14 @@ export class ClientCertificateModel extends ArcBaseModel {
       throw new Error('The "id" argument is missing');
     }
     const { db } = this;
-    const doc = await db.get(id);
-    doc._deleted = true;
-    const updateRecord = await db.put(doc);
-    const { dataKey } = doc;
+    const index = /** @type ARCCertificateIndex */ (await db.get(id));
+    // @ts-ignore
+    index._deleted = true;
+    const updateRecord = await db.put(index);
+    const { dataKey, _id: indexId } = index;
+    const dataId = dataKey || indexId;
     const { dataDb } = this;
-    const data = await dataDb.get(dataKey);
+    const data = await dataDb.get(dataId);
     data._deleted = true;
     await dataDb.put(data);
     ArcModelEvents.ClientCertificate.State.delete(this, id, updateRecord.rev);
@@ -183,40 +191,37 @@ export class ClientCertificateModel extends ArcBaseModel {
    * Inserts new client certificate object.
    * See class description for data structure.
    *
-   * @param {ARCClientCertificate} cert Data to insert.
+   * @param {ClientCertificate} cert Data to insert.
    * @return {Promise<ARCEntityChangeRecord>} Returns a change record for the entity
    */
   async insert(cert) {
-    const data = { ...cert };
-    if (!data.cert) {
+    if (!cert.cert) {
       throw new Error('The "cert" property is required.');
     }
-    if (!data.type) {
+    if (!cert.type) {
       throw new Error('The "type" property is required.');
     }
-    const dataDoc = {
-      cert: this.certificateToStore(data.cert),
-    };
-    delete data.cert;
-    if (data.key) {
-      dataDoc.key = this.certificateToStore(data.key);
-      delete data.key;
-    }
-    const dataRes = await this.dataDb.post(dataDoc);
-    data.dataKey = dataRes.id;
-    if (!data.created) {
-      data.created = Date.now();
-    }
-    const res = await this.db.post(data);
-    delete data.dataKey;
-    data._id = res.id;
-    data._rev = res.rev;
 
-    const record = {
-      id: res.id,
-      rev: res.rev,
-      item: data,
-    };
+    const dataEntity = /** @type ARCClientCertificate */({
+      cert: this.certificateToStore(cert.cert),
+      type: cert.type,
+    });
+    if (cert.key) {
+      dataEntity.key = this.certificateToStore(cert.key);
+    }
+    const indexEntity = /** @type ARCCertificateIndex */({
+      name: cert.name,
+      type: cert.type,
+    });
+    if (cert.created) {
+      indexEntity.created = cert.created;
+    } else {
+      indexEntity.created = Date.now();
+    }
+    const dataResponse = await this.dataDb.post(dataEntity);
+    indexEntity._id = dataResponse.id;
+    const response = await this.db.put(indexEntity);
+    const record = this[createChangeRecord](indexEntity, response);
     ArcModelEvents.ClientCertificate.State.update(this, record);
     return record;
   }
@@ -232,13 +237,13 @@ export class ClientCertificateModel extends ArcBaseModel {
    * certificate is already a base62 string. To spare double base64 conversion
    * use string data.
    *
-   * @param {ARCCertificate|ARCCertificate[]} cert Certificate definition. See class description.
-   * @return {ARCCertificate|ARCCertificate[]}
+   * @param {Certificate|Certificate[]} cert Certificate definition. See class description.
+   * @return {Certificate|Certificate[]}
    * @throws {Error} When data is not set
    */
   certificateToStore(cert) {
     if (Array.isArray(cert)) {
-      return /** @type ARCCertificate[] */ (cert.map((info) =>
+      return /** @type Certificate[] */ (cert.map((info) =>
         this.certificateToStore(info)
       ));
     }
@@ -256,12 +261,12 @@ export class ClientCertificateModel extends ArcBaseModel {
   /**
    * Restores certificate object to it's original values after reading it from
    * the data store.
-   * @param {ARCCertificate|ARCCertificate[]} cert Restored certificate definition.
-   * @return {ARCCertificate|ARCCertificate[]}
+   * @param {Certificate|Certificate[]} cert Restored certificate definition.
+   * @return {Certificate|Certificate[]}
    */
   certificateFromStore(cert) {
     if (Array.isArray(cert)) {
-      return /** @type ARCCertificate[] */ (cert.map((info) =>
+      return /** @type Certificate[] */ (cert.map((info) =>
         this.certificateFromStore(info)
       ));
     }
@@ -322,8 +327,8 @@ export class ClientCertificateModel extends ArcBaseModel {
     }
     e.preventDefault();
     e.stopPropagation();
-    const { id, rev } = e;
-    e.detail.result = this.get(id, rev);
+    const { id } = e;
+    e.detail.result = this.get(id);
   }
 
   /**

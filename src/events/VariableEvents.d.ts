@@ -11,7 +11,7 @@ import {
   ARCModelListResult,
   DeletedEntity,
 } from '../types';
-import { ARCVariable, ARCEnvironment } from '../VariablesModel';
+import { ARCVariable, ARCEnvironment } from '@advanced-rest-client/arc-types/src/models/Variable';
 
 export const nameValue: symbol;
 export const environmentValue: symbol;

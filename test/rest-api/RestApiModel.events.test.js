@@ -9,8 +9,8 @@ import { ArcModelEvents } from '../../src/events/ArcModelEvents.js';
 /* eslint-disable prefer-destructuring */
 
 /** @typedef {import('../../src/RestApiModel').RestApiModel} RestApiModel */
-/** @typedef {import('../../src/RestApiModel').ARCRestApiIndex} ARCRestApiIndex */
-/** @typedef {import('../../src/RestApiModel').ARCRestApi} ARCRestApi */
+/** @typedef {import('@advanced-rest-client/arc-types').RestApi.ARCRestApiIndex} ARCRestApiIndex */
+/** @typedef {import('@advanced-rest-client/arc-types').RestApi.ARCRestApi} ARCRestApi */
 
 describe('RestApiModel', () => {
   const generator = new DataGenerator();
@@ -349,8 +349,8 @@ describe('RestApiModel', () => {
         const { latest, versions } = doc;
         await ArcModelEvents.RestApi.versionDelete(document.body, indexEntity._id, latest);
         const index = await element.indexDb.get(indexEntity._id);
-        assert.notEqual(index.latest, latest, 'lastest is updated');
-        assert.include(versions, index.latest, 'lastest is one of the versions');
+        assert.notEqual(index.latest, latest, 'latest is updated');
+        assert.include(versions, index.latest, 'latest is one of the versions');
       });
 
       it('ignores the event when cancelled', async () => {
@@ -495,24 +495,24 @@ describe('RestApiModel', () => {
       });
 
       it('clears index data', async () => {
-        const indexbefore = await generator.getDatastoreApiIndexData();
-        assert.lengthOf(indexbefore, 10, 'has index data');
+        const indexBefore = await generator.getDatastoreApiIndexData();
+        assert.lengthOf(indexBefore, 10, 'has index data');
         await ArcModelEvents.destroy(document.body, ['rest-apis']);
         const index = await generator.getDatastoreApiIndexData();
         assert.lengthOf(index, 0, 'index is cleared');
       });
 
       it('clears api data store', async () => {
-        const indexbefore = await generator.getDatastoreHostApiData();
-        assert.lengthOf(indexbefore, 10, 'has api data');
+        const indexBefore = await generator.getDatastoreHostApiData();
+        assert.lengthOf(indexBefore, 10, 'has api data');
         await ArcModelEvents.destroy(document.body, ['rest-apis']);
         const index = await generator.getDatastoreHostApiData();
         assert.lengthOf(index, 0, 'api is cleared');
       });
 
       it('clears on "all" store', async () => {
-        const indexbefore = await generator.getDatastoreHostApiData();
-        assert.lengthOf(indexbefore, 10, 'has api data');
+        const indexBefore = await generator.getDatastoreHostApiData();
+        assert.lengthOf(indexBefore, 10, 'has api data');
         await ArcModelEvents.destroy(document.body, ['all']);
         const index = await generator.getDatastoreHostApiData();
         assert.lengthOf(index, 0, 'api is cleared');

@@ -6,8 +6,8 @@ import '../../client-certificate-model.js';
 import { ArcModelEventTypes } from '../../src/events/ArcModelEventTypes.js';
 
 /** @typedef {import('../../src/ClientCertificateModel').ClientCertificateModel} ClientCertificateModel */
-/** @typedef {import('../../src/ClientCertificateModel').ARCClientCertificate} ARCClientCertificate */
-/** @typedef {import('../../src/ClientCertificateModel').ARCCertificate} ARCCertificate */
+/** @typedef {import('@advanced-rest-client/arc-types').ClientCertificate.ARCClientCertificate} ARCClientCertificate */
+/** @typedef {import('@advanced-rest-client/arc-types').ClientCertificate.Certificate} Certificate */
 
 describe('ClientCertificateModel', () => {
   const generator = new DataGenerator();
@@ -118,7 +118,7 @@ describe('ClientCertificateModel', () => {
 
       it('has the certificate', async () => {
         const doc = await element.get(id);
-        const certificate = /** @type ARCCertificate */ (doc.cert);
+        const certificate = /** @type Certificate */ (doc.cert);
         assert.typeOf(certificate, 'object', 'certificate is set');
         assert.typeOf(certificate.data, 'string', 'certificate data is set');
         assert.typeOf(certificate.passphrase, 'string', 'passphrase is set');
@@ -126,7 +126,7 @@ describe('ClientCertificateModel', () => {
 
       it('has the key', async () => {
         const doc = await element.get(id);
-        const info = /** @type ARCCertificate */ (doc.key);
+        const info = /** @type Certificate */ (doc.key);
         assert.typeOf(info, 'object', 'certificate is set');
         assert.typeOf(info.data, 'string', 'certificate data is set');
         assert.typeOf(info.passphrase, 'string', 'passphrase is set');
@@ -141,16 +141,6 @@ describe('ClientCertificateModel', () => {
           err = e;
         }
         assert.equal(err.message, 'The "id" argument is missing');
-      });
-
-      it('returns a document for a specific revision', async () => {
-        const doc = await element.db.get(id);
-        doc.name = 'updated-name';
-        const response = await element.db.put(doc);
-        const result = await element.get(id, doc._rev);
-        assert.typeOf(result, 'object', 'returns an object');
-        assert.notEqual(result.name, 'updated-name', 'has previous version');
-        assert.notEqual(result._rev, response.rev, 'has previous revision');
       });
     });
 
@@ -175,7 +165,7 @@ describe('ClientCertificateModel', () => {
 
       it('has the certificate', async () => {
         const doc = await element.get(id);
-        const info = /** @type ARCCertificate */ (doc.cert);
+        const info = /** @type Certificate */ (doc.cert);
         assert.typeOf(info, 'object', 'certificate is set');
         assert.typeOf(info.data, 'Uint8Array', 'certificate data is set');
         assert.typeOf(info.passphrase, 'string', 'passphrase is set');
@@ -183,7 +173,7 @@ describe('ClientCertificateModel', () => {
 
       it('has the key', async () => {
         const doc = await element.get(id);
-        const info = /** @type ARCCertificate */ (doc.key);
+        const info = /** @type Certificate */ (doc.key);
         assert.typeOf(info, 'object', 'certificate is set');
         assert.typeOf(info.data, 'Uint8Array', 'certificate data is set');
         assert.typeOf(info.passphrase, 'string', 'passphrase is set');
@@ -282,13 +272,22 @@ describe('ClientCertificateModel', () => {
       assert.typeOf(saved.cert, 'object');
     });
 
+    it('inserts both object with the same id', async () => {
+      const item = generator.generateClientCertificate();
+      const record = await element.insert(item);
+      const dataObj = await element.dataDb.get(record.id);
+      const indexObj = await element.db.get(record.id);
+      assert.ok(dataObj, 'Data object is stored');
+      assert.ok(indexObj, 'Index object is stored');
+    });
+
     it('stores binary data', async () => {
       const item = generator.generateClientCertificate({
         binary: true,
       });
       const record = await element.insert(item);
       const doc = await element.get(record.id);
-      const info = /** @type ARCCertificate */ (doc.cert);
+      const info = /** @type Certificate */ (doc.cert);
       assert.typeOf(info, 'object', 'certificate is set');
       assert.typeOf(info.data, 'Uint8Array', 'certificate data is set');
       assert.typeOf(info.passphrase, 'string', 'passphrase is set');
@@ -386,7 +385,7 @@ describe('ClientCertificateModel', () => {
         binary: false,
       });
       assert.typeOf(cert.data, 'string');
-      const result = /** @type ARCCertificate */ (element.certificateToStore(cert));
+      const result = /** @type Certificate */ (element.certificateToStore(cert));
       assert.typeOf(result.data, 'string');
     });
 
@@ -395,7 +394,7 @@ describe('ClientCertificateModel', () => {
         binary: true,
       });
       assert.notTypeOf(cert.data, 'string');
-      const result = /** @type ARCCertificate */ (element.certificateToStore(cert));
+      const result = /** @type Certificate */ (element.certificateToStore(cert));
       assert.typeOf(result.data, 'string', 'has the string data');
       assert.equal(result.type, 'buffer');
     });
@@ -405,7 +404,7 @@ describe('ClientCertificateModel', () => {
         binary: true,
       });
       assert.notTypeOf(cert.data, 'string');
-      const result = /** @type ARCCertificate[] */ (element.certificateToStore([cert]));
+      const result = /** @type Certificate[] */ (element.certificateToStore([cert]));
       assert.typeOf(result, 'array', 'the result is an array');
       assert.lengthOf(result, 1, 'has the same number of items');
       assert.typeOf(result[0].data, 'string', 'has the string data');
@@ -437,7 +436,7 @@ describe('ClientCertificateModel', () => {
         binary: false,
       });
       assert.typeOf(cert.data, 'string');
-      const result = /** @type ARCCertificate */ (element.certificateFromStore(cert));
+      const result = /** @type Certificate */ (element.certificateFromStore(cert));
       assert.typeOf(result.data, 'string');
     });
 
@@ -445,9 +444,10 @@ describe('ClientCertificateModel', () => {
       const cert = generator.generateCertificate({
         binary: true,
       });
+      // @ts-ignore
       cert.data = element.bufferToBase64(cert.data);
       cert.type = 'buffer';
-      const result = /** @type ARCCertificate */ (element.certificateFromStore(cert));
+      const result = /** @type Certificate */ (element.certificateFromStore(cert));
       assert.typeOf(result.data, 'Uint8Array');
     });
 
@@ -455,7 +455,7 @@ describe('ClientCertificateModel', () => {
       const cert = generator.generateCertificate({
         binary: false,
       });
-      const result = /** @type ARCCertificate[] */ (element.certificateFromStore([cert]));
+      const result = /** @type Certificate[] */ (element.certificateFromStore([cert]));
       assert.typeOf(result, 'array', 'the result is an array');
       assert.lengthOf(result, 1, 'has the same number of items');
     });

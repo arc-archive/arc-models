@@ -7,7 +7,7 @@ import { ImportFactory } from '../../src/lib/ImportFactory.js';
 describe('postman-data-import-env', () => {
   const generator = new DataGenerator();
 
-  describe('Postamn import to datastore - environment', () => {
+  describe('Postman import to datastore - environment', () => {
     let originalData;
     let data;
     before(async () => {

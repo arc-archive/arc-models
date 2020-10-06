@@ -6,7 +6,7 @@ import { sortFunction } from '../../src/UrlHistoryModel.js';
 import { ArcModelEventTypes } from '../../src/events/ArcModelEventTypes.js';
 
 /** @typedef {import('../../src/UrlHistoryModel').UrlHistoryModel} UrlHistoryModel */
-/** @typedef {import('../../src/UrlHistoryModel').ARCUrlHistory} ARCUrlHistory */
+/** @typedef {import('@advanced-rest-client/arc-types').UrlHistory.ARCUrlHistory} ARCUrlHistory */
 
 describe('UrlHistoryModel', () => {
   /**
@@ -73,7 +73,7 @@ describe('UrlHistoryModel', () => {
       assert.equal(result, -1);
     });
 
-    it('Returns -1 when a "cnt" is samller', () => {
+    it('Returns -1 when a "cnt" is smaller', () => {
       const result = sortFunction(
         {
           midnight: 0,
@@ -248,7 +248,7 @@ describe('UrlHistoryModel', () => {
       assert.typeOf(result.item.url, 'string');
     });
 
-    it('lowercases the _id', async () => {
+    it('lower-cases the _id', async () => {
       const url = 'https://API.domain.com';
       const result = await element.addUrl(url);
       assert.equal(result.id, url.toLowerCase());

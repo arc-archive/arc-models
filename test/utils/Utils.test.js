@@ -14,8 +14,7 @@ const generator = new DataGenerator();
 /* eslint-disable prefer-destructuring */
 /* global PouchDB */
 
-/** @typedef {import('../../src/RequestTypes').ARCHistoryRequest} ARCHistoryRequest */
-/** @typedef {import('../../src/types').Entity} Entity */
+/** @typedef {import('@advanced-rest-client/arc-types').ArcRequest} ARCHistoryRequest */
 
 describe('Utils', () => {
   describe('normalizeRequest()', () => {
@@ -144,7 +143,7 @@ describe('Utils', () => {
     });
 
     async function getRemovedItem() {
-      const doc = /** @type Entity */ (generator.generateHistoryObject());
+      const doc = /** @type ARCHistoryRequest */ (generator.generateHistoryObject());
       const createResult = await db.post(doc);
       doc._rev = createResult.rev;
       // @ts-ignore
@@ -187,7 +186,7 @@ describe('Utils', () => {
 
     it('ignores not deleted items', async () => {
       const doc1 = await getRemovedItem();
-      const doc2 = /** @type Entity */ (generator.generateHistoryObject());
+      const doc2 = /** @type ARCHistoryRequest */ (generator.generateHistoryObject());
       const createResult = await db.post(doc2);
       doc2._rev = createResult.rev;
       const result = await revertDelete(db, [deleted(doc1), deleted(doc2)]);

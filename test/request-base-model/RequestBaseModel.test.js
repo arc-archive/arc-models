@@ -6,8 +6,8 @@ import { ArcModelEventTypes } from '../../src/events/ArcModelEventTypes.js';
 import { ArcModelEvents } from '../../src/events/ArcModelEvents.js';
 import '../../request-model.js';
 
-/** @typedef {import('../../src/RequestTypes').ARCProject} ARCProject */
-/** @typedef {import('../../src/RequestTypes').ARCSavedRequest} ARCSavedRequest */
+/** @typedef {import('@advanced-rest-client/arc-types').Project.ARCProject} ARCProject */
+/** @typedef {import('@advanced-rest-client/arc-types').ArcRequest.ARCSavedRequest} ARCSavedRequest */
 /** @typedef {import('../../src/types').ARCEntityChangeRecord} ARCEntityChangeRecord */
 /** @typedef {import('../../').RequestModel} RequestModel */
 

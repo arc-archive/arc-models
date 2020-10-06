@@ -10,12 +10,12 @@ WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
 License for the specific language governing permissions and limitations under
 the License.
 */
-import { PayloadProcessor } from '@advanced-rest-client/arc-electron-payload-processor/payload-processor-esm.js';
+import { PayloadProcessor } from '@advanced-rest-client/arc-electron-payload-processor';
 import { v4 } from '@advanced-rest-client/uuid-generator';
 import { RequestBaseModel } from './RequestBaseModel.js';
 import '../url-indexer.js';
 import { UrlIndexer } from './UrlIndexer.js';
-import { generateHistoryId, normalizeRequest, cancelEvent, revertDelete } from './Utils.js';
+import { normalizeRequest, cancelEvent, revertDelete } from './Utils.js';
 import { ArcModelEvents } from './events/ArcModelEvents.js';
 import { ArcModelEventTypes } from './events/ArcModelEventTypes.js';
 
@@ -24,13 +24,14 @@ import { ArcModelEventTypes } from './events/ArcModelEventTypes.js';
 /* eslint-disable no-plusplus */
 /* eslint-disable no-await-in-loop */
 
-/** @typedef {import('./RequestTypes').ARCSavedRequest} ARCSavedRequest */
-/** @typedef {import('./RequestTypes').ARCHistoryRequest} ARCHistoryRequest */
-/** @typedef {import('./RequestTypes').SaveARCRequestOptions} SaveARCRequestOptions */
-/** @typedef {import('./RequestTypes').ARCProject} ARCProject */
-/** @typedef {import('./RequestTypes').ARCRequestRestoreOptions} ARCRequestRestoreOptions */
-/** @typedef {import('./types').Entity} Entity */
+/** @typedef {import('@advanced-rest-client/arc-types').Project.ARCProject} ARCProject */
+/** @typedef {import('@advanced-rest-client/arc-types').ArcRequest.ARCSavedRequest} ARCSavedRequest */
+/** @typedef {import('@advanced-rest-client/arc-types').ArcRequest.ARCHistoryRequest} ARCHistoryRequest */
+/** @typedef {import('@advanced-rest-client/arc-types').ArcRequest.ARCRequestRestoreOptions} ARCRequestRestoreOptions */
 /** @typedef {import('./types').DeletedEntity} DeletedEntity */
+/** @typedef {import('./types').ARCEntityChangeRecord} ARCEntityChangeRecord */
+/** @typedef {import('./types').ARCModelListResult} ARCModelListResult */
+/** @typedef {import('./types').ARCModelListOptions} ARCModelListOptions */
 /** @typedef {import('./events/RequestEvents').ARCRequestReadEvent} ARCRequestReadEvent */
 /** @typedef {import('./events/RequestEvents').ARCRequestReadBulkEvent} ARCRequestReadBulkEvent */
 /** @typedef {import('./events/RequestEvents').ARCRequestUpdateEvent} ARCRequestUpdateEvent */
@@ -44,9 +45,6 @@ import { ArcModelEventTypes } from './events/ArcModelEventTypes.js';
 /** @typedef {import('./events/RequestEvents').ARCRequestUndeleteBulkEvent} ARCRequestUndeleteBulkEvent */
 /** @typedef {import('./events/BaseEvents').ARCModelUpdateEventDetail} ARCModelUpdateEventDetail */
 /** @typedef {import('./events/BaseEvents').ARCModelDeleteEvent} ARCModelDeleteEvent */
-/** @typedef {import('./types').ARCEntityChangeRecord} ARCEntityChangeRecord */
-/** @typedef {import('./types').ARCModelListResult} ARCModelListResult */
-/** @typedef {import('./types').ARCModelListOptions} ARCModelListOptions */
 
 export const readHandler = Symbol('readHandler');
 export const readBulkHandler = Symbol('readBulkHandler');
@@ -62,7 +60,6 @@ export const projectlistHandler = Symbol('projectlistHandler');
 export const storeHandler = Symbol('storeHandler');
 export const syncProjects = Symbol('syncProjects');
 export const sortRequestProjectOrder = Symbol('sortRequestProjectOrder');
-export const saveGoogleDrive = Symbol('saveGoogleDrive');
 export const queryStore = Symbol('queryStore');
 
 /**
@@ -137,7 +134,9 @@ export class RequestModel extends RequestBaseModel {
     }
     const db = this.getDatabase(type);
     let request = await db.get(id, conf);
-    if (opts.restorePayload) {
+    if (opts.ignorePayload) {
+      delete request.payload;
+    } else {
       request = PayloadProcessor.restorePayload(request);
     }
     return normalizeRequest(request);
@@ -161,14 +160,16 @@ export class RequestModel extends RequestBaseModel {
     });
     const requests = [];
     response.rows.forEach((item) => {
-      let request = item.doc;
+      let request = /** @type ARCHistoryRequest|ARCSavedRequest */ (item.doc);
       if (!request) {
         if (opts.preserveOrder) {
           requests[requests.length] = undefined;
         }
         return;
       }
-      if (opts && opts.restorePayload) {
+      if (opts.ignorePayload) {
+        delete request.payload;
+      } else {
         request = PayloadProcessor.restorePayload(request);
       }
       requests[requests.length] = normalizeRequest(request);
@@ -178,10 +179,6 @@ export class RequestModel extends RequestBaseModel {
 
   /**
    * Updates / saves the request object in the datastore.
-   *
-   * Note, this method only works on the meta data. When handling request object
-   * store action, which includes payload processing and project association, please,
-   * use `saveRequest` or `saveHistory` functions.
    *
    * @param {string} type Request type: `saved` or `history`
    * @param {ARCHistoryRequest|ARCSavedRequest} request An object to save / update
@@ -195,7 +192,11 @@ export class RequestModel extends RequestBaseModel {
     day.setHours(0, 0, 0, 0);
 
     const timeValues = { updated, midnight: day.getTime() };
-    let copy = normalizeRequest({ ...request, ...timeValues });
+    const typedCopy = { ...request };
+    if (!typedCopy.type) {
+      typedCopy.type = type;
+    }
+    let copy = /** @type ARCHistoryRequest|ARCSavedRequest */ (normalizeRequest({ ...typedCopy, ...timeValues }));
     if (!copy._id) {
       copy._id = v4();
     }
@@ -210,8 +211,12 @@ export class RequestModel extends RequestBaseModel {
         }
       }
     }
-
+    const originalPayload = copy.payload;
+    copy = await PayloadProcessor.payloadToString(copy);
     const response = await db.put(copy);
+    copy.payload = originalPayload;
+    delete copy.blob;
+    delete copy.multipart;
     copy._rev = response.rev;
     const result = {
       id: copy._id,
@@ -222,11 +227,15 @@ export class RequestModel extends RequestBaseModel {
       result.oldRev = oldRev;
     }
     ArcModelEvents.Request.State.update(this, type, result);
+    if (copy.type === 'saved') {
+      // @ts-ignore
+      await this[syncProjects](copy._id, copy.projects);
+    }
     return result;
   }
 
   /**
-   * Updates more than one request in a bulk.
+   * Updates more than one request in a bulk operation.
    * @param {string} type Request type: `saved-requests` or `history-requests`
    * @param {(ARCHistoryRequest|ARCSavedRequest)[]} requests List of requests to update.
    * @return {Promise<ARCEntityChangeRecord[]>} List of PouchDB responses to each insert
@@ -234,20 +243,34 @@ export class RequestModel extends RequestBaseModel {
   async postBulk(type, requests) {
     const items = [...requests];
     const db = this.getDatabase(type);
-    for (let i = 0; i < items.length; i++) {
-      items[i] = normalizeRequest(items[i]);
-    }
-    const responses = await db.bulkDocs(items);
+    const updated = Date.now();
+    const day = new Date(updated);
+    day.setHours(0, 0, 0, 0);
+    const timeValues = { updated, midnight: day.getTime() };
+    const processed = items.map(async (request) => {
+      let copy = /** @type ARCHistoryRequest|ARCSavedRequest */ ({ ...request, ...timeValues });
+      copy = normalizeRequest(copy);
+      const { payload } = copy;
+      copy = await PayloadProcessor.payloadToString(copy);
+      return {
+        request: copy,
+        payload,
+      }
+    });
+    const processedItems = await Promise.all(processed);
+    const responses = await db.bulkDocs(processedItems.map((item) => item.request));
     const result = /** @type ARCEntityChangeRecord[] */ ([]);
-    for (let i = 0, len = responses.length; i < len; i++) {
-      const response = responses[i];
-      const request = items[i];
+    responses.forEach((response, i) => {
       const typedError = /** @type PouchDB.Core.Error */ (response);
       /* istanbul ignore if */
       if (typedError.error) {
         this._handleException(typedError, true);
-        continue;
+        return;
       }
+      const { request } = processedItems[i];
+      request.payload = processedItems[i].payload;
+      delete request.blob;
+      delete request.multipart;
       const oldRev = request._rev;
       request._rev = response.rev;
       if (!request._id) {
@@ -263,7 +286,11 @@ export class RequestModel extends RequestBaseModel {
       }
       result.push(record);
       ArcModelEvents.Request.State.update(this, type, record);
-    }
+      if (request.type === 'saved') {
+        // @ts-ignore
+        this[syncProjects](request._id, request.projects);
+      }
+    });
     return result;
   }
 
@@ -424,76 +451,6 @@ export class RequestModel extends RequestBaseModel {
   }
 
   /**
-   * Stores a history object in the data store, taking care of `_rev` property read.
-   *
-   * @param {ARCHistoryRequest} request The request object to store
-   * @return {Promise<ARCEntityChangeRecord>} A promise resolved to the updated request object.
-   */
-  async saveHistory(request) {
-    const info = { ...request };
-    if (!info._id) {
-      info._id = generateHistoryId(info);
-    }
-    info.type = 'history';
-    const db = this.getDatabase(info.type);
-    let doc;
-    try {
-      doc = await db.get(info._id);
-    } catch (e) {
-      /* istanbul ignore if */
-      if (e.status !== 404) {
-        this._handleException(e);
-        return undefined;
-      }
-    }
-    if (doc) {
-      info._rev = doc._rev;
-    }
-    return this.saveRequest(info);
-  }
-
-  /**
-   * Saves a request into a data store.
-   * It handles payload to string conversion, handles types, and syncs request
-   * with projects. Use `update()` method only if you are storing already
-   * prepared request object to the store.
-   *
-   * @param {ARCHistoryRequest|ARCSavedRequest} request ArcRequest object
-   * @param {SaveARCRequestOptions=} opts Save request object. Currently only `isDrive`
-   * is supported
-   * @return {Promise<ARCEntityChangeRecord>} A promise resolved to updated request object.
-   */
-  async saveRequest(request, opts = {}) {
-    let typed = /** @type ARCSavedRequest */ (request);
-    if (!typed.type) {
-      if (typed.name) {
-        typed.type = 'saved';
-      } else {
-        typed.type = 'history';
-      }
-    } else if (typed.type === 'drive' || typed.type === 'google-drive') {
-      typed.type = 'saved';
-    }
-    if (!typed._id) {
-      typed._id = v4();
-    }
-    try {
-      typed = await PayloadProcessor.payloadToString(typed);
-      typed = /** @type ARCSavedRequest */ (await this[saveGoogleDrive](typed, opts));
-      const record = await this.post(typed.type, typed);
-      typed = record.item;
-      if (typed.type === 'saved') {
-        await this[syncProjects](typed._id, typed.projects);
-      }
-      return record;
-    } catch (e) {
-      this._handleException(e);
-      /* istanbul ignore next */
-      return undefined;
-    }
-  }
-
-  /**
    * Performs a query for the request data.
    *
    * This is not the same as searching for a request. This only lists
@@ -522,11 +479,9 @@ export class RequestModel extends RequestBaseModel {
    * @param {ARCSavedRequest} request Request object to store.
    * @param {string[]=} projects List of project names to create with this request
    * and attach it to the request object.
-   * @param {SaveARCRequestOptions=} options Save request options. Currently only `isDrive`
-   * is supported
    * @return {Promise<ARCEntityChangeRecord>} A promise resolved to updated request object
    */
-  async saveRequestProject(request, projects, options) {
+  async saveRequestProject(request, projects) {
     const typed = /** @type ARCSavedRequest */ ({ ...request });
     if (!typed._id) {
       typed._id = v4();
@@ -552,7 +507,7 @@ export class RequestModel extends RequestBaseModel {
       typed.projects = typed.projects.concat(projectIds);
     }
     typed.type = 'saved';
-    return this.saveRequest(typed, options);
+    return this.post(typed.type, typed);
   }
 
   /**
@@ -906,12 +861,12 @@ export class RequestModel extends RequestBaseModel {
       return;
     }
     cancelEvent(e);
-    const { requestType, request, projects, opts } = e;
+    const { requestType, request, projects } = e;
     if (requestType === 'history') {
-      e.detail.result = this.saveHistory(request);
+      e.detail.result = this.post(requestType,request);
     } else if (requestType === 'saved') {
       const typed = /** @type ARCSavedRequest */ (request);
-      e.detail.result = this.saveRequestProject(typed, projects, opts);
+      e.detail.result = this.saveRequestProject(typed, projects);
     } else {
       e.detail.result = Promise.reject(new Error(`Unknown request type ${requestType}`));
     }
@@ -1057,14 +1012,7 @@ export class RequestModel extends RequestBaseModel {
       );
       return;
     }
-    if (requestType === 'history') {
-      e.detail.result = this.saveHistory(request);
-    } else if (requestType === 'saved') {
-      const typed = /** @type ARCSavedRequest */ (request);
-      e.detail.result = this.saveRequestProject(typed);
-    } else {
-      e.detail.result = Promise.reject(new Error(`Unknown request type ${requestType}`));
-    }
+    e.detail.result = this.post(requestType, request);
   }
 
 
@@ -1172,48 +1120,6 @@ export class RequestModel extends RequestBaseModel {
     }
 
     e.detail.result = this.revertRemove(requestType, requests);
-  }
-
-  /**
-   * Saves the request on Google Drive.
-   * It dispatches `google-drive-data-save` event to call a component responsible
-   * for saving the request on Google Drive.
-   *
-   * This do nothing if `opts.drive is not set.`
-   *
-   * @param {ARCHistoryRequest|ARCSavedRequest} data Data to save
-   * @param {SaveARCRequestOptions} opts Save request options.
-   * @return {Promise<ARCHistoryRequest|ARCSavedRequest>} Resolved promise to updated object.
-   */
-  async [saveGoogleDrive](data, opts) {
-    if (!opts.isDrive) {
-      return data;
-    }
-    const copy = { ...data };
-    const e = new CustomEvent('google-drive-data-save', {
-      bubbles: true,
-      cancelable: true,
-      composed: true,
-      detail: {
-        result: undefined,
-        content: copy,
-        // @ts-ignore
-        file: `${copy.name || 'arc-request'}.arc`,
-        options: {
-          contentType: 'application/restclient+data',
-        },
-      },
-    });
-    this.dispatchEvent(e);
-    if (!e.defaultPrevented) {
-      throw new Error('Drive export module not found');
-    }
-    const insertResult = await e.detail.result;
-    const driveId = insertResult.id;
-    if (driveId) {
-      copy.driveId = driveId;
-    }
-    return copy;
   }
 
   /**

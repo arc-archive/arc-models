@@ -1,5 +1,4 @@
-import { ARCEntityChangeRecord } from './ArcBaseModel';
-import { ARCModelListOptions, ARCModelListResult } from './types';
+import { ARCModelListOptions, ARCModelListResult, ARCEntityChangeRecord } from './types';
 
 export declare interface DefaultQueryOptions extends Object {
   limit: number;
@@ -28,6 +27,7 @@ export declare class ArcBaseModel extends HTMLElement {
   name?: string;
   /**
    * Limit number of revisions on the data store.
+   * @attribute
    */
   revsLimit?: number;
 

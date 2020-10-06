@@ -1,19 +1,18 @@
-[![Published on NPM](https://img.shields.io/npm/v/@advanced-rest-client/arc-models.svg)](https://www.npmjs.com/package/@advanced-rest-client/arc-models)
+# ARC data models
 
-[![Build Status](https://travis-ci.com/advanced-rest-client/arc-models.svg)](https://travis-ci.com/advanced-rest-client/arc-models)
-
-[![Published on webcomponents.org](https://img.shields.io/badge/webcomponents.org-published-blue.svg)](https://www.webcomponents.org/element/advanced-rest-client/arc-models)
-
-## &lt;arc-models&gt;
-
-Data models for Advanced REST Client application.
-It contains the logic used by the application to store and serve data to the UI.
+Data models for Advanced REST Client application. This module contains the logic used by the application to store and restore data to the UI.
 
 It also provides DOM events based access to the API. Each operation has corresponding event that can be used to access the data.
 A convenient way of using the events API is to by using the `ArcModelEvents` and `ArcModelEventTypes` interfaces.
 The first provides access to function which call creates and dispatches events on a given node. The later provides the definition of the event types for manual handling.
 
-It is highly recommended to use this models with the support of typescript. The library and each component has types definition with documentation for convenient use.
+It is highly recommended to use this models with the support of typescript. The library and each component has types definition with documentation for convenient use. Types are declared in `@advanced-rest-client/arc-types` module.
+
+[![Published on NPM](https://img.shields.io/npm/v/@advanced-rest-client/arc-models.svg)](https://www.npmjs.com/package/@advanced-rest-client/arc-models)
+
+[![Build Status](https://travis-ci.com/advanced-rest-client/arc-models.svg)](https://travis-ci.com/advanced-rest-client/arc-models)
+
+[![Published on webcomponents.org](https://img.shields.io/badge/webcomponents.org-published-blue.svg)](https://www.webcomponents.org/element/advanced-rest-client/arc-models)
 
 ## Usage
 
@@ -21,7 +20,8 @@ The models are modularized so the ARC application can easily replace each interf
 and use the same models to add storage support.
 
 ### Installation
-```
+
+```sh
 npm install --save @advanced-rest-client/arc-models
 ```
 
@@ -171,6 +171,7 @@ npm start
 ```
 
 ### Running the tests
+
 ```sh
 npm test
 ```

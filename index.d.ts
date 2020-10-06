@@ -12,21 +12,28 @@ License for the specific language governing permissions and limitations under
 the License.
 */
 
-export { AuthDataModel, ARCAuthData } from './src/AuthDataModel';
-export { ClientCertificateModel, ARCCertificate, ARCClientCertificate, ARCCertificateIndex } from './src/ClientCertificateModel';
-export { HostRulesModel, ARCHostRuleCreate, ARCHostRule } from './src/HostRulesModel';
+export { AuthDataModel } from './src/AuthDataModel';
+export { ARCAuthData } from '@advanced-rest-client/arc-types/src/models/AuthData';
+export { ClientCertificateModel } from './src/ClientCertificateModel';
+export { Certificate, ARCClientCertificate, ARCCertificateIndex } from '@advanced-rest-client/arc-types/src/models/ClientCertificate';
+export { HostRulesModel } from './src/HostRulesModel';
+export { ARCHostRule, HostRule } from '@advanced-rest-client/arc-types/src/models/HostRule';
 export { ProjectModel } from './src/ProjectModel';
 export { RequestModel } from './src/RequestModel';
-export { RestApiModel, ARCRestApiIndex, ARCRestApi } from './src/RestApiModel';
-export { ARCProject, HTTPRequest, ARCRequest, ARCHistoryRequest, ARCSavedRequest, SaveARCRequestOptions, ARCRequestRestoreOptions } from './src/RequestTypes';
-export { UrlHistoryModel, ARCUrlHistory } from './src/UrlHistoryModel';
-export { UrlIndexer, IndexableRequest, IndexQueryOptions, IndexQueryResult } from './src/UrlIndexer';
-export { VariablesModel, ARCEnvironment, ARCVariable } from './src/VariablesModel';
-export { WebsocketUrlHistoryModel, ARCWebsocketUrlHistory } from './src/WebsocketUrlHistoryModel';
+export { RestApiModel } from './src/RestApiModel';
+export { ARCRestApiIndex, ARCRestApi } from '@advanced-rest-client/arc-types/src/models/RestApi';
+export { HTTPRequest, ARCHistoryRequest, ARCSavedRequest, ARCRequestRestoreOptions, ArcEditorRequest, ArcStoredRequest, ArcBaseRequest } from '@advanced-rest-client/arc-types/src/request/ArcRequest';
+export { ARCProject } from '@advanced-rest-client/arc-types/src/models/Project';
+export { UrlHistoryModel } from './src/UrlHistoryModel';
+export { ARCUrlHistory, ARCWebsocketUrlHistory } from '@advanced-rest-client/arc-types/src/models/UrlHistory';
+export { UrlIndexer } from './src/UrlIndexer';
+export { IndexableRequest, IndexQueryOptions, IndexQueryResult } from '@advanced-rest-client/arc-types/src/models/Indexer';
+export { VariablesModel } from './src/VariablesModel';
+export { ARCEnvironment, ARCVariable } from '@advanced-rest-client/arc-types/src/models/Variable';
+export { WebsocketUrlHistoryModel } from './src/WebsocketUrlHistoryModel';
 export { ArcModelEventTypes } from './src/events/ArcModelEventTypes';
 export { ArcModelEvents } from './src/events/ArcModelEvents';
 export {
-  Entity,
   DeletedEntity,
   ARCEntityChangeRecord,
   ARCRequestEntityChangeRecord,

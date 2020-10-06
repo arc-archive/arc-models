@@ -5,7 +5,7 @@ import {
 import {
   IndexableRequest,
   IndexQueryResult,
-} from '../UrlIndexer';
+} from '@advanced-rest-client/arc-types/src/models/Indexer';
 
 export const requestsValue: symbol;
 export const typeValue: symbol;

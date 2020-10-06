@@ -1,9 +1,8 @@
 /* eslint-disable no-continue */
 /* eslint-disable no-plusplus */
 
-/** @typedef {import('./RequestTypes').ARCSavedRequest} ARCSavedRequest */
-/** @typedef {import('./RequestTypes').ARCHistoryRequest} ARCHistoryRequest */
-/** @typedef {import('./types').Entity} Entity */
+/** @typedef {import('@advanced-rest-client/arc-types').ArcRequest.ARCSavedRequest} ARCSavedRequest */
+/** @typedef {import('@advanced-rest-client/arc-types').ArcRequest.ARCHistoryRequest} ARCHistoryRequest */
 /** @typedef {import('./types').DeletedEntity} DeletedEntity */
 /** @typedef {import('./types').ARCEntityChangeRecord} ARCEntityChangeRecord */
 
@@ -63,6 +62,21 @@ export function normalizeRequestType(type) {
 }
 
 /**
+ * Generates an ID for a request history object
+ *
+ * @param {ARCHistoryRequest} request The request object
+ * @return {string} Generated history ID.
+ */
+export function generateHistoryId(request) {
+  const { method, url } = request;
+  const d = new Date();
+  d.setHours(0, 0, 0, 0);
+  const time = d.getTime();
+  const encUrl = encodeURIComponent(url);
+  return `${time}/${encUrl}/${method}`;
+}
+
+/**
  * Normalizes request object to whatever the app is currently using.
  *
  * @param {ARCHistoryRequest|ARCSavedRequest} request
@@ -100,22 +114,20 @@ export function normalizeRequest(request) {
     day.setHours(0, 0, 0, 0);
     request.midnight = day.getTime();
   }
+  if (!request.type) {
+    // @ts-ignore
+    if (request.name) {
+      request.type = 'saved';
+    } else {
+      request.type = 'history';
+    }
+  } else if (request.type === 'drive' || request.type === 'google-drive') {
+    request.type = 'saved';
+  }
+  if (request.type === 'history' && !request._id) {
+    request._id = generateHistoryId(request);
+  }
   return request;
-}
-
-/**
- * Generates an ID for a request history object
- *
- * @param {ARCHistoryRequest} request The request object
- * @return {string} Generated history ID.
- */
-export function generateHistoryId(request) {
-  const { method, url } = request;
-  const d = new Date();
-  d.setHours(0, 0, 0, 0);
-  const time = d.getTime();
-  const encUrl = encodeURIComponent(url);
-  return `${time}/${encUrl}/${method}`;
 }
 
 /**

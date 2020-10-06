@@ -5,7 +5,7 @@ import { ARCEntityListEvent } from './BaseEvents.js';
 /** @typedef {import('../types').ARCEntityChangeRecord} ARCEntityChangeRecord */
 /** @typedef {import('../types').ARCModelListOptions} ARCModelListOptions */
 /** @typedef {import('../types').ARCModelListResult} ARCModelListResult */
-/** @typedef {import('../WebsocketUrlHistoryModel').ARCWebsocketUrlHistory} ARCWebsocketUrlHistory */
+/** @typedef {import('@advanced-rest-client/arc-types').UrlHistory.ARCWebsocketUrlHistory} ARCWebsocketUrlHistory */
 
 export const urlValue = Symbol('urlValue');
 export const changeRecordValue = Symbol('changeRecordValue');

@@ -1,12 +1,12 @@
 /* eslint-disable max-classes-per-file */
-import { ARCAuthData } from '../AuthDataModel';
+import { AuthData } from '@advanced-rest-client/arc-types';
 import { ARCEntityChangeRecord } from '../types';
 import { ARCModelReadEventDetail, ARCModelUpdateEventDetail } from './BaseEvents';
 
 /**
  * An event dispatched to the store to update an authorization data object.
  */
-export declare class ARCAuthDataUpdateEvent extends CustomEvent<ARCModelUpdateEventDetail<ARCAuthData>> {
+export declare class ARCAuthDataUpdateEvent extends CustomEvent<ARCModelUpdateEventDetail<AuthData.ARCAuthData>> {
   /**
    * The URL of the request associated with the authorization method
    */
@@ -20,20 +20,20 @@ export declare class ARCAuthDataUpdateEvent extends CustomEvent<ARCModelUpdateEv
   /**
    * The authorization data to store.
    */
-  readonly authData: ARCAuthData;
+  readonly authData: AuthData.ARCAuthData;
 
   /**
    * @param url The URL of the request associated with the authorization method
    * @param method The name of the authorization method
    * @param authData The authorization data to store.
    */
-  constructor(url: string, method: string, authData: ARCAuthData);
+  constructor(url: string, method: string, authData: AuthData.ARCAuthData);
 }
 
 /**
  * An event dispatched to the store to query for the authorization data
  */
-export declare class ARCAuthDataQueryEvent extends CustomEvent<ARCModelReadEventDetail<ARCAuthData>> {
+export declare class ARCAuthDataQueryEvent extends CustomEvent<ARCModelReadEventDetail<AuthData.ARCAuthData>> {
   /**
    * The URL of the request associated with the authorization method
    */
@@ -58,12 +58,12 @@ export declare class ARCAuthDataUpdatedEvent extends Event {
   /**
    * The change record
    */
-  readonly changeRecord: ARCEntityChangeRecord<ARCAuthData>;
+  readonly changeRecord: ARCEntityChangeRecord<AuthData.ARCAuthData>;
 
   /**
    * @param record AuthData change record.
    */
-  constructor(record: ARCEntityChangeRecord<ARCAuthData>);
+  constructor(record: ARCEntityChangeRecord<AuthData.ARCAuthData>);
 }
 
 
@@ -76,7 +76,7 @@ export declare class ARCAuthDataUpdatedEvent extends Event {
  * @param authData The authorization data to store.
  * @returns Promise resolved to a the auth change record
  */
-export declare function updateAction(target: EventTarget, url: string, method: string, authData: ARCAuthData): Promise<ARCEntityChangeRecord<ARCAuthData>>;
+export declare function updateAction(target: EventTarget, url: string, method: string, authData: AuthData.ARCAuthData): Promise<ARCEntityChangeRecord<AuthData.ARCAuthData>>;
 
 /**
  * Dispatches an event handled by the data store to query for ARC authorization data
@@ -86,7 +86,7 @@ export declare function updateAction(target: EventTarget, url: string, method: s
  * @param method The name of the authorization method
  * @returns A promise resolved to n auth data model.
  */
-export declare function queryAction(target: EventTarget, url: string, method: string): Promise<ARCAuthData>;
+export declare function queryAction(target: EventTarget, url: string, method: string): Promise<AuthData.ARCAuthData>;
 
 /**
  * Dispatches an event informing about a change in the authdata model.
@@ -94,4 +94,4 @@ export declare function queryAction(target: EventTarget, url: string, method: st
  * @param target A node on which to dispatch the event.
  * @param record AuthData change record.
  */
-export declare function updatedState(target: EventTarget, record: ARCEntityChangeRecord<ARCAuthData>): void;
+export declare function updatedState(target: EventTarget, record: ARCEntityChangeRecord<AuthData.ARCAuthData>): void;

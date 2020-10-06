@@ -17,7 +17,7 @@ import { ArcModelEvents } from './events/ArcModelEvents.js';
 
 /* eslint-disable no-plusplus */
 
-/** @typedef {import('./UrlHistoryModel').ARCUrlHistory} ARCUrlHistory */
+/** @typedef {import('@advanced-rest-client/arc-types').UrlHistory.ARCUrlHistory} ARCUrlHistory */
 /** @typedef {import('./events/UrlHistoryEvents').ARCHistoryUrlInsertEvent} ARCHistoryUrlInsertEvent */
 /** @typedef {import('./events/UrlHistoryEvents').ARCHistoryUrlListEvent} ARCHistoryUrlListEvent */
 /** @typedef {import('./events/UrlHistoryEvents').ARCHistoryUrlQueryEvent} ARCHistoryUrlQueryEvent */

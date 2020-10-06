@@ -1,31 +1,12 @@
+import { UrlHistory } from '@advanced-rest-client/arc-types';
 import {ArcBaseModel} from './ArcBaseModel.js';
 import {
-  Entity,
   ARCEntityChangeRecord,
   ARCModelListOptions,
   ARCModelListResult,
 } from './types';
 
-export declare interface ARCWebsocketUrlHistory extends Entity {
-  /**
-   * A number of times the URL was used
-   */
-  cnt: number;
-  /**
-   * Last use timestamp.
-   */
-  time: number;
-  /**
-   * The request URL stored in the history.
-   */
-  url: string;
-  /**
-   * A timestamp of the midnight that corresponds to the `time` property.
-   */
-  midnight: number;
-}
-
-export declare function sortFunction(a: ARCWebsocketUrlHistory, b: ARCWebsocketUrlHistory): number;
+export declare function sortFunction(a: UrlHistory.ARCWebsocketUrlHistory, b: UrlHistory.ARCWebsocketUrlHistory): number;
 
 export const insertHandler: symbol;
 export const listHandler: symbol;
@@ -43,14 +24,14 @@ export declare class WebsocketUrlHistoryModel extends ArcBaseModel {
    * @param opts Query options.
    * @returns A promise resolved to a list of projects.
    */
-  list(opts?: ARCModelListOptions): Promise<ARCModelListResult<ARCWebsocketUrlHistory>>;
+  list(opts?: ARCModelListOptions): Promise<ARCModelListResult<UrlHistory.ARCWebsocketUrlHistory>>;
 
   /**
    * Adds an URL to the history and checks for already existing entires.
    * @param url The URL to insert
    * @returns A promise resolved to the URL change record
    */
-  addUrl(url: string): Promise<ARCEntityChangeRecord<ARCWebsocketUrlHistory>>;
+  addUrl(url: string): Promise<ARCEntityChangeRecord<UrlHistory.ARCWebsocketUrlHistory>>;
 
   /**
    * Updates / saves the object in the datastore.
@@ -59,7 +40,7 @@ export declare class WebsocketUrlHistoryModel extends ArcBaseModel {
    * @param obj An entity to store
    * @returns A promise resolved to the URL change record
    */
-  update(obj: ARCWebsocketUrlHistory): Promise<ARCEntityChangeRecord<ARCWebsocketUrlHistory>>;
+  update(obj: UrlHistory.ARCWebsocketUrlHistory): Promise<ARCEntityChangeRecord<UrlHistory.ARCWebsocketUrlHistory>>;
 
   /**
    * Queries for websocket history objects.
@@ -67,7 +48,7 @@ export declare class WebsocketUrlHistoryModel extends ArcBaseModel {
    * @param query A partial url to match results. If not set it returns whole history.
    * @returns A promise resolved to a list of PouchDB documents.
    */
-  query(query: string): Promise<ARCWebsocketUrlHistory[]>;
+  query(query: string): Promise<UrlHistory.ARCWebsocketUrlHistory[]>;
 
   _attachListeners(node: EventTarget): void;
   _detachListeners(node: EventTarget): void;

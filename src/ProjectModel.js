@@ -21,7 +21,9 @@ import { createChangeRecord } from './ArcBaseModel.js';
 /* eslint-disable no-continue */
 /* eslint-disable no-plusplus */
 
-/** @typedef {import('./RequestTypes').ARCProject} ARCProject */
+/** @typedef {import('@advanced-rest-client/arc-types').Project.ARCProject} ARCProject */
+/** @typedef {import('@advanced-rest-client/arc-types').ArcRequest.ARCSavedRequest} ARCSavedRequest */
+/** @typedef {import('@advanced-rest-client/arc-types').ArcRequest.ARCHistoryRequest} ARCHistoryRequest */
 /** @typedef {import('./events/ProjectEvents').ARCProjectReadEvent} ARCProjectReadEvent */
 /** @typedef {import('./events/ProjectEvents').ARCProjectUpdateEvent} ARCProjectUpdateEvent */
 /** @typedef {import('./events/ProjectEvents').ARCProjectUpdateBulkEvent} ARCProjectUpdateBulkEvent */
@@ -33,7 +35,6 @@ import { createChangeRecord } from './ArcBaseModel.js';
 /** @typedef {import('./types').ARCModelListResult} ARCModelListResult */
 /** @typedef {import('./types').ARCModelListOptions} ARCModelListOptions */
 /** @typedef {import('./types').DeletedEntity} DeletedEntity */
-/** @typedef {import('./RequestTypes').ARCSavedRequest} ARCSavedRequest */
 
 export const readHandler = Symbol('readHandler');
 export const updateHandler = Symbol('updateHandler');
@@ -144,11 +145,10 @@ export class ProjectModel extends RequestBaseModel {
    * Link to `#removeProject()` for API consistency
    *
    * @param {string} id The ID of the datastore entry.
-   * @param {string=} rev Specific revision to read. Defaults to latest revision.
    * @return {Promise<DeletedEntity>} Promise resolved to a new `_rev` property of deleted object.
    */
-  async delete(id, rev) {
-    return this.removeProject(id, rev);
+  async delete(id) {
+    return this.removeProject(id);
   }
 
   /**
@@ -175,7 +175,7 @@ export class ProjectModel extends RequestBaseModel {
    */
   async addRequest(pid, rid, type, position) {
     const requestDb = this.getDatabase(type);
-    const request = /** @type ARCSavedRequest */ (await requestDb.get(rid));
+    const request = /** @type ARCHistoryRequest */ (await requestDb.get(rid));
     const isHistory = type === 'history';
     let copy = /** @type ARCSavedRequest */ (null);
     if (isHistory) {
@@ -444,8 +444,8 @@ export class ProjectModel extends RequestBaseModel {
     e.preventDefault();
     e.stopPropagation();
 
-    const { id, rev } = e;
-    e.detail.result = this.removeProject(id, rev);
+    const { id } = e;
+    e.detail.result = this.removeProject(id);
   }
 
   /**

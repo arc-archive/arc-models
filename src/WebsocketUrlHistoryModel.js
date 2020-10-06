@@ -15,7 +15,7 @@ import { ArcBaseModel } from './ArcBaseModel.js';
 import { ArcModelEventTypes } from './events/ArcModelEventTypes.js';
 import { ArcModelEvents } from './events/ArcModelEvents.js';
 
-/** @typedef {import('./WebsocketUrlHistoryModel').ARCWebsocketUrlHistory} ARCWebsocketUrlHistory */
+/** @typedef {import('@advanced-rest-client/arc-types').UrlHistory.ARCWebsocketUrlHistory} ARCWebsocketUrlHistory */
 /** @typedef {import('./events/WSUrlHistoryEvents').ARCWSUrlInsertEvent} ARCWSUrlInsertEvent */
 /** @typedef {import('./events/WSUrlHistoryEvents').ARCWSUrlListEvent} ARCWSUrlListEvent */
 /** @typedef {import('./events/WSUrlHistoryEvents').ARCWSUrlQueryEvent} ARCWSUrlQueryEvent */

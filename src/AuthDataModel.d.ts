@@ -1,11 +1,6 @@
 import { ArcBaseModel } from './ArcBaseModel';
-import { Entity, ARCEntityChangeRecord } from './types';
-
-export declare interface ARCAuthData extends Entity {
-  username?: string;
-  password?: string;
-  domain?: string;
-}
+import { ARCEntityChangeRecord } from './types';
+import { AuthData } from '@advanced-rest-client/arc-types';
 
 /**
  * Removes query parameters and the fragment part from the URL
@@ -39,7 +34,7 @@ export declare class AuthDataModel extends ArcBaseModel {
    * @param url The URL of the request
    * @param authMethod The Authorization method to restore data for.
    */
-  query(url: string, authMethod: string): Promise<ARCAuthData|undefined>;
+  query(url: string, authMethod: string): Promise<AuthData.ARCAuthData|undefined>;
 
   /**
    * Creates or updates the auth data in the data store for given method and URl.
@@ -49,5 +44,5 @@ export declare class AuthDataModel extends ArcBaseModel {
    * @param authData The authorization data to store. Schema depends on
    * the `authMethod` property. From model standpoint schema does not matter.
    */
-  update(url: string, authMethod: string, authData: object): Promise<ARCEntityChangeRecord<ARCAuthData>>;
+  update(url: string, authMethod: string, authData: object): Promise<ARCEntityChangeRecord<AuthData.ARCAuthData>>;
 }

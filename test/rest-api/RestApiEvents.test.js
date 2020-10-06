@@ -16,8 +16,8 @@ import {
 } from '../../src/events/RestApiEvents.js';
 import { ArcModelEventTypes } from '../../src/events/ArcModelEventTypes.js';
 
-/** @typedef {import('../../src/RestApiModel').ARCRestApiIndex} ARCRestApiIndex */
-/** @typedef {import('../../src/RestApiModel').ARCRestApi} ARCRestApi */
+/** @typedef {import('@advanced-rest-client/arc-types').RestApi.ARCRestApiIndex} ARCRestApiIndex */
+/** @typedef {import('@advanced-rest-client/arc-types').RestApi.ARCRestApi} ARCRestApi */
 
 describe('RestApiEvents', () => {
   const generator = new DataGenerator();

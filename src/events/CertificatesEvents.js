@@ -6,7 +6,7 @@ import { ARCEntityDeletedEvent, ARCEntityListEvent } from './BaseEvents.js';
 /** @typedef {import('../types').ARCModelListOptions} ARCModelListOptions */
 /** @typedef {import('../types').ARCModelListResult} ARCModelListResult */
 /** @typedef {import('../types').DeletedEntity} DeletedEntity */
-/** @typedef {import('../ClientCertificateModel').ARCClientCertificate} ARCClientCertificate */
+/** @typedef {import('@advanced-rest-client/arc-types').ClientCertificate.ARCClientCertificate} ARCClientCertificate */
 
 export const certificateValue = Symbol('projectValue');
 export const idValue = Symbol('idValue');

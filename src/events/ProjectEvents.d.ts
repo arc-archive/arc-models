@@ -1,3 +1,4 @@
+import { Project } from '@advanced-rest-client/arc-types';
 import {
   ARCModelReadEventDetail,
   ARCModelUpdateEventDetail,
@@ -14,7 +15,6 @@ import {
   ARCModelListResult,
   DeletedEntity,
 } from '../types';
-import { ARCProject } from '../RequestTypes';
 
 export declare const projectIdValue: unique symbol;
 export declare const requestIdValue: unique symbol;
@@ -23,7 +23,7 @@ export declare const requestTypeValue: unique symbol;
 /**
  * Project read event
  */
-export declare class ARCProjectReadEvent extends CustomEvent<ARCModelReadEventDetail<ARCProject>> {
+export declare class ARCProjectReadEvent extends CustomEvent<ARCModelReadEventDetail<Project.ARCProject>> {
   /**
    * Requested project ID.
    */
@@ -42,34 +42,34 @@ export declare class ARCProjectReadEvent extends CustomEvent<ARCModelReadEventDe
 /**
  * An event dispatched to the store to update a project.
  */
-export declare class ARCProjectUpdateEvent extends CustomEvent<ARCModelUpdateEventDetail<ARCProject>> {
+export declare class ARCProjectUpdateEvent extends CustomEvent<ARCModelUpdateEventDetail<Project.ARCProject>> {
   /**
    * A project that is being updated.
    */
-  readonly project: ARCProject;
-  constructor(project: ARCProject);
+  readonly project: Project.ARCProject;
+  constructor(project: Project.ARCProject);
 }
 
 /**
  * An event dispatched to the store to update list of projects in a single transaction.
  */
-export class ARCProjectUpdateBulkEvent extends CustomEvent<ARCModelUpdateBulkEventDetail<ARCProject>> {
+export class ARCProjectUpdateBulkEvent extends CustomEvent<ARCModelUpdateBulkEventDetail<Project.ARCProject>> {
   /**
    * A list of projects that are being updated.
    */
-  readonly projects: ARCProject[];
+  readonly projects: Project.ARCProject[];
   /**
    * @param projects A list of projects to update.
    */
-  constructor(projects: ARCProject[]);
+  constructor(projects: Project.ARCProject[]);
 }
 
 /**
  * An event dispatched from the store after updating a project.
  */
-export declare class ARCProjectUpdatedEvent extends CustomEvent<ARCEntityChangeRecord<ARCProject>> {
-  readonly changeRecord: ARCEntityChangeRecord<ARCProject>;
-  constructor(record: ARCEntityChangeRecord<ARCProject>);
+export declare class ARCProjectUpdatedEvent extends CustomEvent<ARCEntityChangeRecord<Project.ARCProject>> {
+  readonly changeRecord: ARCEntityChangeRecord<Project.ARCProject>;
+  constructor(record: ARCEntityChangeRecord<Project.ARCProject>);
 }
 
 /**
@@ -105,7 +105,7 @@ export declare class ARCProjectDeletedEvent extends ARCEntityDeletedEvent {
 /**
  * An event to be dispatched to list for project data in the data store.
  */
-export declare class ARCProjectListEvent extends ARCEntityListEvent<ARCProject> {
+export declare class ARCProjectListEvent extends ARCEntityListEvent<Project.ARCProject> {
   /**
    * @param opts Query options.
    */
@@ -116,7 +116,7 @@ export declare class ARCProjectListEvent extends ARCEntityListEvent<ARCProject> 
  * An event to be dispatched to list all projects data. Additionally it can be limited by
  * passed keys.
  */
-export declare class ARCProjectListAllEvent extends CustomEvent<ARCModelReadBulkEventDetail<ARCProject>> {
+export declare class ARCProjectListAllEvent extends CustomEvent<ARCModelReadBulkEventDetail<Project.ARCProject>> {
   /**
    * Project keys to read used to initialize the event
    */
@@ -171,7 +171,7 @@ export class ARCProjectMoveEvent extends CustomEvent<ARCModelVoidResultEventDeta
  * @param rev The revision of the project. If not set then the latest revision is used.
  * @returns Promise resolved to a Project model.
  */
-export declare function readAction(target: EventTarget, id: string, rev?: string): Promise<ARCProject>;
+export declare function readAction(target: EventTarget, id: string, rev?: string): Promise<Project.ARCProject>;
 
 /**
  * Dispatches an event handled by the data store to update a project metadata.
@@ -180,7 +180,7 @@ export declare function readAction(target: EventTarget, id: string, rev?: string
  * @param item The project object to update.
  * @returns Promise resolved to a Project model.
  */
-export declare function updateAction(target: EventTarget, item: ARCProject): Promise<ARCEntityChangeRecord<ARCProject>>;
+export declare function updateAction(target: EventTarget, item: Project.ARCProject): Promise<ARCEntityChangeRecord<Project.ARCProject>>;
 
 /**
  * Dispatches an event handled by the data store to update a list of project metadata.
@@ -189,7 +189,7 @@ export declare function updateAction(target: EventTarget, item: ARCProject): Pro
  * @param projects The list of project objects to update.
  * @return Promise resolved to a list of change records
  */
-export declare function updateBulkAction(target: EventTarget, projects: ARCProject[]): Promise<ARCEntityChangeRecord<ARCProject>[]>;
+export declare function updateBulkAction(target: EventTarget, projects: Project.ARCProject[]): Promise<ARCEntityChangeRecord<Project.ARCProject>[]>;
 
 /**
  * Dispatches an event handled by the data store to delete a project metadata.
@@ -208,7 +208,7 @@ export declare function deleteAction(target: EventTarget, id: string, rev?: stri
  * @param opts Query options.
  * @returns Project list result.
  */
-export declare function listAction(target: EventTarget, opts?: ARCModelListOptions): Promise<ARCModelListResult<ARCProject>>;
+export declare function listAction(target: EventTarget, opts?: ARCModelListOptions): Promise<ARCModelListResult<Project.ARCProject>>;
 
 /**
  * Dispatches an event to list all project data.
@@ -217,7 +217,7 @@ export declare function listAction(target: EventTarget, opts?: ARCModelListOptio
  * @param keys Project keys to read. When not set it reads all projects
  * @return List of projects.
  */
-export declare function listAllAction(target: EventTarget, keys?: string[]): Promise<ARCProject[]>;
+export declare function listAllAction(target: EventTarget, keys?: string[]): Promise<Project.ARCProject[]>;
 
 /**
  * Moves a request to a project and removes the request from other projects.
@@ -259,7 +259,7 @@ export declare function removeFromAction(target: EventTarget, projectId: string,
  * @param target A node on which to dispatch the event.
  * @param record Change record
  */
-export declare function updatedState(target: EventTarget, record: ARCEntityChangeRecord<ARCProject>): void;
+export declare function updatedState(target: EventTarget, record: ARCEntityChangeRecord<Project.ARCProject>): void;
 
 /**
  * Dispatches an event after a project was deleted

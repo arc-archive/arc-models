@@ -1,4 +1,4 @@
-import { ApiType } from './ApiTypes';
+import { ApiType } from '@advanced-rest-client/arc-types/src/models/ApiTypes';
 
 export declare class ApiHttpUrl {
   /**

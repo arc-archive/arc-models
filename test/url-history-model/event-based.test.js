@@ -6,7 +6,7 @@ import { ArcModelEventTypes } from '../../src/events/ArcModelEventTypes.js';
 import { ArcModelEvents } from '../../src/events/ArcModelEvents.js';
 
 /** @typedef {import('../../src/UrlHistoryModel').UrlHistoryModel} UrlHistoryModel */
-/** @typedef {import('../../src/UrlHistoryModel').ARCUrlHistory} ARCUrlHistory */
+/** @typedef {import('@advanced-rest-client/arc-types').UrlHistory.ARCUrlHistory} ARCUrlHistory */
 
 describe('UrlHistoryModel - event based', () => {
   /**
@@ -156,7 +156,7 @@ describe('UrlHistoryModel - event based', () => {
       assert.typeOf(result.item.url, 'string');
     });
 
-    it('lowercases the _id', async () => {
+    it('lower-cases the _id', async () => {
       const url = 'https://API.domain.com';
       const result = await ArcModelEvents.UrlHistory.insert(document.body, url);
       assert.equal(result.id, url.toLowerCase());

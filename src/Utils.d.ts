@@ -1,4 +1,4 @@
-import { ARCSavedRequest, ARCHistoryRequest } from './RequestTypes';
+import { ArcRequest } from '@advanced-rest-client/arc-types';
 import { DeletedEntity, ARCEntityChangeRecord } from './types';
 
 /**
@@ -33,7 +33,7 @@ export declare function normalizeRequestType(type: string): string;
 /**
  * Normalizes request object to whatever the app is currently using.
  */
-export declare function normalizeRequest(request: ARCHistoryRequest|ARCSavedRequest): ARCHistoryRequest|ARCSavedRequest;
+export declare function normalizeRequest(request: ArcRequest.ARCHistoryRequest|ArcRequest.ARCSavedRequest): ArcRequest.ARCHistoryRequest|ArcRequest.ARCSavedRequest;
 
 /**
  * Generates an ID for a request history object
@@ -41,7 +41,7 @@ export declare function normalizeRequest(request: ARCHistoryRequest|ARCSavedRequ
  * @param request The request object
  * @returns Generated history ID.
  */
-export declare function generateHistoryId(request: ARCHistoryRequest): string;
+export declare function generateHistoryId(request: ArcRequest.ARCHistoryRequest): string;
 
 /**
  * Finds a next revision after the `deletedRevision` in the revisions history

@@ -19,8 +19,8 @@ import { ArcModelEvents } from './events/ArcModelEvents.js';
 /* eslint-disable no-param-reassign */
 /* eslint-disable no-plusplus */
 
-/** @typedef {import('./RestApiModel').ARCRestApiIndex} ARCRestApiIndex */
-/** @typedef {import('./RestApiModel').ARCRestApi} ARCRestApi */
+/** @typedef {import('@advanced-rest-client/arc-types').RestApi.ARCRestApiIndex} ARCRestApiIndex */
+/** @typedef {import('@advanced-rest-client/arc-types').RestApi.ARCRestApi} ARCRestApi */
 /** @typedef {import('./events/RestApiEvents').ARCRestApiReadEvent} ARCRestApiReadEvent */
 /** @typedef {import('./events/RestApiEvents').ARCRestApiUpdateEvent} ARCRestApiUpdateEvent */
 /** @typedef {import('./events/RestApiEvents').ARCRestApiUpdateBulkEvent} ARCRestApiUpdateBulkEvent */

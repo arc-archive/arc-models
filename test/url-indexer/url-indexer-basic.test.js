@@ -91,7 +91,7 @@ describe('UrlIndexer', () => {
     });
   });
 
-  describe('constans', () => {
+  describe('constants', () => {
     it('indexStoreName is string', () => {
       assert.typeOf(STORE_NAME, 'string');
     });
@@ -249,7 +249,7 @@ describe('UrlIndexer', () => {
       assert.equal(result, id);
     });
 
-    it('does nothing if repeates the call', (done) => {
+    it('does nothing if repeats the call', (done) => {
       element[deleteIndexDebounce](id);
       setTimeout(() => {
         element[deleteIndexDebounce](id);
@@ -302,7 +302,7 @@ describe('UrlIndexer', () => {
       };
     });
 
-    it('slears [deleteRequestQueueValue]', (done) => {
+    it('clears [deleteRequestQueueValue]', (done) => {
       element[deleteIndexDebounce](id);
       element.deleteIndexedData = () => {
         assert.deepEqual(element[deleteRequestQueueValue], []);

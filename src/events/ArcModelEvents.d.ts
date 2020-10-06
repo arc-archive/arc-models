@@ -1,10 +1,8 @@
 import {
-  ARCProject,
   ARCHistoryRequest,
   ARCSavedRequest,
-  SaveARCRequestOptions,
   ARCRequestRestoreOptions,
-} from '../RequestTypes';
+} from '@advanced-rest-client/arc-types/src/request/ArcRequest';
 import {
   ARCRequestEventRequestOptions,
 } from './RequestEvents';
@@ -17,15 +15,15 @@ import {
 import {
   IndexableRequest,
   IndexQueryResult,
-} from '../UrlIndexer';
-import { ARCAuthData } from '../AuthDataModel';
-import { ARCHostRule } from '../HostRulesModel';
-import { ARCClientCertificate } from '../ClientCertificateModel';
-import { ARCWebsocketUrlHistory } from '../WebsocketUrlHistoryModel';
-import { ARCUrlHistory } from '../UrlHistoryModel';
-import { ARCVariable, ARCEnvironment } from '../VariablesModel';
+} from '@advanced-rest-client/arc-types/src/models/Indexer';
+import { ARCAuthData } from '@advanced-rest-client/arc-types/src/models/AuthData';
+import { ARCHostRule } from '@advanced-rest-client/arc-types/src/models/HostRule';
+import { ARCClientCertificate } from '@advanced-rest-client/arc-types/src/models/ClientCertificate';
+import { ARCWebsocketUrlHistory, ARCUrlHistory } from '@advanced-rest-client/arc-types/src/models/UrlHistory';
+import { ARCVariable, ARCEnvironment } from '@advanced-rest-client/arc-types/src/models/Variable';
 import { ARCVariablesListOptions } from './VariableEvents';
-import { ARCRestApi, ARCRestApiIndex } from '../RestApiModel';
+import { ARCRestApi, ARCRestApiIndex } from '@advanced-rest-client/arc-types/src/models/RestApi';
+import { ARCProject } from '@advanced-rest-client/arc-types/src/models/Project';
 
 declare interface ProjectStateFunctions {
   /**
@@ -230,7 +228,7 @@ declare interface RequestFunctions {
    * @param opts Save request options.  Only relevant for `saved` type.
    * @returns Promise resolved to a change record
    */
-  store(target: EventTarget, type: string, request: ARCHistoryRequest|ARCSavedRequest, projects?: string[], opts?: SaveARCRequestOptions): Promise<ARCEntityChangeRecord<ARCHistoryRequest|ARCSavedRequest>>;
+  store(target: EventTarget, type: string, request: ARCHistoryRequest|ARCSavedRequest, projects?: string[]): Promise<ARCEntityChangeRecord<ARCHistoryRequest|ARCSavedRequest>>;
 
   /**
    * Dispatches an event handled by the data store to delete an ARC request from the store.

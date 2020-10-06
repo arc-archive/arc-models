@@ -1,3 +1,4 @@
+import { Indexer } from '@advanced-rest-client/arc-types';
 export declare function createSchema(e: Event): void;
 export declare const STORE_NAME: string;
 export declare const STORE_VERSION: number;
@@ -19,22 +20,8 @@ export declare const appendQueryParams: symbol;
 export declare const storeIndexes: symbol;
 export declare const getIndexedDataAll: symbol;
 
-export declare interface IndexableRequest {
-  /**
-   * stored request ID
-   */
-  id: string;
-  /**
-   * store name or identifier
-   */
-  type: string;
-  /**
-   * the URL to index
-   */
-  url: string;
-}
 
-declare interface IndexableRequestInternal extends IndexableRequest {
+declare interface IndexableRequestInternal extends Indexer.IndexableRequest {
   /**
    * Whether it's a full URL (1) or just part of it (0)
    */
@@ -52,22 +39,6 @@ declare interface IndexableRequestMap {
 declare interface ProcessedQueryResults {
   index: IndexableRequestInternal[];
   remove: IndexableRequestInternal[];
-}
-
-export declare interface IndexQueryOptions {
-  /**
-   * Request type: `saved` or `history`
-   */
-  type?: string;
-  /**
-   * If set it uses slower algorithm but performs full
-   * search on the index. When `false` it only uses filer like query + '*'.
-   */
-  detailed?: boolean;
-}
-
-export declare interface IndexQueryResult {
-  [key: string]: string;
 }
 
 /**
@@ -178,7 +149,7 @@ export declare class UrlIndexer extends HTMLElement {
    *
    * @param requests List of requests to index.
    */
-  index(requests: IndexableRequest[]): Promise<void>;
+  index(requests: Indexer.IndexableRequest[]): Promise<void>;
 
   /**
    * Removes indexed data for given requests.
@@ -208,7 +179,7 @@ export declare class UrlIndexer extends HTMLElement {
    * - detailed (Boolean): If set it uses slower algorithm but performs full
    * search on the index. When false it only uses filer like query + '*'.
    */
-  query(query: string, opts?: IndexQueryOptions): Promise<IndexQueryResult>;
+  query(query: string, opts?: Indexer.IndexQueryOptions): Promise<Indexer.IndexQueryResult>;
 
   /**
    * Reindexes a request by the type.

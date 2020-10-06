@@ -3,7 +3,7 @@ import {
   ARCModelUpdateEventDetail,
   ARCEntityListEvent,
 } from './BaseEvents';
-import { ARCWebsocketUrlHistory } from '../WebsocketUrlHistoryModel';
+import { ARCWebsocketUrlHistory } from '@advanced-rest-client/arc-types/src/models/UrlHistory';
 import {
   ARCEntityChangeRecord,
   ARCModelListOptions,

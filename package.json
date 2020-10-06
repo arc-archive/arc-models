@@ -1,7 +1,7 @@
 {
   "name": "@advanced-rest-client/arc-models",
   "description": "Event based access to ARC datastores",
-  "version": "4.1.12",
+  "version": "4.2.0",
   "license": "Apache-2.0",
   "main": "index.js",
   "module": "index.js",
@@ -11,12 +11,10 @@
     "api"
   ],
   "authors": [
-    "Pawel Psztyc",
-    "The Advanced REST client authors <arc@mulesoft.com>"
+    "Pawel Psztyc"
   ],
   "contributors": [
-    "Pawel Psztyc",
-    "The Advanced REST client authors <arc@mulesoft.com>"
+    "Your name can be here!"
   ],
   "repository": {
     "type": "git",
@@ -27,35 +25,34 @@
     "email": "arc@mulesoft.com"
   },
   "dependencies": {
-    "@advanced-rest-client/arc-electron-payload-processor": "^0.4.0",
+    "@advanced-rest-client/arc-electron-payload-processor": "^1.0.0",
+    "@advanced-rest-client/arc-url": "^0.1.1",
     "@advanced-rest-client/pouchdb-quick-search": "^2.0.3",
-    "@advanced-rest-client/url-parser": "^3.1.0",
     "@advanced-rest-client/uuid-generator": "^3.1.0",
-    "@types/pouchdb": "^6.4.0",
     "pouchdb": "^7.2.2"
   },
   "devDependencies": {
     "@advanced-rest-client/arc-data-generator": "^3.1.9",
     "@advanced-rest-client/arc-demo-helper": "^2.2.0",
-    "@advanced-rest-client/arc-types": "^0.1.8",
+    "@advanced-rest-client/arc-types": "^0.2.1",
     "@advanced-rest-client/testing-karma-sl": "^1.4.2",
     "@anypoint-web-components/anypoint-button": "^1.1.1",
-    "@anypoint-web-components/anypoint-checkbox": "^1.1.2",
+    "@anypoint-web-components/anypoint-checkbox": "^1.1.3",
     "@anypoint-web-components/anypoint-input": "^0.2.21",
-    "@api-components/http-method-label": "^3.1.1",
+    "@api-components/http-method-label": "^3.1.2",
     "@open-wc/eslint-config": "^3.0.0",
-    "@open-wc/testing": "^2.5.27",
-    "@open-wc/testing-karma": "^4.0.6",
+    "@open-wc/testing": "^2.5.29",
+    "@open-wc/testing-karma": "^4.0.8",
     "@polymer/paper-toast": "^3.0.0",
     "@types/har-format": "^1.2.4",
+    "@types/pouchdb": "^6.4.0",
     "chance": "^1.1.7",
     "deepmerge": "^4.2.2",
-    "es-dev-server": "^1.57.5",
+    "es-dev-server": "^1.57.7",
     "eslint": "^7.10.0",
     "eslint-config-prettier": "^6.12.0",
     "husky": "^4.3.0",
     "lint-staged": "^10.4.0",
-    "prettier": "^2.1.2",
     "sinon": "^9.1.0",
     "typescript": "^4.0.3",
     "typescript-lit-html-plugin": "^0.9.0"
@@ -64,14 +61,13 @@
     "start": "es-dev-server --app-index demo/index.html --node-resolve --open --watch",
     "lint:eslint": "eslint --ext .js,.html . --ignore-path .gitignore",
     "format:eslint": "eslint --ext .js,.html . --fix --ignore-path .gitignore",
-    "lint:prettier": "prettier \"**/*.js\" --check --ignore-path .gitignore",
-    "format:prettier": "prettier \"**/*.js\" --write --ignore-path .gitignore",
     "lint:types": "tsc",
-    "lint": "npm run lint:eslint && npm run lint:prettier",
-    "format": "npm run format:eslint && npm run format:prettier",
+    "lint": "npm run lint:eslint",
+    "format": "npm run format:eslint",
     "test": "karma start --coverage",
     "test:watch": "karma start --auto-watch=true --single-run=false",
-    "test:sl": "karma start karma.sl.config.js --compatibility auto --coverage"
+    "test:sl": "karma start karma.sl.config.js --compatibility auto --coverage",
+    "gen:wc": "wca analyze \"*.js\" --outFile custom-elements.json"
   },
   "eslintConfig": {
     "extends": [
@@ -100,10 +96,6 @@
         }
       }
     ]
-  },
-  "prettier": {
-    "singleQuote": true,
-    "arrowParens": "always"
   },
   "husky": {
     "hooks": {

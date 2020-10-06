@@ -5,7 +5,7 @@ import { ArcModelEventTypes } from '../../src/events/ArcModelEventTypes.js';
 import { ArcModelEvents } from '../../src/events/ArcModelEvents.js';
 
 /** @typedef {import('../../src/HostRulesModel').HostRulesModel} HostRulesModel */
-/** @typedef {import('../../src/HostRulesModel').ARCHostRule} ARCHostRule */
+/** @typedef {import('@advanced-rest-client/arc-types').HostRule.ARCHostRule} ARCHostRule */
 
 describe('<host-rules-model> - Events based', () => {
   const generator = new DataGenerator();

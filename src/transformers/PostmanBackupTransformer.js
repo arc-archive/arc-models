@@ -234,7 +234,7 @@ export class PostmanBackupTransformer extends PostmanTransformer {
       enabled: item.enabled || true,
       environment,
       value: this.ensureVariablesSyntax(item.value),
-      variable: item.key
+      name: item.key,
     };
     return result;
   }

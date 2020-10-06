@@ -5,7 +5,7 @@ import '../../host-rules-model.js';
 import { ArcModelEventTypes } from '../../src/events/ArcModelEventTypes.js';
 
 /** @typedef {import('../../src/HostRulesModel').HostRulesModel} HostRulesModel */
-/** @typedef {import('../../src/HostRulesModel').ARCHostRule} ARCHostRule */
+/** @typedef {import('@advanced-rest-client/arc-types').HostRule.ARCHostRule} ARCHostRule */
 /* eslint-disable no-param-reassign */
 
 describe('<host-rules-model>', () => {
@@ -140,7 +140,7 @@ describe('<host-rules-model>', () => {
         assert.isTrue(spy.calledOnce);
       });
 
-      it('has change reord on the state event', async () => {
+      it('has change record on the state event', async () => {
         const spy = sinon.spy();
         element.addEventListener(ArcModelEventTypes.HostRules.State.delete, spy);
         await element.delete(dataObj._id, dataObj._rev);

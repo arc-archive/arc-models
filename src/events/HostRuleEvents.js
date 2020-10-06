@@ -3,7 +3,7 @@ import { ArcModelEventTypes } from './ArcModelEventTypes.js';
 import { ARCEntityDeletedEvent, ARCEntityListEvent } from './BaseEvents.js';
 
 /** @typedef {import('../types').ARCEntityChangeRecord} ARCEntityChangeRecord */
-/** @typedef {import('../HostRulesModel').ARCHostRule} ARCHostRule */
+/** @typedef {import('@advanced-rest-client/arc-types').HostRule.ARCHostRule} ARCHostRule */
 /** @typedef {import('../types').ARCModelListOptions} ARCModelListOptions */
 /** @typedef {import('../types').ARCModelListResult} ARCModelListResult */
 /** @typedef {import('../types').DeletedEntity} DeletedEntity */

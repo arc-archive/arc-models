@@ -1,6 +1,6 @@
+import { RestApi } from '@advanced-rest-client/arc-types';
 import { ArcBaseModel } from './ArcBaseModel';
 import {
-  Entity,
   ARCModelListOptions,
   ARCModelListResult,
   ARCEntityChangeRecord,
@@ -19,48 +19,6 @@ export const removeVersion: symbol;
 export const removeVersions: symbol;
 export const deleteIndexModel: symbol;
 export const deleteDataModel: symbol;
-
-export declare interface ARCRestApiIndex extends Entity {
-  /**
-   * API title
-   */
-  title: string;
-  /**
-   * API media type
-   */
-  type: string;
-  /**
-   * API order on the list
-   */
-  order: number;
-  /**
-   * List of version names stored with this API.
-   */
-  versions: string[];
-  /**
-   * The latest added version name.
-   */
-  latest: string;
-}
-
-export declare interface ARCRestApi extends Entity {
-  /**
-   * The ID of the index item that this entry refers to.
-   */
-  indexId: string;
-  /**
-   * Version name of the API
-   */
-  version: string;
-  /**
-   * API data model. It is the output of the AMF parser run on the API.
-   */
-  data: string;
-  /**
-   * The AMF parser version used to parse this document.
-   */
-  amfVersion?: string;
-}
 
 /**
  * REST APIs model.
@@ -89,7 +47,7 @@ export declare class RestApiModel extends ArcBaseModel {
    * @param rev Specific revision to read. Defaults to latest revision.
    * @returns Promise resolved to an index object.
    */
-  readIndex(id: string, rev?: string): Promise<ARCRestApiIndex>;
+  readIndex(id: string, rev?: string): Promise<RestApi.ARCRestApiIndex>;
 
   /**
    * Creates / updates API index object.
@@ -97,7 +55,7 @@ export declare class RestApiModel extends ArcBaseModel {
    * @param doc PouchDB document.
    * @returns Promise resolved to a change record.
    */
-  updateIndex(doc: ARCRestApiIndex): Promise<ARCEntityChangeRecord<ARCRestApiIndex>>;
+  updateIndex(doc: RestApi.ARCRestApiIndex): Promise<ARCEntityChangeRecord<RestApi.ARCRestApiIndex>>;
 
   /**
    * Updates many index objects in one request.
@@ -105,7 +63,7 @@ export declare class RestApiModel extends ArcBaseModel {
    * @param docs List of PouchDB documents to update.
    * @returns Promise resolved to a list of the change records.
    */
-  updateIndexBatch(docs: ARCRestApiIndex[]): Promise<ARCEntityChangeRecord<ARCRestApiIndex>[]>
+  updateIndexBatch(docs: RestApi.ARCRestApiIndex[]): Promise<ARCEntityChangeRecord<RestApi.ARCRestApiIndex>[]>
 
   /**
    * Removes all AMF and index data from datastores for given index id.
@@ -121,7 +79,7 @@ export declare class RestApiModel extends ArcBaseModel {
    * @param opts Query options.
    * @returns A promise resolved to a list of REST APIs.
    */
-  list(opts?: ARCModelListOptions): Promise<ARCModelListResult<ARCRestApiIndex>>;
+  list(opts?: ARCModelListOptions): Promise<ARCModelListResult<RestApi.ARCRestApiIndex>>;
 
   /**
    * Reads an entry from the raml data datastore.
@@ -130,7 +88,7 @@ export declare class RestApiModel extends ArcBaseModel {
    * @param rev Specific revision to read. Defaults to latest revision.
    * @returns Promise resolved to a project object.
    */
-  readData(id: string, rev?: string): Promise<ARCRestApi>;
+  readData(id: string, rev?: string): Promise<RestApi.ARCRestApi>;
 
   /**
    * Creates / updates API data object.
@@ -138,7 +96,7 @@ export declare class RestApiModel extends ArcBaseModel {
    * @param entity The entity to update.
    * @returns Promise resolved to a change record.
    */
-  updateData(entity: ARCRestApi): Promise<ARCEntityChangeRecord<ARCRestApi>>;
+  updateData(entity: RestApi.ARCRestApi): Promise<ARCEntityChangeRecord<RestApi.ARCRestApi>>;
 
   /**
    * Removes information about version from ARC data datastore and from index

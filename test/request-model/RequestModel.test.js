@@ -10,9 +10,9 @@ import { UrlIndexer } from '../../index.js';
 /* eslint-disable prefer-destructuring */
 
 /** @typedef {import('../../index').RequestModel} RequestModel */
-/** @typedef {import('../../src/RequestTypes').ARCHistoryRequest} ARCHistoryRequest */
-/** @typedef {import('../../src/RequestTypes').ARCSavedRequest} ARCSavedRequest */
-/** @typedef {import('../../src/RequestTypes').ARCProject} ARCProject */
+/** @typedef {import('@advanced-rest-client/arc-types').Project.ARCProject} ARCProject */
+/** @typedef {import('@advanced-rest-client/arc-types').ArcRequest.ARCSavedRequest} ARCSavedRequest */
+/** @typedef {import('@advanced-rest-client/arc-types').ArcRequest.ARCHistoryRequest} ARCHistoryRequest */
 /** @typedef {import('@advanced-rest-client/arc-data-generator').InsertSavedResult} InsertSavedResult */
 
 describe('RequestModel', () => {
@@ -77,12 +77,20 @@ describe('RequestModel', () => {
 
       it('restores payload data', async () => {
         const spy = sinon.spy(PayloadProcessor, 'restorePayload');
-        await model.get(type, requests[0]._id, null, {
-          restorePayload: true,
-        });
+        await model.get(type, requests[0]._id);
         // @ts-ignore
         PayloadProcessor.restorePayload.restore();
         assert.isTrue(spy.called);
+      });
+
+      it('ignores restoring payload when configured', async () => {
+        const spy = sinon.spy(PayloadProcessor, 'restorePayload');
+        await model.get(type, requests[0]._id, null, {
+          ignorePayload: true,
+        });
+        // @ts-ignore
+        PayloadProcessor.restorePayload.restore();
+        assert.isFalse(spy.called);
       });
     });
 
@@ -161,12 +169,21 @@ describe('RequestModel', () => {
     it('restores payload on each request', async () => {
       const ids = requests.slice(0, 5).map((item) => item._id);
       const spy = sinon.spy(PayloadProcessor, 'restorePayload');
-      await model.getBulk(type, ids, {
-        restorePayload: true,
-      });
+      await model.getBulk(type, ids);
       // @ts-ignore
       PayloadProcessor.restorePayload.restore();
       assert.equal(spy.callCount, 5);
+    });
+
+    it('removes payload when instructed', async () => {
+      const ids = requests.slice(0, 5).map((item) => item._id);
+      const spy = sinon.spy(PayloadProcessor, 'restorePayload');
+      await model.getBulk(type, ids, {
+        ignorePayload: true,
+      });
+      // @ts-ignore
+      PayloadProcessor.restorePayload.restore();
+      assert.isFalse(spy.called);
     });
 
     it('normalizes the requests', async () => {
@@ -351,10 +368,13 @@ describe('RequestModel', () => {
     });
 
     it('adds "created" property', async () => {
-      const insert = /** @type InsertSavedResult */ (generator.generateSavedRequestData());
+      const insert = /** @type InsertSavedResult */ (generator.generateSavedRequestData({
+        requestsSize: 1
+      }));
       const requests = /** @type ARCSavedRequest[] */ (insert.requests);
       delete requests[0].created;
       const result = await model.postBulk('saved', requests);
+      // console.log(result[0].item);
       assert.typeOf(result[0].item.created, 'number');
     });
 
@@ -821,7 +841,7 @@ describe('RequestModel', () => {
 
     it('Calls getBulk() with arguments', async () => {
       const spy = sinon.spy(model, 'getBulk');
-      const opts = { restorePayload: true };
+      const opts = { ignorePayload: true };
       await model.readProjectRequests(project._id, opts);
       assert.isTrue(spy.called);
       assert.equal(spy.args[0][0], 'saved');

@@ -27,9 +27,9 @@ if (typeof PouchDB !== 'undefined' && typeof PouchQuickSearch !== 'undefined') {
   PouchDB.plugin(PouchQuickSearch);
 }
 
-/** @typedef {import('./RequestTypes').ARCProject} ARCProject */
-/** @typedef {import('./RequestTypes').ARCSavedRequest} ARCSavedRequest */
-/** @typedef {import('./RequestTypes').ARCHistoryRequest} ARCHistoryRequest */
+/** @typedef {import('@advanced-rest-client/arc-types').Project.ARCProject} ARCProject */
+/** @typedef {import('@advanced-rest-client/arc-types').ArcRequest.ARCSavedRequest} ARCSavedRequest */
+/** @typedef {import('@advanced-rest-client/arc-types').ArcRequest.ARCHistoryRequest} ARCHistoryRequest */
 /** @typedef {import('./types').ARCEntityChangeRecord} ARCEntityChangeRecord */
 /** @typedef {import('./types').DeletedEntity} DeletedEntity */
 /** @typedef {import('./events/BaseEvents').ARCModelDeleteEvent} ARCModelDeleteEvent */
