@@ -406,14 +406,14 @@ describe('VariablesModel', () => {
         const record = await element.updateVariable(entity);
         const result = await element.variableDb.get(record.id);
         assert.typeOf(result, 'object');
-        assert.equal(result.name, entity.variable);
+        assert.equal(result.name, entity.name);
         assert.equal(result.value, entity.value);
         assert.equal(result.environment, entity.environment);
       });
 
       it('throws when no variable', async () => {
         const entity = /** @type ARCVariable */ (generator.generateVariableObject());
-        delete entity.variable;
+        delete entity.name;
         let thrown = false;
         try {
           await element.updateVariable(entity);

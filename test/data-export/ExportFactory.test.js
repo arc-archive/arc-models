@@ -3,6 +3,10 @@ import 'chance/dist/chance.min.js';
 import { DataGenerator } from '@advanced-rest-client/arc-data-generator';
 import { ExportFactory } from '../../src/lib/ExportFactory.js';
 
+/* global PouchDB */
+/** @typedef {import('@advanced-rest-client/arc-types').ArcRequest.ARCSavedRequest} ARCSavedRequest */
+/** @typedef {import('@advanced-rest-client/arc-types').ArcRequest.ARCHistoryRequest} ARCHistoryRequest */
+
 describe('ExportFactory', () => {
   const generator = new DataGenerator();
 
@@ -81,6 +85,29 @@ describe('ExportFactory', () => {
         });
         const requests = getData(result, 'requests');
         assert.lengthOf(requests, 4100, 'has all requests');
+      });
+
+      it('transforms legacy authorization to new authorization object', async () => {
+        const db = new PouchDB('saved-requests');
+        const response = await db.allDocs({
+          include_docs: true,
+          limit: 1,
+        });
+        const request = /** @type ARCSavedRequest */ (response.rows[0].doc);
+        const id = request._id;
+        // @ts-ignore
+        request.authType = 'client certificate';
+        // @ts-ignore
+        request.auth = { id: 'some-id' };
+        await db.put(request);
+        const result = await factory.getExportData({
+          requests: true,
+        });
+        const requests = getData(result, 'requests');
+        const item = requests.find((r) => r._id, id);
+        assert.isUndefined(item.authType, 'authType is removed');
+        assert.isUndefined(item.auth, 'auth is removed');
+        assert.typeOf(item.authorization, 'array', 'authorization is set');
       });
     });
 
@@ -177,6 +204,29 @@ describe('ExportFactory', () => {
         });
         const projects = getData(result, 'history');
         assert.lengthOf(projects, 2100, 'has all requests');
+      });
+
+      it('transforms legacy authorization to new authorization object', async () => {
+        const db = new PouchDB('history-requests');
+        const response = await db.allDocs({
+          include_docs: true,
+          limit: 1,
+        });
+        const request = /** @type ARCHistoryRequest */ (response.rows[0].doc);
+        const id = request._id;
+        // @ts-ignore
+        request.authType = 'client certificate';
+        // @ts-ignore
+        request.auth = { id: 'some-id' };
+        await db.put(request);
+        const result = await factory.getExportData({
+          history: true,
+        });
+        const requests = getData(result, 'history');
+        const item = requests.find((r) => r._id, id);
+        assert.isUndefined(item.authType, 'authType is removed');
+        assert.isUndefined(item.auth, 'auth is removed');
+        assert.typeOf(item.authorization, 'array', 'authorization is set');
       });
     });
 
@@ -359,7 +409,6 @@ describe('ExportFactory', () => {
         assert.typeOf(certData, 'object', 'has the data object');
         assert.typeOf(item._id, 'string', 'has the _id');
         assert.typeOf(item._rev, 'string', 'has the _rev');
-        assert.typeOf(item.dataKey, 'string', 'has cnt property');
         assert.typeOf(certData.cert, 'object', 'has cert property');
       });
 
@@ -458,7 +507,7 @@ describe('ExportFactory', () => {
         assert.typeOf(item, 'object', 'has the index object');
         assert.typeOf(item._id, 'string', 'has the _id');
         assert.typeOf(item._rev, 'string', 'has the _rev');
-        assert.typeOf(item.variable, 'string', 'has variable property');
+        assert.typeOf(item.name, 'string', 'has name property');
       });
 
       it('gets large amount of data', async () => {

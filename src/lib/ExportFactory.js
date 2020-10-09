@@ -1,12 +1,16 @@
+/* eslint-disable no-param-reassign */
 import {
   getDatabaseEntries,
   processRequestsArray,
 } from './DbUtils.js';
+import { normalizeRequest } from '../Utils.js';
 
 /** @typedef {import('@advanced-rest-client/arc-types').DataExport.ArcNativeDataExport} ArcNativeDataExport */
 /** @typedef {import('@advanced-rest-client/arc-types').DataExport.ArcExportProcessedData} ArcExportProcessedData */
 /** @typedef {import('@advanced-rest-client/arc-types').DataExport.ExportKey} ExportKey */
 /** @typedef {import('@advanced-rest-client/arc-types').DataExport.ArcExportClientCertificateData} ArcExportClientCertificateData */
+/** @typedef {import('@advanced-rest-client/arc-types').ClientCertificate.ARCClientCertificate} ARCClientCertificate */
+/** @typedef {import('@advanced-rest-client/arc-types').ClientCertificate.ARCCertificateIndex} ARCCertificateIndex */
 
 /**
  * Maps export key from the event to database name.
@@ -97,12 +101,16 @@ export class ExportFactory {
       key,
       data: [],
     };
+    const normalize = ['requests', 'history'].includes(key)
     if (typeof value === 'boolean' && value) {
       if (key === 'clientcertificates') {
         result.data = await this.getClientCertificatesEntries();
       } else {
         const dbName = getDatabaseName(key);
         result.data = await getDatabaseEntries(dbName, this.dbChunk);
+        if (normalize) {
+          result.data = result.data.map((request) => normalizeRequest(request));
+        }
       }
     } else if (Array.isArray(value) && value.length) {
       result.data = value.map((item) => ({ ...item}));
@@ -114,20 +122,24 @@ export class ExportFactory {
    * @return {Promise<ArcExportClientCertificateData[]|undefined>}
    */
   async getClientCertificatesEntries() {
-    const indexData = await getDatabaseEntries('client-certificates', this.dbChunk);
+    const indexData = /** @type ARCCertificateIndex[] */ (await getDatabaseEntries('client-certificates', this.dbChunk));
     if (!indexData.length) {
       return undefined;
     }
-    const data = await getDatabaseEntries('client-certificates-data', this.dbChunk);
+    const data = /** @type ARCClientCertificate[] */ (await getDatabaseEntries('client-certificates-data', this.dbChunk));
     const result = [];
     indexData.forEach((item) => {
-      const { dataKey } = item;
-      const index = data.findIndex((cdata) => cdata._id === dataKey);
+      const { dataKey, _id } = item;
+      const id = dataKey || _id;
+      if (dataKey) {
+        delete item.dataKey;
+      }
+      const index = data.findIndex((cdata) => cdata._id === id);
       if (index >= 0) {
-        result[result.length] = {
+        result[result.length] = /** @type ArcExportClientCertificateData */ ({
           item,
           data: data[index],
-        }
+        });
         data.splice(index, 1);
       }
     });

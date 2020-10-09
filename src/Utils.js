@@ -5,6 +5,7 @@
 /** @typedef {import('@advanced-rest-client/arc-types').ArcRequest.ARCHistoryRequest} ARCHistoryRequest */
 /** @typedef {import('./types').DeletedEntity} DeletedEntity */
 /** @typedef {import('./types').ARCEntityChangeRecord} ARCEntityChangeRecord */
+/** @typedef {import('@advanced-rest-client/arc-types').ArcRequest.RequestAuthorization} RequestAuthorization */
 
 /**
  * Computes past midnight for given timestamp.
@@ -77,6 +78,31 @@ export function generateHistoryId(request) {
 }
 
 /**
+ * Normalizes authorization object to a current one.
+ *
+ * @param {ARCHistoryRequest} request Request to process
+ * @return {ARCHistoryRequest} Copy of the request
+ */
+export function normalizeAuthorization(request) {
+  // @ts-ignore
+  const { auth={}, authType } = request;
+  if (!authType) {
+    return request;
+  }
+  const requestAuth = /** @type RequestAuthorization */({
+    config: auth,
+    enabled: true,
+    type: authType,
+  });
+  const copy = { ...request };
+  copy.authorization = [requestAuth];
+  delete copy.auth;
+  // @ts-ignore
+  delete copy.authType;
+  return copy;
+}
+
+/**
  * Normalizes request object to whatever the app is currently using.
  *
  * @param {ARCHistoryRequest|ARCSavedRequest} request
@@ -127,7 +153,7 @@ export function normalizeRequest(request) {
   if (request.type === 'history' && !request._id) {
     request._id = generateHistoryId(request);
   }
-  return request;
+  return normalizeAuthorization(request);
 }
 
 /**

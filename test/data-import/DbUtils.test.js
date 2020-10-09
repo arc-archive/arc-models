@@ -8,9 +8,11 @@ import {
   processRequestsArray,
 } from '../../src/lib/DbUtils.js';
 
+/** @typedef {import('@advanced-rest-client/arc-types').ArcRequest.ARCSavedRequest} ARCSavedRequest */
+
 /* global PouchDB */
 
-describe('Utils', () => {
+describe('DbUtils', () => {
   const generator = new DataGenerator();
 
   describe('getEntry()', () => {
@@ -32,8 +34,8 @@ describe('Utils', () => {
       assert.isTrue(result.test);
     });
 
-    it('returens undefined when no object', async () => {
-      const result = await getEntry(dbName, 'unknwon');
+    it('returns undefined when no object', async () => {
+      const result = await getEntry(dbName, 'unknown');
       assert.isUndefined(result);
     });
   });
@@ -135,7 +137,7 @@ describe('Utils', () => {
       assert.equal(result, null);
     });
 
-    it('rerads certificate data from the store', async () => {
+    it('reads certificate data from the store', async () => {
       const id = created[0]._id;
       const result = await readClientCertificateIfNeeded(id);
       assert.typeOf(result, 'object', 'has the result');
@@ -156,27 +158,76 @@ describe('Utils', () => {
       await generator.destroyClientCertificates();
     });
 
-    it('returns certificates the are not already defined', async () => {
+    it('returns certificates for the legacy system', async () => {
       const { requests } = generator.generateSavedRequestData({
         requestsSize: 3,
       });
+      // @ts-ignore
       requests[0].authType = 'client certificate';
+      // @ts-ignore
       requests[0].auth = { id: created[0]._id };
+      // @ts-ignore
       requests[1].authType = 'basic';
+      // @ts-ignore
       delete requests[2].authType;
       const result = await processRequestsArray(requests, []);
       assert.typeOf(result, 'array');
       assert.lengthOf(result, 1);
     });
 
-    it('ignores when certificate in already defined', async () => {
-      const { requests } = generator.generateSavedRequestData({
+    it('returns certificates the are not already defined', async () => {
+      const requests = /** @type ARCSavedRequest[] */ (generator.generateSavedRequestData({
         requestsSize: 3,
-      });
-      requests[0].authType = 'client certificate';
-      requests[0].auth = { id: created[0]._id };
-      requests[1].authType = 'basic';
-      delete requests[2].authType;
+      }).requests);
+
+      requests[0].authorization = [
+        {
+          type: 'client certificate',
+          enabled: true,
+          config: {
+            id: created[0]._id,
+          }
+        }
+      ];
+      requests[1].authorization = [
+        {
+          type: 'basic',
+          enabled: true,
+          config: {
+            username: 'test',
+          }
+        }
+      ];
+      delete requests[2].authorization;
+      const result = await processRequestsArray(requests, []);
+      assert.typeOf(result, 'array');
+      assert.lengthOf(result, 1);
+    });
+
+    it('ignores when certificate in already defined', async () => {
+      const requests = /** @type ARCSavedRequest[] */ (generator.generateSavedRequestData({
+        requestsSize: 3,
+      }).requests);
+
+      requests[0].authorization = [
+        {
+          type: 'client certificate',
+          enabled: true,
+          config: {
+            id: created[0]._id,
+          }
+        }
+      ];
+      requests[1].authorization = [
+        {
+          type: 'basic',
+          enabled: true,
+          config: {
+            username: 'test',
+          }
+        }
+      ];
+      delete requests[2].authorization;
       const result = await processRequestsArray(requests, created.map((cert) => {
         return {
           item: cert,

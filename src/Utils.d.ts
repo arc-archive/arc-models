@@ -69,3 +69,11 @@ export declare function findNotDeleted<T>(db: PouchDB.Database, items: DeletedEn
  * @returns Resolved promise with restored objects. Objects have updated `_rev` property.
  */
 export declare function revertDelete<T>(db: PouchDB.Database, items: DeletedEntity[]): Promise<ARCEntityChangeRecord<T>[]>;
+
+/**
+ * Normalizes authorization object to a current one.
+ *
+ * @param request Request to process
+ * @return Copy of the request
+ */
+export declare function normalizeAuthorization(request: ArcRequest.ARCHistoryRequest): ArcRequest.ARCHistoryRequest;

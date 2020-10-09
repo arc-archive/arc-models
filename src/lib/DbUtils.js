@@ -2,8 +2,15 @@
 /* eslint-disable no-param-reassign */
 /* global PouchDB */
 
+import { normalizeAuthorization } from '../Utils.js';
+
 /** @typedef {import('@advanced-rest-client/arc-types').DataExport.ArcExportClientCertificateData} ArcExportClientCertificateData */
 /** @typedef {import('./DbUtils').PageResult} PageResult */
+/** @typedef {import('@advanced-rest-client/arc-types').ClientCertificate.ARCClientCertificate} ARCClientCertificate */
+/** @typedef {import('@advanced-rest-client/arc-types').ClientCertificate.ARCCertificateIndex} ARCCertificateIndex */
+/** @typedef {import('@advanced-rest-client/arc-types').ArcRequest.ARCHistoryRequest} ARCHistoryRequest */
+/** @typedef {import('@advanced-rest-client/arc-types').ArcRequest.RequestAuthorization} RequestAuthorization */
+/** @typedef {import('@advanced-rest-client/arc-types').Authorization.CCAuthorization} CCAuthorization */
 
 /**
  * Safely reads a datastore entry. It returns undefined if the entry does not exist.
@@ -99,11 +106,15 @@ export async function readClientCertificateIfNeeded(id, certificates) {
       return null;
     }
   }
-  const index = await getEntry('client-certificates', id);
+  const index = /** @type ARCCertificateIndex */ (await getEntry('client-certificates', id));
   if (!index) {
     return null;
   }
-  const data = await getEntry('client-certificates-data', index.dataKey);
+  const indexId = index.dataKey || index._id;
+  if (index.dataKey) {
+    delete index.dataKey;
+  }
+  const data = /** @type ARCClientCertificate */ (await getEntry('client-certificates-data', indexId));
   if (!data) {
     return null;
   }
@@ -113,11 +124,13 @@ export async function readClientCertificateIfNeeded(id, certificates) {
   }
 }
 
+
+
 /**
  * Processes request data for required export properties after the data
  * has been received from the data store but before creating export object.
  *
- * @param {object[]} requests A list of requests to process
+ * @param {ARCHistoryRequest[]} requests A list of requests to process
  * @param {ArcExportClientCertificateData[]} certificates The list of read certificates
  * @return {Promise<ArcExportClientCertificateData[]>} Promise resolved to altered list of requests.
  */
@@ -126,13 +139,20 @@ export async function processRequestsArray(requests, certificates) {
     if (!item) {
       return undefined;
     }
-    const { auth={}, authType } = item;
-    if (!auth || authType !== 'client certificate') {
+    const request = normalizeAuthorization(item);
+    const { authorization } = request;
+    if (!Array.isArray(authorization) || !authorization.length) {
       return undefined;
     }
-    const cc = await readClientCertificateIfNeeded(auth.id, certificates);
-    delete auth.id;
-    return cc;
+    const auth = authorization.find((a) => a.type === 'client certificate');
+    if (!auth) {
+      return undefined;
+    }
+    const cnf = /** @type CCAuthorization */ (auth.config);
+    if (!cnf) {
+      return undefined;
+    }
+    return readClientCertificateIfNeeded(cnf.id, certificates);
   });
   const data = await Promise.all(ps);
   return data.filter((item) => !!item);
