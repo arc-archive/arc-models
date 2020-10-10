@@ -124,8 +124,6 @@ export async function readClientCertificateIfNeeded(id, certificates) {
   }
 }
 
-
-
 /**
  * Processes request data for required export properties after the data
  * has been received from the data store but before creating export object.

@@ -14,6 +14,8 @@ import { UrlIndexer } from '../../index.js';
 /** @typedef {import('@advanced-rest-client/arc-types').ArcRequest.ARCSavedRequest} ARCSavedRequest */
 /** @typedef {import('@advanced-rest-client/arc-types').ArcRequest.ARCHistoryRequest} ARCHistoryRequest */
 /** @typedef {import('@advanced-rest-client/arc-data-generator').InsertSavedResult} InsertSavedResult */
+/** @typedef {import('@advanced-rest-client/arc-types').ArcResponse.TransformedPayload} TransformedPayload */
+/** @typedef {import('@advanced-rest-client/arc-types').ArcResponse.Response} Response */
 
 describe('RequestModel', () => {
   /**
@@ -91,6 +93,21 @@ describe('RequestModel', () => {
         // @ts-ignore
         PayloadProcessor.restorePayload.restore();
         assert.isFalse(spy.called);
+      });
+
+      it('restores TransformedPayload object', async () => {
+        const request = /** @type ARCSavedRequest */ (generator.generateSavedItem());
+        const response = generator.generateResponse({ noBody: true });
+        const data = [116, 0, 101, 0, 115, 0, 116, 0, 32, 0, 112, 0, 97, 0, 121, 0, 108, 0, 111, 0, 97, 0, 100, 0];
+        const payload = /** @type TransformedPayload */({
+          type: 'ArrayBuffer',
+          data,
+        });
+        response.payload = payload;
+        request.response = response;
+        const record = await model.savedDb.post(request);
+        const result = await model.get(type, record.id);
+        assert.typeOf(result.response.payload, 'ArrayBuffer');
       });
     });
 
@@ -196,6 +213,21 @@ describe('RequestModel', () => {
       assert.typeOf(result[0].updated, 'number');
       assert.typeOf(result[0].created, 'number');
       assert.typeOf(result[0].midnight, 'number');
+    });
+
+    it('restores TransformedPayload object', async () => {
+      const request = /** @type ARCSavedRequest */ (generator.generateSavedItem());
+      const response = generator.generateResponse({ noBody: true });
+      const data = [116, 0, 101, 0, 115, 0, 116, 0, 32, 0, 112, 0, 97, 0, 121, 0, 108, 0, 111, 0, 97, 0, 100, 0];
+      const payload = /** @type TransformedPayload */({
+        type: 'ArrayBuffer',
+        data,
+      });
+      response.payload = payload;
+      request.response = response;
+      const record = await model.historyDb.post(request);
+      const [result] = await model.getBulk(type, [record.id]);
+      assert.typeOf(result.response.payload, 'ArrayBuffer');
     });
   });
 

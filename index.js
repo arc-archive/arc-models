@@ -22,6 +22,7 @@ export { UrlHistoryModel } from './src/UrlHistoryModel.js';
 export { UrlIndexer } from './src/UrlIndexer.js';
 export { VariablesModel } from './src/VariablesModel.js';
 export { WebsocketUrlHistoryModel } from './src/WebsocketUrlHistoryModel.js';
+export { HistoryDataModel } from './src/HistoryDataModel.js';
 export { ArcModelEventTypes } from './src/events/ArcModelEventTypes.js';
 export { ArcModelEvents } from './src/events/ArcModelEvents.js';
 export {

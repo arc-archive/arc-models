@@ -13,6 +13,7 @@ the License.
 */
 
 import 'pouchdb/dist/pouchdb.js';
+import { TelemetryEvents } from '@advanced-rest-client/arc-events';
 import { ArcModelEventTypes } from './events/ArcModelEventTypes.js';
 import { ArcModelEvents } from './events/ArcModelEvents.js';
 
@@ -155,17 +156,7 @@ export class ArcBaseModel extends HTMLElement {
     } else {
       message = JSON.stringify(e);
     }
-    this.dispatchEvent(
-      new CustomEvent('send-analytics', {
-        bubbles: true,
-        composed: true,
-        detail: {
-          type: 'exception',
-          description: message,
-          fatal: true,
-        },
-      })
-    );
+    TelemetryEvents.exception(this, message, true);
     if (!noThrow) {
       throw e;
     }

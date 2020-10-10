@@ -6,6 +6,8 @@
 /** @typedef {import('./types').DeletedEntity} DeletedEntity */
 /** @typedef {import('./types').ARCEntityChangeRecord} ARCEntityChangeRecord */
 /** @typedef {import('@advanced-rest-client/arc-types').ArcRequest.RequestAuthorization} RequestAuthorization */
+/** @typedef {import('@advanced-rest-client/arc-types').ArcResponse.TransformedPayload} TransformedPayload */
+/** @typedef {import('@advanced-rest-client/arc-types').ArcResponse.Response} Response */
 
 /**
  * Computes past midnight for given timestamp.
@@ -264,4 +266,20 @@ export async function revertDelete(db, items) {
     records.push(record);
   });
   return records;
+}
+
+/**
+ * Transforms the `TransformedPayload` object to its original data type.
+ * @param {TransformedPayload} body
+ * @returns {Buffer|ArrayBuffer|undefined}
+ */
+export function restoreTransformedPayload(body) {
+  if (body.type === 'ArrayBuffer') {
+    const { buffer } = new Uint16Array(body.data);
+    return buffer;
+  }
+  if (body.type === 'Buffer') {
+    return Buffer.from(body.data);
+  }
+  return undefined;
 }

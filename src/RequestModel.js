@@ -15,7 +15,7 @@ import { v4 } from '@advanced-rest-client/uuid-generator';
 import { RequestBaseModel } from './RequestBaseModel.js';
 import '../url-indexer.js';
 import { UrlIndexer } from './UrlIndexer.js';
-import { normalizeRequest, cancelEvent, revertDelete } from './Utils.js';
+import { normalizeRequest, cancelEvent, revertDelete, restoreTransformedPayload } from './Utils.js';
 import { ArcModelEvents } from './events/ArcModelEvents.js';
 import { ArcModelEventTypes } from './events/ArcModelEventTypes.js';
 
@@ -138,6 +138,12 @@ export class RequestModel extends RequestBaseModel {
       delete request.payload;
     } else {
       request = PayloadProcessor.restorePayload(request);
+      if (request.response && request.response.payload) {
+        const p = request.response.payload;
+        if (p.type && p.data) {
+          request.response.payload = restoreTransformedPayload(p);
+        }
+      }
     }
     return normalizeRequest(request);
   }
@@ -171,6 +177,12 @@ export class RequestModel extends RequestBaseModel {
         delete request.payload;
       } else {
         request = PayloadProcessor.restorePayload(request);
+        if (request.response && request.response.payload) {
+          const p = request.response.payload;
+          if (p.type && p.data) {
+            request.response.payload = restoreTransformedPayload(p);
+          }
+        }
       }
       requests[requests.length] = normalizeRequest(request);
     });

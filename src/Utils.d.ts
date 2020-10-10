@@ -1,4 +1,4 @@
-import { ArcRequest } from '@advanced-rest-client/arc-types';
+import { ArcRequest, ArcResponse } from '@advanced-rest-client/arc-types';
 import { DeletedEntity, ARCEntityChangeRecord } from './types';
 
 /**
@@ -77,3 +77,8 @@ export declare function revertDelete<T>(db: PouchDB.Database, items: DeletedEnti
  * @return Copy of the request
  */
 export declare function normalizeAuthorization(request: ArcRequest.ARCHistoryRequest): ArcRequest.ARCHistoryRequest;
+
+/**
+ * Transforms the `TransformedPayload` object to its original data type.
+ */
+export function restoreTransformedPayload(body: ArcResponse.TransformedPayload): Buffer|ArrayBuffer|undefined;

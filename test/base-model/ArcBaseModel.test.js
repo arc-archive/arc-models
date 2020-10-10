@@ -1,5 +1,6 @@
 import { fixture, assert } from '@open-wc/testing';
 import * as sinon from 'sinon';
+import { TelemetryEventTypes } from '@advanced-rest-client/arc-events';
 import { ArcModelEventTypes } from '../../src/events/ArcModelEventTypes.js';
 import { ArcModelEvents } from '../../src/events/ArcModelEvents.js';
 import { ArcBaseModel, notifyDestroyed, deletemodelHandler } from '../../src/ArcBaseModel.js';
@@ -134,35 +135,30 @@ describe('ArcBaseModel', () => {
       });
     });
 
-    it('Do not throws an error when noThrow is set', () => {
+    it('does not throw when noThrow is set', () => {
       element._handleException(new Error('test'), true);
     });
 
-    it('Dispatches send-analytics event', () => {
+    it(`dispatches ${TelemetryEventTypes.exception} event`, () => {
       const spy = sinon.spy();
-      element.addEventListener('send-analytics', spy);
+      element.addEventListener(TelemetryEventTypes.exception, spy);
       element._handleException(new Error('test'), true);
       assert.isTrue(spy.called);
-      const ev = spy.args[0][0];
-      assert.isTrue(ev.bubbles, 'Event bubbles');
-      assert.isTrue(ev.composed, 'Event is composed');
-      assert.isFalse(ev.cancelable, 'Event is not cancelable');
     });
 
-    it('send-analytics event has exception details', () => {
+    it('the event has exception details', () => {
       const spy = sinon.spy();
-      element.addEventListener('send-analytics', spy);
+      element.addEventListener(TelemetryEventTypes.exception, spy);
       element._handleException(new Error('test'), true);
       assert.isTrue(spy.called);
       const { detail } = spy.args[0][0];
-      assert.equal(detail.type, 'exception', 'Type is set');
       assert.equal(detail.description, 'test', 'Message is set');
       assert.isTrue(detail.fatal, 'Is fatal exception');
     });
 
     it('Serializes non-error object', () => {
       const spy = sinon.spy();
-      element.addEventListener('send-analytics', spy);
+      element.addEventListener(TelemetryEventTypes.exception, spy);
       element._handleException({ test: true }, true);
       assert.isTrue(spy.called);
       const { detail } = spy.args[0][0];

@@ -21,6 +21,7 @@ export { ARCHostRule, HostRule } from '@advanced-rest-client/arc-types/src/model
 export { ProjectModel } from './src/ProjectModel';
 export { RequestModel } from './src/RequestModel';
 export { RestApiModel } from './src/RestApiModel';
+export { HistoryDataModel } from './src/HistoryDataModel';
 export { ARCRestApiIndex, ARCRestApi } from '@advanced-rest-client/arc-types/src/models/RestApi';
 export { HTTPRequest, ARCHistoryRequest, ARCSavedRequest, ARCRequestRestoreOptions, ArcEditorRequest, ArcStoredRequest, ArcBaseRequest } from '@advanced-rest-client/arc-types/src/request/ArcRequest';
 export { ARCProject } from '@advanced-rest-client/arc-types/src/models/Project';
