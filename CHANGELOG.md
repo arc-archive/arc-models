@@ -985,3 +985,32 @@
 * moving types to arc-types [acd8d7a](https://github.com/advanced-rest-client/arc-models/commit/acd8d7ae53396323194074ecc594bf3a190a2e36) by Pawel
 
 
+<a name="4.2.1"></a>
+## [4.2.1](https://github.com/advanced-rest-client/arc-models/compare/4.1.9...4.2.1) (2020-10-10)
+
+### Update
+
+* upgrading to the new types [0a5963c](https://github.com/advanced-rest-client/arc-models/commit/0a5963c74f012a1002c471bd21845078e72c0416) by Pawel
+* [ci skip] automated merge master->stage. syncing main branches [b3538c5](https://github.com/advanced-rest-client/arc-models/commit/b3538c567b616a54a58e46f164544107e38b15c0) by Ci agent
+* [ci skip] automated merge master->stage. syncing main branches [25df632](https://github.com/advanced-rest-client/arc-models/commit/25df6320f6fd7418b3426518fd646f5cf9e14d22) by Ci agent
+* [ci skip] automated merge master->stage. syncing main branches [f4bdb6b](https://github.com/advanced-rest-client/arc-models/commit/f4bdb6b71ff77a641a0b26f495557e345bf8ec79) by Ci agent
+* adding missing types export [bb2ae5a](https://github.com/advanced-rest-client/arc-models/commit/bb2ae5ad37feebad216a363eb04c49567e7716d6) by Pawel
+* [ci skip] automated merge master->stage. syncing main branches [ef8101f](https://github.com/advanced-rest-client/arc-models/commit/ef8101fd767e4a7a35c14fc1975f4349bf2a65c2) by Ci agent
+
+
+### Features
+
+* moving history savier here [6e34bf4](https://github.com/advanced-rest-client/arc-models/commit/6e34bf42f20be4ab7e56befcb7fdf0ed396362ef) by Pawel
+* cleaning requests when removing project [a270429](https://github.com/advanced-rest-client/arc-models/commit/a2704294c36d5f3aa1f1658b9e3ca9b9f8463257) by Pawel
+
+
+### Bug Fixes
+
+* fixing url indexer destory event handling [41b8393](https://github.com/advanced-rest-client/arc-models/commit/41b83930de701756ef0034eca327df1eb679a601) by Pawel Psztyc
+
+
+### Refactor
+
+* moving types to arc-types [acd8d7a](https://github.com/advanced-rest-client/arc-models/commit/acd8d7ae53396323194074ecc594bf3a190a2e36) by Pawel
+
+
