@@ -93,9 +93,12 @@ export const ArcModelEventTypes = {
     update: 'modelenvironmentupdate',
     delete: 'modelenvironmentdelete',
     list: 'modelenvironmentlist',
+    current: 'modelenvironmentcurrent',
+    select: 'modelenvironmentselect',
     State: {
       update: 'modelstateenvironmentupdate',
       delete: 'modelstateenvironmentdelete',
+      select: 'modelstateenvironmentselect'
     },
   },
   Variable: {

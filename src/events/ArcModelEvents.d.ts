@@ -21,7 +21,7 @@ import { ARCHostRule } from '@advanced-rest-client/arc-types/src/models/HostRule
 import { ARCClientCertificate } from '@advanced-rest-client/arc-types/src/models/ClientCertificate';
 import { ARCWebsocketUrlHistory, ARCUrlHistory } from '@advanced-rest-client/arc-types/src/models/UrlHistory';
 import { ARCVariable, ARCEnvironment } from '@advanced-rest-client/arc-types/src/models/Variable';
-import { ARCVariablesListOptions } from './VariableEvents';
+import { ARCVariablesListOptions, EnvironmentStateDetail } from './VariableEvents';
 import { ARCRestApi, ARCRestApiIndex } from '@advanced-rest-client/arc-types/src/models/RestApi';
 import { ARCProject } from '@advanced-rest-client/arc-types/src/models/Project';
 
@@ -547,6 +547,14 @@ declare interface EnvironmentStateFunctions {
    * @param rev Updated revision.
    */
   delete(target: EventTarget, id: string, rev: string): void;
+  /**
+   * Dispatches an event to read current environment information.
+   *
+   * @param target A node on which to dispatch the event.
+   * @param state Current environment state definition.
+   * @returns This has no side effects.
+   */
+  select(target: EventTarget, state: EnvironmentStateDetail): void;
 }
 
 declare interface EnvironmentFunctions {
@@ -582,6 +590,21 @@ declare interface EnvironmentFunctions {
    * @returns Model query result.
    */
   list(target: EventTarget, opts?: ARCVariablesListOptions): Promise<ARCModelListResult<ARCEnvironment>>;
+  /**
+   * Dispatches an event to read the current environment information.
+   *
+   * @param target A node on which to dispatch the event.
+   * @returns Promise resolved to the current environment definition.
+   */
+  current(target: EventTarget): Promise<EnvironmentStateDetail>;
+  /**
+   * Dispatches an event to read current environment information.
+   *
+   * @param target A node on which to dispatch the event.
+   * @param id The id of the environment to select. Falsy value if should select the default environment.
+   * @returns This has no side effects.
+   */
+  select(target: EventTarget, id: string): void;
   State: EnvironmentStateFunctions;
 }
 

@@ -110,6 +110,7 @@ declare interface UrlHistoryEvents {
 declare interface EnvironmentStateEvents {
   update: string;
   delete: string;
+  select: string;
 }
 
 declare interface EnvironmentEvents {
@@ -117,6 +118,8 @@ declare interface EnvironmentEvents {
   update: string;
   delete: string;
   list: string;
+  current: string;
+  select: string;
   State: EnvironmentStateEvents;
 }
 

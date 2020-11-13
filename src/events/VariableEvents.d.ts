@@ -13,12 +13,30 @@ import {
 } from '../types';
 import { ARCVariable, ARCEnvironment } from '@advanced-rest-client/arc-types/src/models/Variable';
 
-export const nameValue: symbol;
-export const environmentValue: symbol;
-export const environmentIdValue: symbol;
-export const variableValue: symbol;
-export const variableIdValue: symbol;
-export const changeRecordValue: symbol;
+export declare const nameValue: unique symbol;
+export declare const environmentValue: unique symbol;
+export declare const environmentIdValue: unique symbol;
+export declare const variableValue: unique symbol;
+export declare const variableIdValue: unique symbol;
+export declare const changeRecordValue: unique symbol;
+
+/**
+ * A definition fo the detail object for the environment change state event.
+ */
+export declare interface EnvironmentStateDetail {
+  /**
+   * The currently (new) selected environment. The components should use this value to select
+   * the environment if needed.
+   * Note, when the value is not set (has the `null` value) meant that selected environment is the `default`
+   * environment which has no representation in the data store.
+   */
+  environment: ARCEnvironment|null;
+  /**
+   * The list of variables associated with this environment. It my be an empty list
+   * when the environment has no variables.
+   */
+  variables: ARCVariable[];
+}
 
 export declare interface ARCVariablesListOptions extends ARCModelListOptions {
   /**
@@ -115,6 +133,37 @@ export class ARCEnvironmentListEvent extends ARCEntityListEvent<ARCEnvironment> 
   constructor(opts?: ARCVariablesListOptions);
 }
 
+
+/**
+ * An event dispatches when a component needs to read current environment details.
+ */
+export declare class ARCEnvironmentCurrentEvent extends CustomEvent<ARCModelReadEventDetail<EnvironmentStateDetail>> {
+  constructor();
+}
+
+/**
+ * An event dispatches when a user changes the environment. This event is to be dispatched
+ * by components to the variables model and the model informs other components about the change
+ * through the state event.
+ */
+export class ARCEnvironmentSelectEvent extends CustomEvent<string> {
+  /**
+   * @param id The ID of the environment to select. When not set it selects the default environment.
+   */
+  constructor(id?: string);
+}
+
+/**
+ * An event dispatches when the environment changed. It contains information about the current environment,
+ * and it's variables.
+ */
+export class ARCEnvironmentStateSelectEvent extends CustomEvent<EnvironmentStateDetail> {
+  /**
+   * @param detail The change record for the environment
+   */
+  constructor(detail: EnvironmentStateDetail);
+}
+
 /**
  * An event dispatched to the store to update a variable.
  */
@@ -148,7 +197,7 @@ export class ARCVariableUpdatedEvent extends CustomEvent<ARCEntityChangeRecord<A
 /**
  * An event dispatched to the store to delete a variable
  */
-export class ARCEVariableDeleteEvent extends CustomEvent<ARCModelDeleteEventDetail> {
+export class ARCVariableDeleteEvent extends CustomEvent<ARCModelDeleteEventDetail> {
   /**
    * The variable id used to initialize the event.
    */
@@ -256,6 +305,23 @@ export declare function deleteVariableAction(target: EventTarget, id: string): P
  */
 export declare function listVariableAction(target: EventTarget, name: string, opts?: ARCVariablesListOptions): Promise<ARCModelListResult<ARCVariable>>;
 
+/**
+ * Dispatches an event to read current environment information.
+ *
+ * @param target A node on which to dispatch the event.
+ * @returns Promise resolved to the current environment definition.
+ */
+export declare function currentEnvironmentAction(target: EventTarget): Promise<EnvironmentStateDetail>;
+
+/**
+ * Dispatches an event to read current environment information.
+ *
+ * @param target A node on which to dispatch the event.
+ * @param id The id of the environment to select. Falsy value if should select the default environment.
+ * @returns This has no side effects.
+ */
+export declare function selectEnvironmentAction(target: EventTarget, id: string): void;
+
 //
 // State events
 //
@@ -293,3 +359,12 @@ export declare function updatedVariableState(target: EventTarget, record: ARCEnt
  * @param rev Updated revision.
  */
 export declare function deletedVariableState(target: EventTarget, id: string, rev: string): void;
+
+/**
+ * Dispatches an event to read current environment information.
+ *
+ * @param target A node on which to dispatch the event.
+ * @param state Current environment state definition.
+ * @returns This has no side effects.
+ */
+export declare function environmentSelectedAction(target: EventTarget, state: EnvironmentStateDetail): void;

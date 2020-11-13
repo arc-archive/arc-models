@@ -374,6 +374,8 @@ describe('ArcModelEventTypes', () => {
       ['update', 'modelenvironmentupdate'],
       ['delete', 'modelenvironmentdelete'],
       ['list', 'modelenvironmentlist'],
+      ['current', 'modelenvironmentcurrent'],
+      ['select', 'modelenvironmentselect'],
     ].forEach(([prop, value]) => {
       it(`has ${prop} property`, () => {
         assert.equal(ArcModelEventTypes.Environment[prop], value);
@@ -394,6 +396,7 @@ describe('ArcModelEventTypes', () => {
     [
       ['update', 'modelstateenvironmentupdate'],
       ['delete', 'modelstateenvironmentdelete'],
+      ['select', 'modelstateenvironmentselect'],
     ].forEach(([prop, value]) => {
       it(`has ${prop} property`, () => {
         assert.equal(ArcModelEventTypes.Environment.State[prop], value);

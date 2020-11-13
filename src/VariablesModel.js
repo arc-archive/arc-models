@@ -31,9 +31,12 @@ import { ArcModelEvents } from './events/ArcModelEvents.js';
 /** @typedef {import('./events/VariableEvents').ARCEnvironmentDeleteEvent} ARCEnvironmentDeleteEvent */
 /** @typedef {import('./events/VariableEvents').ARCEnvironmentListEvent} ARCEnvironmentListEvent */
 /** @typedef {import('./events/VariableEvents').ARCVariableUpdateEvent} ARCVariableUpdateEvent */
-/** @typedef {import('./events/VariableEvents').ARCEVariableDeleteEvent} ARCEVariableDeleteEvent */
+/** @typedef {import('./events/VariableEvents').ARCVariableDeleteEvent} ARCVariableDeleteEvent */
 /** @typedef {import('./events/VariableEvents').ARCVariableListEvent} ARCVariableListEvent */
 /** @typedef {import('./events/VariableEvents').ARCVariablesListOptions} ARCVariablesListOptions */
+/** @typedef {import('./events/VariableEvents').EnvironmentStateDetail} EnvironmentStateDetail */
+/** @typedef {import('./events/VariableEvents').ARCEnvironmentSelectEvent} ARCEnvironmentSelectEvent */
+/** @typedef {import('./events/VariableEvents').ARCEnvironmentCurrentEvent} ARCEnvironmentCurrentEvent */
 /** @typedef {import('./events/BaseEvents').ARCModelDeleteEvent} ARCModelDeleteEvent */
 
 export const envReadHandler = Symbol('envReadHandler');
@@ -47,6 +50,10 @@ export const updateEnvironmentName = Symbol('updateEnvironmentName');
 export const deleteEnvironmentVariables = Symbol('deleteEnvironmentVariables');
 export const deleteEnvironmentsModel = Symbol('deleteEnvironmentsModel');
 export const deleteVariablesModel = Symbol('deleteVariablesModel');
+export const currentValue = Symbol('currentValue');
+export const environmentChangeHandler = Symbol('environmentChangeHandler');
+export const environmentCurrentHandler = Symbol('environmentCurrentHandler');
+export const selectEnvironment = Symbol('selectEnvironment');
 
 /**
  * Model for variables
@@ -71,6 +78,25 @@ export class VariablesModel extends ArcBaseModel {
     return new PouchDB('variables');
   }
 
+  /**
+   * @returns {string} The id of the currently selected environment or null when the default is selected.
+   */
+  get currentEnvironment() {
+    return this[currentValue] || null;
+  }
+
+  /**
+   * @param {string} value The id of the environment to select or null when the default is selected.
+   */
+  set currentEnvironment(value) {
+    const old = this[currentValue];
+    if (old === value || !old && !value) {
+      return;
+    }
+    this[currentValue] = value;
+    this[selectEnvironment]();
+  }
+
   constructor() {
     super();
     this[envReadHandler] = this[envReadHandler].bind(this);
@@ -80,6 +106,21 @@ export class VariablesModel extends ArcBaseModel {
     this[varUpdateHandler] = this[varUpdateHandler].bind(this);
     this[varDeleteHandler] = this[varDeleteHandler].bind(this);
     this[varListHandler] = this[varListHandler].bind(this);
+    this[environmentChangeHandler] = this[environmentChangeHandler].bind(this);
+    this[environmentCurrentHandler] = this[environmentCurrentHandler].bind(this);
+    /** 
+     * @type {string}
+     */
+    this[currentValue] = undefined;
+  }
+
+  /**
+   * Reads environment from the data store by its id.
+   * @param {string} id
+   * @return {Promise<ARCEnvironment>}
+   */
+  async getEnvironment(id) {
+    return this.environmentDb.get(id);
   }
 
   /**
@@ -456,6 +497,34 @@ export class VariablesModel extends ArcBaseModel {
   }
 
   /**
+   * Reads the current environment and it's variables.
+   * @returns {Promise<EnvironmentStateDetail>} The environment state object.
+   */
+  async readCurrent() {
+    const { currentEnvironment } = this;
+    const result = /** @type EnvironmentStateDetail */ ({
+      environment: null,
+      variables: [],
+    });
+    if (currentEnvironment) {
+      result.environment = await this.getEnvironment(currentEnvironment);
+    }
+    const name = result.environment ? result.environment.name : 'default';
+    const vars = await this.listAllVariables(name);
+    result.variables = vars.items;
+    return result;
+  }
+
+  /**
+   * A handler for the `currentEnvironment` property change.
+   * Reads the current state and informs the components about the change.
+   */
+  async [selectEnvironment]() {
+    const state = await this.readCurrent();
+    ArcModelEvents.Environment.State.select(this, state);
+  }
+
+  /**
    * Handler for destroy-model custom event.
    *
    * @param {ARCModelDeleteEvent} e
@@ -493,6 +562,8 @@ export class VariablesModel extends ArcBaseModel {
     node.addEventListener(ArcModelEventTypes.Environment.update, this[envUpdateHandler]);
     node.addEventListener(ArcModelEventTypes.Environment.delete, this[envDeleteHandler]);
     node.addEventListener(ArcModelEventTypes.Environment.list, this[envListHandler]);
+    node.addEventListener(ArcModelEventTypes.Environment.select, this[environmentChangeHandler]);
+    node.addEventListener(ArcModelEventTypes.Environment.current, this[environmentCurrentHandler]);
     node.addEventListener(ArcModelEventTypes.Variable.update, this[varUpdateHandler]);
     node.addEventListener(ArcModelEventTypes.Variable.delete, this[varDeleteHandler]);
     node.addEventListener(ArcModelEventTypes.Variable.list, this[varListHandler]);
@@ -504,6 +575,8 @@ export class VariablesModel extends ArcBaseModel {
     node.removeEventListener(ArcModelEventTypes.Environment.update, this[envUpdateHandler]);
     node.removeEventListener(ArcModelEventTypes.Environment.delete, this[envDeleteHandler]);
     node.removeEventListener(ArcModelEventTypes.Environment.list, this[envListHandler]);
+    node.removeEventListener(ArcModelEventTypes.Environment.select, this[environmentChangeHandler]);
+    node.removeEventListener(ArcModelEventTypes.Environment.current, this[environmentCurrentHandler]);
     node.removeEventListener(ArcModelEventTypes.Variable.update, this[varUpdateHandler]);
     node.removeEventListener(ArcModelEventTypes.Variable.delete, this[varDeleteHandler]);
     node.removeEventListener(ArcModelEventTypes.Variable.list, this[varListHandler]);
@@ -601,7 +674,7 @@ export class VariablesModel extends ArcBaseModel {
   /**
    * A handler for the variable delete custom event.
    *
-   * @param {ARCEVariableDeleteEvent} e
+   * @param {ARCVariableDeleteEvent} e
    */
   [varDeleteHandler](e) {
     if (e.defaultPrevented) {
@@ -635,5 +708,24 @@ export class VariablesModel extends ArcBaseModel {
         nextPageToken,
       });
     }
+  }
+  
+  /**
+   * A handler for the environment change event
+   *
+   * @param {ARCEnvironmentSelectEvent} e
+   */
+  [environmentChangeHandler](e) {
+    const id = e.detail;
+    this.currentEnvironment = id;
+  }
+
+  /**
+   * A handler for the current environment read event
+   *
+   * @param {ARCEnvironmentCurrentEvent} e
+   */
+  [environmentCurrentHandler](e) {
+    e.detail.result = this.readCurrent();
   }
 }

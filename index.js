@@ -122,9 +122,12 @@ export {
   ARCEnvironmentListEvent,
   ARCVariableUpdateEvent,
   ARCVariableUpdatedEvent,
-  ARCEVariableDeleteEvent,
+  ARCVariableDeleteEvent,
   ARCVariableDeletedEvent,
   ARCVariableListEvent,
+  ARCEnvironmentCurrentEvent,
+  ARCEnvironmentSelectEvent,
+  ARCEnvironmentStateSelectEvent,
 } from './src/events/VariableEvents.js';
 
 export { ExportProcessor } from './src/lib/ExportProcessor.js';

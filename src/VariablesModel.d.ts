@@ -1,11 +1,28 @@
 import { Variable } from '@advanced-rest-client/arc-types';
 import {ArcBaseModel} from './ArcBaseModel';
+import { ARCEnvironmentCurrentEvent, ARCEnvironmentSelectEvent, EnvironmentStateDetail } from './events/VariableEvents';
 import {
   DeletedEntity,
   ARCEntityChangeRecord,
   ARCModelListOptions,
   ARCModelListResult,
 } from './types';
+
+export declare const envReadHandler: unique symbol;
+export declare const envUpdateHandler: unique symbol;
+export declare const envDeleteHandler: unique symbol;
+export declare const envListHandler: unique symbol;
+export declare const varUpdateHandler: unique symbol;
+export declare const varDeleteHandler: unique symbol;
+export declare const varListHandler: unique symbol;
+export declare const updateEnvironmentName: unique symbol;
+export declare const deleteEnvironmentVariables: unique symbol;
+export declare const deleteEnvironmentsModel: unique symbol;
+export declare const deleteVariablesModel: unique symbol;
+export declare const currentValue: unique symbol;
+export declare const environmentChangeHandler: unique symbol;
+export declare const environmentCurrentHandler: unique symbol;
+export declare const selectEnvironment: unique symbol;
 
 /**
  * Model for variables
@@ -15,14 +32,24 @@ export declare class VariablesModel extends ArcBaseModel {
   /**
    * Handler to the environments database.
    */
-  readonly environmentDb: PouchDB.Database;
-
+  get environmentDb(): PouchDB.Database;
+  
   /**
    * Handler to the variables database.
    */
-  readonly variableDb: PouchDB.Database;
+  get variableDb(): PouchDB.Database;
+
+  /**
+   * The id of the currently selected environment or null when the default is selected.
+   */
+  currentEnvironment: string;
 
   constructor();
+
+  /**
+   * Reads environment from the data store by its id.
+   */
+  getEnvironment(id: string): Promise<Variable.ARCEnvironment>;
 
   /**
    * Reads the environment meta data.
@@ -112,6 +139,28 @@ export declare class VariablesModel extends ArcBaseModel {
    */
   deleteVariable(id: string): Promise<DeletedEntity>;
 
+  /**
+   * Reads the current environment and it's variables.
+   * @returns The environment state object.
+   */
+  readCurrent(): Promise<EnvironmentStateDetail>;
+
+  /**
+   * A handler for the `currentEnvironment` property change.
+   * Reads the current state and informs the components about the change.
+   */
+  [selectEnvironment](): Promise<void>;
+
   _attachListeners(node: EventTarget): void;
   _detachListeners(node: EventTarget): void;
+
+  /**
+   * A handler for the environment change event
+   */
+  [environmentChangeHandler](e: ARCEnvironmentSelectEvent): void;
+
+  /**
+   * A handler for the current environment read event
+   */
+  [environmentCurrentHandler](e: ARCEnvironmentCurrentEvent): void;
 }

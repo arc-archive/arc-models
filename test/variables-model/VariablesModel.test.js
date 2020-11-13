@@ -1,9 +1,12 @@
-import { assert, fixture, html } from '@open-wc/testing';
+import { assert, fixture, html, oneEvent } from '@open-wc/testing';
 import { DataGenerator } from '@advanced-rest-client/arc-data-generator';
 import * as sinon from 'sinon';
 import '../../variables-model.js';
-// import { sortFunction } from '../../src/VariablesModel.js';
 import { ArcModelEventTypes } from '../../src/events/ArcModelEventTypes.js';
+import { currentValue } from '../../src/VariablesModel.js';
+import { ArcModelEvents } from '../../src/events/ArcModelEvents.js';
+
+/* global PouchDB */
 
 /** @typedef {import('../../src/VariablesModel').VariablesModel} VariablesModel */
 /** @typedef {import('@advanced-rest-client/arc-types').Variable.ARCVariable} ARCVariable */
@@ -579,6 +582,115 @@ describe('VariablesModel', () => {
           nextPageToken: result1.nextPageToken,
         });
         assert.isAtLeast(result2.items.length, 1);
+      });
+    });
+
+    /**
+     * @returns {Promise<ARCVariable[]>}
+     */
+    async function generateVarsAndEnvs() {
+      const created = await generator.insertVariablesData({
+        size: 32,
+      });
+      const items = [];
+      created.forEach((variable) => {
+        if (variable.environment !== 'default') {
+          items.push({
+            name: variable.environment,
+            created: Date.now(),
+          });
+        }
+      });
+      const db = new PouchDB('variables-environments');
+      await db.bulkDocs(items);
+      return created;
+    }
+  
+    describe('readCurrent()', () => {
+      let element = /** @type VariablesModel */ (null);
+      let created = /** @type ARCVariable[] */ (null);
+      before(async () => {
+        created = await generateVarsAndEnvs();
+      });
+
+      after(async () => {
+        await generator.destroyVariablesData();
+      });
+
+      beforeEach(async () => {
+        element = await basicFixture();
+      });
+
+      it('returns default environment', async () => {
+        const result = await element.readCurrent();
+        assert.typeOf(result, 'object', 'result is an object');
+        assert.equal(result.environment, null, 'the environment property is not set');
+        const defaultVars = created.filter((item) => item.environment === 'default');
+        assert.equal(result.variables.length, defaultVars.length, 'has all variables');
+      });
+
+      it('returns non-default environment', async () => {
+        const first = created.find((item) => item.environment !== 'default');
+        const env = await element.readEnvironment(first.environment);
+        element[currentValue] = env._id;
+        const result = await element.readCurrent();
+        assert.typeOf(result, 'object', 'result is an object');
+        assert.typeOf(result.environment, 'object', 'the environment property is set');
+        const defaultVars = created.filter((item) => item.environment === env.name);
+        assert.equal(result.variables.length, defaultVars.length, 'has all variables');
+      });
+
+      it('reads the current via the event', async () => {
+        const result = await ArcModelEvents.Environment.current(document.body);
+        assert.typeOf(result, 'object', 'result is an object');
+        assert.equal(result.environment, null, 'the environment property is not set');
+        const defaultVars = created.filter((item) => item.environment === 'default');
+        assert.equal(result.variables.length, defaultVars.length, 'has all variables');
+      });
+    });
+
+    describe('#currentEnvironment', () => {
+      let element = /** @type VariablesModel */ (null);
+      let created = /** @type ARCVariable[] */ (null);
+      before(async () => {
+        created = await generateVarsAndEnvs();
+      });
+
+      after(async () => {
+        await generator.destroyVariablesData();
+      });
+
+      beforeEach(async () => {
+        element = await basicFixture();
+      });
+
+      it('returns null when environment is not set', () => {
+        const result = element.currentEnvironment;
+        assert.equal(result, null);
+      });
+
+      it('reads the current state and dispatches event when changes', async () => {
+        const first = created.find((item) => item.environment !== 'default');
+        const env = await element.readEnvironment(first.environment);
+        element.currentEnvironment = env._id;
+        const e = await oneEvent(element, ArcModelEventTypes.Environment.State.select);
+        const { detail } = e;
+        assert.typeOf(detail, 'object', 'detail is an object');
+        assert.typeOf(detail.environment, 'object', 'the environment property is set');
+        const defaultVars = created.filter((item) => item.environment === env.name);
+        assert.equal(detail.variables.length, defaultVars.length, 'has all variables');
+      });
+
+      it('selects an environment via the event', async () => {
+        const first = created.find((item) => item.environment !== 'default');
+        const env = await element.readEnvironment(first.environment);
+        ArcModelEvents.Environment.select(document.body, env._id);
+        const e = await oneEvent(element, ArcModelEventTypes.Environment.State.select);
+        const { detail } = e;
+        assert.typeOf(detail, 'object', 'detail is an object');
+        assert.typeOf(detail.environment, 'object', 'the environment property is set');
+        const defaultVars = created.filter((item) => item.environment === env.name);
+        assert.equal(detail.variables.length, defaultVars.length, 'has all variables');
       });
     });
   });

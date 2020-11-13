@@ -9,9 +9,12 @@ import {
   ARCEnvironmentListEvent,
   ARCVariableUpdateEvent,
   ARCVariableUpdatedEvent,
-  ARCEVariableDeleteEvent,
+  ARCVariableDeleteEvent,
   ARCVariableDeletedEvent,
   ARCVariableListEvent,
+  ARCEnvironmentCurrentEvent,
+  ARCEnvironmentSelectEvent,
+  ARCEnvironmentStateSelectEvent,
 } from '../../src/events/VariableEvents.js';
 import { ArcModelEventTypes } from '../../src/events/ArcModelEventTypes.js';
 
@@ -160,6 +163,45 @@ describe('VariableEvents', () => {
     });
   });
 
+  describe('ARCEnvironmentCurrentEvent', () => {
+    it('has the correct type', () => {
+      const e = new ARCEnvironmentCurrentEvent();
+      assert.equal(e.type, ArcModelEventTypes.Environment.current);
+    });
+
+    it('has empty detail', () => {
+      const e = new ARCEnvironmentCurrentEvent();
+      assert.deepEqual(e.detail, {});
+    });
+  });
+
+  describe('ARCEnvironmentSelectEvent', () => {
+    it('has the correct type', () => {
+      const e = new ARCEnvironmentSelectEvent();
+      assert.equal(e.type, ArcModelEventTypes.Environment.select);
+    });
+
+    it('has the id as the detail', () => {
+      const id = 'test-id';
+      const e = new ARCEnvironmentSelectEvent(id);
+      assert.equal(e.detail, id);
+    });
+  });
+
+  describe('ARCEnvironmentSelectEvent', () => {
+    const init = { environment: null, variables: [] };
+
+    it('has the correct type', () => {
+      const e = new ARCEnvironmentStateSelectEvent(init);
+      assert.equal(e.type, ArcModelEventTypes.Environment.State.select);
+    });
+
+    it('has the state as the detail', () => {
+      const e = new ARCEnvironmentStateSelectEvent(init);
+      assert.deepEqual(e.detail, init);
+    });
+  });
+
   describe('ARCVariableUpdateEvent', () => {
     const entity = /** @type ARCVariable */ (generator.generateVariableObject());
 
@@ -200,11 +242,11 @@ describe('VariableEvents', () => {
     });
   });
 
-  describe('ARCEVariableDeleteEvent', () => {
+  describe('ARCVariableDeleteEvent', () => {
     const id = 'db-id';
 
     it('has readonly id property', () => {
-      const e = new ARCEVariableDeleteEvent(id);
+      const e = new ARCVariableDeleteEvent(id);
       assert.equal(e.id, id);
       assert.throws(() => {
         // @ts-ignore
@@ -213,7 +255,7 @@ describe('VariableEvents', () => {
     });
 
     it('has the correct type', () => {
-      const e = new ARCEVariableDeleteEvent(id);
+      const e = new ARCVariableDeleteEvent(id);
       assert.equal(e.type, ArcModelEventTypes.Variable.delete);
     });
   });

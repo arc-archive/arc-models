@@ -150,9 +150,13 @@ export {
   ARCEnvironmentListEvent,
   ARCVariableUpdateEvent,
   ARCVariableUpdatedEvent,
-  ARCEVariableDeleteEvent,
+  ARCVariableDeleteEvent,
   ARCVariableDeletedEvent,
   ARCVariableListEvent,
+  ARCEnvironmentCurrentEvent,
+  ARCEnvironmentSelectEvent,
+  ARCEnvironmentStateSelectEvent,
+  EnvironmentStateDetail,
 } from './src/events/VariableEvents';
 export { ExportProcessor } from './src/lib/ExportProcessor';
 export { ExportFactory } from './src/lib/ExportFactory';

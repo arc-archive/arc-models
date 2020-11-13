@@ -122,9 +122,12 @@ export const ArcModelEvents = {
     update: VariableEvents.updateEnvironmentAction,
     delete: VariableEvents.deleteEnvironmentAction,
     list: VariableEvents.listEnvironmentAction,
+    current: VariableEvents.currentEnvironmentAction,
+    select: VariableEvents.selectEnvironmentAction,
     State: {
       update: VariableEvents.updatedEnvironmentState,
       delete: VariableEvents.deletedEnvironmentState,
+      select: VariableEvents.environmentSelectedAction,
     },
   },
   Variable: {
