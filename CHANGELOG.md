@@ -1014,3 +1014,24 @@
 * moving types to arc-types [acd8d7a](https://github.com/advanced-rest-client/arc-models/commit/acd8d7ae53396323194074ecc594bf3a190a2e36) by Pawel
 
 
+<a name="4.2.2"></a>
+## [4.2.2](https://github.com/advanced-rest-client/arc-models/compare/4.2.0...4.2.2) (2020-11-13)
+
+### Build
+
+* bumping version [7c205ca](https://github.com/advanced-rest-client/arc-models/commit/7c205cad1b56584adb0819462d840707ab5c8b67) by Pawel
+
+
+### Update
+
+* [ci skip] automated merge master->stage. syncing main branches [304eae5](https://github.com/advanced-rest-client/arc-models/commit/304eae50fa4f327aa7987fe60715e4c40d2c085e) by Ci agent
+* upgrading to the new types [0a5963c](https://github.com/advanced-rest-client/arc-models/commit/0a5963c74f012a1002c471bd21845078e72c0416) by Pawel
+* [ci skip] automated merge master->stage. syncing main branches [b3538c5](https://github.com/advanced-rest-client/arc-models/commit/b3538c567b616a54a58e46f164544107e38b15c0) by Ci agent
+
+
+### Features
+
+* adding environment selection logic [34e16a5](https://github.com/advanced-rest-client/arc-models/commit/34e16a508b404edf22ef672416657b33d89e2d68) by Pawel
+* moving history savier here [6e34bf4](https://github.com/advanced-rest-client/arc-models/commit/6e34bf42f20be4ab7e56befcb7fdf0ed396362ef) by Pawel
+
+
