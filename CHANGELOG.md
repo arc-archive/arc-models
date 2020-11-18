@@ -1035,3 +1035,25 @@
 * moving history savier here [6e34bf4](https://github.com/advanced-rest-client/arc-models/commit/6e34bf42f20be4ab7e56befcb7fdf0ed396362ef) by Pawel
 
 
+<a name="4.2.3"></a>
+## [4.2.3](https://github.com/advanced-rest-client/arc-models/compare/4.2.1...4.2.3) (2020-11-18)
+
+### Build
+
+* bumping version [7c205ca](https://github.com/advanced-rest-client/arc-models/commit/7c205cad1b56584adb0819462d840707ab5c8b67) by Pawel
+
+
+### Update
+
+* upgrading the testing framework [f411177](https://github.com/advanced-rest-client/arc-models/commit/f411177b8eb386ab78e916d447644e199605f2bf) by Pawel
+* updating dependencies [9e22dc7](https://github.com/advanced-rest-client/arc-models/commit/9e22dc70df57d6a9fdbaedbf2cf774d7fd18da44) by Pawel
+* [ci skip] automated merge master->stage. syncing main branches [690ec92](https://github.com/advanced-rest-client/arc-models/commit/690ec926dc864d5de164e3e6f63d48ad5384472e) by Ci agent
+* [ci skip] automated merge master->stage. syncing main branches [304eae5](https://github.com/advanced-rest-client/arc-models/commit/304eae50fa4f327aa7987fe60715e4c40d2c085e) by Ci agent
+
+
+### Features
+
+* adding variable set event [28a9684](https://github.com/advanced-rest-client/arc-models/commit/28a96845e0b8db38b42ddde9aafc0c6158e36456) by Pawel
+* adding environment selection logic [34e16a5](https://github.com/advanced-rest-client/arc-models/commit/34e16a508b404edf22ef672416657b33d89e2d68) by Pawel
+
+
