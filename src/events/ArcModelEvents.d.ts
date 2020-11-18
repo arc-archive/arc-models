@@ -652,6 +652,16 @@ declare interface VariableFunctions {
    * @returns Model query result.
    */
   list(target: EventTarget, name: string, opts?: ARCVariablesListOptions): Promise<ARCModelListResult<ARCVariable>>;
+  /**
+   * Dispatches an event handled by the data store to set a variable for the current environment.
+   *
+   * @param target A node on which to dispatch the event.
+   * @param name The name of the variable. Case sensitive.
+   * @param value The value to set on the variable.
+   * @returns Promise resolved to the change record
+   */
+  set(target: EventTarget, name: string, value: string): Promise<ARCEntityChangeRecord<ARCVariable>>;
+  
   State: VariableStateFunctions;
 }
 

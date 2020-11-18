@@ -179,6 +179,28 @@ export class ARCVariableUpdateEvent extends CustomEvent<ARCModelUpdateEventDetai
   constructor(variable: ARCVariable);
 }
 
+
+/**
+ * An event dispatched to create / update a variable in the current environment
+ */
+export declare class ARCVariableSetEvent extends CustomEvent<ARCModelUpdateEventDetail<ARCVariable>> {
+  /**
+   * The variable name used to initialize this event
+   */
+  get name(): string;
+  /**
+   * The variable value to set
+   */
+  get value(): string;
+
+   /**
+   * @param name The name of the variable. Case sensitive.
+   * @param value The value to set on the variable.
+   */
+  constructor(name: string, value: string);
+}
+
+
 /**
  * An event dispatched from the store after updating a variable
  */
@@ -285,6 +307,17 @@ export declare function listEnvironmentAction(target: EventTarget, opts?: ARCVar
  * @returns Promise resolved to the change record
  */
 export declare function updateVariableAction(target: EventTarget, item: ARCVariable): Promise<ARCEntityChangeRecord<ARCVariable>>;
+
+
+/**
+ * Dispatches an event handled by the data store to set a variable for the current environment.
+ *
+ * @param target A node on which to dispatch the event.
+ * @param name The name of the variable. Case sensitive.
+ * @param value The value to set on the variable.
+ * @returns Promise resolved to the change record
+ */
+export declare function setVariableAction(target: EventTarget, name: string, value: string): Promise<ARCEntityChangeRecord<ARCVariable>>;
 
 /**
  * Dispatches an event handled by the data store to delete a variable.

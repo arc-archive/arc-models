@@ -15,6 +15,7 @@ import {
   ARCEnvironmentCurrentEvent,
   ARCEnvironmentSelectEvent,
   ARCEnvironmentStateSelectEvent,
+  ARCVariableSetEvent,
 } from '../../src/events/VariableEvents.js';
 import { ArcModelEventTypes } from '../../src/events/ArcModelEventTypes.js';
 
@@ -239,6 +240,34 @@ describe('VariableEvents', () => {
     it('has the correct type', () => {
       const e = new ARCVariableUpdatedEvent(record);
       assert.equal(e.type, ArcModelEventTypes.Variable.State.update);
+    });
+  });
+
+  describe('ARCVariableSetEvent', () => {
+    const name = 'test name';
+    const value = 'test value';
+
+    it('has the correct type', () => {
+      const e = new ARCVariableSetEvent(name, value);
+      assert.equal(e.type, ArcModelEventTypes.Variable.set);
+    });
+
+    it('has readonly name property', () => {
+      const e = new ARCVariableSetEvent(name, value);
+      assert.equal(e.name, name);
+      assert.throws(() => {
+        // @ts-ignore
+        e.name = 'test';
+      });
+    });
+
+    it('has readonly value property', () => {
+      const e = new ARCVariableSetEvent(name, value);
+      assert.equal(e.value, value);
+      assert.throws(() => {
+        // @ts-ignore
+        e.value = 'test';
+      });
     });
   });
 

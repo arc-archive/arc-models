@@ -97,6 +97,7 @@
     "modelurlindexerupdate",
     "modelvariabledelete",
     "modelvariablelist",
+    "modelvariableset",
     "modelvariableupdate",
     "modelwsurlhistoryinsert",
     "modelwsurlhistorylist",

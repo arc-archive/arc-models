@@ -134,6 +134,7 @@ export const ArcModelEvents = {
     update: VariableEvents.updateVariableAction,
     delete: VariableEvents.deleteVariableAction,
     list: VariableEvents.listVariableAction,
+    set: VariableEvents.setVariableAction,
     State: {
       update: VariableEvents.updatedVariableState,
       delete: VariableEvents.deletedVariableState,

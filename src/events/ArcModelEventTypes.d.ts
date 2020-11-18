@@ -132,6 +132,7 @@ declare interface VariableEvents {
   update: string;
   delete: string;
   list: string;
+  set: string;
   State: VariableStateEvents;
 }
 

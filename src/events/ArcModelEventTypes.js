@@ -105,6 +105,7 @@ export const ArcModelEventTypes = {
     update: 'modelvariableupdate',
     delete: 'modelvariabledelete',
     list: 'modelvariablelist',
+    set: 'modelvariableset',
     State: {
       update: 'modelstatevariableupdate',
       delete: 'modelstatevariabledelete',

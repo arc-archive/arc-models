@@ -420,6 +420,7 @@ describe('ArcModelEventTypes', () => {
       ['update', 'modelvariableupdate'],
       ['delete', 'modelvariabledelete'],
       ['list', 'modelvariablelist'],
+      ['set', 'modelvariableset'],
     ].forEach(([prop, value]) => {
       it(`has ${prop} property`, () => {
         assert.equal(ArcModelEventTypes.Variable[prop], value);

@@ -37,6 +37,7 @@ import { ArcModelEvents } from './events/ArcModelEvents.js';
 /** @typedef {import('./events/VariableEvents').EnvironmentStateDetail} EnvironmentStateDetail */
 /** @typedef {import('./events/VariableEvents').ARCEnvironmentSelectEvent} ARCEnvironmentSelectEvent */
 /** @typedef {import('./events/VariableEvents').ARCEnvironmentCurrentEvent} ARCEnvironmentCurrentEvent */
+/** @typedef {import('./events/VariableEvents').ARCVariableSetEvent} ARCVariableSetEvent */
 /** @typedef {import('./events/BaseEvents').ARCModelDeleteEvent} ARCModelDeleteEvent */
 
 export const envReadHandler = Symbol('envReadHandler');
@@ -54,6 +55,7 @@ export const currentValue = Symbol('currentValue');
 export const environmentChangeHandler = Symbol('environmentChangeHandler');
 export const environmentCurrentHandler = Symbol('environmentCurrentHandler');
 export const selectEnvironment = Symbol('selectEnvironment');
+export const variableSetHandler = Symbol('variableSetHandler');
 
 /**
  * Model for variables
@@ -108,6 +110,7 @@ export class VariablesModel extends ArcBaseModel {
     this[varListHandler] = this[varListHandler].bind(this);
     this[environmentChangeHandler] = this[environmentChangeHandler].bind(this);
     this[environmentCurrentHandler] = this[environmentCurrentHandler].bind(this);
+    this[variableSetHandler] = this[variableSetHandler].bind(this);
     /** 
      * @type {string}
      */
@@ -545,6 +548,31 @@ export class VariablesModel extends ArcBaseModel {
     e.detail.result.push(this[deleteEnvironmentsModel]());
   }
 
+  /**
+   * Sets a variable for the current environment.
+   * If the variable already exist then its value is updated. Otherwise a new variable is added.
+   * 
+   * @param {string} name The name of the variable. Case sensitive.
+   * @param {string} value The value to set on the variable.
+   * @returns {Promise<ARCEntityChangeRecord>} Promise resolved to the promise id, whether 
+   */
+  async setVariable(name, value) {
+    const info = await this.readCurrent();
+    const { variables, environment } = info;
+    let variable = variables.find((item) => item.name === name);
+    if (!variable) {
+      const eName = environment ? environment.name : 'default';
+      variable = /** @type ARCVariable */ ({
+        environment: eName,
+        enabled: true,
+      });
+    }
+    variable.enabled = true;
+    variable.name = name;
+    variable.value = value;
+    return this.updateVariable(variable);
+  }
+
 
   async [deleteVariablesModel]() {
     await this.variableDb.destroy();
@@ -567,6 +595,7 @@ export class VariablesModel extends ArcBaseModel {
     node.addEventListener(ArcModelEventTypes.Variable.update, this[varUpdateHandler]);
     node.addEventListener(ArcModelEventTypes.Variable.delete, this[varDeleteHandler]);
     node.addEventListener(ArcModelEventTypes.Variable.list, this[varListHandler]);
+    node.addEventListener(ArcModelEventTypes.Variable.set, this[variableSetHandler]);
   }
 
   _detachListeners(node) {
@@ -580,6 +609,7 @@ export class VariablesModel extends ArcBaseModel {
     node.removeEventListener(ArcModelEventTypes.Variable.update, this[varUpdateHandler]);
     node.removeEventListener(ArcModelEventTypes.Variable.delete, this[varDeleteHandler]);
     node.removeEventListener(ArcModelEventTypes.Variable.list, this[varListHandler]);
+    node.removeEventListener(ArcModelEventTypes.Variable.set, this[variableSetHandler]);
   }
 
   /**
@@ -727,5 +757,15 @@ export class VariablesModel extends ArcBaseModel {
    */
   [environmentCurrentHandler](e) {
     e.detail.result = this.readCurrent();
+  }
+
+  /**
+   * A handler for the current environment read event
+   *
+   * @param {ARCVariableSetEvent} e
+   */
+  [variableSetHandler](e) {
+    const { name, value } = e;
+    e.detail.result = this.setVariable(name, value);
   }
 }

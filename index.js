@@ -121,6 +121,7 @@ export {
   ARCEnvironmentDeletedEvent,
   ARCEnvironmentListEvent,
   ARCVariableUpdateEvent,
+  ARCVariableSetEvent,
   ARCVariableUpdatedEvent,
   ARCVariableDeleteEvent,
   ARCVariableDeletedEvent,

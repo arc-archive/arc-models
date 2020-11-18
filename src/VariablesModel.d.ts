@@ -146,6 +146,16 @@ export declare class VariablesModel extends ArcBaseModel {
   readCurrent(): Promise<EnvironmentStateDetail>;
 
   /**
+   * Sets a variable for the current environment.
+   * If the variable already exist then its value is updated. Otherwise a new variable is added.
+   * 
+   * @param name The name of the variable. Case sensitive.
+   * @param value The value to set on the variable.
+   * @returns Promise resolved to the promise id, whether 
+   */
+  setVariable(name: string, value: string): Promise<ARCEntityChangeRecord<Variable.ARCVariable>>;
+
+  /**
    * A handler for the `currentEnvironment` property change.
    * Reads the current state and informs the components about the change.
    */

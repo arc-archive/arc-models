@@ -649,6 +649,43 @@ describe('VariablesModel', () => {
       });
     });
 
+    describe('setVariable()', () => {
+      let element = /** @type VariablesModel */ (null);
+      let created = /** @type ARCVariable[] */ (null);
+      before(async () => {
+        created = await generator.insertVariablesAndEnvironments({ 
+          size: 2,
+          defaultEnv: true,
+        });
+      });
+
+      after(async () => {
+        await generator.destroyVariablesData();
+      });
+
+      beforeEach(async () => {
+        element = await basicFixture();
+      });
+
+      it('creates a new variable', async () => {
+        const record = await element.setVariable('veryRandomVariable', 'with value');
+        assert.typeOf(record, 'object', 'returns the change record');
+        const result = await element.variableDb.get(record.id);
+        assert.typeOf(result, 'object', 'has created variable');
+        assert.equal(result.name, 'veryRandomVariable', 'the variable has the name');
+        assert.equal(result.value, 'with value', 'the variable has the value');
+      });
+
+      it('updates existing variable', async () => {
+        const { _id, name } = created[0];
+        const record = await element.setVariable(name, 'updated value');
+        assert.typeOf(record, 'object', 'returns the change record');
+        assert.equal(record.id, _id, 'updated the existing variable');
+        const result = await element.variableDb.get(_id);
+        assert.equal(result.value, 'updated value', 'the variable has the value');
+      });
+    });
+
     describe('#currentEnvironment', () => {
       let element = /** @type VariablesModel */ (null);
       let created = /** @type ARCVariable[] */ (null);
