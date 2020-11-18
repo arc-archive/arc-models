@@ -11,7 +11,7 @@ const chance = new Chance();
 
 export const DataTestHelper = {};
 DataTestHelper.getFile = async (file) => {
-  const response = await fetch(`/base/test/data/${file}`);
+  const response = await fetch(`/test/data/${file}`);
   if (!response.ok) {
     throw new Error(`File ${file} is unavailable`);
   }

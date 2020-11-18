@@ -1,4 +1,5 @@
 import { fixture, assert, aTimeout } from '@open-wc/testing';
+import 'pouchdb/dist/pouchdb.js';
 import { DbHelper } from './db-helper.js';
 import '../../url-indexer.js';
 import {
@@ -6,6 +7,8 @@ import {
   getIndexedDataAll,
 } from '../../src/UrlIndexer.js';
 import { ArcModelEvents } from '../../src/events/ArcModelEvents.js';
+
+/* global PouchDB */
 
 /** @typedef {import('../../src/UrlIndexer').UrlIndexer} UrlIndexer */
 
@@ -320,7 +323,6 @@ describe('UrlIndexer', () => {
       const REQUEST_TYPE = 'saved';
 
       before(async () => {
-        /* global PouchDB */
         let db = new PouchDB('saved-requests');
         await db.destroy();
         db = new PouchDB('saved-requests');
