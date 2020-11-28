@@ -25,7 +25,7 @@ import { ARCVariablesListOptions, EnvironmentStateDetail } from './VariableEvent
 import { ARCRestApi, ARCRestApiIndex } from '@advanced-rest-client/arc-types/src/models/RestApi';
 import { ARCProject } from '@advanced-rest-client/arc-types/src/models/Project';
 
-declare interface ProjectStateFunctions {
+export declare interface ProjectStateFunctions {
   /**
    * Dispatches an event after a project was updated
    *
@@ -43,7 +43,7 @@ declare interface ProjectStateFunctions {
   delete(target: EventTarget, id: string, rev: string): void;
 }
 
-declare interface ProjectFunctions {
+export declare interface ProjectFunctions {
   /**
    * Dispatches an event handled by the data store to read the project metadata.
    *
@@ -135,7 +135,7 @@ declare interface ProjectFunctions {
   State: ProjectStateFunctions;
 }
 
-declare interface RequestStateFunctions {
+export declare interface RequestStateFunctions {
   /**
    * Dispatches an event after a request object was updated
    *
@@ -155,7 +155,7 @@ declare interface RequestStateFunctions {
   delete(target: EventTarget, type: string, id: string, rev: string): void;
 }
 
-declare interface RequestFunctions {
+export declare interface RequestFunctions {
   /**
    * Dispatches an event handled by the data store to read an ARC request metadata.
    *
@@ -271,7 +271,7 @@ declare interface RequestFunctions {
   State: RequestStateFunctions;
 }
 
-declare interface UrlIndexerStateFunctions {
+export  declare interface UrlIndexerStateFunctions {
   /**
    * Dispatches an event informing that the indexer has finished the indexing task
    *
@@ -280,7 +280,7 @@ declare interface UrlIndexerStateFunctions {
   finished(target: EventTarget): void;
 }
 
-declare interface UrlIndexerFunctions {
+export declare interface UrlIndexerFunctions {
   /**
    * Dispatches an event handled by the data store to update indexed data.
    *
@@ -304,7 +304,7 @@ declare interface UrlIndexerFunctions {
   State: UrlIndexerStateFunctions;
 }
 
-declare interface AuthDataStateFunctions {
+export declare interface AuthDataStateFunctions {
   /**
    * Dispatches an event informing about a change in the authdata model.
    *
@@ -314,7 +314,7 @@ declare interface AuthDataStateFunctions {
   update(target: EventTarget, record: ARCEntityChangeRecord<ARCAuthData>): void;
 }
 
-declare interface AuthDataFunctions {
+export declare interface AuthDataFunctions {
   /**
    * Dispatches an event handled by the data store to update an authorization data.
    *
@@ -337,7 +337,7 @@ declare interface AuthDataFunctions {
   State: AuthDataStateFunctions;
 }
 
-declare interface HostRulesStateFunctions {
+export declare interface HostRulesStateFunctions {
   /**
    * Dispatches an event informing about a change in the host rules model.
    *
@@ -355,7 +355,7 @@ declare interface HostRulesStateFunctions {
   delete(target: EventTarget, id: string, rev: string): void;
 }
 
-declare interface HostRulesFunctions {
+export declare interface HostRulesFunctions {
   /**
    * Dispatches an event handled by the data store to update a host rule entity
    *
@@ -395,7 +395,7 @@ declare interface HostRulesFunctions {
   State: HostRulesStateFunctions;
 }
 
-declare interface ClientCertificateStateFunctions {
+export declare interface ClientCertificateStateFunctions {
   /**
    * Dispatches an event after a client certificate was updated
    *
@@ -413,7 +413,7 @@ declare interface ClientCertificateStateFunctions {
   delete(target: EventTarget, id: string, rev: string): void;
 }
 
-declare interface ClientCertificateFunctions {
+export declare interface ClientCertificateFunctions {
   /**
    * Dispatches an event handled by the data store to read the client certificate.
    *
@@ -453,7 +453,7 @@ declare interface ClientCertificateFunctions {
   State: ClientCertificateStateFunctions;
 }
 
-declare interface WSUrlHistoryStateFunctions {
+export declare interface WSUrlHistoryStateFunctions {
   /**
    * Dispatches an event after an URL entity was updated
    *
@@ -463,7 +463,7 @@ declare interface WSUrlHistoryStateFunctions {
   update(target: EventTarget, record: ARCEntityChangeRecord<ARCWebsocketUrlHistory>): void;
 }
 
-declare interface WSUrlHistoryFunctions {
+export declare interface WSUrlHistoryFunctions {
   /**
    * Dispatches an event handled by the data store to list a page of the results
    *
@@ -492,7 +492,7 @@ declare interface WSUrlHistoryFunctions {
   State: WSUrlHistoryStateFunctions;
 }
 
-declare interface UrlHistoryStateFunctions {
+export declare interface UrlHistoryStateFunctions {
   /**
    * Dispatches an event after an URL entity was updated
    *
@@ -502,7 +502,7 @@ declare interface UrlHistoryStateFunctions {
   update(target: EventTarget, record: ARCEntityChangeRecord<ARCUrlHistory>): void;
 }
 
-declare interface UrlHistoryFunctions {
+export declare interface UrlHistoryFunctions {
   /**
    * Dispatches an event handled by the data store to list a page of the results
    *
@@ -531,7 +531,7 @@ declare interface UrlHistoryFunctions {
   State: UrlHistoryStateFunctions;
 }
 
-declare interface EnvironmentStateFunctions {
+export declare interface EnvironmentStateFunctions {
   /**
    * Dispatches an event after an environment was updated
    *
@@ -557,7 +557,7 @@ declare interface EnvironmentStateFunctions {
   select(target: EventTarget, state: EnvironmentStateDetail): void;
 }
 
-declare interface EnvironmentFunctions {
+export declare interface EnvironmentFunctions {
   /**
    * Dispatches an event handled by the data store to read the environment metadata
    *
@@ -608,7 +608,7 @@ declare interface EnvironmentFunctions {
   State: EnvironmentStateFunctions;
 }
 
-declare interface VariableStateFunctions {
+export declare interface VariableStateFunctions {
   /**
    * Dispatches an event after a variable was updated
    *
@@ -626,7 +626,7 @@ declare interface VariableStateFunctions {
   delete(target: EventTarget, id: string, rev: string): void;
 }
 
-declare interface VariableFunctions {
+export declare interface VariableFunctions {
   /**
    * Dispatches an event handled by the data store to update a variable metadata.
    *
@@ -665,7 +665,7 @@ declare interface VariableFunctions {
   State: VariableStateFunctions;
 }
 
-declare interface RestApiStateFunctions {
+export declare interface RestApiStateFunctions {
   /**
    * Dispatches an event after a REST API index entity was updated
    *
@@ -700,7 +700,7 @@ declare interface RestApiStateFunctions {
   versionDelete(target: EventTarget, id: string, rev: string, indexId: string, version: string): void;
 }
 
-declare interface RestApiFunctions {
+export declare interface RestApiFunctions {
   /**
    * Dispatches an event to list the REST API index data.
    *
@@ -772,7 +772,7 @@ declare interface RestApiFunctions {
   State: RestApiStateFunctions;
 }
 
-declare interface ArcModelEvents {
+export declare interface ArcModelEvents {
   /**
    * Dispatches an event handled by the data store to destroy a data store.
    *
