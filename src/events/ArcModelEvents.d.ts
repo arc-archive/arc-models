@@ -772,7 +772,7 @@ export declare interface RestApiFunctions {
   State: RestApiStateFunctions;
 }
 
-export declare interface ArcModelEvents {
+declare interface ArcModelEvents {
   /**
    * Dispatches an event handled by the data store to destroy a data store.
    *
