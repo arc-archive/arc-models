@@ -11,6 +11,7 @@ WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
 License for the specific language governing permissions and limitations under
 the License.
 */
+import { TransportEventTypes } from '@advanced-rest-client/arc-events';
 import { ArcBaseModel } from './ArcBaseModel.js';
 import { ArcModelEventTypes } from './events/ArcModelEventTypes.js';
 import { ArcModelEvents } from './events/ArcModelEvents.js';
@@ -21,6 +22,7 @@ import { ArcModelEvents } from './events/ArcModelEvents.js';
 /** @typedef {import('./events/UrlHistoryEvents').ARCHistoryUrlInsertEvent} ARCHistoryUrlInsertEvent */
 /** @typedef {import('./events/UrlHistoryEvents').ARCHistoryUrlListEvent} ARCHistoryUrlListEvent */
 /** @typedef {import('./events/UrlHistoryEvents').ARCHistoryUrlQueryEvent} ARCHistoryUrlQueryEvent */
+/** @typedef {import('@advanced-rest-client/arc-events').ApiTransportEvent} ApiTransportEvent */
 /** @typedef {import('./types').ARCModelListResult} ARCModelListResult */
 /** @typedef {import('./types').ARCModelListOptions} ARCModelListOptions */
 /** @typedef {import('./types').ARCEntityChangeRecord} ARCEntityChangeRecord */
@@ -57,6 +59,7 @@ export function sortFunction(a, b) {
 export const insertHandler = Symbol('insertHandler');
 export const listHandler = Symbol('listHandler');
 export const queryHandler = Symbol('queryHandler');
+export const transportHandler = Symbol('transportHandler');
 
 /**
  * An element that saves Request URL in the history and serves list
@@ -72,6 +75,7 @@ export class UrlHistoryModel extends ArcBaseModel {
     this[insertHandler] = this[insertHandler].bind(this);
     this[listHandler] = this[listHandler].bind(this);
     this[queryHandler] = this[queryHandler].bind(this);
+    this[transportHandler] = this[transportHandler].bind(this);
   }
 
   /**
@@ -192,6 +196,7 @@ export class UrlHistoryModel extends ArcBaseModel {
     node.addEventListener(ArcModelEventTypes.UrlHistory.insert, this[insertHandler]);
     node.addEventListener(ArcModelEventTypes.UrlHistory.list, this[listHandler]);
     node.addEventListener(ArcModelEventTypes.UrlHistory.query, this[queryHandler]);
+    node.addEventListener(TransportEventTypes.transport, this[transportHandler]);
   }
 
   _detachListeners(node) {
@@ -199,6 +204,7 @@ export class UrlHistoryModel extends ArcBaseModel {
     node.removeEventListener(ArcModelEventTypes.UrlHistory.insert, this[insertHandler]);
     node.removeEventListener(ArcModelEventTypes.UrlHistory.list, this[listHandler]);
     node.removeEventListener(ArcModelEventTypes.UrlHistory.query, this[queryHandler]);
+    node.removeEventListener(TransportEventTypes.transport, this[transportHandler]);
   }
 
   /**
@@ -249,4 +255,13 @@ export class UrlHistoryModel extends ArcBaseModel {
     e.detail.result = this.query(term);
   }
 
+  /**
+   * Processes API response action.
+   * @param {ApiTransportEvent} e
+   */
+  [transportHandler](e) {
+    const { request } = e.detail;
+    // Async so the response can be rendered to the user faster.
+    setTimeout(() => this.addUrl(request.url)); 
+  }
 }

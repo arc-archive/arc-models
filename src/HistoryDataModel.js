@@ -71,17 +71,20 @@ export class HistoryDataModel extends ArcBaseModel {
     this[responseHandler] = this[responseHandler].bind(this);
   }
 
-  connectedCallback() {
-    super.connectedCallback();
-    window.addEventListener(TransportEventTypes.response, this[responseHandler]);
-    if (!this.hasAttribute('aria-hidden')) {
-      this.setAttribute('aria-hidden', 'true');
-    }
+  /**
+   * @param {EventTarget} node
+   */
+  _attachListeners(node) {
+    super._attachListeners(node);
+    node.addEventListener(TransportEventTypes.response, this[responseHandler]);
   }
 
-  disconnectedCallback() {
-    super.disconnectedCallback();
-    window.removeEventListener(TransportEventTypes.response, this[responseHandler]);
+  /**
+   * @param {EventTarget} node
+   */
+  _detachListeners(node) {
+    super._detachListeners(node);
+    node.removeEventListener(TransportEventTypes.response, this[responseHandler]);
   }
 
   /**

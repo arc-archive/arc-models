@@ -89,6 +89,12 @@ export class ArcBaseModel extends HTMLElement {
     if (!this._oldEventsTarget) {
       this._eventsTargetChanged(this.eventsTarget);
     }
+    if (!this.hasAttribute('aria-hidden')) {
+      this.setAttribute('aria-hidden', 'true');
+    }
+    if (!this.hasAttribute('hidden')) {
+      this.setAttribute('hidden', '');
+    }
   }
 
   disconnectedCallback() {

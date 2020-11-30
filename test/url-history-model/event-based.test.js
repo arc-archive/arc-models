@@ -1,6 +1,7 @@
-import { assert, fixture, html } from '@open-wc/testing';
+import { assert, fixture, html, oneEvent } from '@open-wc/testing';
 import { DataGenerator } from '@advanced-rest-client/arc-data-generator';
-import * as sinon from 'sinon';
+import { TransportEventTypes, TransportEvents } from '@advanced-rest-client/arc-events';
+import sinon from 'sinon';
 import '../../url-history-model.js';
 import { ArcModelEventTypes } from '../../src/events/ArcModelEventTypes.js';
 import { ArcModelEvents } from '../../src/events/ArcModelEvents.js';
@@ -252,13 +253,30 @@ describe('UrlHistoryModel - event based', () => {
     });
 
     after(async () => {
-      await generator.destroyWebsocketsData();
+      await generator.destroyUrlData();
     });
 
     it('deletes saved model', async () => {
       await ArcModelEvents.destroy(document.body, ['url-history'])
       const result = await generator.getDatastoreUrlsData();
       assert.deepEqual(result, []);
+    });
+  });
+
+  describe(`${TransportEventTypes.transport} event`, () => {
+    after(async () => {
+      await generator.destroyUrlData();
+    });
+
+    it('stores the URL when request is being transported', async () => {
+      const model = await basicFixture();
+      const request = generator.generateHistoryObject();
+      TransportEvents.transport(document.body, 'test', request);
+      const e = await oneEvent(model, ArcModelEventTypes.UrlHistory.State.update);
+      
+      // @ts-ignore
+      const record = e.changeRecord;
+      assert.equal(record.item.url, request.url);
     });
   });
 });

@@ -1,14 +1,17 @@
+import { ApiTransportEvent } from '@advanced-rest-client/arc-events';
 import { UrlHistory } from '@advanced-rest-client/arc-types';
 import {ArcBaseModel} from './ArcBaseModel.js';
+import { ARCHistoryUrlInsertEvent, ARCHistoryUrlListEvent, ARCHistoryUrlQueryEvent } from './events/UrlHistoryEvents';
 import {
   ARCEntityChangeRecord,
   ARCModelListOptions,
   ARCModelListResult,
 } from './types';
 
-export const insertHandler: symbol;
-export const listHandler: symbol;
-export const queryHandler: symbol;
+export const insertHandler: unique symbol;
+export const listHandler: unique symbol;
+export const queryHandler: unique symbol;
+export const transportHandler: unique symbol;
 
 /**
  * A function used to sort query list items. It relays on two properties that
@@ -61,4 +64,15 @@ export declare class UrlHistoryModel extends ArcBaseModel {
 
   _attachListeners(node: EventTarget): void;
   _detachListeners(node: EventTarget): void;
+
+  [insertHandler](e: ARCHistoryUrlInsertEvent): void;
+
+  [listHandler](e: ARCHistoryUrlListEvent): void;
+
+  [queryHandler](e: ARCHistoryUrlQueryEvent): void;
+
+  /**
+   * Processes API response action.
+   */
+  [transportHandler](e: ApiTransportEvent): void;
 }
