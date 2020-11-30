@@ -1057,3 +1057,26 @@
 * adding environment selection logic [34e16a5](https://github.com/advanced-rest-client/arc-models/commit/34e16a508b404edf22ef672416657b33d89e2d68) by Pawel
 
 
+<a name="4.2.6"></a>
+## [4.2.6](https://github.com/advanced-rest-client/arc-models/compare/4.2.2...4.2.6) (2020-11-30)
+
+### Update
+
+* updating types [0347c19](https://github.com/advanced-rest-client/arc-models/commit/0347c194f8aae2ae5d81e9a30a0a400556bac445) by Pawel Psztyc
+* [ci skip] automated merge master->stage. syncing main branches [e586d75](https://github.com/advanced-rest-client/arc-models/commit/e586d75c92711ae86002459815493aae338c3a96) by Ci agent
+* upgrading the testing framework [f411177](https://github.com/advanced-rest-client/arc-models/commit/f411177b8eb386ab78e916d447644e199605f2bf) by Pawel
+* updating dependencies [9e22dc7](https://github.com/advanced-rest-client/arc-models/commit/9e22dc70df57d6a9fdbaedbf2cf774d7fd18da44) by Pawel
+* [ci skip] automated merge master->stage. syncing main branches [690ec92](https://github.com/advanced-rest-client/arc-models/commit/690ec926dc864d5de164e3e6f63d48ad5384472e) by Ci agent
+
+
+### Features
+
+* adding storing URL on the transport event [c33c558](https://github.com/advanced-rest-client/arc-models/commit/c33c558c0a872cd6e1b9c9a74b3f9e0b6d63a212) by Pawel Psztyc
+* adding variable set event [28a9684](https://github.com/advanced-rest-client/arc-models/commit/28a96845e0b8db38b42ddde9aafc0c6158e36456) by Pawel
+
+
+### Bug Fixes
+
+* removing ArcModelEvents from exports [7b56e2b](https://github.com/advanced-rest-client/arc-models/commit/7b56e2b799965d81160925c5b5bd336f56c5ed5d) by Pawel Psztyc
+
+
