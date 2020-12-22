@@ -82,6 +82,54 @@
       ]
     },
     {
+      "name": "history-data-model",
+      "path": "./history-data-model.js",
+      "description": "The model that stores requests history object (for the history menu and panel)\nand the HAR-like object for each request event made.\n\nThis element should be added to the dom to add support for the ARC history.",
+      "attributes": [
+        {
+          "name": "revsLimit",
+          "description": "Limit number of revisions on the data store.",
+          "type": "number | undefined"
+        }
+      ],
+      "properties": [
+        {
+          "name": "historyDisabled",
+          "description": "When set the element won't store history request as ARC history.\nIt does not change the history data.",
+          "type": "boolean"
+        },
+        {
+          "name": "dataDisabled",
+          "description": "When set the element won't store history data.\nIt does not change the history request.",
+          "type": "boolean"
+        },
+        {
+          "name": "db",
+          "description": "Note, the element does not include PouchDB to the document!",
+          "type": "Database<{}>"
+        },
+        {
+          "name": "defaultQueryOptions",
+          "type": "DefaultQueryOptions"
+        },
+        {
+          "name": "eventsTarget",
+          "type": "EventTarget"
+        },
+        {
+          "name": "name",
+          "description": "Name of the data store",
+          "type": "string | undefined"
+        },
+        {
+          "name": "revsLimit",
+          "attribute": "revsLimit",
+          "description": "Limit number of revisions on the data store.",
+          "type": "number | undefined"
+        }
+      ]
+    },
+    {
       "name": "host-rules-model",
       "path": "./host-rules-model.js",
       "description": "Model for host rules.\n\nAvailable events:\n\n- `host-rules-insert` Bulk add hosts\n- `host-rules-changed` Change / add record\n- `host-rules-deleted` Remove record\n- `host-rules-list` Lists all rules\n- `host-rules-clear` Clears hosts datastore\n\nEach event must be cancelable or it will be ignored.\nThe insert, change and delete events dispatches non cancelable update/delete\nevents. Application should listen for this events to update it's state.",
@@ -341,6 +389,16 @@
           "name": "variableDb",
           "description": "Handler to the variables database.",
           "type": "Database<{}>"
+        },
+        {
+          "name": "currentEnvironment",
+          "description": "The id of the currently selected environment or null when the default is selected.",
+          "type": "string"
+        },
+        {
+          "name": "systemVariables",
+          "description": "The list of system variables.",
+          "type": "Readonly<{ [key: string]: string; }> | undefined"
         },
         {
           "name": "db",

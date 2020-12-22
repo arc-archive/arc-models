@@ -1,4 +1,5 @@
 import { Variable } from '@advanced-rest-client/arc-types';
+import { SystemVariables } from '@advanced-rest-client/arc-types/src/models/Variable';
 import {ArcBaseModel} from './ArcBaseModel';
 import { ARCEnvironmentCurrentEvent, ARCEnvironmentSelectEvent, EnvironmentStateDetail } from './events/VariableEvents';
 import {
@@ -43,6 +44,11 @@ export declare class VariablesModel extends ArcBaseModel {
    * The id of the currently selected environment or null when the default is selected.
    */
   currentEnvironment: string;
+
+  /**
+   * The list of system variables.
+   */
+  systemVariables?: SystemVariables;
 
   constructor();
 
