@@ -734,7 +734,7 @@ export declare interface RestApiFunctions {
    * @param entity The entity to update.
    * @returns Promise resolved to a the change record
    */
-  update(target: EventTarget, entity: ARCRestApiIndex): ARCEntityChangeRecord<ARCRestApiIndex>;
+  update(target: EventTarget, entity: ARCRestApiIndex): Promise<ARCEntityChangeRecord<ARCRestApiIndex>>;
   /**
    * Dispatches an event handled by the data store to update a REST API data entity
    *

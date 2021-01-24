@@ -240,7 +240,7 @@ export declare function readAction(target: EventTarget, id: string, rev?: string
  * @param entity The entity to update.
  * @returns Promise resolved to a the change record
  */
-export declare function updateAction(target: EventTarget, entity: ARCRestApiIndex): ARCEntityChangeRecord<ARCRestApiIndex>;
+export declare function updateAction(target: EventTarget, entity: ARCRestApiIndex): Promise<ARCEntityChangeRecord<ARCRestApiIndex>>;
 
 /**
  * Dispatches an event handled by the data store to update a list of REST API index entities.
