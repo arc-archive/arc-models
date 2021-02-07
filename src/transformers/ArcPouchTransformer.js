@@ -41,7 +41,7 @@ export class ArcPouchTransformer extends BaseTransformer {
    * @return {Promise<ArcExportObject>} New data model object.
    */
   async transform() {
-    const data = /** @type ArcExportObject */ (this[dataValue]);
+    const data = /** @type ArcExportObject */ ({ ...this[dataValue] });
     if (data.projects && data.projects.length) {
       data.projects = this.transformProjects(data.projects);
     }
@@ -73,6 +73,9 @@ export class ArcPouchTransformer extends BaseTransformer {
     if (hostRules && hostRules.length) {
       data.hostrules = hostRules;
     }
+    if (Array.isArray(data.variables) && data.variables.length) {
+      data.variables = this.transformVariables(data.variables);
+    }
     if (!data.loadToWorkspace) {
       data.kind = 'ARC#Import';
     }
@@ -90,7 +93,8 @@ export class ArcPouchTransformer extends BaseTransformer {
    * @return {ExportArcProjects[]} Processed list
    */
   transformProjects(projects) {
-    return projects.map((project) => {
+    return projects.map((item) => {
+      const project = { ...item };
       if (!project.key) {
         project.key = v4();
       }
@@ -104,7 +108,8 @@ export class ArcPouchTransformer extends BaseTransformer {
    * @return {ExportArcSavedRequest[]} Processed requests.
    */
   transformRequests(requests, projects=[]) {
-    return requests.map((request) => {
+    return requests.map((object) => {
+      const request = { ...object };
       if (!request.key) {
         // @ts-ignore
         const refId = request._referenceLegacyProject || request.legacyProject;
@@ -138,7 +143,8 @@ export class ArcPouchTransformer extends BaseTransformer {
    * @return {ExportArcHistoryRequest[]}
    */
   transformHistory(history) {
-    return history.map((item) => {
+    return history.map((object) => {
+      const item = { ...object };
       const result = updateItemTimings(item);
       result.url = item.url || 'http://';
       result.method = item.method || 'GET';
@@ -169,5 +175,21 @@ export class ArcPouchTransformer extends BaseTransformer {
       result[result.length] = data;
     });
     return result;
+  }
+
+  /**
+   * Maps the old `variable` property to the new `name` property.
+   * @param {ExportArcVariable[]} variables 
+   * @returns {ExportArcVariable[]}
+   */
+  transformVariables(variables) {
+    return variables.map((item) => {
+      const variable = { ...item };
+      if (variable.variable && !variable.name) {
+        variable.name = variable.variable;
+        delete variable.variable;
+      }
+      return variable;
+    });
   }
 }
