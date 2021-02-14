@@ -33,6 +33,9 @@ export {
   ARCProjectDeleteEvent,
   ARCProjectDeletedEvent,
   ARCProjectListEvent,
+  ARCProjectReadBulkEvent,
+  ARCProjectListAllEvent,
+  ARCProjectMoveEvent,
 } from './src/events/ProjectEvents.js';
 export {
   ARCRequestReadEvent,

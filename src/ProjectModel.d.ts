@@ -55,6 +55,13 @@ export declare class ProjectModel extends RequestBaseModel {
   get(id: string, rev?: string): Promise<Project.ARCProject>;
 
   /**
+   * Bulk read a list of projects
+   * @param ids The list of ids to read.
+   * @returns Read projects.
+   */
+  getBulk(ids: string[]): Promise<Project.ARCProject[]>;
+
+  /**
    * Link to `#removeProject()` for API consistency
    *
    * @param  id The ID of the datastore entry.

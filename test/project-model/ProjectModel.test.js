@@ -231,6 +231,44 @@ describe('ProjectModel', () => {
     });
   });
 
+  describe('getBulk()', () => {
+    let created = /** @type ARCProject[] */ (null);
+    before(async () => {
+      const model = await basicFixture();
+      const projects = /** @type ARCProject[] */ (generator.generateProjects({ projectsSize: 5 }));
+      const results = await model.postBulk(projects);
+      created = results.map((item) => item.item);
+    });
+
+    let element = /** @type ProjectModel */ (null);
+    beforeEach(async () => {
+      element = await basicFixture();
+    });
+
+    after(async () => {
+      await generator.destroySavedRequestData();
+    });
+
+    it('returns the list of requested items', async () => {
+      const ids = [created[0]._id, created[1]._id];
+      const result = await element.getBulk(ids);
+      const p1 = await element.get(created[0]._id);
+      const p2 = await element.get(created[1]._id);
+      assert.deepEqual(result[0], p1);
+      assert.deepEqual(result[1], p2);
+    });
+
+    it('throws when no arguments', async () => {
+      let thrown = false;
+      try {
+        await element.getBulk(undefined);
+      } catch (e) {
+        thrown = true;
+      }
+      assert.isTrue(thrown);
+    });
+  });
+
   describe('list()', () => {
     before(async () => {
       const model = await basicFixture();

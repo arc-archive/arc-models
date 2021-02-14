@@ -3,6 +3,7 @@ export const ArcModelEventTypes = {
   destroyed: 'modeldestroyed',
   Project: {
     read: 'modelprojectread',
+    readBulk: 'modelprojectreadbulk',
     update: 'modelprojectchange',
     updateBulk: 'modelprojectupdatebulk',
     delete: 'modelprojectdelete',

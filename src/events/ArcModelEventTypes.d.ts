@@ -5,6 +5,7 @@ declare interface ProjectStateEvents {
 
 declare interface ProjectEvents {
   read: string;
+  readBulk: string;
   update: string;
   delete: string;
   list: string;

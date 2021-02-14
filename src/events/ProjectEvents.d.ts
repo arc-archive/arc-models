@@ -27,16 +27,32 @@ export declare class ARCProjectReadEvent extends CustomEvent<ARCModelReadEventDe
   /**
    * Requested project ID.
    */
-  readonly id: string;
+  get id(): string;
   /**
    * Requested project revision ID.
    */
-  readonly rev?: string;
+  get rev(): string|undefined;
   /**
    * @param id Project id
    * @param rev Project revision id
    */
   constructor(id: string, rev?: string);
+}
+
+/**
+ * An event to be dispatched to read in bulk ARC project entities from the data store.
+ */
+export declare class ARCProjectReadBulkEvent extends CustomEvent<ARCModelReadEventDetail<Project.ARCProject[]>> {
+  /**
+   * The list of ids used to initialize this event.
+   */
+  get ids(): string[];
+  [projectIdValue]: string[];
+  
+  /**
+   * @param ids List of ids to read.
+   */
+  constructor(ids: string[]);
 }
 
 /**
@@ -46,7 +62,7 @@ export declare class ARCProjectUpdateEvent extends CustomEvent<ARCModelUpdateEve
   /**
    * A project that is being updated.
    */
-  readonly project: Project.ARCProject;
+  get project(): Project.ARCProject;
   constructor(project: Project.ARCProject);
 }
 
@@ -57,7 +73,7 @@ export class ARCProjectUpdateBulkEvent extends CustomEvent<ARCModelUpdateBulkEve
   /**
    * A list of projects that are being updated.
    */
-  readonly projects: Project.ARCProject[];
+  get projects(): Project.ARCProject[];
   /**
    * @param projects A list of projects to update.
    */
@@ -68,7 +84,7 @@ export class ARCProjectUpdateBulkEvent extends CustomEvent<ARCModelUpdateBulkEve
  * An event dispatched from the store after updating a project.
  */
 export declare class ARCProjectUpdatedEvent extends CustomEvent<ARCEntityChangeRecord<Project.ARCProject>> {
-  readonly changeRecord: ARCEntityChangeRecord<Project.ARCProject>;
+  get changeRecord(): ARCEntityChangeRecord<Project.ARCProject>;
   constructor(record: ARCEntityChangeRecord<Project.ARCProject>);
 }
 
@@ -79,11 +95,11 @@ export declare class ARCProjectDeleteEvent extends CustomEvent<ARCModelDeleteEve
   /**
    * Deleted project ID.
    */
-  readonly id: string;
+  get id(): string;
   /**
    * Deleted project revision ID.
    */
-  readonly rev?: string;
+  get rev(): string|undefined;
   /**
    * @param id Project id
    * @param rev Project revision id
@@ -120,7 +136,7 @@ export declare class ARCProjectListAllEvent extends CustomEvent<ARCModelReadBulk
   /**
    * Project keys to read used to initialize the event
    */
-  readonly keys: string[]|undefined;
+  get keys(): string[]|undefined;
 
   /**
    * @param keys Project keys to read. When not set it reads all projects
@@ -136,22 +152,22 @@ export class ARCProjectMoveEvent extends CustomEvent<ARCModelVoidResultEventDeta
   /**
    * The target project id
    */
-  readonly projectId: string;
+  get projectId(): string;
 
   /**
    * The target project id
    */
-  readonly requestId: string;
+  get requestId(): string;
 
   /**
    * The target project id
    */
-  readonly requestType: string;
+  get requestType(): string;
   
   /**
    * The index at which to add the request.
    */
-  readonly position?: number;
+  get position(): number|undefined;
 
   /**
    * @param type The event type
@@ -172,6 +188,15 @@ export class ARCProjectMoveEvent extends CustomEvent<ARCModelVoidResultEventDeta
  * @returns Promise resolved to a Project model.
  */
 export declare function readAction(target: EventTarget, id: string, rev?: string): Promise<Project.ARCProject>;
+
+/**
+ * Dispatches an event handled by the data store to read multiple projects metadata.
+ *
+ * @param target A node on which to dispatch the event.
+ * @param ids The ids of projects to read
+ * @returns Promise resolved to the list of projects.
+ */
+export declare function readBulkAction(target: EventTarget, ids: string[]): Promise<Project.ARCProject[]>;
 
 /**
  * Dispatches an event handled by the data store to update a project metadata.

@@ -25,6 +25,7 @@ import { createChangeRecord } from './ArcBaseModel.js';
 /** @typedef {import('@advanced-rest-client/arc-types').ArcRequest.ARCSavedRequest} ARCSavedRequest */
 /** @typedef {import('@advanced-rest-client/arc-types').ArcRequest.ARCHistoryRequest} ARCHistoryRequest */
 /** @typedef {import('./events/ProjectEvents').ARCProjectReadEvent} ARCProjectReadEvent */
+/** @typedef {import('./events/ProjectEvents').ARCProjectReadBulkEvent} ARCProjectReadBulkEvent */
 /** @typedef {import('./events/ProjectEvents').ARCProjectUpdateEvent} ARCProjectUpdateEvent */
 /** @typedef {import('./events/ProjectEvents').ARCProjectUpdateBulkEvent} ARCProjectUpdateBulkEvent */
 /** @typedef {import('./events/ProjectEvents').ARCProjectDeleteEvent} ARCProjectDeleteEvent */
@@ -37,6 +38,7 @@ import { createChangeRecord } from './ArcBaseModel.js';
 /** @typedef {import('./types').DeletedEntity} DeletedEntity */
 
 export const readHandler = Symbol('readHandler');
+export const readBulkHandler = Symbol('readBulkHandler');
 export const updateHandler = Symbol('updateHandler');
 export const updateBulkHandler = Symbol('updateBulkHandler');
 export const deleteHandler = Symbol('deleteHandler');
@@ -60,6 +62,7 @@ export class ProjectModel extends RequestBaseModel {
   constructor() {
     super('legacy-projects');
     this[readHandler] = this[readHandler].bind(this);
+    this[readBulkHandler] = this[readBulkHandler].bind(this);
     this[updateHandler] = this[updateHandler].bind(this);
     this[deleteHandler] = this[deleteHandler].bind(this);
     this[listHandler] = this[listHandler].bind(this);
@@ -135,10 +138,28 @@ export class ProjectModel extends RequestBaseModel {
    *
    * @param {string} id The ID of the datastore entry.
    * @param {string=} rev Specific revision to read. Defaults to the latest revision.
-   * @return {Promise<ARCProject>} Promise resolved to a datastore object.
+   * @returns {Promise<ARCProject>} Promise resolved to a datastore object.
    */
   async get(id, rev) {
     return this.readProject(id, rev);
+  }
+
+  /**
+   * Bulk read a list of projects
+   * @param {string[]} ids The list of ids to read.
+   * @returns {Promise<ARCProject[]>} Read projects.
+   */
+  async getBulk(ids) {
+    if (!Array.isArray(ids) || !ids.length) {
+      throw new Error('The "ids" property is required');
+    }
+    const response = await this.projectDb.allDocs({
+      keys: ids,
+      include_docs: true,
+    });
+    const { rows } = response;
+    const result = rows.map((item) => item.doc);
+    return result;
   }
 
   /**
@@ -294,6 +315,7 @@ export class ProjectModel extends RequestBaseModel {
   _attachListeners(node) {
     super._attachListeners(node);
     node.addEventListener(ArcModelEventTypes.Project.read, this[readHandler]);
+    node.addEventListener(ArcModelEventTypes.Project.readBulk, this[readBulkHandler]);
     node.addEventListener(ArcModelEventTypes.Project.update, this[updateHandler]);
     node.addEventListener(ArcModelEventTypes.Project.updateBulk, this[updateBulkHandler]);
     node.addEventListener(ArcModelEventTypes.Project.delete, this[deleteHandler]);
@@ -310,6 +332,7 @@ export class ProjectModel extends RequestBaseModel {
   _detachListeners(node) {
     super._detachListeners(node);
     node.removeEventListener(ArcModelEventTypes.Project.read, this[readHandler]);
+    node.removeEventListener(ArcModelEventTypes.Project.readBulk, this[readBulkHandler]);
     node.removeEventListener(ArcModelEventTypes.Project.update, this[updateHandler]);
     node.removeEventListener(ArcModelEventTypes.Project.updateBulk, this[updateBulkHandler]);
     node.removeEventListener(ArcModelEventTypes.Project.delete, this[deleteHandler]);
@@ -333,6 +356,21 @@ export class ProjectModel extends RequestBaseModel {
 
     const { id, rev } = e;
     e.detail.result = this.readProject(id, rev);
+  }
+
+  /**
+   * Handler for project bulk read event.
+   * @param {ARCProjectReadBulkEvent} e
+   */
+  [readBulkHandler](e) {
+    if (e.defaultPrevented) {
+      return;
+    }
+    e.preventDefault();
+    e.stopPropagation();
+
+    const { ids } = e;
+    e.detail.result = this.getBulk(ids);
   }
 
   /**

@@ -53,6 +53,16 @@ export declare interface ProjectFunctions {
    * @returns Promise resolved to a Project model.
    */
   read(target: EventTarget, id: string, rev?: string): Promise<ARCProject>;
+
+  /**
+   * Dispatches an event handled by the data store to read multiple projects metadata.
+   *
+   * @param target A node on which to dispatch the event.
+   * @param ids The ids of projects to read
+   * @returns Promise resolved to the list of projects.
+   */
+  readBulk(target: EventTarget, ids: string[]): Promise<ARCProject[]>;
+
   /**
    * Dispatches an event handled by the data store to update a project metadata.
    *

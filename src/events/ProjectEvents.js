@@ -57,6 +57,34 @@ export class ARCProjectReadEvent extends CustomEvent {
 }
 
 /**
+ * An event to be dispatched to read in bulk ARC project entities from the data store.
+ */
+export class ARCProjectReadBulkEvent extends CustomEvent {
+  /**
+   * @return {string[]} The list of ids used to initialize this event.
+   */
+  get ids() {
+    return this[projectIdValue];
+  }
+
+  /**
+   * @param {string[]} ids List of ids to read.
+   */
+  constructor(ids) {
+    if (!Array.isArray(ids)) {
+      throw new Error('The projects lists is missing.');
+    }
+    super(ArcModelEventTypes.Project.readBulk, {
+      bubbles: true,
+      composed: true,
+      cancelable: true,
+      detail: {},
+    });
+    this[projectIdValue] = ids;
+  }
+}
+
+/**
  * An event dispatched to the store to update a project.
  */
 export class ARCProjectUpdateEvent extends CustomEvent {
@@ -279,6 +307,19 @@ export class ARCProjectMoveEvent extends CustomEvent {
  */
 export async function readAction(target, id, rev) {
   const e = new ARCProjectReadEvent(id, rev);
+  target.dispatchEvent(e);
+  return e.detail.result;
+}
+
+/**
+ * Dispatches an event handled by the data store to read multiple projects metadata.
+ *
+ * @param {EventTarget} target A node on which to dispatch the event.
+ * @param {string[]} ids The ids of projects to read
+ * @returns {Promise<ARCProject[]>} Promise resolved to the list of projects.
+ */
+export async function readBulkAction(target, ids) {
+  const e = new ARCProjectReadBulkEvent(ids);
   target.dispatchEvent(e);
   return e.detail.result;
 }
