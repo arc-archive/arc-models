@@ -3,6 +3,7 @@
 
 /** @typedef {import('@advanced-rest-client/arc-types').ArcRequest.ARCSavedRequest} ARCSavedRequest */
 /** @typedef {import('@advanced-rest-client/arc-types').ArcRequest.ARCHistoryRequest} ARCHistoryRequest */
+/** @typedef {import('@advanced-rest-client/arc-types').Project.ARCProject} ARCProject */
 /** @typedef {import('./types').DeletedEntity} DeletedEntity */
 /** @typedef {import('./types').ARCEntityChangeRecord} ARCEntityChangeRecord */
 /** @typedef {import('@advanced-rest-client/arc-types').ArcRequest.RequestAuthorization} RequestAuthorization */
@@ -282,4 +283,34 @@ export function restoreTransformedPayload(body) {
     return Buffer.from(body.data);
   }
   return undefined;
+}
+
+/**
+ * Normalizes projects list to common model.
+ * It updates `updated` property to current time.
+ * If an item is not an object then it is removed.
+ *
+ * @param {ARCProject[]} projects List of projects.
+ * @return {ARCProject[]}
+ */
+export function normalizeProjects(projects) {
+  const items = [...projects];
+  for (let i = items.length - 1; i >= 0; i--) {
+    let item = items[i];
+    if (!item || typeof item !== 'object') {
+      items.splice(i, 1);
+      continue;
+    }
+    item = {
+      order: 0,
+      requests: [],
+      ...item,
+    };
+    item.updated = Date.now();
+    if (!item.created) {
+      item.created = item.updated;
+    }
+    items[i] = item;
+  }
+  return items;
 }

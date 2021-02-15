@@ -47,8 +47,6 @@ export const listAllHandler = Symbol('listAllHandler');
 export const moveToHandler = Symbol('moveToHandler');
 export const addToHandler = Symbol('addToHandler');
 export const removeFromHandler = Symbol('removeFromHandler');
-export const normalizeProjects = Symbol('normalizeProjects');
-export const processUpdateBulkResponse = Symbol('processUpdateBulkResponse');
 
 /**
  * A model to access projects data in Advanced REST Client.
@@ -150,16 +148,7 @@ export class ProjectModel extends RequestBaseModel {
    * @returns {Promise<ARCProject[]>} Read projects.
    */
   async getBulk(ids) {
-    if (!Array.isArray(ids) || !ids.length) {
-      throw new Error('The "ids" property is required');
-    }
-    const response = await this.projectDb.allDocs({
-      keys: ids,
-      include_docs: true,
-    });
-    const { rows } = response;
-    const result = rows.map((item) => item.doc);
-    return result;
+    return this.readProjects(ids);
   }
 
   /**
@@ -178,12 +167,7 @@ export class ProjectModel extends RequestBaseModel {
    * @return {Promise<ARCEntityChangeRecord[]>}
    */
   async postBulk(projects) {
-    if (!Array.isArray(projects) || !projects.length) {
-      throw new Error('The "projects" property is required');
-    }
-    const items = this[normalizeProjects](projects);
-    const response = await this.projectDb.bulkDocs(items);
-    return this[processUpdateBulkResponse](items, response);
+    return this.updateProjects(projects);
   }
 
   /**
@@ -401,73 +385,6 @@ export class ProjectModel extends RequestBaseModel {
 
     const { projects } = e;
     e.detail.result = this.postBulk(projects);
-  }
-
-  /**
-   * Normalizes projects list to common model.
-   * It updates `updated` property to current time.
-   * If an item is not an object then it is removed.
-   *
-   * @param {ARCProject[]} projects List of projects.
-   * @return {ARCProject[]}
-   */
-  [normalizeProjects](projects) {
-    const items = [...projects];
-    for (let i = items.length - 1; i >= 0; i--) {
-      let item = items[i];
-      if (!item || typeof item !== 'object') {
-        items.splice(i, 1);
-        continue;
-      }
-      item = {
-        order: 0,
-        requests: [],
-        ...item,
-      };
-      item.updated = Date.now();
-      if (!item.created) {
-        item.created = item.updated;
-      }
-      items[i] = item;
-    }
-    return items;
-  }
-
-  /**
-   * Processes datastore response after calling `updateBulk()` function.
-   * @param {ARCProject[]} projects List of requests to update.
-   * @param {Array<PouchDB.Core.Response|PouchDB.Core.Error>} responses PouchDB response
-   * @return {ARCEntityChangeRecord[]} List of projects with updated `_id` and `_rew`
-   */
-  [processUpdateBulkResponse](projects, responses) {
-    const result = /** @type ARCEntityChangeRecord[] */ ([]);
-    for (let i = 0, len = responses.length; i < len; i++) {
-      const response = responses[i];
-      const project = { ...projects[i] };
-      const typedError = /** @type PouchDB.Core.Error */ (response);
-      /* istanbul ignore if */
-      if (typedError.error) {
-        this._handleException(typedError, true);
-        continue;
-      }
-      const oldRev = project._rev;
-      project._rev = response.rev;
-      /* istanbul ignore if */
-      if (!project._id) {
-        project._id = response.id;
-      }
-      const record = /** @type ARCEntityChangeRecord */ ({
-        id: project._id,
-        rev: response.rev,
-        item: project,
-      });
-      if (oldRev) {
-        record.oldRev = oldRev;
-      }
-      result.push(record);
-      ArcModelEvents.Project.State.update(this, record);
-    }
-    return result;
   }
 
   /**

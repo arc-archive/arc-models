@@ -1,7 +1,7 @@
 import { fixture, assert, oneEvent } from '@open-wc/testing';
 import { DataGenerator } from '@advanced-rest-client/arc-data-generator';
-import * as sinon from 'sinon';
-import { PayloadProcessor } from '@advanced-rest-client/arc-electron-payload-processor/payload-processor-esm.js';
+import sinon from 'sinon';
+import { PayloadProcessor } from '@advanced-rest-client/arc-electron-payload-processor';
 import { ArcModelEventTypes } from '../../src/events/ArcModelEventTypes.js';
 import '../../request-model.js';
 import { sortRequestProjectOrder, queryStore } from '../../src/RequestModel.js';
@@ -649,6 +649,7 @@ describe('RequestModel', () => {
   describe('revertRemove()', () => {
     const type = 'saved';
     let doc = /** @type ARCSavedRequest */ (null);
+    let pid = /** @type string */ (null);
 
     after(async () => {
       await generator.destroySavedRequestData();
@@ -665,8 +666,15 @@ describe('RequestModel', () => {
     let model = /** @type RequestModel */ (null);
     beforeEach(async () => {
       model = await basicFixture();
-      const request = /** @type ARCSavedRequest */ (generator.generateSavedItem());
+      const project = generator.generateProjects({ projectsSize: 1 })[0];
+      // const project = (await model.updateProject({ _id: v4(), name: 'Test project' })).item;
+      const request = /** @type ARCSavedRequest */ (generator.generateSavedItem({
+        project: project._id,
+      }));
       const record = await model.post(type, request);
+      project.requests = [record.id];
+      const pRec = await model.updateProject(project);
+      pid = pRec.id;
       doc = /** @type ARCSavedRequest */ (record.item);
       const result = await model.delete(type, doc._id, doc._rev);
       doc._rev = result.rev;
@@ -712,6 +720,14 @@ describe('RequestModel', () => {
         thrown = true;
       }
       assert.isTrue(thrown);
+    });
+
+    it('updates a project with the restored request', async () => {
+      const projectBefore = await model.readProject(pid);
+      assert.notInclude(projectBefore.requests, doc._id)
+      await model.revertRemove('saved', [deleted(doc)]);
+      const projectAfter = await model.readProject(pid);
+      assert.include(projectAfter.requests, doc._id)
     });
   });
 
@@ -1081,11 +1097,9 @@ describe('RequestModel', () => {
   });
 
   describe('indexData()', () => {
-    before(() => {
-      return generator.insertHistoryRequestData({
+    before(() => generator.insertHistoryRequestData({
         requestsSize: 1,
-      });
-    });
+      }));
 
     after(async () => {
       await generator.destroySavedRequestData();

@@ -12,8 +12,6 @@ export declare const listAllHandler: unique symbol;
 export declare const moveToHandler: unique symbol;
 export declare const addToHandler: unique symbol;
 export declare const removeFromHandler: unique symbol;
-export declare const normalizeProjects: unique symbol;
-export declare const processUpdateBulkResponse: unique symbol;
 
 /**
  * A model to access projects data in Advanced REST Client.
@@ -119,23 +117,6 @@ export declare class ProjectModel extends RequestBaseModel {
    * Handler for `project-update-bulk` custom event.
    */
   [updateBulkHandler](e: ARCProjectUpdateBulkEvent): void;
-
-  /**
-   * Normalizes projects list to common model.
-   * It updates `updated` property to current time.
-   * If an item is not an object then it is removed.
-   *
-   * @param projects List of projects.
-   */
-  [normalizeProjects](projects: Project.ARCProject[]): Project.ARCProject[];
-
-  /**
-   * Processes datastore response after calling `updateBulk()` function.
-   * @param projects List of requests to update.
-   * @param responses PouchDB response
-   * @returns List of projects with updated `_id` and `_rew`
-   */
-  [processUpdateBulkResponse](projects: Project.ARCProject[], responses: (PouchDB.Core.Response|PouchDB.Core.Error)[]): ARCEntityChangeRecord<Project.ARCProject>[];
 
   /**
    * Removes a project from the data store.

@@ -2,6 +2,8 @@ import { ArcBaseModel } from './ArcBaseModel';
 import { Project, ArcRequest } from '@advanced-rest-client/arc-types';
 import { ARCEntityChangeRecord, DeletedEntity } from './types';
 
+export declare const processUpdateProjectBulkResponse: unique symbol;
+
 /**
  * A base class for Request and Projects` models.
  */
@@ -36,6 +38,13 @@ export declare class RequestBaseModel extends ArcBaseModel {
   readProject(id: string, rev?: string): Promise<Project.ARCProject>;
 
   /**
+   * Bulk read a list of projects
+   * @param ids The list of ids to read.
+   * @returns Read projects.
+   */
+  readProjects(ids: string[]): Promise<Project.ARCProject[]>;
+
+  /**
    * Updates / saves a project object in the datastore.
    * This function fires `project-object-changed` event.
    *
@@ -43,6 +52,12 @@ export declare class RequestBaseModel extends ArcBaseModel {
    * @returns Resolved promise to project object with updated `_rev`
    */
   updateProject(project: Project.ARCProject): Promise<ARCEntityChangeRecord<Project.ARCProject>>;
+
+  /**
+   * Updates more than one project in a bulk request.
+   * @param projects List of requests to update.
+   */
+  updateProjects(projects: Project.ARCProject[]): Promise<ARCEntityChangeRecord<Project.ARCProject>[]>;
 
   /**
    * Removes a project entity from the data store.
@@ -81,5 +96,13 @@ export declare class RequestBaseModel extends ArcBaseModel {
    * @param request The request to process 
    * @returns Change record for each changed project.
    */
-  removeFromProjects(request: ArcRequest.ARCSavedRequest): Promise<ARCEntityChangeRecord<Project.ARCProject>[]>
+  removeFromProjects(request: ArcRequest.ARCSavedRequest): Promise<ARCEntityChangeRecord<Project.ARCProject>[]>;
+
+  /**
+   * Processes datastore response after calling `updateBulk()` function.
+   * @param projects List of requests to update.
+   * @param responses PouchDB response
+   * @returns List of projects with updated `_id` and `_rew`
+   */
+  [processUpdateProjectBulkResponse](projects: Project.ARCProject[], responses: Array<PouchDB.Core.Response|PouchDB.Core.Error>): ARCEntityChangeRecord<Project.ARCProject>[];
 }

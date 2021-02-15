@@ -1,4 +1,4 @@
-import { ArcRequest, ArcResponse } from '@advanced-rest-client/arc-types';
+import { ArcRequest, ArcResponse, Project } from '@advanced-rest-client/arc-types';
 import { DeletedEntity, ARCEntityChangeRecord } from './types';
 
 /**
@@ -82,3 +82,12 @@ export declare function normalizeAuthorization(request: ArcRequest.ARCHistoryReq
  * Transforms the `TransformedPayload` object to its original data type.
  */
 export function restoreTransformedPayload(body: ArcResponse.TransformedPayload): Buffer|ArrayBuffer|undefined;
+
+/**
+ * Normalizes projects list to common model.
+ * It updates `updated` property to current time.
+ * If an item is not an object then it is removed.
+ *
+ * @param projects List of projects.
+ */
+export declare function normalizeProjects(projects: Project.ARCProject[]): Project.ARCProject[];

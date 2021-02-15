@@ -1,3 +1,5 @@
+/* eslint-disable arrow-body-style */
+/* eslint-disable no-param-reassign */
 /**
 Copyright 2016 The Advanced REST client authors <arc@mulesoft.com>
 Licensed under the Apache License, Version 2.0 (the "License"); you may not
@@ -61,6 +63,7 @@ export const storeHandler = Symbol('storeHandler');
 export const syncProjects = Symbol('syncProjects');
 export const sortRequestProjectOrder = Symbol('sortRequestProjectOrder');
 export const queryStore = Symbol('queryStore');
+export const revertRemoveProject = Symbol('revertRemoveProject');
 
 /**
  * A model to access request data in Advanced REST Client.
@@ -456,10 +459,45 @@ export class RequestModel extends RequestBaseModel {
     }
     const db = this.getDatabase(type);
     const result = await revertDelete(db, items);
+    await this[revertRemoveProject](result);
     result.forEach((record) => {
       ArcModelEvents.Request.State.update(this, type, record);
     });
     return result;
+  }
+
+  /**
+   * Checks for project data in the restored requests and re-inserts the request to the corresponding projects.
+   * @param {ARCEntityChangeRecord[]} result
+   */
+  async [revertRemoveProject](result) {
+    const projects = {};
+    result.forEach((record) => {
+      const req = /** @type ARCHistoryRequest|ARCSavedRequest */ (record.item);
+      if (!Array.isArray(req.projects) || !req.projects.length) {
+        return;
+      }
+      req.projects.forEach((pid) => {
+        if (!projects[pid]) {
+          projects[pid] = [];
+        }
+        projects[pid].push(req._id);
+      });
+    });
+    const keys = Object.keys(projects);
+    if (!keys.length) {
+      return;
+    }
+    const dbProjects = await this.readProjects(keys);
+    dbProjects.forEach((project) => {
+      if (!project.requests) {
+        project.requests = [];
+      }
+      project.requests = project.requests.concat(projects[project._id]);
+      // https://stackoverflow.com/a/14438954/1127848
+      project.requests = project.requests.filter((v, i, a) => a.indexOf(v) === i);
+    });
+    await this.updateProjects(dbProjects);
   }
 
   /**
