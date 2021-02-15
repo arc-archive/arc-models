@@ -15,7 +15,7 @@ the License.
 */
 import { v4 } from '@advanced-rest-client/uuid-generator';
 import { TransportEventTypes } from '@advanced-rest-client/arc-events';
-import { PayloadProcessor } from '@advanced-rest-client/arc-electron-payload-processor';
+import { BodyProcessor } from '@advanced-rest-client/body-editor';
 import { ArcBaseModel } from './ArcBaseModel.js';
 import { normalizeRequest } from './Utils.js';
 import { ArcModelEvents } from './events/ArcModelEvents.js';
@@ -158,7 +158,7 @@ export class HistoryDataModel extends ArcBaseModel {
     const id = `${d.getTime()}/${encoded}/${source.method}`;
     const copy = { ...source, type: 'history', _id: id };
     const normalized = normalizeRequest(copy);
-    const transportCopy = await PayloadProcessor.payloadToString(normalizeRequest(request));
+    const transportCopy = await BodyProcessor.payloadToString(normalizeRequest(request));
     const created = request.startTime;
     const updated = request.endTime;
     const doc = /** @type ARCHistoryRequest */ ({
@@ -185,7 +185,7 @@ export class HistoryDataModel extends ArcBaseModel {
     const responsePayloadSize = await this[computePayloadSize](response.payload);
     const requestHeadersSize = this[calculateBytes](request.headers);
     const responseHeadersSize = this[calculateBytes](response.headers);
-    const requestCopy = await PayloadProcessor.payloadToString(request);
+    const requestCopy = await BodyProcessor.payloadToString(request);
     const responsePayload = this[prepareResponseBody](response.payload);
     const doc = /** @type HistoryData */ ({
       _id: id,

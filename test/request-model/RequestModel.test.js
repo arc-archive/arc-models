@@ -1,7 +1,7 @@
 import { fixture, assert, oneEvent } from '@open-wc/testing';
 import { DataGenerator } from '@advanced-rest-client/arc-data-generator';
 import sinon from 'sinon';
-import { PayloadProcessor } from '@advanced-rest-client/arc-electron-payload-processor';
+import { BodyProcessor } from '@advanced-rest-client/body-editor';
 import { ArcModelEventTypes } from '../../src/events/ArcModelEventTypes.js';
 import '../../request-model.js';
 import { sortRequestProjectOrder, queryStore } from '../../src/RequestModel.js';
@@ -78,20 +78,20 @@ describe('RequestModel', () => {
       });
 
       it('restores payload data', async () => {
-        const spy = sinon.spy(PayloadProcessor, 'restorePayload');
+        const spy = sinon.spy(BodyProcessor, 'restorePayload');
         await model.get(type, requests[0]._id);
         // @ts-ignore
-        PayloadProcessor.restorePayload.restore();
+        BodyProcessor.restorePayload.restore();
         assert.isTrue(spy.called);
       });
 
       it('ignores restoring payload when configured', async () => {
-        const spy = sinon.spy(PayloadProcessor, 'restorePayload');
+        const spy = sinon.spy(BodyProcessor, 'restorePayload');
         await model.get(type, requests[0]._id, null, {
           ignorePayload: true,
         });
         // @ts-ignore
-        PayloadProcessor.restorePayload.restore();
+        BodyProcessor.restorePayload.restore();
         assert.isFalse(spy.called);
       });
 
@@ -185,21 +185,21 @@ describe('RequestModel', () => {
 
     it('restores payload on each request', async () => {
       const ids = requests.slice(0, 5).map((item) => item._id);
-      const spy = sinon.spy(PayloadProcessor, 'restorePayload');
+      const spy = sinon.spy(BodyProcessor, 'restorePayload');
       await model.getBulk(type, ids);
       // @ts-ignore
-      PayloadProcessor.restorePayload.restore();
+      BodyProcessor.restorePayload.restore();
       assert.equal(spy.callCount, 5);
     });
 
     it('removes payload when instructed', async () => {
       const ids = requests.slice(0, 5).map((item) => item._id);
-      const spy = sinon.spy(PayloadProcessor, 'restorePayload');
+      const spy = sinon.spy(BodyProcessor, 'restorePayload');
       await model.getBulk(type, ids, {
         ignorePayload: true,
       });
       // @ts-ignore
-      PayloadProcessor.restorePayload.restore();
+      BodyProcessor.restorePayload.restore();
       assert.isFalse(spy.called);
     });
 

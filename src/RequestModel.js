@@ -12,7 +12,7 @@ WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
 License for the specific language governing permissions and limitations under
 the License.
 */
-import { PayloadProcessor } from '@advanced-rest-client/arc-electron-payload-processor';
+import { BodyProcessor } from '@advanced-rest-client/body-editor';
 import { v4 } from '@advanced-rest-client/uuid-generator';
 import { RequestBaseModel } from './RequestBaseModel.js';
 import '../url-indexer.js';
@@ -140,7 +140,7 @@ export class RequestModel extends RequestBaseModel {
     if (opts.ignorePayload) {
       delete request.payload;
     } else {
-      request = PayloadProcessor.restorePayload(request);
+      request = BodyProcessor.restorePayload(request);
       if (request.response && request.response.payload) {
         const p = request.response.payload;
         if (p.type && p.data) {
@@ -179,7 +179,7 @@ export class RequestModel extends RequestBaseModel {
       if (opts.ignorePayload) {
         delete request.payload;
       } else {
-        request = PayloadProcessor.restorePayload(request);
+        request = BodyProcessor.restorePayload(request);
         if (request.response && request.response.payload) {
           const p = request.response.payload;
           if (p.type && p.data) {
@@ -227,7 +227,7 @@ export class RequestModel extends RequestBaseModel {
       }
     }
     const originalPayload = copy.payload;
-    copy = await PayloadProcessor.payloadToString(copy);
+    copy = await BodyProcessor.payloadToString(copy);
     const response = await db.put(copy);
     copy.payload = originalPayload;
     delete copy.blob;
@@ -266,7 +266,7 @@ export class RequestModel extends RequestBaseModel {
       let copy = /** @type ARCHistoryRequest|ARCSavedRequest */ ({ ...request, ...timeValues });
       copy = normalizeRequest(copy);
       const { payload } = copy;
-      copy = await PayloadProcessor.payloadToString(copy);
+      copy = await BodyProcessor.payloadToString(copy);
       return {
         request: copy,
         payload,

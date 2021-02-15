@@ -25,9 +25,8 @@
     "email": "arc@mulesoft.com"
   },
   "dependencies": {
-    "@advanced-rest-client/arc-electron-payload-processor": "^1.0.2",
     "@advanced-rest-client/arc-events": "^0.2.14",
-    "@advanced-rest-client/arc-url": "^0.1.4",
+    "@advanced-rest-client/body-editor": "^0.1.13",
     "@advanced-rest-client/pouchdb-quick-search": "^2.0.3",
     "@advanced-rest-client/uuid-generator": "^3.1.1",
     "pouchdb": "^7.2.2"
