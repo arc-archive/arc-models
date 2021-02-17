@@ -26,6 +26,7 @@
   },
   "dependencies": {
     "@advanced-rest-client/arc-events": "^0.2.14",
+    "@advanced-rest-client/arc-headers": "^0.1.7",
     "@advanced-rest-client/body-editor": "^0.1.13",
     "@advanced-rest-client/pouchdb-quick-search": "^2.0.3",
     "@advanced-rest-client/uuid-generator": "^3.1.1",
@@ -42,6 +43,7 @@
     "@open-wc/eslint-config": "^4.2.0",
     "@open-wc/testing": "^2.5.32",
     "@polymer/paper-toast": "^3.0.0",
+    "@types/har-format": "^1.2.5",
     "@types/pouchdb": "^6.4.0",
     "@web/dev-server": "^0.1.7",
     "@web/test-runner": "^0.12.15",

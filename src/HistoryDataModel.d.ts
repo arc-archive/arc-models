@@ -11,9 +11,6 @@ export declare const computeHistoryStoreUrl:  unique symbol;
 export declare const computeHistoryDataId:  unique symbol;
 export declare const prepareResponseBody:  unique symbol;
 export declare const computeTotalTime:  unique symbol;
-export declare const calculateBytes:  unique symbol;
-export declare const computePayloadSize:  unique symbol;
-export declare const computeFormDataSize:  unique symbol;
 
 /**
  * The model that stores requests history object (for the history menu and panel)
@@ -118,25 +115,4 @@ export class HistoryDataModel extends ArcBaseModel {
    * @return Sum of times in the `timings` object. The `-1` values are ignored.
    */
   [computeTotalTime](timings: ArcResponse.RequestTime): number;
-
-  /**
-   * Calculates size of the string
-   * @param {string} str A string to compute size from.
-   * @return {number} Size of the string.
-   */
-  [calculateBytes](str: string): number;
-
-  /**
-   * Computes size of the payload.
-   *
-   * @param payload The payload
-   * @return The size of the payload
-   */
-  [computePayloadSize](payload: ArrayBuffer|Blob|File|String|FormData|ArcResponse.TransformedPayload): Promise<number>;
-
-  /**
-   * @param data The size of the form data
-   * @return The size of the form data
-   */
-  [computeFormDataSize](data: FormData): Promise<number>;
 }
