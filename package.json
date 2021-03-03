@@ -64,7 +64,7 @@
     "lint:types": "tsc",
     "lint": "npm run lint:eslint",
     "format": "npm run format:eslint",
-    "test": "web-test-runner test/**/*.test.js --coverage --node-resolve --playwright --browsers chromium firefox",
+    "test": "web-test-runner test/**/*.test.js --coverage --node-resolve --playwright --browsers chromium",
     "test:all": "web-test-runner test/**/*.test.js --coverage --node-resolve --playwright --browsers chromium firefox webkit",
     "test:watch": "web-test-runner test/**/*.test.js --node-resolve --watch --playwright --browsers chromium",
     "test:dev": "web-test-runner --config wtr-dev.config.mjs",
