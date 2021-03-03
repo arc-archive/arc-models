@@ -1,8 +1,7 @@
 import { fixture, assert } from '@open-wc/testing';
 import { DataGenerator } from '@advanced-rest-client/arc-data-generator';
-import * as sinon from 'sinon';
-import { ArcModelEventTypes } from '../../src/events/ArcModelEventTypes.js';
-import { ArcModelEvents } from '../../src/events/ArcModelEvents.js';
+import sinon from 'sinon';
+import { UrlIndexer, ArcModelEventTypes, ArcModelEvents } from '../../index.js';
 import '../../request-model.js';
 
 /* eslint-disable prefer-destructuring */
@@ -30,9 +29,7 @@ describe('RequestModel Events API', () => {
       requests = data.requests;
     });
 
-    after(() => {
-      return generator.destroySavedRequestData();
-    });
+    after(() => generator.destroySavedRequestData());
 
     let model = /** @type RequestModel */ (null);
     beforeEach(async () => {
@@ -158,9 +155,7 @@ describe('RequestModel Events API', () => {
       requests = data.requests;
     });
 
-    after(() => {
-      return generator.destroySavedRequestData();
-    });
+    after(() => generator.destroySavedRequestData());
 
     beforeEach(async () => {
       await basicFixture();
@@ -956,11 +951,20 @@ describe('RequestModel Events API', () => {
     before(async () => {
       const data = await generator.insertSavedRequestData();
       requests = data.requests;
+      const indexer = new UrlIndexer();
+      const indexable = requests.map((r) => ({
+          id: r._id,
+          type: r.type,
+          url: r.url,
+        }));
+      await indexer.index(indexable);
     });
 
     after(async () => {
       await generator.destroySavedRequestData();
       await generator.destroyHistoryData();
+      const indexer = new UrlIndexer();
+      await indexer.clearIndexedData();
     });
 
     beforeEach(async () => {
@@ -995,14 +999,23 @@ describe('RequestModel Events API', () => {
 
   describe(`${ArcModelEventTypes.Request.list} event`, () => {
     before(async () => {
-      await generator.insertSavedRequestData({
+      const data = await generator.insertSavedRequestData({
         requestsSize: 30,
       });
+      const indexer = new UrlIndexer();
+      const indexable = data.requests.map((r) => ({
+          id: r._id,
+          type: r.type,
+          url: r.url,
+        }));
+      await indexer.index(indexable);
     });
 
     after(async () => {
       await generator.destroySavedRequestData();
       await generator.destroyHistoryData();
+      const indexer = new UrlIndexer();
+      await indexer.clearIndexedData();
     });
 
     beforeEach(async () => {
@@ -1030,9 +1043,9 @@ describe('RequestModel Events API', () => {
 
     it('returns list result record', async () => {
       const result = await ArcModelEvents.Request.list(document.body, 'saved');
-      assert.typeOf(result, 'object');
-      assert.typeOf(result.nextPageToken, 'string');
-      assert.typeOf(result.items, 'array');
+      assert.typeOf(result, 'object', 'the result is an object');
+      assert.typeOf(result.items, 'array', 'has the items array');
+      assert.typeOf(result.nextPageToken, 'string', 'has the page token');
     });
 
     it('respects "limit" parameter', async () => {

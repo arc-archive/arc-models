@@ -1370,17 +1370,38 @@ describe('RequestModel', () => {
     let history = /** @type ARCHistoryRequest[] */ (null);
     let saved = /** @type ARCSavedRequest[] */ (null);
     before(async () => {
-      const data = await generator.insertSavedRequestData();
+      const data = await generator.insertSavedRequestData({
+        requestsSize: 3,
+      });
       saved = data.requests;
-      history = await generator.insertHistoryRequestData();
+      history = await generator.insertHistoryRequestData({
+        requestsSize: 3,
+      });
+      const indexable = [];
+      saved.forEach((r) => {
+        indexable.push({
+          id: r._id,
+          type: r.type,
+          url: r.url,
+        });
+      });
+      history.forEach((r) => {
+        indexable.push({
+          id: r._id,
+          type: r.type,
+          url: r.url,
+        });
+      });
+      
       const indexer = new UrlIndexer();
-      await indexer.reindexSaved();
-      await indexer.reindexHistory();
+      await indexer.index(indexable);
     });
 
     after(async () => {
       await generator.destroySavedRequestData();
       await generator.destroyHistoryData();
+      const indexer = new UrlIndexer();
+      await indexer.clearIndexedData();
     });
 
     let model = /** @type RequestModel */ (null);

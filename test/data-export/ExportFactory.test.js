@@ -77,14 +77,14 @@ describe('ExportFactory', () => {
 
       it('gets large amount of data', async () => {
         await generator.insertSavedRequestData({
-          requestsSize: 4000,
+          requestsSize: 2000,
           projectsSize: 1,
         });
         const result = await factory.getExportData({
           requests: true,
         });
         const requests = getData(result, 'requests');
-        assert.lengthOf(requests, 4100, 'has all requests');
+        assert.lengthOf(requests, 2100, 'has all requests');
       });
 
       it('transforms legacy authorization to new authorization object', async () => {
