@@ -949,7 +949,9 @@ describe('RequestModel Events API', () => {
   describe(`${ArcModelEventTypes.Request.query} event`, () => {
     let requests = /** @type ARCSavedRequest[] */ (null);
     before(async () => {
-      const data = await generator.insertSavedRequestData();
+      const data = await generator.insertSavedRequestData({
+        requestsSize: 3,
+      });
       requests = data.requests;
       const indexer = new UrlIndexer();
       const indexable = requests.map((r) => ({
