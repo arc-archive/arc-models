@@ -1,3 +1,5 @@
+/* eslint-disable arrow-body-style */
+/* eslint-disable no-param-reassign */
 /**
 Copyright 2016 The Advanced REST client authors <arc@mulesoft.com>
 Licensed under the Apache License, Version 2.0 (the "License"); you may not
@@ -10,7 +12,7 @@ WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
 License for the specific language governing permissions and limitations under
 the License.
 */
-import { PayloadProcessor } from '@advanced-rest-client/arc-electron-payload-processor';
+import { BodyProcessor } from '@advanced-rest-client/body-editor';
 import { v4 } from '@advanced-rest-client/uuid-generator';
 import { RequestBaseModel } from './RequestBaseModel.js';
 import '../url-indexer.js';
@@ -61,6 +63,7 @@ export const storeHandler = Symbol('storeHandler');
 export const syncProjects = Symbol('syncProjects');
 export const sortRequestProjectOrder = Symbol('sortRequestProjectOrder');
 export const queryStore = Symbol('queryStore');
+export const revertRemoveProject = Symbol('revertRemoveProject');
 
 /**
  * A model to access request data in Advanced REST Client.
@@ -137,7 +140,7 @@ export class RequestModel extends RequestBaseModel {
     if (opts.ignorePayload) {
       delete request.payload;
     } else {
-      request = PayloadProcessor.restorePayload(request);
+      request = BodyProcessor.restorePayload(request);
       if (request.response && request.response.payload) {
         const p = request.response.payload;
         if (p.type && p.data) {
@@ -176,7 +179,7 @@ export class RequestModel extends RequestBaseModel {
       if (opts.ignorePayload) {
         delete request.payload;
       } else {
-        request = PayloadProcessor.restorePayload(request);
+        request = BodyProcessor.restorePayload(request);
         if (request.response && request.response.payload) {
           const p = request.response.payload;
           if (p.type && p.data) {
@@ -224,7 +227,7 @@ export class RequestModel extends RequestBaseModel {
       }
     }
     const originalPayload = copy.payload;
-    copy = await PayloadProcessor.payloadToString(copy);
+    copy = await BodyProcessor.payloadToString(copy);
     const response = await db.put(copy);
     copy.payload = originalPayload;
     delete copy.blob;
@@ -263,7 +266,7 @@ export class RequestModel extends RequestBaseModel {
       let copy = /** @type ARCHistoryRequest|ARCSavedRequest */ ({ ...request, ...timeValues });
       copy = normalizeRequest(copy);
       const { payload } = copy;
-      copy = await PayloadProcessor.payloadToString(copy);
+      copy = await BodyProcessor.payloadToString(copy);
       return {
         request: copy,
         payload,
@@ -456,10 +459,45 @@ export class RequestModel extends RequestBaseModel {
     }
     const db = this.getDatabase(type);
     const result = await revertDelete(db, items);
+    await this[revertRemoveProject](result);
     result.forEach((record) => {
       ArcModelEvents.Request.State.update(this, type, record);
     });
     return result;
+  }
+
+  /**
+   * Checks for project data in the restored requests and re-inserts the request to the corresponding projects.
+   * @param {ARCEntityChangeRecord[]} result
+   */
+  async [revertRemoveProject](result) {
+    const projects = {};
+    result.forEach((record) => {
+      const req = /** @type ARCHistoryRequest|ARCSavedRequest */ (record.item);
+      if (!Array.isArray(req.projects) || !req.projects.length) {
+        return;
+      }
+      req.projects.forEach((pid) => {
+        if (!projects[pid]) {
+          projects[pid] = [];
+        }
+        projects[pid].push(req._id);
+      });
+    });
+    const keys = Object.keys(projects);
+    if (!keys.length) {
+      return;
+    }
+    const dbProjects = await this.readProjects(keys);
+    dbProjects.forEach((project) => {
+      if (!project.requests) {
+        project.requests = [];
+      }
+      project.requests = project.requests.concat(projects[project._id]);
+      // https://stackoverflow.com/a/14438954/1127848
+      project.requests = project.requests.filter((v, i, a) => a.indexOf(v) === i);
+    });
+    await this.updateProjects(dbProjects);
   }
 
   /**

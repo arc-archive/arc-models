@@ -22,6 +22,7 @@ import { ArcModelEvents } from './events/ArcModelEvents.js';
 
 /** @typedef {import('@advanced-rest-client/arc-types').Variable.ARCEnvironment} ARCEnvironment */
 /** @typedef {import('@advanced-rest-client/arc-types').Variable.ARCVariable} ARCVariable */
+/** @typedef {import('@advanced-rest-client/arc-types').Variable.SystemVariables} SystemVariables */
 /** @typedef {import('./types').ARCEntityChangeRecord} ARCEntityChangeRecord */
 /** @typedef {import('./types').DeletedEntity} DeletedEntity */
 /** @typedef {import('./types').ARCModelListResult} ARCModelListResult */
@@ -56,6 +57,7 @@ export const environmentChangeHandler = Symbol('environmentChangeHandler');
 export const environmentCurrentHandler = Symbol('environmentCurrentHandler');
 export const selectEnvironment = Symbol('selectEnvironment');
 export const variableSetHandler = Symbol('variableSetHandler');
+export const systemVariablesValue = Symbol('systemVariablesValue');
 
 /**
  * Model for variables
@@ -97,6 +99,28 @@ export class VariablesModel extends ArcBaseModel {
     }
     this[currentValue] = value;
     this[selectEnvironment]();
+  }
+
+  /**
+   * @returns {SystemVariables} List of previously set system variables
+   */
+  get systemVariables() {
+    return this[systemVariablesValue];
+  }
+
+  /**
+   * @param {SystemVariables} value
+   */
+  set systemVariables(value) {
+    const old = this[systemVariablesValue];
+    if (old === value) {
+      return;
+    }
+    let setValue;
+    if (value) {
+      setValue = Object.freeze(value);
+    }
+    this[systemVariablesValue] = setValue;
   }
 
   constructor() {
@@ -504,13 +528,16 @@ export class VariablesModel extends ArcBaseModel {
    * @returns {Promise<EnvironmentStateDetail>} The environment state object.
    */
   async readCurrent() {
-    const { currentEnvironment } = this;
+    const { currentEnvironment, systemVariables } = this;
     const result = /** @type EnvironmentStateDetail */ ({
       environment: null,
       variables: [],
     });
     if (currentEnvironment) {
       result.environment = await this.getEnvironment(currentEnvironment);
+    }
+    if (systemVariables) {
+      result.systemVariables = systemVariables;
     }
     const name = result.environment ? result.environment.name : 'default';
     const vars = await this.listAllVariables(name);

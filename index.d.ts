@@ -51,6 +51,9 @@ export {
   ARCProjectDeleteEvent,
   ARCProjectDeletedEvent,
   ARCProjectListEvent,
+  ARCProjectReadBulkEvent,
+  ARCProjectListAllEvent,
+  ARCProjectMoveEvent,
 } from './src/events/ProjectEvents';
 export {
   ARCRequestEventRequestOptions,
@@ -164,3 +167,5 @@ export { ExportFactory } from './src/lib/ExportFactory';
 export { ImportNormalize } from './src/lib/ImportNormalize';
 export { ImportFactory } from './src/lib/ImportFactory';
 export { isSingleRequest, isPostman, isArcFile, prepareImportObject, readFile, isOldImport, isObject } from './src/lib/ImportUtils';
+export * as DataSize from './src/lib/DataSize';
+export { HarTransformer } from './src/transformers/HarTransformer';

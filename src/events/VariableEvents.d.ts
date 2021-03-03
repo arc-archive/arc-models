@@ -11,7 +11,7 @@ import {
   ARCModelListResult,
   DeletedEntity,
 } from '../types';
-import { ARCVariable, ARCEnvironment } from '@advanced-rest-client/arc-types/src/models/Variable';
+import { ARCVariable, ARCEnvironment, SystemVariables } from '@advanced-rest-client/arc-types/src/models/Variable';
 
 export declare const nameValue: unique symbol;
 export declare const environmentValue: unique symbol;
@@ -36,6 +36,10 @@ export declare interface EnvironmentStateDetail {
    * when the environment has no variables.
    */
   variables: ARCVariable[];
+  /**
+   * An optional and readonly map of system variables that should be applied to the variables processor.
+   */
+  systemVariables?: SystemVariables
 }
 
 export declare interface ARCVariablesListOptions extends ARCModelListOptions {

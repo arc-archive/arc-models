@@ -4,14 +4,16 @@ import { DataTestHelper } from './DataTestHelper.js';
 import { ArcPouchTransformer } from '../../src/transformers/ArcPouchTransformer.js';
 import { ExportProcessor } from '../../src/lib/ExportProcessor.js';
 
+/** @typedef {import('@advanced-rest-client/arc-types').DataExport.ArcExportObject} ArcExportObject */
+
 describe('ArcPouchTransformer', () => {
   describe('previous version', () => {
     let jsonData;
-    let result;
+    let result = /** @type ArcExportObject */ (null);
     before(async () => {
       const response = await DataTestHelper.getFile('pouch-data-export.json');
       jsonData = JSON.parse(response);
-      const transformer = new ArcPouchTransformer(jsonData);
+      const transformer = new ArcPouchTransformer(JSON.parse(response));
       result = await transformer.transform();
     });
 
@@ -71,7 +73,8 @@ describe('ArcPouchTransformer', () => {
       assert.equal(request.method, compare.method);
       assert.equal(request.headers, compare.headers);
       assert.equal(request.payload, compare.payload);
-      assert.equal(request.created, compare.created);
+      assert.equal(request.created, compare.updated, 'the created is the previous updated');
+      assert.equal(request.updated, compare.updated, 'has the updated property');
       assert.equal(request.name, compare.name);
       assert.equal(request.type, compare.type);
       assert.equal(request.kind, 'ARC#RequestData');
@@ -82,7 +85,8 @@ describe('ArcPouchTransformer', () => {
       assert.equal(request.method, compare.method);
       assert.equal(request.headers, '');
       assert.equal(request.payload, '');
-      assert.equal(request.created, compare.created);
+      assert.equal(request.created, compare.created, 'has the created property');
+      assert.typeOf(request.updated, 'number', 'has the generated updated property');
       assert.equal(request.name, compare.name);
       assert.equal(request.type, compare.type);
       assert.equal(request.kind, 'ARC#RequestData');
@@ -93,7 +97,7 @@ describe('ArcPouchTransformer', () => {
       assert.equal(request.method, compare.method);
       assert.equal(request.headers, compare.headers);
       assert.equal(request.payload, compare.payload);
-      assert.equal(request.created, compare.created);
+      assert.equal(request.created, compare.updated, 'the created is the previous updated');
       assert.equal(request.name, compare.name);
       assert.equal(request.type, compare.type);
       assert.equal(request.kind, 'ARC#RequestData');
@@ -115,7 +119,7 @@ describe('ArcPouchTransformer', () => {
       assert.equal(project.kind, 'ARC#ProjectData');
     });
 
-    it('associates requests with porojects', () => {
+    it('associates requests with projects', () => {
       assert.isUndefined(result.requests[0].projects);
       assert.isUndefined(result.requests[1].projects);
       assert.typeOf(result.requests[2].projects, 'array');
@@ -124,7 +128,7 @@ describe('ArcPouchTransformer', () => {
       assert.lengthOf(result.requests[3].projects, 1);
     });
 
-    it('associates porojects with requests', () => {
+    it('associates projects with requests', () => {
       const p1 = result.projects[0];
       assert.typeOf(p1.requests, 'array');
       assert.lengthOf(p1.requests, 1);
@@ -140,8 +144,16 @@ describe('ArcPouchTransformer', () => {
       assert.equal(result.requests[3].projects[0], p2id);
     });
 
-    it('does not transform variable object', () => {
-      assert.deepEqual(result.variables, jsonData.variables);
+    it('transforms variable objects', () => {
+      result.variables.forEach((item, index) => {
+        const processed = { ...item };
+        const original = { ...jsonData.variables[index] };
+        assert.typeOf(processed.name, 'string', 'processed item has name property');
+        assert.equal(processed.name, original.variable, 'processed item has name value from the original variable');
+        delete processed.name;
+        delete original.variable;
+        assert.deepEqual(processed, original, 'has all properties');
+      });
     });
 
     it('does not transform cookies object', () => {
@@ -164,11 +176,11 @@ describe('ArcPouchTransformer', () => {
       assert.deepEqual(result.hostrules, jsonData['host-rules']);
     });
 
-    it('transforms clicent certificates', () => {
+    it('transforms client certificates', () => {
       assert.lengthOf(result.clientcertificates, 1);
     });
 
-    it('sets clicent certificates data', () => {
+    it('sets client certificates data', () => {
       const [item] = result.clientcertificates;
       assert.equal(item.name, 'Bob pem', 'has the name');
       assert.equal(item.type, 'pem', 'has the type');
@@ -220,12 +232,18 @@ describe('ArcPouchTransformer', () => {
       const factory = new ArcPouchTransformer(exportObject);
       const result = await factory.transform();
       assert.deepEqual(exportObject.requests, result.requests);
-      assert.deepEqual(exportObject.projects, result.projects);
+      const [project] = result.projects;
+      assert.typeOf(project.created, 'number', 'the project has the created property');
+      assert.typeOf(project.updated, 'number', 'the project has the updated property');
+      delete project.created;
+      delete project.updated;
+      assert.deepEqual(exportObject.projects[0], project);
     });
 
     it('does not process the history requests data', async () => {
       const data = generator.generateHistoryRequestsData({
         requestsSize: 2,
+        forcePayload: true,
       });
       const exportObject = createExport('history', data);
       const factory = new ArcPouchTransformer(exportObject);
@@ -263,7 +281,7 @@ describe('ArcPouchTransformer', () => {
       assert.deepEqual(exportObject.variables, result.variables);
     });
 
-    it('does not process the url history data', async () => {
+    it('does not process the authorization data', async () => {
       const data = generator.generateBasicAuthData({
         size: 2,
       });

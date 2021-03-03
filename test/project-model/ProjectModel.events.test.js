@@ -162,6 +162,48 @@ describe('ProjectModel', () => {
       });
     });
 
+    describe(ArcModelEventTypes.Project.readBulk, () => {
+      let created = /** @type ARCProject[] */ (null);
+      before(async () => {
+        const model = await basicFixture();
+        const projects = /** @type ARCProject[] */ (generator.generateProjects({ projectsSize: 5 }));
+        const results = await model.postBulk(projects);
+        created = results.map((item) => item.item);
+      });
+
+      let element = /** @type ProjectModel */ (null);
+      beforeEach(async () => {
+        element = await basicFixture();
+      });
+
+      after(async () => {
+        await generator.destroySavedRequestData();
+      });
+
+      it('returns the list of requested items', async () => {
+        const ids = [created[0]._id, created[1]._id];
+        const result = await ArcModelEvents.Project.readBulk(document.body, ids);
+        const p1 = await element.get(created[0]._id);
+        const p2 = await element.get(created[1]._id);
+        assert.deepEqual(result[0], p1);
+        assert.deepEqual(result[1], p2);
+      });
+
+      it('ignores the event when cancelled', async () => {
+        document.body.addEventListener(ArcModelEventTypes.Project.readBulk, function f(e) {
+          e.preventDefault();
+          document.body.removeEventListener(ArcModelEventTypes.Project.readBulk, f);
+        });
+        const e = new CustomEvent(ArcModelEventTypes.Project.readBulk, {
+          bubbles: true,
+          cancelable: true,
+          detail: { result: undefined },
+        });
+        document.body.dispatchEvent(e);
+        assert.isUndefined(e.detail.result);
+      });
+    });
+
     describe(ArcModelEventTypes.Project.list, () => {
       before(async () => {
         const model = await basicFixture();

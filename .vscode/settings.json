@@ -47,6 +47,7 @@
     "modelprojectlistall",
     "modelprojectmoveto",
     "modelprojectread",
+    "modelprojectreadbulk",
     "modelprojectremovefrom",
     "modelprojectremovefrombulk",
     "modelprojectupdatebulk",

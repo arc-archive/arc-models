@@ -16,6 +16,7 @@ describe('ArcModelEventTypes', () => {
 
     [
       ['read', 'modelprojectread'],
+      ['readBulk', 'modelprojectreadbulk'],
       ['update', 'modelprojectchange'],
       ['updateBulk', 'modelprojectupdatebulk'],
       ['delete', 'modelprojectdelete'],

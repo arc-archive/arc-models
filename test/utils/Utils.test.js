@@ -7,6 +7,7 @@ import {
   computeMidnight,
   computeTime,
   normalizeRequestType,
+  normalizeProjects,
 } from '../../src/Utils.js';
 
 const generator = new DataGenerator();
@@ -14,7 +15,8 @@ const generator = new DataGenerator();
 /* eslint-disable prefer-destructuring */
 /* global PouchDB */
 
-/** @typedef {import('@advanced-rest-client/arc-types').ArcRequest} ARCHistoryRequest */
+/** @typedef {import('@advanced-rest-client/arc-types').ArcRequest.ARCHistoryRequest} ARCHistoryRequest */
+/** @typedef {import('@advanced-rest-client/arc-types').Project.ARCProject} ARCProject */
 
 describe('Utils', () => {
   describe('normalizeRequest()', () => {
@@ -243,6 +245,64 @@ describe('Utils', () => {
     it('processes legacy-projects', () => {
       const result = normalizeRequestType('legacy-projects');
       assert.equal(result, 'projects');
+    });
+  });
+
+  describe('[normalizeProjects]()', () => {
+    it('filters out invalid items', () => {
+      // @ts-ignore
+      const result = normalizeProjects(['test']);
+      assert.deepEqual(result, []);
+    });
+
+    it('adds order property', () => {
+      const project = /** @type ARCProject */ (generator.createProjectObject());
+      delete project.order;
+      const result = normalizeProjects([project]);
+      assert.equal(result[0].order, 0);
+    });
+
+    it('respects existing order property', () => {
+      const project = /** @type ARCProject */ (generator.createProjectObject());
+      project.order = 1;
+      const result = normalizeProjects([project]);
+      assert.equal(result[0].order, 1);
+    });
+
+    it('adds requests property', () => {
+      const project = /** @type ARCProject */ (generator.createProjectObject());
+      delete project.requests;
+      const result = normalizeProjects([project]);
+      assert.deepEqual(result[0].requests, []);
+    });
+
+    it('respects existing order property', () => {
+      const project = /** @type ARCProject */ (generator.createProjectObject());
+      project.requests = ['test'];
+      const result = normalizeProjects([project]);
+      assert.deepEqual(result[0].requests, ['test']);
+    });
+
+    it('adds updated property', () => {
+      const project = /** @type ARCProject */ (generator.createProjectObject());
+      delete project.updated;
+      const result = normalizeProjects([project]);
+      assert.typeOf(result[0].updated, 'number');
+    });
+
+    it('adds created property', () => {
+      const project = /** @type ARCProject */ (generator.createProjectObject());
+      delete project.created;
+      const result = normalizeProjects([project]);
+      assert.typeOf(result[0].created, 'number');
+      assert.equal(result[0].created, result[0].updated);
+    });
+
+    it('respects existing created property', () => {
+      const project = /** @type ARCProject */ (generator.createProjectObject());
+      project.created = 10;
+      const result = normalizeProjects([project]);
+      assert.equal(result[0].created, 10);
     });
   });
 });

@@ -16,7 +16,7 @@ import { ArcBaseModel, deletemodelHandler, notifyDestroyed, createChangeRecord }
 import 'pouchdb/dist/pouchdb.js';
 import '@advanced-rest-client/pouchdb-quick-search/dist/pouchdb.quick-search.min.js';
 import { ArcModelEvents } from './events/ArcModelEvents.js';
-import { normalizeRequest, normalizeRequestType } from './Utils.js';
+import { normalizeRequest, normalizeRequestType, normalizeProjects } from './Utils.js';
 
 /* global PouchQuickSearch */
 /* eslint-disable class-methods-use-this */
@@ -33,6 +33,8 @@ if (typeof PouchDB !== 'undefined' && typeof PouchQuickSearch !== 'undefined') {
 /** @typedef {import('./types').ARCEntityChangeRecord} ARCEntityChangeRecord */
 /** @typedef {import('./types').DeletedEntity} DeletedEntity */
 /** @typedef {import('./events/BaseEvents').ARCModelDeleteEvent} ARCModelDeleteEvent */
+
+export const processUpdateProjectBulkResponse = Symbol('processUpdateProjectBulkResponse');
 
 /**
  * A base class for Request and Projects` models.
@@ -123,6 +125,24 @@ export class RequestBaseModel extends ArcBaseModel {
   }
 
   /**
+   * Bulk read a list of projects
+   * @param {string[]} ids The list of ids to read.
+   * @returns {Promise<ARCProject[]>} Read projects.
+   */
+  async readProjects(ids) {
+    if (!Array.isArray(ids) || !ids.length) {
+      throw new Error('The "ids" property is required');
+    }
+    const response = await this.projectDb.allDocs({
+      keys: ids,
+      include_docs: true,
+    });
+    const { rows } = response;
+    const result = rows.map((item) => item.doc);
+    return result;
+  }
+
+  /**
    * Updates / saves a project object in the datastore.
    *
    * @param {ARCProject} project A project to save / update
@@ -136,6 +156,20 @@ export class RequestBaseModel extends ArcBaseModel {
     const record = this[createChangeRecord](copy, response, oldRev);
     ArcModelEvents.Project.State.update(this, record);
     return record;
+  }
+
+  /**
+   * Updates more than one project in a bulk request.
+   * @param {ARCProject[]} projects List of requests to update.
+   * @return {Promise<ARCEntityChangeRecord[]>}
+   */
+  async updateProjects(projects) {
+    if (!Array.isArray(projects) || !projects.length) {
+      throw new Error('The "projects" property is required');
+    }
+    const items = normalizeProjects(projects);
+    const response = await this.projectDb.bulkDocs(items);
+    return this[processUpdateProjectBulkResponse](items, response);
   }
 
   /**
@@ -271,5 +305,41 @@ export class RequestBaseModel extends ArcBaseModel {
       }
     });
     return Promise.all(updates);
+  }
+
+  /**
+   * Processes datastore response after calling `updateBulk()` function.
+   * @param {ARCProject[]} projects List of requests to update.
+   * @param {Array<PouchDB.Core.Response|PouchDB.Core.Error>} responses PouchDB response
+   * @return {ARCEntityChangeRecord[]} List of projects with updated `_id` and `_rew`
+   */
+  [processUpdateProjectBulkResponse](projects, responses) {
+    const result = /** @type ARCEntityChangeRecord[] */ ([]);
+    responses.forEach((response, i) => {
+      const project = { ...projects[i] };
+      const typedError = /** @type PouchDB.Core.Error */ (response);
+      /* istanbul ignore if */
+      if (typedError.error) {
+        this._handleException(typedError, true);
+        return;
+      }
+      const oldRev = project._rev;
+      project._rev = response.rev;
+      /* istanbul ignore if */
+      if (!project._id) {
+        project._id = response.id;
+      }
+      const record = /** @type ARCEntityChangeRecord */ ({
+        id: project._id,
+        rev: response.rev,
+        item: project,
+      });
+      if (oldRev) {
+        record.oldRev = oldRev;
+      }
+      result.push(record);
+      ArcModelEvents.Project.State.update(this, record);
+    });
+    return result;
   }
 }

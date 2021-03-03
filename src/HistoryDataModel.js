@@ -15,10 +15,11 @@ the License.
 */
 import { v4 } from '@advanced-rest-client/uuid-generator';
 import { TransportEventTypes } from '@advanced-rest-client/arc-events';
-import { PayloadProcessor } from '@advanced-rest-client/arc-electron-payload-processor';
+import { BodyProcessor } from '@advanced-rest-client/body-editor';
 import { ArcBaseModel } from './ArcBaseModel.js';
 import { normalizeRequest } from './Utils.js';
 import { ArcModelEvents } from './events/ArcModelEvents.js';
+import { computePayloadSize, calculateBytes } from './lib/DataSize.js';
 
 /** @typedef {import('@advanced-rest-client/arc-events').ApiResponseEvent} ApiResponseEvent */
 /** @typedef {import('@advanced-rest-client/arc-types').ArcRequest.TransportRequest} TransportRequest */
@@ -39,9 +40,6 @@ export const computeHistoryStoreUrl = Symbol('computeHistoryStoreUrl');
 export const computeHistoryDataId = Symbol('computeHistoryDataId');
 export const prepareResponseBody = Symbol('prepareResponseBody');
 export const computeTotalTime = Symbol('computeTotalTime');
-export const calculateBytes = Symbol('calculateBytes');
-export const computePayloadSize = Symbol('computePayloadSize');
-export const computeFormDataSize = Symbol('computeFormDataSize');
 
 /**
  * The model that stores requests history object (for the history menu and panel)
@@ -158,7 +156,7 @@ export class HistoryDataModel extends ArcBaseModel {
     const id = `${d.getTime()}/${encoded}/${source.method}`;
     const copy = { ...source, type: 'history', _id: id };
     const normalized = normalizeRequest(copy);
-    const transportCopy = await PayloadProcessor.payloadToString(normalizeRequest(request));
+    const transportCopy = await BodyProcessor.payloadToString(normalizeRequest(request));
     const created = request.startTime;
     const updated = request.endTime;
     const doc = /** @type ARCHistoryRequest */ ({
@@ -181,11 +179,11 @@ export class HistoryDataModel extends ArcBaseModel {
     const id = this[computeHistoryDataId](url, request.method);
     const timings = response.timings || this[createEmptyTimings]();
     const totalTime = this[computeTotalTime](timings);
-    const requestPayloadSize = await this[computePayloadSize](request.payload);
-    const responsePayloadSize = await this[computePayloadSize](response.payload);
-    const requestHeadersSize = this[calculateBytes](request.headers);
-    const responseHeadersSize = this[calculateBytes](response.headers);
-    const requestCopy = await PayloadProcessor.payloadToString(request);
+    const requestPayloadSize = await computePayloadSize(request.payload);
+    const responsePayloadSize = await computePayloadSize(response.payload);
+    const requestHeadersSize = calculateBytes(request.headers);
+    const responseHeadersSize = calculateBytes(response.headers);
+    const requestCopy = await BodyProcessor.payloadToString(request);
     const responsePayload = this[prepareResponseBody](response.payload);
     const doc = /** @type HistoryData */ ({
       _id: id,
@@ -327,69 +325,5 @@ export class HistoryDataModel extends ArcBaseModel {
       total = -1;
     }
     return total;
-  }
-
-  /**
-   * Calculates size of the string
-   * @param {string} str A string to compute size from.
-   * @return {number} Size of the string.
-   */
-  [calculateBytes](str) {
-    if (!str || !str.length || typeof str !== 'string') {
-      return 0;
-    }
-    let s = str.length;
-    for (let i = str.length - 1; i >= 0; i--) {
-      const code = str.charCodeAt(i);
-      if (code > 0x7f && code <= 0x7ff) {
-        s++;
-      } else if (code > 0x7ff && code <= 0xffff) {
-        /* istanbul ignore next */
-        s += 2;
-      }
-      /* istanbul ignore if */
-      if (code >= 0xDC00 && code <= 0xDFFF) {
-        i--; // trail surrogate
-      }
-    }
-    return s;
-  }
-
-  /**
-   * Computes size of the payload.
-   *
-   * @param {ArrayBuffer|Blob|File|String|FormData|TransformedPayload} payload The payload
-   * @return {Promise<number>} The size of the payload
-   */
-  async [computePayloadSize](payload) {
-    if (!payload) {
-      return 0;
-    }
-    if (payload instanceof ArrayBuffer) {
-      return payload.byteLength;
-    } 
-    if (payload instanceof Blob) {
-      return payload.size;
-    }
-    if (payload instanceof FormData) {
-      return this[computeFormDataSize](payload);
-    }
-    return this[calculateBytes](String(payload));
-  }
-
-  /**
-   * @param {FormData} data The size of the form data
-   * @return {Promise<number>} The size of the form data
-   */
-  async [computeFormDataSize](data) {
-    const request = new Request('/', {
-      method: 'POST',
-      body: data,
-    });
-    if (!request.arrayBuffer) {
-      return 0;
-    }
-    const buffer = await request.arrayBuffer();
-    return buffer.byteLength;
   }
 }

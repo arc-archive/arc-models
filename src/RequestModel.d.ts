@@ -2,16 +2,17 @@ import {RequestBaseModel} from './RequestBaseModel';
 import { Project, ArcRequest } from '@advanced-rest-client/arc-types';
 import {DeletedEntity, ARCEntityChangeRecord, ARCModelListResult, ARCModelListOptions,} from './types';
 
-export declare const syncProjects: symbol;
-export declare const readBulkHandler: symbol;
-export declare const updateHandler: symbol;
-export declare const updatebulkHandler: symbol;
-export declare const deleteHandler: symbol;
-export declare const deleteBulkHandler: symbol;
-export declare const undeleteBulkHandler: symbol;
-export declare const storeHandler: symbol;
-export declare const sortRequestProjectOrder: symbol;
-export declare const queryStore: symbol;
+export declare const syncProjects: unique symbol;
+export declare const readBulkHandler: unique symbol;
+export declare const updateHandler: unique symbol;
+export declare const updatebulkHandler: unique symbol;
+export declare const deleteHandler: unique symbol;
+export declare const deleteBulkHandler: unique symbol;
+export declare const undeleteBulkHandler: unique symbol;
+export declare const storeHandler: unique symbol;
+export declare const sortRequestProjectOrder: unique symbol;
+export declare const queryStore: unique symbol;
+export declare const revertRemoveProject: unique symbol;
 
 /**
  * A model to access request data in Advanced REST Client.
@@ -139,6 +140,12 @@ export declare class RequestModel extends RequestBaseModel {
    * updated `_rev` property.
    */
   revertRemove(type: string, items: DeletedEntity[]): Promise<ARCEntityChangeRecord<ArcRequest.ARCHistoryRequest|ArcRequest.ARCSavedRequest>[]>;
+
+  /**
+   * Checks for project data in the restored requests and re-inserts the request to the corresponding projects.
+   * @param {} result
+   */
+  [revertRemoveProject](result: ARCEntityChangeRecord<ArcRequest.ARCHistoryRequest|ArcRequest.ARCSavedRequest>[]): Promise<void>;
 
   /**
    * Performs a query for the request data.

@@ -5,7 +5,6 @@ import * as sinon from 'sinon';
 import '../../project-model.js';
 import '../../request-model.js';
 import { ArcModelEventTypes } from '../../src/events/ArcModelEventTypes.js';
-import { normalizeProjects } from '../../src/ProjectModel.js';
 
 /** @typedef {import('../../src/ProjectModel').ProjectModel} ProjectModel */
 /** @typedef {import('../../index').RequestModel} RequestModel */
@@ -231,6 +230,44 @@ describe('ProjectModel', () => {
     });
   });
 
+  describe('getBulk()', () => {
+    let created = /** @type ARCProject[] */ (null);
+    before(async () => {
+      const model = await basicFixture();
+      const projects = /** @type ARCProject[] */ (generator.generateProjects({ projectsSize: 5 }));
+      const results = await model.postBulk(projects);
+      created = results.map((item) => item.item);
+    });
+
+    let element = /** @type ProjectModel */ (null);
+    beforeEach(async () => {
+      element = await basicFixture();
+    });
+
+    after(async () => {
+      await generator.destroySavedRequestData();
+    });
+
+    it('returns the list of requested items', async () => {
+      const ids = [created[0]._id, created[1]._id];
+      const result = await element.getBulk(ids);
+      const p1 = await element.get(created[0]._id);
+      const p2 = await element.get(created[1]._id);
+      assert.deepEqual(result[0], p1);
+      assert.deepEqual(result[1], p2);
+    });
+
+    it('throws when no arguments', async () => {
+      let thrown = false;
+      try {
+        await element.getBulk(undefined);
+      } catch (e) {
+        thrown = true;
+      }
+      assert.isTrue(thrown);
+    });
+  });
+
   describe('list()', () => {
     before(async () => {
       const model = await basicFixture();
@@ -376,69 +413,6 @@ describe('ProjectModel', () => {
         thrown = true;
       }
       assert.isTrue(thrown, 'Has no entity');
-    });
-  });
-
-  describe('[normalizeProjects]()', () => {
-    let model = /** @type ProjectModel */ (null);
-    beforeEach(async () => {
-      model = await basicFixture();
-    });
-
-    it('filters out invalid items', () => {
-      // @ts-ignore
-      const result = model[normalizeProjects](['test']);
-      assert.deepEqual(result, []);
-    });
-
-    it('adds order property', () => {
-      const project = /** @type ARCProject */ (generator.createProjectObject());
-      delete project.order;
-      const result = model[normalizeProjects]([project]);
-      assert.equal(result[0].order, 0);
-    });
-
-    it('respects existing order property', () => {
-      const project = /** @type ARCProject */ (generator.createProjectObject());
-      project.order = 1;
-      const result = model[normalizeProjects]([project]);
-      assert.equal(result[0].order, 1);
-    });
-
-    it('adds requests property', () => {
-      const project = /** @type ARCProject */ (generator.createProjectObject());
-      delete project.requests;
-      const result = model[normalizeProjects]([project]);
-      assert.deepEqual(result[0].requests, []);
-    });
-
-    it('respects existing order property', () => {
-      const project = /** @type ARCProject */ (generator.createProjectObject());
-      project.requests = ['test'];
-      const result = model[normalizeProjects]([project]);
-      assert.deepEqual(result[0].requests, ['test']);
-    });
-
-    it('adds updated property', () => {
-      const project = /** @type ARCProject */ (generator.createProjectObject());
-      delete project.updated;
-      const result = model[normalizeProjects]([project]);
-      assert.typeOf(result[0].updated, 'number');
-    });
-
-    it('adds created property', () => {
-      const project = /** @type ARCProject */ (generator.createProjectObject());
-      delete project.created;
-      const result = model[normalizeProjects]([project]);
-      assert.typeOf(result[0].created, 'number');
-      assert.equal(result[0].created, result[0].updated);
-    });
-
-    it('respects existing created property', () => {
-      const project = /** @type ARCProject */ (generator.createProjectObject());
-      project.created = 10;
-      const result = model[normalizeProjects]([project]);
-      assert.equal(result[0].created, 10);
     });
   });
 

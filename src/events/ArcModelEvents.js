@@ -37,6 +37,7 @@ export const ArcModelEvents = {
   },
   Project: {
     read: ProjectEvents.readAction,
+    readBulk: ProjectEvents.readBulkAction,
     update: ProjectEvents.updateAction,
     updateBulk: ProjectEvents.updateBulkAction,
     delete: ProjectEvents.deleteAction,
