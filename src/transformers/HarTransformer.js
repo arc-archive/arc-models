@@ -4,8 +4,10 @@ import { BodyProcessor } from '@advanced-rest-client/body-editor';
 import { computePayloadSize, calculateBytes } from '../lib/DataSize.js';
 
 /** @typedef {import('@advanced-rest-client/arc-types').ArcRequest.ArcBaseRequest} ArcBaseRequest */
+/** @typedef {import('@advanced-rest-client/arc-types').ArcRequest.TransportRequest} TransportRequest */
 /** @typedef {import('@advanced-rest-client/arc-types').ArcResponse.ErrorResponse} ErrorResponse */
 /** @typedef {import('@advanced-rest-client/arc-types').ArcResponse.Response} ArcResponse */
+/** @typedef {import('@advanced-rest-client/arc-types').ArcResponse.HTTPResponse} HTTPResponse */
 /** @typedef {import('@advanced-rest-client/arc-types').ArcResponse.TransformedPayload} TransformedPayload */
 /** @typedef {import('har-format').Har} Har */
 /** @typedef {import('har-format').Log} Log */
@@ -24,15 +26,16 @@ import { computePayloadSize, calculateBytes } from '../lib/DataSize.js';
  */
 export class HarTransformer {
   /**
+   * @param {string=} version The application version name.
    * @param {string=} name The name of the "creator" field.
-   * @param {string=} version The version name.
    */
-  constructor(name, version) {
+  constructor(version, name) {
     this.name = name || 'Advanced REST Client';
     this.version = version || 'Unknown';
   }
 
   /**
+   * Transforms the request objects to a log.
    * @param {ArcBaseRequest[]} requests
    * @returns {Promise<Har>}
    */
@@ -76,12 +79,24 @@ export class HarTransformer {
   async createEntries(requests) {
     const ps = requests.map((r) => this.createEntry(r));
     const result = await Promise.all(ps);
-    return result.filter((item) => !!item);
+    let entires = [];
+    result.forEach((entry) => {
+      if (!entry) {
+        return;
+      }
+      if (Array.isArray(entry)) {
+        entires = entires.concat(entry);
+      } else {
+        entires.push(entry);
+      }
+    });
+    entires = entires.sort((a, b) => new Date(b.startedDateTime).getTime() - new Date(a.startedDateTime).getTime());
+    return entires;
   }
 
   /**
    * @param {ArcBaseRequest} request
-   * @returns {Promise<Entry|null>}
+   * @returns {Promise<Entry|Entry[]|null>}
    */
   async createEntry(request) {
     const processedRequest = BodyProcessor.restorePayload(request);
@@ -97,7 +112,24 @@ export class HarTransformer {
     }
     let typedResponse = /** @type ArcResponse */ (response);
     typedResponse = BodyProcessor.restorePayload(typedResponse);
-    const { loadingTime, timings } = typedResponse;
+    
+    const item = await this._createEntry(processedRequest, transportRequest, typedResponse);
+    if (Array.isArray(typedResponse.redirects) && typedResponse.redirects.length) {
+      const result = await this.createRedirectEntries(processedRequest, typedResponse);
+      result.push(item);
+      return result;
+    }
+    return item;
+  }
+
+  /**
+   * @param {ArcBaseRequest} request
+   * @param {TransportRequest} transportRequest
+   * @param {ArcResponse} response
+   * @return {Promise<Entry>} 
+   */
+  async _createEntry(request, transportRequest, response) {
+    const { loadingTime, timings } = response;
     const { startTime = Date.now(), } = transportRequest;
   
     const entry = /** @type Entry */ ({
@@ -105,10 +137,32 @@ export class HarTransformer {
       time: loadingTime,
       cache: this.createCache(),
       timings,
-      request: await this.createRequest(processedRequest),
-      response: await this.createResponse(typedResponse),
+      request: await this.createRequest(request),
+      response: await this.createResponse(response),
     });
     return entry;
+  }
+
+  /**
+   * @param {ArcBaseRequest} request
+   * @param {ArcResponse} response
+   * @return {Promise<Entry[]>} 
+   */
+  async createRedirectEntries(request, response) {
+    const ps = response.redirects.map(async (redirect) => {
+      const { startTime=Date.now(), endTime=Date.now(), timings, response: redirectResponse, url } = redirect;
+      const loadingTime = endTime - startTime;
+      const entry = /** @type Entry */ ({
+        startedDateTime: new Date(startTime).toISOString(),
+        time: loadingTime,
+        cache: this.createCache(),
+        timings,
+        request: await this.createRequest(request),
+        response: await this.createResponse(redirectResponse, url),
+      });
+      return entry;
+    });
+    return Promise.all(ps);
   }
 
   /**
@@ -153,10 +207,11 @@ export class HarTransformer {
   }
 
   /**
-   * @param {ArcResponse} response
+   * @param {HTTPResponse} response The response data
+   * @param {string=} redirectURL Optional redirect URL for the redirected request.
    * @returns {Promise<Response>}
    */
-  async createResponse(response) {
+  async createResponse(response, redirectURL) {
     const { status, statusText, payload, headers, } = response;
     const result = /** @type Response */ ({
       status,
@@ -164,13 +219,13 @@ export class HarTransformer {
       httpVersion: 'HTTP/1.1',
       cookies: [],
       headers: this.createHeaders(headers),
-      redirectURL: '',
+      redirectURL,
       headersSize: 0,
       bodySize: 0,
     });
     if (payload) {
-      result.bodySize = await computePayloadSize(payload);
-      // result.postData = await this.createPostData(payload, headers);
+      result.content = await this.createResponseContent(/** @type string | Buffer | ArrayBuffer */ (payload), headers);
+      result.bodySize = result.content.size || 0;
     }
     if (headers) {
       // Total number of bytes from the start of the HTTP request message until (and including) 
@@ -212,13 +267,12 @@ export class HarTransformer {
     const type = typeof payload;
     if (['string', 'boolean', 'undefined'].includes(type)) {
       result.text = /** @type string */ (payload);
-    }
-    
-    if (payload instanceof Blob) {
-      result.text = await BodyProcessor.blobToString(payload);
+    } else if (payload instanceof Blob) {
+      result.text = await BodyProcessor.fileToString(/** @type File */ (payload));
     } else if (payload instanceof FormData) {
       const r = new Request('/', {
         body: payload,
+        method: 'POST',
       });
       const buff = await r.arrayBuffer();
       result.text = this.readBodyString(buff);
@@ -259,13 +313,31 @@ export class HarTransformer {
    * @returns {Promise<Content>}
    */
   async createResponseContent(payload, headers) {
-    const mimeType = HeadersParser.contentType(headers);
+    const headerItem = HeadersParser.toJSON(headers).find((item) => item.name.toLowerCase() === 'content-type');
+    let mimeType = /** @type string */ (headerItem && headerItem.value);
+    let encoding;
+    if (mimeType && mimeType.includes('charset=')) {
+      const parts = mimeType.split(';');
+      // Content-Type: text/html; charset=UTF-8
+      parts.forEach((part) => {
+        const item = part.trim();
+        const _tmp = item.split('=');
+        if (_tmp.length === 1) {
+          mimeType = item;
+        } else if (_tmp[0].trim() === 'charset') {
+          encoding = _tmp[1].trim();
+        }
+      });
+    }
     const result = /** @type Content */ ({
       mimeType,
     });
     if (payload) {
       result.text = this.readBodyString(payload);
       result.size = await computePayloadSize(payload);
+    }
+    if (encoding) {
+      result.encoding = encoding;
     }
     return result;
   }
