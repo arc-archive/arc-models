@@ -139,3 +139,5 @@ export { ExportFactory } from './src/lib/ExportFactory.js';
 export { ImportNormalize } from './src/lib/ImportNormalize.js';
 export { ImportFactory } from './src/lib/ImportFactory.js';
 export { isSingleRequest, isPostman, isArcFile, prepareImportObject, readFile, isOldImport, isObject } from './src/lib/ImportUtils.js';
+export * as DataSize from './src/lib/DataSize.js';
+export { HarTransformer } from './src/transformers/HarTransformer.js';

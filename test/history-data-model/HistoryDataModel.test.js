@@ -6,8 +6,6 @@ import '../../history-data-model.js';
 import '../../request-model.js';
 import {
   computeHistoryStoreUrl,
-  computePayloadSize,
-  calculateBytes,
   computeHistoryDataId,
   createHistoryDataModel,
   saveHistoryData,
@@ -105,79 +103,6 @@ describe('HistoryDataModel', () => {
       const url = 'https://domain.com/';
       const result = element[computeHistoryStoreUrl](url + '?a=b#abc');
       assert.equal(result, url);
-    });
-  });
-
-  describe('[computePayloadSize]()', () => {
-    let element = /** @type HistoryDataModel */ (null);
-    before(async () => {
-      element = await basicFixture();
-    });
-
-    it('returns 0 for empty argument', async () => {
-      const result = await element[computePayloadSize](undefined);
-      assert.equal(result, 0);
-    });
-
-    it('returns size of an ArrayBuffer', async () => {
-      const buffer = new ArrayBuffer(8);
-      const result = await element[computePayloadSize](buffer);
-      assert.equal(result, 8);
-    });
-
-    it('returns size of a blob', async () => {
-      const blob = new Blob(['test']);
-      const result = await element[computePayloadSize](blob);
-      assert.equal(result, 4);
-    });
-
-    it('returns size of a string', async () => {
-      const blob = 'test';
-      const result = await element[computePayloadSize](blob);
-      assert.equal(result, 4);
-    });
-
-    it('returns size of a FormData', async () => {
-      const form = new FormData();
-      const blob = new Blob(['test']);
-      form.append('text', 'value');
-      form.append('file', blob);
-      const result = await element[computePayloadSize](form);
-      // todo (pawel): Gecko and Webkit reports 343 bytes while Chromium says it's 292
-      // This needs checking what is actually happens.
-      assert.isAbove(result, 200);
-      // assert.equal(result, 292);
-    });
-  });
-
-  describe('[calculateBytes]()', () => {
-    let element = /** @type HistoryDataModel */ (null);
-    before(async () => {
-      element = await basicFixture();
-    });
-
-    it('returns 0 for empty argument', () => {
-      const result = element[calculateBytes](undefined);
-      assert.equal(result, 0);
-    });
-
-    it('returns 0 for non string argument', () => {
-      const blob = new Blob(['test']);
-      // @ts-ignore
-      const result = element[calculateBytes](blob);
-      assert.equal(result, 0);
-    });
-
-    it('returns size of a string', () => {
-      const blob = 'test';
-      const result = element[calculateBytes](blob);
-      assert.equal(result, 4);
-    });
-
-    it('returns size of a string with non-latin', () => {
-      const blob = 'ł';
-      const result = element[calculateBytes](blob);
-      assert.equal(result, 2);
     });
   });
 
