@@ -10,9 +10,7 @@ It is highly recommended to use this models with the support of typescript. The 
 
 [![Published on NPM](https://img.shields.io/npm/v/@advanced-rest-client/arc-models.svg)](https://www.npmjs.com/package/@advanced-rest-client/arc-models)
 
-[![Build Status](https://travis-ci.com/advanced-rest-client/arc-models.svg)](https://travis-ci.com/advanced-rest-client/arc-models)
-
-[![Published on webcomponents.org](https://img.shields.io/badge/webcomponents.org-published-blue.svg)](https://www.webcomponents.org/element/advanced-rest-client/arc-models)
+[![Tests and publishing](https://github.com/advanced-rest-client/arc-models/actions/workflows/deployment.yml/badge.svg)](https://github.com/advanced-rest-client/arc-models/actions/workflows/deployment.yml)
 
 ## Usage
 
