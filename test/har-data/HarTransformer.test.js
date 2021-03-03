@@ -397,7 +397,7 @@ describe('HarTransformer', () => {
       });
       const result = /** @type Entry[] */ (await har.createEntry(request));
       assert.typeOf(result, 'array', 'is an array');
-      assert.equal(result.length, response.redirects.length, 'has all entries');
+      assert.equal(result.length, response.redirects.length + 1, 'has all entries');
     });
 
     it('has the startedDateTime property', async () => {
