@@ -1,6 +1,11 @@
 import { TransformedPayload } from '@advanced-rest-client/arc-types/src/request/ArcResponse';
 
 /**
+ * Computes size in the nearest units
+ */
+export declare function bytesToSize(bytes: number, decimals?: number): string;
+
+/**
  * Calculates size of the string
  * @param str A string to compute size from.
  * @returns Size of the string.

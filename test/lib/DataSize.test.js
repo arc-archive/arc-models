@@ -2,9 +2,57 @@ import { assert } from '@open-wc/testing';
 import {
   computePayloadSize,
   calculateBytes,
+  bytesToSize,
 } from '../../src/lib/DataSize.js';
 
 describe('lib/DataSize', () => {
+  describe('bytesToSize()', () => {
+    it('returns value for 0', () => {
+      const result = bytesToSize(0);
+      assert.equal(result, '0 Bytes');
+    });
+
+    it('returns value in bytes', () => {
+      const result = bytesToSize(10);
+      assert.equal(result, '10 Bytes');
+    });
+
+    it('returns value in kilobytes', () => {
+      const result = bytesToSize(10240);
+      assert.equal(result, '10 KB');
+    });
+
+    it('returns value in megabytes', () => {
+      const result = bytesToSize(10*1024*1024);
+      assert.equal(result, '10 MB');
+    });
+
+    it('returns value in gigabytes', () => {
+      const result = bytesToSize(10*1024*1024*1024);
+      assert.equal(result, '10 GB');
+    });
+
+    it('returns value in terabytes', () => {
+      const result = bytesToSize(10*1024*1024*1024*1024);
+      assert.equal(result, '10 TB');
+    });
+
+    it('returns value in petabytes', () => {
+      const result = bytesToSize(10*1024*1024*1024*1024*1024);
+      assert.equal(result, '10 PB');
+    });
+
+    it('returns value in exabyte', () => {
+      const result = bytesToSize(10*1024*1024*1024*1024*1024*1024);
+      assert.equal(result, '10 EB');
+    });
+
+    it('returns value in zettabyte', () => {
+      const result = bytesToSize(10*1024*1024*1024*1024*1024*1024*1024);
+      assert.equal(result, '10 ZB');
+    });
+  });
+  
   describe('computePayloadSize()', () => {
     it('returns 0 for empty argument', async () => {
       const result = await computePayloadSize(undefined);
