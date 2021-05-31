@@ -67,7 +67,6 @@ const next = await ArcModelEvents.Request.list(document.body, 'saved', {
 
 Note that limit has to be defined for each call as the page cursor does not  store this information.
 
-
 ### In an html file
 
 ```html
