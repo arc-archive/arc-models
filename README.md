@@ -153,6 +153,54 @@ class SampleElement extends PolymerElement {
 customElements.define('sample-element', SampleElement);
 ```
 
+## Export elements
+
+### ImportDataInspectorElement
+
+An element to visually inspect ARC export object. It is used by ARC during the import flow.
+
+```html
+<import-data-inspector .data="${data}" @cancel="${this.cancelled}" @import="${this.imported}"></import-data-inspector>
+```
+
+The data object is the `ArcExportObject` declare in the `@advanced-rest-client/arc-types/DataExport` declaration.
+
+### ExportOptionsElement
+
+An element to present the user with the file export options handled by the application.
+
+```html
+<export-options file="my-demo-file.arc" provider="drive" parentId="drive file id" withEncrypt></export-options>
+```
+
+The element dispatches event defined in `GoogleDriveEventTypes.listAppFolders` to request the application to list all application created folder in the Google Drive application.
+
+### ArcExportFormElement
+
+An element that contains a UI to present ARC database export options. It communicates with the `ArcDataExportElement` via events.
+
+```html
+<arc-export-form withEncrypt provider="drive" parentId="drive file id"></arc-export-form>
+```
+
+### ArcDataExportElement
+
+A component that handles ARC data export logic via events. It takes care for creating an export object for ARC data, encrypting the content (when requested) and to produce communicate with the export provides via event.
+
+This element should be inserted into the DOM somewhere in the project.
+
+```html
+<are-data-export appVersion="major.minor.patch" electronCookies></are-data-export>
+```
+
+### ArcDataImportElement
+
+The opposite of the `ArcDataExportElement` element. Provides the logic for the import flow and communicates with other components via the events system to finish the import flow.
+
+```html
+<are-data-import></are-data-import>
+```
+
 ## Development
 
 ```sh
