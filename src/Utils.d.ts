@@ -91,3 +91,9 @@ export function restoreTransformedPayload(body: ArcResponse.TransformedPayload):
  * @param projects List of projects.
  */
 export declare function normalizeProjects(projects: Project.ARCProject[]): Project.ARCProject[];
+
+/**
+ * Generates default export name value.
+ * @return {string}
+ */
+export declare function generateFileName(): string;
