@@ -4,7 +4,7 @@ export default {
   concurrency: 1,
   testFramework: {
     config: {
-      timeout: 10000,
+      timeout: 20000,
     },
   },
 }
