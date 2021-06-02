@@ -36,6 +36,12 @@ describe('ArcDataExportElement', () => {
   }
 
   describe('electronCookies property', () => {
+    after(async () => {
+      // this is just to make sure the next test has a clear db
+      await generator.destroySavedRequestData();
+      await generator.destroyHistoryData();
+    });
+
     it('Has property from the attribute', async () => {
       const element = await electronCookiesFixture();
       assert.isTrue(element.electronCookies);
@@ -219,7 +225,7 @@ describe('ArcDataExportElement', () => {
         const { history } = result;
         const [item] = history;
         assert.typeOf(item.key, 'string', 'has the key');
-        assert.equal(item.kind, 'ARC#HistoryData', 'has the kind');
+        assert.equal(item.kind, 'ARC#HttpRequest', 'has the kind');
         // @ts-ignore
         assert.isUndefined(item.name, 'has no name');
       });

@@ -191,7 +191,7 @@ export class ClientCertificateModel extends ArcBaseModel {
    * See class description for data structure.
    *
    * @param {ClientCertificate} cert Data to insert.
-   * @return {Promise<ARCEntityChangeRecord>} Returns a change record for the entity
+   * @return {Promise<ARCEntityChangeRecord>} Returns a change record for the index entity
    */
   async insert(cert) {
     if (!cert.cert) {
@@ -217,9 +217,11 @@ export class ClientCertificateModel extends ArcBaseModel {
       indexEntity.created = Date.now();
     }
     const dataResponse = await this.dataDb.post(dataEntity);
+    dataEntity._rev = dataResponse.rev;
+    dataEntity._id = dataResponse.id;
     indexEntity._id = dataResponse.id;
     const response = await this.db.put(indexEntity);
-    const record = this[createChangeRecord](dataEntity, response);
+    const record = this[createChangeRecord](indexEntity, response);
     ArcModelEvents.ClientCertificate.State.update(this, record);
     return record;
   }
