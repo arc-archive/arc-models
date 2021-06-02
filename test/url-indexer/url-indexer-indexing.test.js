@@ -1,12 +1,12 @@
 import { fixture, assert, aTimeout } from '@open-wc/testing';
 import 'pouchdb/dist/pouchdb.js';
+import { ArcModelEvents } from '@advanced-rest-client/arc-events';
 import { DbHelper } from './db-helper.js';
 import '../../url-indexer.js';
 import {
   storeIndexes,
   getIndexedDataAll,
 } from '../../src/UrlIndexer.js';
-import { ArcModelEvents } from '../../src/events/ArcModelEvents.js';
 
 /* global PouchDB */
 

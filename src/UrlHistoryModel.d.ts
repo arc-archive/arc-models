@@ -1,12 +1,6 @@
-import { ApiTransportEvent } from '@advanced-rest-client/arc-events';
-import { UrlHistory } from '@advanced-rest-client/arc-types';
+import { ApiTransportEvent, ARCHistoryUrlInsertEvent, ARCHistoryUrlListEvent, ARCHistoryUrlQueryEvent } from '@advanced-rest-client/arc-events';
+import { UrlHistory, Model } from '@advanced-rest-client/arc-types';
 import {ArcBaseModel} from './ArcBaseModel.js';
-import { ARCHistoryUrlInsertEvent, ARCHistoryUrlListEvent, ARCHistoryUrlQueryEvent } from './events/UrlHistoryEvents';
-import {
-  ARCEntityChangeRecord,
-  ARCModelListOptions,
-  ARCModelListResult,
-} from './types';
 
 export const insertHandler: unique symbol;
 export const listHandler: unique symbol;
@@ -36,14 +30,14 @@ export declare class UrlHistoryModel extends ArcBaseModel {
    * @param opts Query options.
    * @returns A promise resolved to a list of projects.
    */
-  list(opts?: ARCModelListOptions): Promise<ARCModelListResult<UrlHistory.ARCUrlHistory>>;
+  list(opts?: Model.ARCModelListOptions): Promise<Model.ARCModelListResult<UrlHistory.ARCUrlHistory>>;
 
   /**
    * Adds an URL to the history and checks for already existing entires.
    * @param url The URL to insert
    * @returns A promise resolved to the URL change record
    */
-  addUrl(url: string): Promise<ARCEntityChangeRecord<UrlHistory.ARCUrlHistory>>;
+  addUrl(url: string): Promise<Model.ARCEntityChangeRecord<UrlHistory.ARCUrlHistory>>;
 
   /**
    * Updates / saves the object in the datastore.
@@ -52,7 +46,7 @@ export declare class UrlHistoryModel extends ArcBaseModel {
    * @param obj An entity to store
    * @returns A promise resolved to the URL change record
    */
-  update(obj: UrlHistory.ARCUrlHistory): Promise<ARCEntityChangeRecord<UrlHistory.ARCUrlHistory>>;
+  update(obj: UrlHistory.ARCUrlHistory): Promise<Model.ARCEntityChangeRecord<UrlHistory.ARCUrlHistory>>;
 
   /**
    * Queries for websocket history objects.

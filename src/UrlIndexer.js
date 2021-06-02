@@ -12,9 +12,8 @@ License for the specific language governing permissions and limitations under
 the License.
 */
 import { v4 } from '@advanced-rest-client/uuid-generator';
+import { ArcModelEventTypes, ArcModelEvents } from '@advanced-rest-client/arc-events';
 import { normalizeRequestType } from './Utils.js';
-import { ArcModelEventTypes } from './events/ArcModelEventTypes.js';
-import { ArcModelEvents } from './events/ArcModelEvents.js';
 
 /** @typedef {import('@advanced-rest-client/arc-types').Indexer.IndexableRequest} IndexableRequest */
 /** @typedef {import('./UrlIndexer').IndexableRequestInternal} IndexableRequestInternal */
@@ -22,11 +21,11 @@ import { ArcModelEvents } from './events/ArcModelEvents.js';
 /** @typedef {import('./UrlIndexer').ProcessedQueryResults} ProcessedQueryResults */
 /** @typedef {import('@advanced-rest-client/arc-types').Indexer.IndexQueryOptions} IndexQueryOptions */
 /** @typedef {import('@advanced-rest-client/arc-types').Indexer.IndexQueryResult} IndexQueryResult */
-/** @typedef {import('./events/RequestEvents').ARCRequestUpdatedEvent} ARCRequestUpdatedEvent */
-/** @typedef {import('./events/RequestEvents').ARCRequestDeletedEvent} ARCRequestDeletedEvent */
-/** @typedef {import('./events/BaseEvents').ARCModelStateDeleteEvent} ARCModelStateDeleteEvent */
-/** @typedef {import('./events/UrlIndexerEvents').ARCUrlIndexUpdateEvent} ARCUrlIndexUpdateEvent */
-/** @typedef {import('./events/UrlIndexerEvents').ARCUrlIndexQueryEvent} ARCUrlIndexQueryEvent */
+/** @typedef {import('@advanced-rest-client/arc-events').ARCRequestUpdatedEvent} ARCRequestUpdatedEvent */
+/** @typedef {import('@advanced-rest-client/arc-events').ARCRequestDeletedEvent} ARCRequestDeletedEvent */
+/** @typedef {import('@advanced-rest-client/arc-events').ARCModelStateDeleteEvent} ARCModelStateDeleteEvent */
+/** @typedef {import('@advanced-rest-client/arc-events').ARCUrlIndexUpdateEvent} ARCUrlIndexUpdateEvent */
+/** @typedef {import('@advanced-rest-client/arc-events').ARCUrlIndexQueryEvent} ARCUrlIndexQueryEvent */
 
 /* eslint-disable class-methods-use-this */
 /* eslint-disable no-plusplus */

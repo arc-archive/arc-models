@@ -1,6 +1,5 @@
 import { ArcBaseModel } from './ArcBaseModel';
-import { ARCEntityChangeRecord } from './types';
-import { AuthData } from '@advanced-rest-client/arc-types';
+import { AuthData, Model } from '@advanced-rest-client/arc-types';
 
 /**
  * Removes query parameters and the fragment part from the URL
@@ -44,5 +43,5 @@ export declare class AuthDataModel extends ArcBaseModel {
    * @param authData The authorization data to store. Schema depends on
    * the `authMethod` property. From model standpoint schema does not matter.
    */
-  update(url: string, authMethod: string, authData: object): Promise<ARCEntityChangeRecord<AuthData.ARCAuthData>>;
+  update(url: string, authMethod: string, authData: object): Promise<Model.ARCEntityChangeRecord<AuthData.ARCAuthData>>;
 }

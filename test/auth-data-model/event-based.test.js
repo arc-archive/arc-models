@@ -1,8 +1,7 @@
 import { fixture, assert } from '@open-wc/testing';
 import { DataGenerator } from '@advanced-rest-client/arc-data-generator';
 import '../../auth-data-model.js';
-import { ArcModelEventTypes } from '../../src/events/ArcModelEventTypes.js';
-import { ArcModelEvents } from '../../src/events/ArcModelEvents.js';
+import { ArcModelEventTypes, ArcModelEvents } from '@advanced-rest-client/arc-events';
 
 /** @typedef {import('../../src/AuthDataModel').AuthDataModel} AuthDataModel */
 
@@ -68,9 +67,7 @@ describe('Authorization data model - events', () => {
 
   describe(`${ArcModelEventTypes.AuthData.update} event`, () => {
     const authData = { username: 'uname', password: 'other' };
-    after(() => {
-      return generator.destroyAuthData();
-    });
+    after(() => generator.destroyAuthData());
 
     beforeEach(async () => {
       await basicFixture();

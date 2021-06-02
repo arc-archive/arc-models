@@ -1,5 +1,4 @@
-import { ArcRequest, ArcResponse, Project } from '@advanced-rest-client/arc-types';
-import { DeletedEntity, ARCEntityChangeRecord } from './types';
+import { ArcRequest, ArcResponse, Project, Model } from '@advanced-rest-client/arc-types';
 
 /**
  * Computes past midnight for given timestamp.
@@ -60,7 +59,7 @@ export declare function findUndeletedRevision(revs: object, deletedRevision: str
  * @param items List of documents to process
  * @returns Last not deleted version of each document.
  */
-export declare function findNotDeleted<T>(db: PouchDB.Database, items: DeletedEntity[]): Promise<T[]>;
+export declare function findNotDeleted<T>(db: PouchDB.Database, items: Model.DeletedEntity[]): Promise<T[]>;
 /**
  * Reverts deleted items.
  *
@@ -68,7 +67,7 @@ export declare function findNotDeleted<T>(db: PouchDB.Database, items: DeletedEn
  * @param items List of objects to restore.
  * @returns Resolved promise with restored objects. Objects have updated `_rev` property.
  */
-export declare function revertDelete<T>(db: PouchDB.Database, items: DeletedEntity[]): Promise<ARCEntityChangeRecord<T>[]>;
+export declare function revertDelete<T>(db: PouchDB.Database, items: Model.DeletedEntity[]): Promise<Model.ARCEntityChangeRecord<T>[]>;
 
 /**
  * Normalizes authorization object to a current one.

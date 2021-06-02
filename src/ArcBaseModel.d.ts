@@ -1,4 +1,4 @@
-import { ARCModelListOptions, ARCModelListResult, ARCEntityChangeRecord } from './types';
+import { Model } from '@advanced-rest-client/arc-types';
 
 export declare interface DefaultQueryOptions extends Object {
   limit: number;
@@ -106,7 +106,7 @@ export declare class ArcBaseModel extends HTMLElement {
    * @param opts Query options.
    * @returns A promise resolved to a list of entities.
    */
-  listEntities<T>(db: PouchDB.Database, opts?: ARCModelListOptions): Promise<ARCModelListResult<T>>;
+  listEntities<T>(db: PouchDB.Database, opts?: Model.ARCModelListOptions): Promise<Model.ARCModelListResult<T>>;
 
   /**
    * Generates a change record for an update operation
@@ -114,5 +114,5 @@ export declare class ArcBaseModel extends HTMLElement {
    * @param response The data store response
    * @param oldRev The revision before the change
    */
-  [createChangeRecord]<T>(item: T, response: PouchDB.Core.Response, oldRev?: string): ARCEntityChangeRecord<T>;
+  [createChangeRecord]<T>(item: T, response: PouchDB.Core.Response, oldRev?: string): Model.ARCEntityChangeRecord<T>;
 }

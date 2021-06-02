@@ -26,7 +26,7 @@ describe('PostmanEnvTransformer', () => {
       assert.equal(result[1].value, 'test ${var1}');
     });
 
-    it('Sets `enabled` proeprty', () => {
+    it('Sets `enabled` property', () => {
       const result = transformer.transformVariables(jsonData.values, '');
       assert.isTrue(result[1].enabled);
       assert.isFalse(result[2].enabled);

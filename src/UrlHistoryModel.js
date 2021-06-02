@@ -11,21 +11,19 @@ WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
 License for the specific language governing permissions and limitations under
 the License.
 */
-import { TransportEventTypes } from '@advanced-rest-client/arc-events';
+import { TransportEventTypes, ArcModelEventTypes, ArcModelEvents } from '@advanced-rest-client/arc-events';
 import { ArcBaseModel } from './ArcBaseModel.js';
-import { ArcModelEventTypes } from './events/ArcModelEventTypes.js';
-import { ArcModelEvents } from './events/ArcModelEvents.js';
 
 /* eslint-disable no-plusplus */
 
 /** @typedef {import('@advanced-rest-client/arc-types').UrlHistory.ARCUrlHistory} ARCUrlHistory */
-/** @typedef {import('./events/UrlHistoryEvents').ARCHistoryUrlInsertEvent} ARCHistoryUrlInsertEvent */
-/** @typedef {import('./events/UrlHistoryEvents').ARCHistoryUrlListEvent} ARCHistoryUrlListEvent */
-/** @typedef {import('./events/UrlHistoryEvents').ARCHistoryUrlQueryEvent} ARCHistoryUrlQueryEvent */
+/** @typedef {import('@advanced-rest-client/arc-events').ARCHistoryUrlInsertEvent} ARCHistoryUrlInsertEvent */
+/** @typedef {import('@advanced-rest-client/arc-events').ARCHistoryUrlListEvent} ARCHistoryUrlListEvent */
+/** @typedef {import('@advanced-rest-client/arc-events').ARCHistoryUrlQueryEvent} ARCHistoryUrlQueryEvent */
 /** @typedef {import('@advanced-rest-client/arc-events').ApiTransportEvent} ApiTransportEvent */
-/** @typedef {import('./types').ARCModelListResult} ARCModelListResult */
-/** @typedef {import('./types').ARCModelListOptions} ARCModelListOptions */
-/** @typedef {import('./types').ARCEntityChangeRecord} ARCEntityChangeRecord */
+/** @typedef {import('@advanced-rest-client/arc-types').Model.ARCEntityChangeRecord} ARCEntityChangeRecord */
+/** @typedef {import('@advanced-rest-client/arc-types').Model.ARCModelListOptions} ARCModelListOptions */
+/** @typedef {import('@advanced-rest-client/arc-types').Model.ARCModelListResult} ARCModelListResult */
 
 /**
  * A function used to sort query list items. It relays on two properties that

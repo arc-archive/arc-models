@@ -1,9 +1,9 @@
 import { fixture, assert } from '@open-wc/testing';
 import sinon from 'sinon';
 import { DataGenerator } from '@advanced-rest-client/arc-data-generator';
+import { ArcModelEventTypes } from '@advanced-rest-client/arc-events';
 import 'chance/dist/chance.min.js';
 import '../../rest-api-model.js';
-import { ArcModelEventTypes } from '../../src/events/ArcModelEventTypes.js';
 
 /* eslint-disable prefer-destructuring */
 
@@ -46,9 +46,7 @@ describe('RestApiModel', () => {
     });
 
     describe('updateIndex()', () => {
-      after(() => {
-        return generator.destroyAllApiData();
-      });
+      after(() => generator.destroyAllApiData());
 
       let element = /** @type RestApiModel */ (null);
       let entity = /** @type ARCRestApiIndex */ (null);
@@ -90,16 +88,14 @@ describe('RestApiModel', () => {
     });
 
     describe('updateData()', () => {
-      after(() => {
-        return generator.destroyAllApiData();
-      });
+      after(() => generator.destroyAllApiData());
 
       let element = /** @type RestApiModel */ (null);
       let entity = /** @type ARCRestApi */ (null);;
       beforeEach(async () => {
         element = await basicFixture();
-        const index = /** @type ARCRestApiIndex */ (generator.generateApiIndex());
-        entity = /** @type ARCRestApi */ (generator.generateApiData(index));
+        const index = /** @type any */ (generator.generateApiIndex());
+        entity = /** @type ARCRestApi */ (generator.generateApiData(index)[0]);
       });
 
       it('returns the changelog', async () => {
@@ -147,9 +143,7 @@ describe('RestApiModel', () => {
         dataEntities = /** @type ARCRestApi[] */ (result[1]);
       });
 
-      after(() => {
-        return generator.destroyAllApiData();
-      });
+      after(() => generator.destroyAllApiData());
 
       it('reads the entity', async () => {
         const doc = await element.readData(dataEntities[0]._id);
@@ -175,9 +169,7 @@ describe('RestApiModel', () => {
         }));
       });
 
-      after(() => {
-        return generator.destroyAllApiData();
-      });
+      after(() => generator.destroyAllApiData());
 
       it('returns the changelog for each item', async () => {
         const records = await element.updateIndexBatch(items);
@@ -215,9 +207,7 @@ describe('RestApiModel', () => {
         element = await basicFixture();
       });
 
-      afterEach(() => {
-        return generator.destroyAllApiData();
-      });
+      afterEach(() => generator.destroyAllApiData());
 
       it('removes a version from the index', async () => {
         await element.removeVersion(indexEntity._id, dataEntity.version);
@@ -299,9 +289,7 @@ describe('RestApiModel', () => {
         element = await basicFixture();
       });
 
-      afterEach(() => {
-        return generator.destroyAllApiData();
-      });
+      afterEach(() => generator.destroyAllApiData());
 
       it('removes index entity from the store', async () => {
         await element.delete(indexEntity._id);
@@ -342,9 +330,7 @@ describe('RestApiModel', () => {
         element = await basicFixture();
       });
 
-      afterEach(() => {
-        return generator.destroyAllApiData();
-      });
+      afterEach(() => generator.destroyAllApiData());
 
       it('returns a query result for default parameters', async () => {
         const result = await element.list();

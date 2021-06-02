@@ -1,13 +1,14 @@
+/* eslint-disable no-unused-vars */
 import { fixture, assert } from '@open-wc/testing';
 import { DataGenerator } from '@advanced-rest-client/arc-data-generator';
-import * as sinon from 'sinon';
+import { ArcModelEventTypes, ArcModelEvents } from '@advanced-rest-client/arc-events';
+import sinon from 'sinon';
 import 'chance/dist/chance.min.js';
 import '../../client-certificate-model.js';
-import { ArcModelEventTypes } from '../../src/events/ArcModelEventTypes.js';
-import { ArcModelEvents } from '../../src/events/ArcModelEvents.js';
 
 /** @typedef {import('../../src/ClientCertificateModel').ClientCertificateModel} ClientCertificateModel */
 /** @typedef {import('@advanced-rest-client/arc-types').ClientCertificate.Certificate} Certificate */
+/** @typedef {import('@advanced-rest-client/arc-types').ClientCertificate.ClientCertificate} ClientCertificate */
 
 describe('<client-certificate-model> events based', () => {
   const generator = new DataGenerator();
@@ -18,7 +19,7 @@ describe('<client-certificate-model> events based', () => {
     return fixture('<client-certificate-model></client-certificate-model>');
   }
 
-  describe(`${ArcModelEventTypes.ClientCertificate.list} event`, () => {
+  describe(`The list event`, () => {
     describe('With data', () => {
       before(async () => {
         await generator.insertCertificatesData({
@@ -105,7 +106,7 @@ describe('<client-certificate-model> events based', () => {
     });
   });
 
-  describe(`${ArcModelEventTypes.ClientCertificate.read} event`, () => {
+  describe(`The read event`, () => {
     describe('String data', () => {
       let id;
       before(async () => {
@@ -232,7 +233,7 @@ describe('<client-certificate-model> events based', () => {
     });
   });
 
-  describe(`${ArcModelEventTypes.ClientCertificate.delete} event`, () => {
+  describe(`The delete event`, () => {
     let id;
     let element = /** @type ClientCertificateModel */ (null);
     beforeEach(async () => {
@@ -278,7 +279,7 @@ describe('<client-certificate-model> events based', () => {
     });
   });
 
-  describe(`${ArcModelEventTypes.ClientCertificate.insert} event`, () => {
+  describe(`The insert event`, () => {
     let element = /** @type ClientCertificateModel */ (null);
     beforeEach(async () => {
       element = await basicFixture();
@@ -289,14 +290,14 @@ describe('<client-certificate-model> events based', () => {
     });
 
     it('inserts an item to the "index" store', async () => {
-      const item = generator.generateClientCertificate();
+      const item = /** @type ClientCertificate */ (generator.generateClientCertificate());
       await ArcModelEvents.ClientCertificate.insert(document.body, item);
       const all = await element.list();
       assert.lengthOf(all.items, 1);
     });
 
     it('returns chnagerecord of the "index" store', async () => {
-      const item = generator.generateClientCertificate();
+      const item = /** @type ClientCertificate */ (generator.generateClientCertificate());
       const result = await ArcModelEvents.ClientCertificate.insert(document.body, item);
       assert.typeOf(result, 'object', 'returns an object');
       assert.typeOf(result.id, 'string', 'has an id');
@@ -306,16 +307,16 @@ describe('<client-certificate-model> events based', () => {
     });
 
     it('inserts an item to the "data" store', async () => {
-      const item = generator.generateClientCertificate();
+      const item = /** @type ClientCertificate */ (generator.generateClientCertificate());
       const record = await ArcModelEvents.ClientCertificate.insert(document.body, item);
       const saved = await element.get(record.id);
       assert.typeOf(saved.cert, 'object');
     });
 
     it('stores binary data', async () => {
-      const item = generator.generateClientCertificate({
+      const item = /** @type ClientCertificate */ (generator.generateClientCertificate({
         binary: true,
-      });
+      }));
       const record = await ArcModelEvents.ClientCertificate.insert(document.body, item);
       const doc = await element.get(record.id);
       const info = /** @type Certificate */ (doc.cert);
@@ -336,7 +337,7 @@ describe('<client-certificate-model> events based', () => {
     });
 
     it('throws when no type', async () => {
-      const item = generator.generateClientCertificate();
+      const item = /** @type ClientCertificate */ (generator.generateClientCertificate());
       delete item.type;
       let err;
       try {
@@ -348,7 +349,7 @@ describe('<client-certificate-model> events based', () => {
     });
 
     it('dispatches change event', async () => {
-      const item = generator.generateClientCertificate();
+      const item = /** @type ClientCertificate */ (generator.generateClientCertificate());
       const spy = sinon.spy();
       element.addEventListener(ArcModelEventTypes.ClientCertificate.State.update, spy);
       const record = await ArcModelEvents.ClientCertificate.insert(document.body, item);
@@ -377,7 +378,7 @@ describe('<client-certificate-model> events based', () => {
     });
   });
 
-  describe(`${ArcModelEventTypes.destroy} event`, () => {
+  describe(`Datastore destroy event`, () => {
     beforeEach(async () => {
       await generator.insertCertificatesData({
         size: 10,

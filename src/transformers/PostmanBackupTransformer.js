@@ -113,9 +113,7 @@ export class PostmanBackupTransformer extends PostmanTransformer {
       });
     }
     const { requests } = collection;
-    let result = ordered.map((id) => {
-      return requests.find((request) => request.id === id);
-    });
+    let result = ordered.map((id) => requests.find((request) => request.id === id));
     result = result.filter((item) => !!item);
     return result;
   }
@@ -134,9 +132,7 @@ export class PostmanBackupTransformer extends PostmanTransformer {
     if (!orderIds || !orderIds.length) {
       return folders;
     }
-    let result = orderIds.map((id) => {
-      return folders.find((folder) => folder.id === id);
-    });
+    let result = orderIds.map((id) => folders.find((folder) => folder.id === id));
     result = result.filter((item) => !!item);
     return result;
   }

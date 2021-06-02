@@ -77,7 +77,7 @@ describe('ArcPouchTransformer', () => {
       assert.equal(request.updated, compare.updated, 'has the updated property');
       assert.equal(request.name, compare.name);
       assert.equal(request.type, compare.type);
-      assert.equal(request.kind, 'ARC#RequestData');
+      assert.equal(request.kind, 'ARC#HttpRequest');
 
       request = result.requests[1];
       compare = jsonData.requests[1];
@@ -89,7 +89,7 @@ describe('ArcPouchTransformer', () => {
       assert.typeOf(request.updated, 'number', 'has the generated updated property');
       assert.equal(request.name, compare.name);
       assert.equal(request.type, compare.type);
-      assert.equal(request.kind, 'ARC#RequestData');
+      assert.equal(request.kind, 'ARC#HttpRequest');
 
       request = result.requests[3];
       compare = jsonData.requests[3];
@@ -100,7 +100,7 @@ describe('ArcPouchTransformer', () => {
       assert.equal(request.created, compare.updated, 'the created is the previous updated');
       assert.equal(request.name, compare.name);
       assert.equal(request.type, compare.type);
-      assert.equal(request.kind, 'ARC#RequestData');
+      assert.equal(request.kind, 'ARC#HttpRequest');
     });
 
     it('has project values', () => {
@@ -222,7 +222,7 @@ describe('ArcPouchTransformer', () => {
           data: projects,
         },
         {
-          key: 'saved',
+          key: 'requests',
           data,
         },
       ], {
@@ -231,7 +231,23 @@ describe('ArcPouchTransformer', () => {
       });
       const factory = new ArcPouchTransformer(exportObject);
       const result = await factory.transform();
-      assert.deepEqual(exportObject.requests, result.requests);
+      assert.typeOf(exportObject.requests, 'array', 'created requests array');
+      assert.equal(exportObject.requests.length, result.requests.length, 'has the same number of requests');
+      const [srcRequest] = exportObject.requests;
+      const [trgRequest] = result.requests;
+      assert.equal(srcRequest.url, trgRequest.url, 'the URL is set');
+      assert.equal(srcRequest.method, trgRequest.method, 'the method is set');
+      assert.equal(srcRequest.headers, trgRequest.headers, 'the headers is set');
+      assert.equal(srcRequest.created, trgRequest.created, 'the created is set');
+      assert.equal(srcRequest.updated, trgRequest.updated, 'the updated is set');
+      assert.equal(srcRequest.type, trgRequest.type, 'the type is set');
+      assert.equal(srcRequest.name, trgRequest.name, 'the name is set');
+      assert.equal(srcRequest.midnight, trgRequest.midnight, 'the midnight is set');
+      assert.equal(srcRequest.description, trgRequest.description, 'the description is set');
+      assert.notStrictEqual(trgRequest.payload, undefined, 'the payload is set');
+      assert.equal(srcRequest.key, trgRequest.key, 'the key is set');
+      assert.equal(trgRequest.kind, 'ARC#HttpRequest', 'the kind is set');
+      // assert.deepEqual(exportObject.requests, result.requests, 'requests are transformed');
       const [project] = result.projects;
       assert.typeOf(project.created, 'number', 'the project has the created property');
       assert.typeOf(project.updated, 'number', 'the project has the updated property');

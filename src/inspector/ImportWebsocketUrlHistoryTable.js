@@ -19,7 +19,7 @@ import { ImportBaseTable } from './ImportBaseTable.js';
 /** @typedef {import('@advanced-rest-client/arc-types').DataExport.ExportArcWebsocketUrl} ExportArcWebsocketUrl */
 
 /**
- * An element to display list of URLs hsitory to import.
+ * An element to display list of URLs history to import.
  */
 export class ImportWebsocketUrlHistoryTable extends ImportBaseTable {
 

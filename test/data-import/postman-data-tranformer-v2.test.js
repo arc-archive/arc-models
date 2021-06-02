@@ -124,7 +124,7 @@ describe('PostmanV2Transformer', () => {
       let shallowCopy;
       beforeEach(() => {
         transformer = new PostmanV2Transformer(jsonData);
-        shallowCopy = Array.from(item, (i) => { return { ...i } });
+        shallowCopy = Array.from(item, (i) => ({ ...i }));
       });
 
       it('computes body value', () => {
@@ -186,7 +186,7 @@ describe('PostmanV2Transformer', () => {
     describe('computeHeaders()', () => {
       beforeEach(() => {
         transformer = new PostmanV2Transformer(jsonData);
-        shallowCopy = Array.from(headers, (i) => { return { ...i } });
+        shallowCopy = Array.from(headers, (i) => ({ ...i }));
       });
 
       it('Computes headers value', () => {

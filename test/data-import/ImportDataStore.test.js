@@ -5,14 +5,14 @@ import { ImportFactory, transformKeys } from '../../src/lib/ImportFactory.js';
 
 /* global PouchDB */
 
-/** @typedef {import('@advanced-rest-client/arc-models').ARCSavedRequest} ARCSavedRequest */
-/** @typedef {import('@advanced-rest-client/arc-models').ARCHistoryRequest} ARCHistoryRequest */
-/** @typedef {import('@advanced-rest-client/arc-models').ARCProject} ARCProject */
-/** @typedef {import('@advanced-rest-client/arc-models').ARCWebsocketUrlHistory} ARCWebsocketUrlHistory */
-/** @typedef {import('@advanced-rest-client/arc-models').ARCUrlHistory} ARCUrlHistory */
-/** @typedef {import('@advanced-rest-client/arc-models').ARCAuthData} ARCAuthData */
-/** @typedef {import('@advanced-rest-client/arc-models').ARCHostRule} ARCHostRule */
-/** @typedef {import('@advanced-rest-client/arc-models').ARCVariable} ARCVariable */
+/** @typedef {import('@advanced-rest-client/arc-types').ArcRequest.ARCSavedRequest} ARCSavedRequest */
+/** @typedef {import('@advanced-rest-client/arc-types').ArcRequest.ARCHistoryRequest} ARCHistoryRequest */
+/** @typedef {import('@advanced-rest-client/arc-types').Project.ARCProject} ARCProject */
+/** @typedef {import('@advanced-rest-client/arc-types').UrlHistory.ARCWebsocketUrlHistory} ARCWebsocketUrlHistory */
+/** @typedef {import('@advanced-rest-client/arc-types').UrlHistory.ARCUrlHistory} ARCUrlHistory */
+/** @typedef {import('@advanced-rest-client/arc-types').AuthData.ARCAuthData} ARCAuthData */
+/** @typedef {import('@advanced-rest-client/arc-types').HostRule.ARCHostRule} ARCHostRule */
+/** @typedef {import('@advanced-rest-client/arc-types').Variable.ARCVariable} ARCVariable */
 
 describe('ImportDataStore', () => {
   const generator = new DataGenerator();
@@ -32,7 +32,7 @@ describe('ImportDataStore', () => {
       assert.typeOf(result[0]._id, 'string');
     });
 
-    it('coppies "key" property', () => {
+    it('copies "key" property', () => {
       const item = {
         key: 'test-id'
       };
@@ -49,7 +49,7 @@ describe('ImportDataStore', () => {
 
     function genExportItem() {
       const request = /** @type ARCSavedRequest */ (generator.generateSavedItem());
-      const exportItem = { ...request, kind: 'ARC#RequestData', key: request._id };
+      const exportItem = { ...request, kind: 'ARC#HttpRequest', key: request._id };
       delete exportItem._id;
       return exportItem;
     }
@@ -73,7 +73,7 @@ describe('ImportDataStore', () => {
 
     it('handles conflicts', async () => {
       const request = /** @type ARCSavedRequest */ (generator.generateSavedItem());
-      const exportItem = { ...request, kind: 'ARC#RequestData', key: request._id };
+      const exportItem = { ...request, kind: 'ARC#HttpRequest', key: request._id };
       delete exportItem._id;
       const db = new PouchDB('saved-requests');
       const { rev } = await db.put(request);

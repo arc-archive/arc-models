@@ -12,10 +12,10 @@ License for the specific language governing permissions and limitations under
 the License.
 */
 import { v4 } from '@advanced-rest-client/uuid-generator';
-import { ArcBaseModel, deletemodelHandler, notifyDestroyed, createChangeRecord } from './ArcBaseModel.js';
+import { ArcModelEvents } from '@advanced-rest-client/arc-events';
 import 'pouchdb/dist/pouchdb.js';
 import '@advanced-rest-client/pouchdb-quick-search/dist/pouchdb.quick-search.min.js';
-import { ArcModelEvents } from './events/ArcModelEvents.js';
+import { ArcBaseModel, deletemodelHandler, notifyDestroyed, createChangeRecord } from './ArcBaseModel.js';
 import { normalizeRequest, normalizeRequestType, normalizeProjects } from './Utils.js';
 
 /* global PouchQuickSearch */
@@ -30,9 +30,9 @@ if (typeof PouchDB !== 'undefined' && typeof PouchQuickSearch !== 'undefined') {
 /** @typedef {import('@advanced-rest-client/arc-types').Project.ARCProject} ARCProject */
 /** @typedef {import('@advanced-rest-client/arc-types').ArcRequest.ARCSavedRequest} ARCSavedRequest */
 /** @typedef {import('@advanced-rest-client/arc-types').ArcRequest.ARCHistoryRequest} ARCHistoryRequest */
-/** @typedef {import('./types').ARCEntityChangeRecord} ARCEntityChangeRecord */
-/** @typedef {import('./types').DeletedEntity} DeletedEntity */
-/** @typedef {import('./events/BaseEvents').ARCModelDeleteEvent} ARCModelDeleteEvent */
+/** @typedef {import('@advanced-rest-client/arc-types').Model.ARCEntityChangeRecord} ARCEntityChangeRecord */
+/** @typedef {import('@advanced-rest-client/arc-types').Model.DeletedEntity} DeletedEntity */
+/** @typedef {import('@advanced-rest-client/arc-events').ARCModelDeleteEvent} ARCModelDeleteEvent */
 
 export const processUpdateProjectBulkResponse = Symbol('processUpdateProjectBulkResponse');
 

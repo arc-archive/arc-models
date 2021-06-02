@@ -8,10 +8,10 @@ import {
   DataImportEventTypes, 
   ImportEvents,
   EncryptionEventTypes,
+  ArcModelEventTypes,
 } from '@advanced-rest-client/arc-events';
 import { DataGenerator } from '@advanced-rest-client/arc-data-generator';
 import { DataHelper } from './DataHelper.js';
-import { ArcModelEventTypes } from '../../index.js';
 import { notifyIndexer, notifyApiParser, decryptIfNeeded } from '../../src/ArcDataImportElement.js';
 import '../../arc-data-import.js';
 

@@ -1,8 +1,8 @@
 import { fixture, assert } from '@open-wc/testing';
 import sinon from 'sinon';
 import { DataGenerator } from '@advanced-rest-client/arc-data-generator';
+import { ArcModelEventTypes } from '@advanced-rest-client/arc-events';
 import '../../host-rules-model.js';
-import { ArcModelEventTypes } from '../../src/events/ArcModelEventTypes.js';
 
 /** @typedef {import('../../src/HostRulesModel').HostRulesModel} HostRulesModel */
 /** @typedef {import('@advanced-rest-client/arc-types').HostRule.ARCHostRule} ARCHostRule */
@@ -20,9 +20,7 @@ describe('<host-rules-model>', () => {
 
   describe('Static methods', () => {
     describe('update()', () => {
-      afterEach(() => {
-        return generator.destroyHostRulesData();
-      });
+      afterEach(() => generator.destroyHostRulesData());
 
       let element = /** @type {HostRulesModel} */ (null);
       beforeEach(async () => {
@@ -80,9 +78,7 @@ describe('<host-rules-model>', () => {
     });
 
     describe('read()', () => {
-      afterEach(() => {
-        return generator.destroyHostRulesData();
-      });
+      afterEach(() => generator.destroyHostRulesData());
 
       let element = /** @type {HostRulesModel} */ (null);
       let dataObj;
@@ -109,9 +105,7 @@ describe('<host-rules-model>', () => {
     });
 
     describe('delete()', () => {
-      afterEach(() => {
-        return generator.destroyHostRulesData();
-      });
+      afterEach(() => generator.destroyHostRulesData());
 
       let element = /** @type {HostRulesModel} */ (null);
       let dataObj;
@@ -153,9 +147,7 @@ describe('<host-rules-model>', () => {
     });
 
     describe('list()', () => {
-      afterEach(() => {
-        return generator.destroyHostRulesData();
-      });
+      afterEach(() => generator.destroyHostRulesData());
 
       let element = /** @type {HostRulesModel} */ (null);
       beforeEach(async () => {
@@ -200,9 +192,7 @@ describe('<host-rules-model>', () => {
     });
 
     describe('updateBulk()', () => {
-      afterEach(() => {
-        return generator.destroyHostRulesData();
-      });
+      afterEach(() => generator.destroyHostRulesData());
 
       let element = /** @type {HostRulesModel} */ (null);
       let data;

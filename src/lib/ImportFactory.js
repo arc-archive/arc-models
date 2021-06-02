@@ -299,12 +299,10 @@ export class ImportFactory {
     if (!userDefined.length) {
       return;
     }
-    const docs = /** @type ARCEnvironment[] */ (userDefined.map((name) => {
-      return {
+    const docs = /** @type ARCEnvironment[] */ (userDefined.map((name) => ({
         name,
         created: Date.now(),
-      };
-    }));
+      })));
     await db.bulkDocs(docs);
   }
 

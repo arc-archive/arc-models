@@ -1,5 +1,5 @@
 import { DataExport } from '@advanced-rest-client/arc-types';
-import { IndexableRequest } from '@advanced-rest-client/arc-models';
+import { Indexer } from '@advanced-rest-client/arc-types';
 
 export const handleConflictedItem: unique symbol;
 export const insertGeneric: unique symbol;
@@ -14,8 +14,8 @@ export declare function transformKeys<T>(items: T[]): T[];
  * A class that gives access to the datastore for ARC objects.
  */
 export declare class ImportFactory {
-  historyIndexes?: IndexableRequest[];
-  savedIndexes?: IndexableRequest[];
+  historyIndexes?: Indexer.IndexableRequest[];
+  savedIndexes?: Indexer.IndexableRequest[];
   /**
    * Imports data into the data store.
    *
@@ -98,5 +98,5 @@ export declare class ImportFactory {
    * @param requests Inserted requests
    * @param type Request type, `saved` or `history`
    */
-  listRequestIndex(result: (PouchDB.Core.Response|PouchDB.Core.Error)[], requests: DataExport.ExportArcHistoryRequest[], type: string): IndexableRequest[]|undefined;
+  listRequestIndex(result: (PouchDB.Core.Response|PouchDB.Core.Error)[], requests: DataExport.ExportArcHistoryRequest[], type: string): Indexer.IndexableRequest[]|undefined;
 }

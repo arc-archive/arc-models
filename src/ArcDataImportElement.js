@@ -22,11 +22,11 @@ import {
   ImportEvents,
   WorkspaceEvents,
   RestApiEvents,
+  ArcModelEvents,
 } from '@advanced-rest-client/arc-events';
 import { readFile, isSingleRequest } from './lib/ImportUtils.js';
 import { ImportNormalize } from './lib/ImportNormalize.js';
 import { ImportFactory } from './lib/ImportFactory.js';
-import { ArcModelEvents } from './events/ArcModelEvents.js';
 
 /** @typedef {import('@advanced-rest-client/arc-types').DataExport.ArcExportObject} ArcExportObject */
 /** @typedef {import('@advanced-rest-client/arc-types').Indexer.IndexableRequest} IndexableRequest */

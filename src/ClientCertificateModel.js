@@ -11,9 +11,8 @@ WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
 License for the specific language governing permissions and limitations under
 the License.
 */
+import { ArcModelEventTypes, ArcModelEvents } from '@advanced-rest-client/arc-events';
 import { ArcBaseModel, createChangeRecord } from './ArcBaseModel.js';
-import { ArcModelEventTypes } from './events/ArcModelEventTypes.js';
-import { ArcModelEvents } from './events/ArcModelEvents.js';
 
 /* eslint-disable class-methods-use-this */
 /* eslint-disable no-param-reassign */
@@ -22,14 +21,14 @@ import { ArcModelEvents } from './events/ArcModelEvents.js';
 /** @typedef {import('@advanced-rest-client/arc-types').ClientCertificate.ARCCertificateIndex} ARCCertificateIndex */
 /** @typedef {import('@advanced-rest-client/arc-types').ClientCertificate.Certificate} Certificate */
 /** @typedef {import('@advanced-rest-client/arc-types').ClientCertificate.ClientCertificate} ClientCertificate */
-/** @typedef {import('./events/CertificatesEvents').ARCClientCertificateInsertEvent} ARCClientCertificateInsertEvent */
-/** @typedef {import('./events/CertificatesEvents').ARCClientCertificateReadEvent} ARCClientCertificateReadEvent */
-/** @typedef {import('./events/CertificatesEvents').ARCClientCertificateDeleteEvent} ARCClientCertificateDeleteEvent */
-/** @typedef {import('./events/CertificatesEvents').ARCClientCertificateListEvent} ARCClientCertificateListEvent */
-/** @typedef {import('./types').ARCEntityChangeRecord} ARCEntityChangeRecord */
-/** @typedef {import('./types').DeletedEntity} DeletedEntity */
-/** @typedef {import('./types').ARCModelListResult} ARCModelListResult */
-/** @typedef {import('./types').ARCModelListOptions} ARCModelListOptions */
+/** @typedef {import('@advanced-rest-client/arc-events').ARCClientCertificateInsertEvent} ARCClientCertificateInsertEvent */
+/** @typedef {import('@advanced-rest-client/arc-events').ARCClientCertificateReadEvent} ARCClientCertificateReadEvent */
+/** @typedef {import('@advanced-rest-client/arc-events').ARCClientCertificateDeleteEvent} ARCClientCertificateDeleteEvent */
+/** @typedef {import('@advanced-rest-client/arc-events').ARCClientCertificateListEvent} ARCClientCertificateListEvent */
+/** @typedef {import('@advanced-rest-client/arc-types').Model.ARCEntityChangeRecord} ARCEntityChangeRecord */
+/** @typedef {import('@advanced-rest-client/arc-types').Model.ARCModelListOptions} ARCModelListOptions */
+/** @typedef {import('@advanced-rest-client/arc-types').Model.ARCModelListResult} ARCModelListResult */
+/** @typedef {import('@advanced-rest-client/arc-types').Model.DeletedEntity} DeletedEntity */
 
 export const listHandler = Symbol('listHandler');
 export const insertHandler = Symbol('insertHandler');
@@ -192,7 +191,7 @@ export class ClientCertificateModel extends ArcBaseModel {
    * See class description for data structure.
    *
    * @param {ClientCertificate} cert Data to insert.
-   * @return {Promise<ARCEntityChangeRecord>} Returns a change record for the entity
+   * @return {Promise<ARCEntityChangeRecord>} Returns a change record for the index entity
    */
   async insert(cert) {
     if (!cert.cert) {
@@ -201,7 +200,6 @@ export class ClientCertificateModel extends ArcBaseModel {
     if (!cert.type) {
       throw new Error('The "type" property is required.');
     }
-
     const dataEntity = /** @type ARCClientCertificate */({
       cert: this.certificateToStore(cert.cert),
       type: cert.type,
@@ -219,6 +217,8 @@ export class ClientCertificateModel extends ArcBaseModel {
       indexEntity.created = Date.now();
     }
     const dataResponse = await this.dataDb.post(dataEntity);
+    dataEntity._rev = dataResponse.rev;
+    dataEntity._id = dataResponse.id;
     indexEntity._id = dataResponse.id;
     const response = await this.db.put(indexEntity);
     const record = this[createChangeRecord](indexEntity, response);

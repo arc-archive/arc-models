@@ -1,7 +1,7 @@
 /* eslint-disable prefer-template */
 import { fixture, html, assert, oneEvent } from '@open-wc/testing';
 import { DataGenerator } from '@advanced-rest-client/arc-data-generator';
-import { TransportEvents, TransportEventTypes } from '@advanced-rest-client/arc-events';
+import { ArcModelEventTypes, TransportEvents, TransportEventTypes } from '@advanced-rest-client/arc-events';
 import '../../history-data-model.js';
 import '../../request-model.js';
 import {
@@ -13,14 +13,13 @@ import {
   prepareResponseBody,
   createEmptyTimings,
 } from '../../src/HistoryDataModel.js';
-import { ArcModelEventTypes } from '../../src/events/ArcModelEventTypes.js';
 
 /** @typedef {import('../../').HistoryDataModel} HistoryDataModel */
 /** @typedef {import('@advanced-rest-client/arc-types').HistoryData.HistoryData} HistoryData */
 /** @typedef {import('@advanced-rest-client/arc-types').ArcRequest.TransportRequest} TransportRequest */
 /** @typedef {import('@advanced-rest-client/arc-types').ArcResponse.Response} Response */
 /** @typedef {import('@advanced-rest-client/arc-types').ArcRequest.ARCHistoryRequest} ARCHistoryRequest */
-/** @typedef {import('../../').ARCRequestUpdatedEvent} ARCRequestUpdatedEvent */
+/** @typedef {import('@advanced-rest-client/arc-events').ARCRequestUpdatedEvent} ARCRequestUpdatedEvent */
 /** @typedef {import('@advanced-rest-client/arc-types').ArcResponse.TransformedPayload} TransformedPayload */
 
 describe('HistoryDataModel', () => {

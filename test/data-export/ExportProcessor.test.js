@@ -2,6 +2,9 @@ import { assert } from '@open-wc/testing';
 import 'chance/dist/chance.min.js';
 import { DataGenerator } from '@advanced-rest-client/arc-data-generator/arc-data-generator.js';
 import { ExportProcessor } from '../../src/lib/ExportProcessor.js';
+
+/** @typedef {import('@advanced-rest-client/arc-types').ClientCertificate.Certificate} Certificate */
+
 /* global Chance */
 // @ts-ignore
 const chance = new Chance();
@@ -79,7 +82,7 @@ describe('ExportProcessor', () => {
 
     it('kind property is set', () => {
       const result = instance.prepareRequestsList(data);
-      assert.equal(result[0].kind, 'ARC#RequestData');
+      assert.equal(result[0].kind, 'ARC#HttpRequest');
     });
   });
 
@@ -155,7 +158,7 @@ describe('ExportProcessor', () => {
     });
 
     it('kind property is set', () => {
-      assert.equal(result[0].kind, 'ARC#HistoryData');
+      assert.equal(result[0].kind, 'ARC#HttpRequest');
     });
   });
 
@@ -449,18 +452,22 @@ describe('ExportProcessor', () => {
         });
         certs = mockRev(certs);
         data = [];
-        certs.forEach((cert) => {
-          const item = cert;
+        certs.forEach((obj) => {
+          const item = obj;
+          const certificate = /** @type Certificate */ (item.cert);
+          const keyCertificate = /** @type Certificate */ (item.key);
           const dataDoc = {
-            cert: DataGenerator.certificateToStore(item.cert),
+            cert: DataGenerator.certificateToStore(certificate),
           };
           delete item.cert;
           if (item.key) {
-            dataDoc.key = DataGenerator.certificateToStore(item.key);
+            dataDoc.key = DataGenerator.certificateToStore(keyCertificate);
             delete item.key;
           }
+          // @ts-ignore
           item._id = `index-id-${Date.now()}`;
           dataDoc._id = `data-id-${Date.now()}`;
+          // @ts-ignore
           item.dataKey = `data-${Date.now()}`;
           data.push({ item, data: dataDoc });
         });

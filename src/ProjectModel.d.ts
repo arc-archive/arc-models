@@ -1,7 +1,6 @@
-import { Project } from '@advanced-rest-client/arc-types';
-import { ARCProjectDeleteEvent, ARCProjectListAllEvent, ARCProjectListEvent, ARCProjectMoveEvent, ARCProjectReadEvent, ARCProjectUpdateBulkEvent, ARCProjectUpdateEvent } from './events/ProjectEvents.js';
+import { Project, Model } from '@advanced-rest-client/arc-types';
+import { ARCProjectDeleteEvent, ARCProjectListAllEvent, ARCProjectListEvent, ARCProjectMoveEvent, ARCProjectReadEvent, ARCProjectUpdateBulkEvent, ARCProjectUpdateEvent } from '@advanced-rest-client/arc-events';
 import { RequestBaseModel } from './RequestBaseModel.js';
-import { ARCEntityChangeRecord, ARCModelListResult, ARCModelListOptions } from './types';
 
 export declare const readHandler: unique symbol;
 export declare const updateHandler: unique symbol;
@@ -26,7 +25,7 @@ export declare class ProjectModel extends RequestBaseModel {
    * @param opts Query options.
    * @returns A promise resolved to a list of projects.
    */
-  list(opts?: ARCModelListOptions): Promise<ARCModelListResult<Project.ARCProject>>;
+  list(opts?: Model.ARCModelListOptions): Promise<Model.ARCModelListResult<Project.ARCProject>>;
 
   /**
    * Lists all project entities.
@@ -41,7 +40,7 @@ export declare class ProjectModel extends RequestBaseModel {
    *
    * @param project Project object to update.
    */
-  post(project: Project.ARCProject): Promise<ARCEntityChangeRecord<Project.ARCProject>>;
+  post(project: Project.ARCProject): Promise<Model.ARCEntityChangeRecord<Project.ARCProject>>;
 
   /**
    * Link to `#readProject()` for API consistency
@@ -73,7 +72,7 @@ export declare class ProjectModel extends RequestBaseModel {
    *
    * @param projects List of requests to update.
    */
-  postBulk(projects: Project.ARCProject[]): Promise<ARCEntityChangeRecord<Project.ARCProject>[]>;
+  postBulk(projects: Project.ARCProject[]): Promise<Model.ARCEntityChangeRecord<Project.ARCProject>[]>;
 
   /**
    * Adds a request to a project.

@@ -1,6 +1,5 @@
 import { ArcBaseModel } from './ArcBaseModel';
-import { Project, ArcRequest } from '@advanced-rest-client/arc-types';
-import { ARCEntityChangeRecord, DeletedEntity } from './types';
+import { Project, ArcRequest, Model } from '@advanced-rest-client/arc-types';
 
 export declare const processUpdateProjectBulkResponse: unique symbol;
 
@@ -51,13 +50,13 @@ export declare class RequestBaseModel extends ArcBaseModel {
    * @param project A project to save / update
    * @returns Resolved promise to project object with updated `_rev`
    */
-  updateProject(project: Project.ARCProject): Promise<ARCEntityChangeRecord<Project.ARCProject>>;
+  updateProject(project: Project.ARCProject): Promise<Model.ARCEntityChangeRecord<Project.ARCProject>>;
 
   /**
    * Updates more than one project in a bulk request.
    * @param projects List of requests to update.
    */
-  updateProjects(projects: Project.ARCProject[]): Promise<ARCEntityChangeRecord<Project.ARCProject>[]>;
+  updateProjects(projects: Project.ARCProject[]): Promise<Model.ARCEntityChangeRecord<Project.ARCProject>[]>;
 
   /**
    * Removes a project entity from the data store.
@@ -65,7 +64,7 @@ export declare class RequestBaseModel extends ArcBaseModel {
    *
    * @param id The ID of the datastore entry.
    */
-  removeProject(id: string): Promise<DeletedEntity>;
+  removeProject(id: string): Promise<Model.DeletedEntity>;
 
   /**
    * Removes requests associated with the project.
@@ -96,7 +95,7 @@ export declare class RequestBaseModel extends ArcBaseModel {
    * @param request The request to process 
    * @returns Change record for each changed project.
    */
-  removeFromProjects(request: ArcRequest.ARCSavedRequest): Promise<ARCEntityChangeRecord<Project.ARCProject>[]>;
+  removeFromProjects(request: ArcRequest.ARCSavedRequest): Promise<Model.ARCEntityChangeRecord<Project.ARCProject>[]>;
 
   /**
    * Processes datastore response after calling `updateBulk()` function.
@@ -104,5 +103,5 @@ export declare class RequestBaseModel extends ArcBaseModel {
    * @param responses PouchDB response
    * @returns List of projects with updated `_id` and `_rew`
    */
-  [processUpdateProjectBulkResponse](projects: Project.ARCProject[], responses: Array<PouchDB.Core.Response|PouchDB.Core.Error>): ARCEntityChangeRecord<Project.ARCProject>[];
+  [processUpdateProjectBulkResponse](projects: Project.ARCProject[], responses: Array<PouchDB.Core.Response|PouchDB.Core.Error>): Model.ARCEntityChangeRecord<Project.ARCProject>[];
 }

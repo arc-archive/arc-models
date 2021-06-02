@@ -9,7 +9,7 @@ import { BaseTransformer, dataValue } from './BaseTransformer.js';
 /** @typedef {import('@advanced-rest-client/arc-types').DataExport.ExportArcProjects} ExportArcProjects */
 /** @typedef {import('@advanced-rest-client/arc-types').DataExport.ExportArcHistoryRequest} ExportArcHistoryRequest */
 /** @typedef {import('@advanced-rest-client/arc-types').DataExport.ExportArcSavedRequest} ExportArcSavedRequest */
-/** @typedef {import('@advanced-rest-client/arc-models').ARCProject} ARCProject */
+/** @typedef {import('@advanced-rest-client/arc-types').Project} ARCProject */
 /** @typedef {import('./ArcDexieTransformer').ProjectItem} ProjectItem */
 /** @typedef {import('./ArcDexieTransformer').RequestProcessItem} RequestProcessItem */
 /** @typedef {import('./ArcDexieTransformer').DexieExport} DexieExport */
@@ -202,7 +202,7 @@ export class ArcDexieTransformer extends BaseTransformer {
       method: item.method,
       url: item.url,
       type: 'saved',
-      kind: '',
+      kind: 'ARC#HttpRequest',
       key: v4(),
     });
     // payload and headers
@@ -253,9 +253,7 @@ export class ArcDexieTransformer extends BaseTransformer {
     if (!arr || !arr.length) {
       return '';
     }
-    return arr.map((item) => {
-      return `${item.name  }: ${  item.value}`;
-    }).join('\n');
+    return arr.map((item) => `${item.name}: ${item.value}`).join('\n');
   }
 
   /**

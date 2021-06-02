@@ -134,6 +134,7 @@ export class ArcPouchTransformer extends BaseTransformer {
       request.method = request.method || 'GET';
       request.headers = request.headers || '';
       request.payload = request.payload || '';
+      request.kind = 'ARC#HttpRequest';
       return updateItemTimings(request);
     });
   }

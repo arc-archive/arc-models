@@ -16,9 +16,7 @@ describe('Dexie legacy import', () => {
       originalData = JSON.parse(response);
     });
 
-    after(() => {
-      return generator.destroySavedRequestData();
-    });
+    after(() => generator.destroySavedRequestData());
 
     beforeEach(async () => {
       data = generator.clone(originalData);

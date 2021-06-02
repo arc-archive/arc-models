@@ -16,9 +16,7 @@ describe('Data integrity test', () => {
     assert.isUndefined(errors);
   });
 
-  after(() => {
-    return generator.destroyAll();
-  });
+  after(() => generator.destroyAll());
 
   describe('request data integrity', () => {
     let requests;

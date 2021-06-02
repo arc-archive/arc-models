@@ -1,4 +1,4 @@
-import { fixture, assert, aTimeout, nextFrame } from '@open-wc/testing';
+import { fixture, assert, aTimeout, nextFrame, html } from '@open-wc/testing';
 import sinon from 'sinon';
 import { GoogleDriveEventTypes } from '@advanced-rest-client/arc-events';
 import '../../export-options.js';
@@ -12,14 +12,14 @@ describe('ExportOptionsElement', () => {
    * @return {Promise<ExportOptionsElement>}
    */
   async function basicFixture() {
-    return (fixture(`<export-options></export-options>`));
+    return (fixture(html`<export-options></export-options>`));
   }
 
   /**
    * @return {Promise<ExportOptionsElement>}
    */
   async function validFixture() {
-    return (fixture(`<export-options
+    return (fixture(html`<export-options
       file="test-file"
       provider="file"></export-options>`));
   }
@@ -28,7 +28,7 @@ describe('ExportOptionsElement', () => {
    * @return {Promise<ExportOptionsElement>}
    */
   async function fullDriveFixture() {
-    return (fixture(`
+    return (fixture(html`
     <export-options
       file="test-file.json"
       provider="drive"

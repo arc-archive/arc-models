@@ -13,16 +13,14 @@ the License.
 */
 
 import 'pouchdb/dist/pouchdb.js';
-import { TelemetryEvents } from '@advanced-rest-client/arc-events';
-import { ArcModelEventTypes } from './events/ArcModelEventTypes.js';
-import { ArcModelEvents } from './events/ArcModelEvents.js';
+import { TelemetryEvents, ArcModelEventTypes, ArcModelEvents } from '@advanced-rest-client/arc-events';
 
 /* eslint-disable class-methods-use-this */
 
-/** @typedef {import('./types').ARCModelListResult} ARCModelListResult */
-/** @typedef {import('./types').ARCModelListOptions} ARCModelListOptions */
-/** @typedef {import('./events/BaseEvents').ARCModelDeleteEvent} ARCModelDeleteEvent */
-/** @typedef {import('./types').ARCEntityChangeRecord} ARCEntityChangeRecord */
+/** @typedef {import('@advanced-rest-client/arc-events').ARCModelDeleteEvent} ARCModelDeleteEvent */
+/** @typedef {import('@advanced-rest-client/arc-types').Model.ARCEntityChangeRecord} ARCEntityChangeRecord */
+/** @typedef {import('@advanced-rest-client/arc-types').Model.ARCModelListOptions} ARCModelListOptions */
+/** @typedef {import('@advanced-rest-client/arc-types').Model.ARCModelListResult} ARCModelListResult */
 
 export const deletemodelHandler = Symbol('deletemodelHandler');
 export const notifyDestroyed = Symbol('notifyDestroyed');

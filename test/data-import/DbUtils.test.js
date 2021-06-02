@@ -129,11 +129,9 @@ describe('DbUtils', () => {
 
     it('returns null when certificate is in the list of created certs', async () => {
       const id = created[0]._id;
-      const result = await readClientCertificateIfNeeded(id, created.map((cert) => {
-        return {
+      const result = await readClientCertificateIfNeeded(id, created.map((cert) => ({
           item: cert,
-        };
-      }));
+        })));
       assert.equal(result, null);
     });
 
@@ -228,11 +226,9 @@ describe('DbUtils', () => {
         }
       ];
       delete requests[2].authorization;
-      const result = await processRequestsArray(requests, created.map((cert) => {
-        return {
+      const result = await processRequestsArray(requests, created.map((cert) => ({
           item: cert,
-        };
-      }));
+        })));
       assert.typeOf(result, 'array');
       assert.lengthOf(result, 0);
     });

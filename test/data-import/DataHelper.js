@@ -27,9 +27,7 @@ DataHelper.generateElectronBuffer = () => {
     "requests": [{}]
   }`;
   const uint8 = new Uint8Array([10, 20, 30, 40, 50]);
-  uint8.toString = () => {
-    return data;
-  };
+  uint8.toString = () => data;
   return uint8;
 };
 
@@ -63,11 +61,10 @@ DataHelper.generateJsonErrorFile = () => {
 /**
  * @return {ArcExportObject}
  */
-DataHelper.generateSingleRequestImport = () => {
-  return {
+DataHelper.generateSingleRequestImport = () => ({
     requests: [{
       key: '11013905-9b5a-49d9-adc8-f76ec3ead2f1',
-      kind: 'ARC#RequestData',
+      kind: 'ARC#HttpRequest',
       updated: 1545502958053,
       created: 1545363890469,
       headers: 'Content-Type: application/json\nContent-Length: 2',
@@ -80,17 +77,15 @@ DataHelper.generateSingleRequestImport = () => {
     createdAt: '2019-02-02T21:58:25.467Z',
     version: '13.0.0',
     kind: 'ARC#AllDataExport'
-  };
-};
+  });
 
 /**
  * @return {ArcExportObject}
  */
-DataHelper.generateMultiRequestImport = () => {
-  return {
+DataHelper.generateMultiRequestImport = () => ({
     requests: [{
       key: '11013905-9b5a-49d9-adc8-f76ec3ead2f1',
-      kind: 'ARC#RequestData',
+      kind: 'ARC#HttpRequest',
       updated: 1545502958053,
       created: 1545363890469,
       headers: 'Content-Type: application/json\nContent-Length: 2',
@@ -101,7 +96,7 @@ DataHelper.generateMultiRequestImport = () => {
       type: 'saved',
     }, {
       key: '20013905-9b5a-49d9-adc8-f76ec3ead2f1',
-      kind: 'ARC#RequestData',
+      kind: 'ARC#HttpRequest',
       updated: 1545502958057,
       created: 1545363890464,
       headers: 'Content-Type: application/json\nContent-Length: 2',
@@ -114,17 +109,15 @@ DataHelper.generateMultiRequestImport = () => {
     createdAt: '2019-02-02T21:58:25.467Z',
     version: '13.0.0',
     kind: 'ARC#AllDataExport'
-  };
-};
+  });
 
 /**
  * @return {ArcExportObject}
  */
-DataHelper.generateProjectImportOpen = () => {
-  return {
+DataHelper.generateProjectImportOpen = () => ({
     requests: [{
       key: '11013905-9b5a-49d9-adc8-f76ec3ead2f1',
-      kind: 'ARC#RequestData',
+      kind: 'ARC#HttpRequest',
       updated: 1545502958053,
       created: 1545363890469,
       headers: 'Content-Type: application/json\nContent-Length: 2',
@@ -148,5 +141,4 @@ DataHelper.generateProjectImportOpen = () => {
     createdAt: '2019-02-02T21:58:25.467Z',
     version: '13.0.0',
     kind: 'ARC#ProjectExport'
-  };
-};
+  });

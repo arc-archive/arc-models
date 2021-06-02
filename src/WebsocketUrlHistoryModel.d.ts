@@ -1,10 +1,5 @@
-import { UrlHistory } from '@advanced-rest-client/arc-types';
+import { UrlHistory, Model } from '@advanced-rest-client/arc-types';
 import {ArcBaseModel} from './ArcBaseModel.js';
-import {
-  ARCEntityChangeRecord,
-  ARCModelListOptions,
-  ARCModelListResult,
-} from './types';
 
 export declare function sortFunction(a: UrlHistory.ARCWebsocketUrlHistory, b: UrlHistory.ARCWebsocketUrlHistory): number;
 
@@ -24,14 +19,14 @@ export declare class WebsocketUrlHistoryModel extends ArcBaseModel {
    * @param opts Query options.
    * @returns A promise resolved to a list of projects.
    */
-  list(opts?: ARCModelListOptions): Promise<ARCModelListResult<UrlHistory.ARCWebsocketUrlHistory>>;
+  list(opts?: Model.ARCModelListOptions): Promise<Model.ARCModelListResult<UrlHistory.ARCWebsocketUrlHistory>>;
 
   /**
    * Adds an URL to the history and checks for already existing entires.
    * @param url The URL to insert
    * @returns A promise resolved to the URL change record
    */
-  addUrl(url: string): Promise<ARCEntityChangeRecord<UrlHistory.ARCWebsocketUrlHistory>>;
+  addUrl(url: string): Promise<Model.ARCEntityChangeRecord<UrlHistory.ARCWebsocketUrlHistory>>;
 
   /**
    * Updates / saves the object in the datastore.
@@ -40,7 +35,7 @@ export declare class WebsocketUrlHistoryModel extends ArcBaseModel {
    * @param obj An entity to store
    * @returns A promise resolved to the URL change record
    */
-  update(obj: UrlHistory.ARCWebsocketUrlHistory): Promise<ARCEntityChangeRecord<UrlHistory.ARCWebsocketUrlHistory>>;
+  update(obj: UrlHistory.ARCWebsocketUrlHistory): Promise<Model.ARCEntityChangeRecord<UrlHistory.ARCWebsocketUrlHistory>>;
 
   /**
    * Queries for websocket history objects.

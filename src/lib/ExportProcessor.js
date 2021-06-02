@@ -101,7 +101,7 @@ export class ExportProcessor {
         // @ts-ignore
         delete request.legacyProject;
       }
-      request.kind = 'ARC#RequestData';
+      request.kind = 'ARC#HttpRequest';
       request.key = item._id;
       delete request._rev;
       delete request._id;
@@ -132,7 +132,7 @@ export class ExportProcessor {
   prepareHistoryDataList(history) {
     const result = history.map((item) => {
       const request = /** @type ExportArcHistoryRequest */ (item);
-      request.kind = 'ARC#HistoryData';
+      request.kind = 'ARC#HttpRequest';
       request.key = item._id;
       delete request._rev;
       delete request._id;

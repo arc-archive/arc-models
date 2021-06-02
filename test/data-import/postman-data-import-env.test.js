@@ -15,9 +15,7 @@ describe('postman-data-import-env', () => {
       originalData = JSON.parse(response);
     });
 
-    after(() => {
-      return generator.destroyVariablesData();
-    });
+    after(() => generator.destroyVariablesData());
 
     beforeEach(async () => {
       data = generator.clone(originalData);

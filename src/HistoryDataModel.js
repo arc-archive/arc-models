@@ -14,11 +14,10 @@ License for the specific language governing permissions and limitations under
 the License.
 */
 import { v4 } from '@advanced-rest-client/uuid-generator';
-import { TransportEventTypes } from '@advanced-rest-client/arc-events';
+import { TransportEventTypes, ArcModelEvents } from '@advanced-rest-client/arc-events';
 import { BodyProcessor } from '@advanced-rest-client/body-editor';
 import { ArcBaseModel } from './ArcBaseModel.js';
 import { normalizeRequest } from './Utils.js';
-import { ArcModelEvents } from './events/ArcModelEvents.js';
 import { computePayloadSize, calculateBytes } from './lib/DataSize.js';
 
 /** @typedef {import('@advanced-rest-client/arc-events').ApiResponseEvent} ApiResponseEvent */
@@ -195,7 +194,9 @@ export class HistoryDataModel extends ArcBaseModel {
         payload: requestCopy.payload,
         url: request.url,
         method: request.method,
+        // @ts-ignore
         multipart: requestCopy.multipart,
+        // @ts-ignore
         blob: requestCopy.blob,
       },
       response: {

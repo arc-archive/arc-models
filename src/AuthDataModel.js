@@ -11,14 +11,13 @@ WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
 License for the specific language governing permissions and limitations under
 the License.
 */
+import { ArcModelEventTypes, ArcModelEvents } from '@advanced-rest-client/arc-events';
 import { ArcBaseModel } from './ArcBaseModel.js';
-import { ArcModelEventTypes } from './events/ArcModelEventTypes.js';
-import { ArcModelEvents } from './events/ArcModelEvents.js';
 
 /** @typedef {import('@advanced-rest-client/arc-types').AuthData.ARCAuthData} ARCAuthData */
-/** @typedef {import('./events/AuthDataEvents').ARCAuthDataUpdateEvent} ARCAuthDataUpdateEvent */
-/** @typedef {import('./events/AuthDataEvents').ARCAuthDataQueryEvent} ARCAuthDataQueryEvent */
-/** @typedef {import('./types').ARCEntityChangeRecord} ARCEntityChangeRecord */
+/** @typedef {import('@advanced-rest-client/arc-events').ARCAuthDataUpdateEvent} ARCAuthDataUpdateEvent */
+/** @typedef {import('@advanced-rest-client/arc-events').ARCAuthDataQueryEvent} ARCAuthDataQueryEvent */
+/** @typedef {import('@advanced-rest-client/arc-types').Model.ARCEntityChangeRecord} ARCEntityChangeRecord */
 
 /**
  * Removes query parameters and the fragment part from the URL

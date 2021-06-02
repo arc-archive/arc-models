@@ -24,9 +24,7 @@ describe('PouchDB import to datastore', () => {
       assert.isUndefined(errors, 'No errors while importing');
     });
 
-    afterEach(() => {
-      return generator.destroyAll();
-    });
+    afterEach(() => generator.destroyAll());
 
     it('stores saved request data', async () => {
       const result = await generator.getDatastoreRequestData();
@@ -87,9 +85,7 @@ describe('PouchDB import to datastore', () => {
   });
 
   describe('overriding data', () => {
-    after(() => {
-      return generator.destroyAll();
-    });
+    after(() => generator.destroyAll());
 
     before(async () => {
       data = generator.clone(originalData);

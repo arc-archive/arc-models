@@ -1,7 +1,8 @@
 import { fixture, assert } from '@open-wc/testing';
 import { DataGenerator } from '@advanced-rest-client/arc-data-generator';
 import sinon from 'sinon';
-import { UrlIndexer, ArcModelEventTypes, ArcModelEvents } from '../../index.js';
+import { ArcModelEventTypes, ArcModelEvents } from '@advanced-rest-client/arc-events';
+import { UrlIndexer } from '../../index.js';
 import '../../request-model.js';
 
 /* eslint-disable prefer-destructuring */

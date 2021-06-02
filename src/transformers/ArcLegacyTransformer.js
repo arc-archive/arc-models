@@ -135,8 +135,8 @@ export class ArcLegacyTransformer extends BaseTransformer {
     if (Number.isNaN(created)) {
       created = Date.now();
     }
-    const result = {
-      kind: 'ARC#RequestData',
+    const result = /** @type ExportArcSavedRequest */ ({
+      kind: 'ARC#HttpRequest',
       key: id,
       created,
       updated: Date.now(),
@@ -146,7 +146,7 @@ export class ArcLegacyTransformer extends BaseTransformer {
       payload: item.payload || '',
       type: 'saved',
       url: item.url,
-    };
+    });
     if (projectId) {
       result.projects = [projectId];
       this.addRequestReference(project, id);

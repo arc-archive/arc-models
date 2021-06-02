@@ -11,9 +11,8 @@ WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
 License for the specific language governing permissions and limitations under
 the License.
 */
+import { ArcModelEventTypes, ArcModelEvents } from '@advanced-rest-client/arc-events';
 import { ArcBaseModel } from './ArcBaseModel.js';
-import { ArcModelEventTypes } from './events/ArcModelEventTypes.js';
-import { ArcModelEvents } from './events/ArcModelEvents.js';
 
 /* eslint-disable require-atomic-updates */
 /* eslint-disable no-plusplus */
@@ -21,14 +20,14 @@ import { ArcModelEvents } from './events/ArcModelEvents.js';
 /* eslint-disable no-param-reassign */
 
 /** @typedef {import('@advanced-rest-client/arc-types').HostRule.ARCHostRule} ARCHostRule */
-/** @typedef {import('./types').ARCEntityChangeRecord} ARCEntityChangeRecord */
-/** @typedef {import('./types').DeletedEntity} DeletedEntity */
-/** @typedef {import('./types').ARCModelListResult} ARCModelListResult */
-/** @typedef {import('./types').ARCModelListOptions} ARCModelListOptions */
-/** @typedef {import('./events/HostRuleEvents').ARCHostRuleUpdateEvent} ARCHostRuleUpdateEvent */
-/** @typedef {import('./events/HostRuleEvents').ARCHostRuleUpdateBulkEvent} ARCHostRuleUpdateBulkEvent */
-/** @typedef {import('./events/HostRuleEvents').ARCHostRuleDeleteEvent} ARCHostRuleDeleteEvent */
-/** @typedef {import('./events/HostRuleEvents').ARCHostRulesListEvent} ARCHostRulesListEvent */
+/** @typedef {import('@advanced-rest-client/arc-types').Model.ARCEntityChangeRecord} ARCEntityChangeRecord */
+/** @typedef {import('@advanced-rest-client/arc-types').Model.ARCModelListOptions} ARCModelListOptions */
+/** @typedef {import('@advanced-rest-client/arc-types').Model.ARCModelListResult} ARCModelListResult */
+/** @typedef {import('@advanced-rest-client/arc-types').Model.DeletedEntity} DeletedEntity */
+/** @typedef {import('@advanced-rest-client/arc-events').ARCHostRuleUpdateEvent} ARCHostRuleUpdateEvent */
+/** @typedef {import('@advanced-rest-client/arc-events').ARCHostRuleUpdateBulkEvent} ARCHostRuleUpdateBulkEvent */
+/** @typedef {import('@advanced-rest-client/arc-events').ARCHostRuleDeleteEvent} ARCHostRuleDeleteEvent */
+/** @typedef {import('@advanced-rest-client/arc-events').ARCHostRulesListEvent} ARCHostRulesListEvent */
 
 export const updateHandler = Symbol('updateHandler');
 export const updateBulkHandler = Symbol('updateBulkHandler');
@@ -122,9 +121,7 @@ export class HostRulesModel extends ArcBaseModel {
    * @return {Promise<ARCEntityChangeRecord[]>} Resolved promise to the result of Pouch DB operation
    */
   async updateBulk(items) {
-    const rules = items.map((item) => {
-      return { ...item, updated: Date.now() };
-    });
+    const rules = items.map((item) => ({ ...item, updated: Date.now() }));
     const response = await this.db.bulkDocs(rules);
     const result = [];
     for (let i = 0, len = response.length; i < len; i++) {

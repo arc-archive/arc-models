@@ -1,11 +1,5 @@
-import { ClientCertificate } from '@advanced-rest-client/arc-types';
+import { ClientCertificate, Model } from '@advanced-rest-client/arc-types';
 import { ArcBaseModel } from './ArcBaseModel';
-import {
-  ARCModelListOptions,
-  ARCModelListResult,
-  ARCEntityChangeRecord,
-  DeletedEntity,
-} from './types';
 
 /**
  * Events based access to client-certificates data store.
@@ -57,7 +51,7 @@ export declare class ClientCertificateModel extends ArcBaseModel {
    * @param opts Query options.
    * @returns A promise resolved to a list of projects.
    */
-  list(opts?: ARCModelListOptions): Promise<ARCModelListResult<ClientCertificate.ARCCertificateIndex>>;
+  list(opts?: Model.ARCModelListOptions): Promise<Model.ARCModelListResult<ClientCertificate.ARCCertificateIndex>>;
 
   /**
    * Reads client certificate full structure.
@@ -79,7 +73,7 @@ export declare class ClientCertificateModel extends ArcBaseModel {
    * @param id Certificate's datastore id.
    * @returns Promise resolved when both entries are deleted.
    */
-  delete(id: string): Promise<DeletedEntity>;
+  delete(id: string): Promise<Model.DeletedEntity>;
 
   /**
    * Inserts new client certificate object.
@@ -90,7 +84,7 @@ export declare class ClientCertificateModel extends ArcBaseModel {
    * id. Because this API operates on a single ID without reviews this won't
    * return the final object.
    */
-  insert(data: ClientCertificate.ClientCertificate): Promise<ARCEntityChangeRecord<ClientCertificate.ARCClientCertificate>>;
+  insert(data: ClientCertificate.ClientCertificate): Promise<Model.ARCEntityChangeRecord<ClientCertificate.ARCClientCertificate>>;
 
   /**
    * Prepares certificate object to be stored in the data store.
