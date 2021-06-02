@@ -1,10 +1,9 @@
 import { assert, fixture, html, oneEvent } from '@open-wc/testing';
 import { DataGenerator } from '@advanced-rest-client/arc-data-generator';
-import * as sinon from 'sinon';
+import sinon from 'sinon';
+import { ArcModelEventTypes, ArcModelEvents } from '@advanced-rest-client/arc-events';
 import '../../variables-model.js';
-import { ArcModelEventTypes } from '../../src/events/ArcModelEventTypes.js';
 import { currentValue } from '../../src/VariablesModel.js';
-import { ArcModelEvents } from '../../src/events/ArcModelEvents.js';
 
 /* global PouchDB */
 
@@ -299,11 +298,9 @@ describe('VariablesModel', () => {
     describe('listEnvironments()', () => {
       before(async () => {
         const model = await basicFixture();
-        const items = Array(30).fill(0).map(() => {
-          return {
+        const items = Array(30).fill(0).map(() => ({
             name: 'a name',
-          }
-        });
+          }));
         await model.environmentDb.bulkDocs(items);
       });
 
@@ -355,11 +352,9 @@ describe('VariablesModel', () => {
     describe('listAllEnvironments()', () => {
       before(async () => {
         const model = await basicFixture();
-        const items = Array(32).fill(0).map(() => {
-          return {
+        const items = Array(32).fill(0).map(() => ({
             name: 'a name',
-          }
-        });
+          }));
         await model.environmentDb.bulkDocs(items);
       });
 

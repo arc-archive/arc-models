@@ -1,10 +1,10 @@
+/* eslint-disable no-unused-vars */
 import { fixture, assert } from '@open-wc/testing';
 import { DataGenerator } from '@advanced-rest-client/arc-data-generator';
-import * as sinon from 'sinon';
+import { ArcModelEventTypes, ArcModelEvents } from '@advanced-rest-client/arc-events';
+import sinon from 'sinon';
 import 'chance/dist/chance.min.js';
 import '../../client-certificate-model.js';
-import { ArcModelEventTypes } from '../../src/events/ArcModelEventTypes.js';
-import { ArcModelEvents } from '../../src/events/ArcModelEvents.js';
 
 /** @typedef {import('../../src/ClientCertificateModel').ClientCertificateModel} ClientCertificateModel */
 /** @typedef {import('@advanced-rest-client/arc-types').ClientCertificate.Certificate} Certificate */

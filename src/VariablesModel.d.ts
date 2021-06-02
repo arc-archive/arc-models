@@ -1,13 +1,6 @@
-import { Variable } from '@advanced-rest-client/arc-types';
-import { SystemVariables } from '@advanced-rest-client/arc-types/src/models/Variable';
+import { Variable, Model } from '@advanced-rest-client/arc-types';
+import { ARCEnvironmentCurrentEvent, ARCEnvironmentSelectEvent, EnvironmentStateDetail } from '@advanced-rest-client/arc-events';
 import {ArcBaseModel} from './ArcBaseModel';
-import { ARCEnvironmentCurrentEvent, ARCEnvironmentSelectEvent, EnvironmentStateDetail } from './events/VariableEvents';
-import {
-  DeletedEntity,
-  ARCEntityChangeRecord,
-  ARCModelListOptions,
-  ARCModelListResult,
-} from './types';
 
 export declare const envReadHandler: unique symbol;
 export declare const envUpdateHandler: unique symbol;
@@ -48,7 +41,7 @@ export declare class VariablesModel extends ArcBaseModel {
   /**
    * The list of system variables.
    */
-  systemVariables?: SystemVariables;
+  systemVariables?: Variable.SystemVariables;
 
   constructor();
 
@@ -69,7 +62,7 @@ export declare class VariablesModel extends ArcBaseModel {
    *
    * @param data Entity to store
    */
-  updateEnvironment(data: Variable.ARCEnvironment): Promise<ARCEntityChangeRecord<Variable.ARCEnvironment>>;
+  updateEnvironment(data: Variable.ARCEnvironment): Promise<Model.ARCEntityChangeRecord<Variable.ARCEnvironment>>;
 
   /**
    * Deletes an environment from the data store.
@@ -86,7 +79,7 @@ export declare class VariablesModel extends ArcBaseModel {
    * @param id The id of the entity to delete
    * @returns Null when the document cannot be found
    */
-  deleteEnvironment(id: string): Promise<DeletedEntity|null>;
+  deleteEnvironment(id: string): Promise<Model.DeletedEntity|null>;
 
   /**
    * Lists all user defined environments.
@@ -94,14 +87,14 @@ export declare class VariablesModel extends ArcBaseModel {
    * @param opts Query options.
    * @returns A promise resolved to a list of projects.
    */
-  listEnvironments(opts?: ARCModelListOptions): Promise<ARCModelListResult<Variable.ARCEnvironment>>;
+  listEnvironments(opts?: Model.ARCModelListOptions): Promise<Model.ARCModelListResult<Variable.ARCEnvironment>>;
 
   /**
    * Lists all user defined environments.
    *
    * @returns Resolved promise with the list of environments.
    */
-  listAllEnvironments(): Promise<ARCModelListResult<Variable.ARCEnvironment>>;
+  listAllEnvironments(): Promise<Model.ARCModelListResult<Variable.ARCEnvironment>>;
 
   /**
    * Reads all variables for the `environment`
@@ -110,7 +103,7 @@ export declare class VariablesModel extends ArcBaseModel {
    * for.
    * @returns Resolved promise with the list of variables for the environment.
    */
-  listAllVariables(environment: string): Promise<ARCModelListResult<Variable.ARCVariable>>;
+  listAllVariables(environment: string): Promise<Model.ARCModelListResult<Variable.ARCVariable>>;
 
   /**
    * Lists all user defined environments.
@@ -119,7 +112,7 @@ export declare class VariablesModel extends ArcBaseModel {
    * @param opts Query options.
    * @returns A promise resolved to a list of projects.
    */
-  listVariables(name: string, opts?: ARCModelListOptions): Promise<ARCModelListResult<Variable.ARCVariable>>;
+  listVariables(name: string, opts?: Model.ARCModelListOptions): Promise<Model.ARCModelListResult<Variable.ARCVariable>>;
 
   /**
    * Updates a variable entity.
@@ -127,7 +120,7 @@ export declare class VariablesModel extends ArcBaseModel {
    * @param data An entity to update
    * @returns Promise resolved to the variable change record
    */
-  updateVariable(data: Variable.ARCVariable): Promise<ARCEntityChangeRecord<Variable.ARCVariable>>;
+  updateVariable(data: Variable.ARCVariable): Promise<Model.ARCEntityChangeRecord<Variable.ARCVariable>>;
 
   /**
    * Deletes a variable from the data store.
@@ -143,7 +136,7 @@ export declare class VariablesModel extends ArcBaseModel {
    *
    * @param id The PouchDB `_id` property of the object to delete.
    */
-  deleteVariable(id: string): Promise<DeletedEntity>;
+  deleteVariable(id: string): Promise<Model.DeletedEntity>;
 
   /**
    * Reads the current environment and it's variables.
@@ -159,7 +152,7 @@ export declare class VariablesModel extends ArcBaseModel {
    * @param value The value to set on the variable.
    * @returns Promise resolved to the promise id, whether 
    */
-  setVariable(name: string, value: string): Promise<ARCEntityChangeRecord<Variable.ARCVariable>>;
+  setVariable(name: string, value: string): Promise<Model.ARCEntityChangeRecord<Variable.ARCVariable>>;
 
   /**
    * A handler for the `currentEnvironment` property change.

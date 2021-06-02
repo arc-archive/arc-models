@@ -99,9 +99,7 @@ export class PostmanV1Transformer extends PostmanTransformer {
       });
     }
     const {requests} = raw;
-    let result = ordered.map((id) => {
-      return requests.find((request) => request.id === id);
-    });
+    let result = ordered.map((id) => requests.find((request) => request.id === id));
     result = result.filter((item) => !!item);
     return result;
   }
@@ -149,19 +147,19 @@ export class PostmanV1Transformer extends PostmanTransformer {
     let headers = item.headers || '';
     headers = this.ensureVariablesSyntax(headers);
     const body = this.computeBodyOld(item);
-    const copy = {
+    const copy = /** @type ExportArcSavedRequest */({
       ...item,
       type: 'saved',
-      kind: 'ARC#RequestData',
+      kind: 'ARC#HttpRequest',
       key: undefined,
-    }
+    });
     const id = this.generateRequestId(copy, raw.id);
     let created = Number(item.time);
     if (Number.isNaN(created)) {
       created = Date.now();
     }
     const result = /** @type ExportArcSavedRequest */({
-      kind: 'ARC#RequestData',
+      kind: 'ARC#HttpRequest',
       key: id,
       created,
       updated: Date.now(),

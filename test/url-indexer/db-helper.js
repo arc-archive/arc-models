@@ -3,8 +3,7 @@ const INDEX_STORE_VERSION = 1;
 
 export const DbHelper = {};
 
-DbHelper.destroy = async () => {
-  return new Promise((resolve, reject) => {
+DbHelper.destroy = async () => new Promise((resolve, reject) => {
     const request = window.indexedDB.deleteDatabase(INDEX_STORE_NAME);
     request.onsuccess = () => {
       resolve();
@@ -13,14 +12,12 @@ DbHelper.destroy = async () => {
       reject();
     };
   });
-};
 
 /**
  * Removes all indexes from the index data store.
  * @return {Promise}
  */
-DbHelper.clearData = () => {
-  return new Promise((resolve, reject) => {
+DbHelper.clearData = () => new Promise((resolve, reject) => {
     const request = window.indexedDB.open(INDEX_STORE_NAME, INDEX_STORE_VERSION);
     request.onsuccess = (e) => {
       const evTarget = /** @type IDBOpenDBRequest */ (e.target);
@@ -41,13 +38,11 @@ DbHelper.clearData = () => {
       reject(new Error('Unable to open the store'));
     };
   });
-};
 /**
  * Reads all URL indexes datastore
  * @return {Promise}
  */
-DbHelper.readAllIndexes = () => {
-  return new Promise((resolve, reject) => {
+DbHelper.readAllIndexes = () => new Promise((resolve, reject) => {
     const request = window.indexedDB.open(INDEX_STORE_NAME, INDEX_STORE_VERSION);
     request.onsuccess = (e) => {
       const results = [];
@@ -63,8 +58,8 @@ DbHelper.readAllIndexes = () => {
         resolve(results);
       };
       const store = tx.objectStore('urls');
-      const crequest = store.openCursor();
-      crequest.onsuccess = (ce) => {
+      const cRequest = store.openCursor();
+      cRequest.onsuccess = (ce) => {
         // @ts-ignore
         const cursor = ce.target.result;
         if (cursor) {
@@ -77,4 +72,3 @@ DbHelper.readAllIndexes = () => {
       reject(new Error('Unable to open the store'));
     };
   });
-};

@@ -1,9 +1,9 @@
 import { fixture, assert } from '@open-wc/testing';
 import { DataGenerator } from '@advanced-rest-client/arc-data-generator';
-import * as sinon from 'sinon';
+import sinon from 'sinon';
+import { ArcModelEventTypes } from '@advanced-rest-client/arc-events';
 import 'chance/dist/chance.min.js';
 import '../../client-certificate-model.js';
-import { ArcModelEventTypes } from '../../src/events/ArcModelEventTypes.js';
 
 /** @typedef {import('../../src/ClientCertificateModel').ClientCertificateModel} ClientCertificateModel */
 /** @typedef {import('@advanced-rest-client/arc-types').ClientCertificate.ARCClientCertificate} ARCClientCertificate */

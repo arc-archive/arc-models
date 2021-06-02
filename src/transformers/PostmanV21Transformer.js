@@ -144,7 +144,7 @@ export class PostmanV21Transformer extends PostmanTransformer {
     const header = this.ensureVarsRecursively(request.header);
     const time = Date.now();
     const result = /** @type ExportArcSavedRequest */ ({
-      kind: 'ARC#RequestData',
+      kind: 'ARC#HttpRequest',
       name,
       url,
       method,

@@ -14,12 +14,11 @@ the License.
 */
 import { BodyProcessor } from '@advanced-rest-client/body-editor';
 import { v4 } from '@advanced-rest-client/uuid-generator';
+import { ArcModelEventTypes, ArcModelEvents } from '@advanced-rest-client/arc-events';
 import { RequestBaseModel } from './RequestBaseModel.js';
 import '../url-indexer.js';
 import { UrlIndexer } from './UrlIndexer.js';
 import { normalizeRequest, cancelEvent, revertDelete, restoreTransformedPayload } from './Utils.js';
-import { ArcModelEvents } from './events/ArcModelEvents.js';
-import { ArcModelEventTypes } from './events/ArcModelEventTypes.js';
 
 /* eslint-disable class-methods-use-this */
 /* eslint-disable no-continue */

@@ -1,11 +1,5 @@
-import { HostRule } from '@advanced-rest-client/arc-types';
+import { HostRule, Model } from '@advanced-rest-client/arc-types';
 import {ArcBaseModel} from './ArcBaseModel.js';
-import {
-  ARCEntityChangeRecord,
-  DeletedEntity,
-  ARCModelListOptions,
-  ARCModelListResult,
-} from './types';
 
 /**
  * Model for host rules.
@@ -44,7 +38,7 @@ export declare class HostRulesModel extends ArcBaseModel {
    * @param rule A rule object to save / update
    * @returns Resolved promise to updated object with updated `_rev`
    */
-  update(rule: HostRule.ARCHostRule): Promise<ARCEntityChangeRecord<HostRule.ARCHostRule>>;
+  update(rule: HostRule.ARCHostRule): Promise<Model.ARCEntityChangeRecord<HostRule.ARCHostRule>>;
 
   /**
    * Updates / saves the host rule object in the datastore.
@@ -53,7 +47,7 @@ export declare class HostRulesModel extends ArcBaseModel {
    * @param rules List of rules to save / update
    * @returns Resolved promise to the result of Pouch DB operation
    */
-  updateBulk(rules: HostRule.ARCHostRule[]): Promise<ARCEntityChangeRecord<HostRule.ARCHostRule>[]>;
+  updateBulk(rules: HostRule.ARCHostRule[]): Promise<Model.ARCEntityChangeRecord<HostRule.ARCHostRule>[]>;
 
   /**
    * Removed an object from the datastore.
@@ -63,12 +57,12 @@ export declare class HostRulesModel extends ArcBaseModel {
    * @param rev Specific revision to read. Defaults to latest revision.
    * @returns Promise resolved to a new `_rev` property of deleted object.
    */
-  delete(id: string, rev?: string): Promise<DeletedEntity>;
+  delete(id: string, rev?: string): Promise<Model.DeletedEntity>;
 
   /**
    * Lists all existing host rules
    *
    * @returns Promise resolved to list of the host rules
    */
-  list(opts?: ARCModelListOptions): Promise<ARCModelListResult<HostRule.ARCHostRule>>;
+  list(opts?: Model.ARCModelListOptions): Promise<Model.ARCModelListResult<HostRule.ARCHostRule>>;
 }

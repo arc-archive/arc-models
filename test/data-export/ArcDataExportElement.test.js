@@ -109,7 +109,7 @@ describe('ArcDataExportElement', () => {
         }, options);
         const saved = result.requests;
         const [request] = saved;
-        assert.equal(request.kind, 'ARC#RequestData', 'has the kind');
+        assert.equal(request.kind, 'ARC#HttpRequest', 'has the kind');
         assert.typeOf(request.key, 'string', 'has the key');
         assert.typeOf(request.name, 'string', 'has the name');
         assert.typeOf(request.url, 'string', 'has the url');

@@ -1,8 +1,7 @@
 import { fixture, assert } from '@open-wc/testing';
 import { DataGenerator } from '@advanced-rest-client/arc-data-generator';
+import { ArcModelEventTypes, ArcModelEvents } from '@advanced-rest-client/arc-events';
 import '../../host-rules-model.js';
-import { ArcModelEventTypes } from '../../src/events/ArcModelEventTypes.js';
-import { ArcModelEvents } from '../../src/events/ArcModelEvents.js';
 
 /** @typedef {import('../../src/HostRulesModel').HostRulesModel} HostRulesModel */
 /** @typedef {import('@advanced-rest-client/arc-types').HostRule.ARCHostRule} ARCHostRule */
@@ -21,9 +20,7 @@ describe('<host-rules-model> - Events based', () => {
       await basicFixture();
     });
 
-    afterEach(() => {
-      return generator.destroyHostRulesData();
-    });
+    afterEach(() => generator.destroyHostRulesData());
 
     it('ignores cancelled events', async () => {
       const hr = /** @type ARCHostRule */ (generator.generateHostRuleObject());
@@ -108,9 +105,7 @@ describe('<host-rules-model> - Events based', () => {
       await basicFixture();
     });
 
-    afterEach(() => {
-      return generator.destroyHostRulesData();
-    });
+    afterEach(() => generator.destroyHostRulesData());
 
     it('ignores cancelled events', async () => {
       const hrs = /** @type ARCHostRule[] */ (generator.generateHostRulesData());
@@ -189,9 +184,7 @@ describe('<host-rules-model> - Events based', () => {
       dataObj = record.item;
     });
 
-    afterEach(() => {
-      return generator.destroyHostRulesData();
-    });
+    afterEach(() => generator.destroyHostRulesData());
 
     it('ignores cancelled events', async () => {
       document.body.addEventListener(ArcModelEventTypes.HostRules.delete, function f(e) {
@@ -256,9 +249,7 @@ describe('<host-rules-model> - Events based', () => {
       await basicFixture();
     });
 
-    afterEach(() => {
-      return generator.destroyHostRulesData();
-    });
+    afterEach(() => generator.destroyHostRulesData());
 
     it('ignores cancelled events', async () => {
       document.body.addEventListener(ArcModelEventTypes.HostRules.list, function f(e) {

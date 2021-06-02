@@ -1,18 +1,17 @@
 import { fixture, assert } from '@open-wc/testing';
 import { DataGenerator } from '@advanced-rest-client/arc-data-generator';
-import * as sinon from 'sinon';
+import sinon from 'sinon';
 import { v4 } from '@advanced-rest-client/uuid-generator';
+import { ArcModelEventTypes, ArcModelEvents } from '@advanced-rest-client/arc-events';
 import '../../project-model.js';
 import '../../request-model.js';
-import { ArcModelEventTypes } from '../../src/events/ArcModelEventTypes.js';
-import { ArcModelEvents } from '../../src/events/ArcModelEvents.js';
 
 /** @typedef {import('../../index').ProjectModel} ProjectModel */
 /** @typedef {import('../../index').RequestModel} RequestModel */
 /** @typedef {import('@advanced-rest-client/arc-types').Project.ARCProject} ARCProject */
 /** @typedef {import('@advanced-rest-client/arc-types').ArcRequest.ARCSavedRequest} ARCSavedRequest */
 /** @typedef {import('@advanced-rest-client/arc-types').ArcRequest.ARCHistoryRequest} ARCHistoryRequest */
-/** @typedef {import('../../src/types').ARCEntityChangeRecord} ARCEntityChangeRecord */
+/** @typedef {import('@advanced-rest-client/arc-types').Model.ARCEntityChangeRecord} ARCEntityChangeRecord */
 
 describe('ProjectModel', () => {
   /**

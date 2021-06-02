@@ -11,17 +11,16 @@ WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
 License for the specific language governing permissions and limitations under
 the License.
 */
+import { ArcModelEventTypes, ArcModelEvents } from '@advanced-rest-client/arc-events';
 import { ArcBaseModel } from './ArcBaseModel.js';
-import { ArcModelEventTypes } from './events/ArcModelEventTypes.js';
-import { ArcModelEvents } from './events/ArcModelEvents.js';
 
 /** @typedef {import('@advanced-rest-client/arc-types').UrlHistory.ARCWebsocketUrlHistory} ARCWebsocketUrlHistory */
-/** @typedef {import('./events/WSUrlHistoryEvents').ARCWSUrlInsertEvent} ARCWSUrlInsertEvent */
-/** @typedef {import('./events/WSUrlHistoryEvents').ARCWSUrlListEvent} ARCWSUrlListEvent */
-/** @typedef {import('./events/WSUrlHistoryEvents').ARCWSUrlQueryEvent} ARCWSUrlQueryEvent */
-/** @typedef {import('./types').ARCModelListResult} ARCModelListResult */
-/** @typedef {import('./types').ARCModelListOptions} ARCModelListOptions */
-/** @typedef {import('./types').ARCEntityChangeRecord} ARCEntityChangeRecord */
+/** @typedef {import('@advanced-rest-client/arc-events').ARCWSUrlInsertEvent} ARCWSUrlInsertEvent */
+/** @typedef {import('@advanced-rest-client/arc-events').ARCWSUrlListEvent} ARCWSUrlListEvent */
+/** @typedef {import('@advanced-rest-client/arc-events').ARCWSUrlQueryEvent} ARCWSUrlQueryEvent */
+/** @typedef {import('@advanced-rest-client/arc-types').Model.ARCEntityChangeRecord} ARCEntityChangeRecord */
+/** @typedef {import('@advanced-rest-client/arc-types').Model.ARCModelListOptions} ARCModelListOptions */
+/** @typedef {import('@advanced-rest-client/arc-types').Model.ARCModelListResult} ARCModelListResult */
 
 /* eslint-disable no-plusplus */
 /* eslint-disable no-continue */

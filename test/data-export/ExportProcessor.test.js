@@ -79,7 +79,7 @@ describe('ExportProcessor', () => {
 
     it('kind property is set', () => {
       const result = instance.prepareRequestsList(data);
-      assert.equal(result[0].kind, 'ARC#RequestData');
+      assert.equal(result[0].kind, 'ARC#HttpRequest');
     });
   });
 

@@ -33,7 +33,7 @@ export class ImportRequestsTable extends ImportBaseTable {
   itemBodyTemplate(item) {
     return html`
     <div class="no-wrap">${item.name}</div>
-    <div secondary class="no-wrap">${item.url}</div>
+    <div data-secondary class="no-wrap">${item.url}</div>
     `;
   }
 

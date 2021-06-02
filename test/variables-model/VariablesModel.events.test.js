@@ -1,9 +1,8 @@
 import { assert, fixture, html } from '@open-wc/testing';
 import { DataGenerator } from '@advanced-rest-client/arc-data-generator';
-import * as sinon from 'sinon';
+import sinon from 'sinon';
+import { ArcModelEventTypes, ArcModelEvents } from '@advanced-rest-client/arc-events';
 import '../../variables-model.js';
-import { ArcModelEventTypes } from '../../src/events/ArcModelEventTypes.js';
-import { ArcModelEvents } from '../../src/events/ArcModelEvents.js';
 
 /** @typedef {import('../../src/VariablesModel').VariablesModel} VariablesModel */
 /** @typedef {import('@advanced-rest-client/arc-types').Variable.ARCVariable} ARCVariable */
@@ -252,11 +251,9 @@ describe('VariablesModel', () => {
     describe(`${ArcModelEventTypes.Environment.list} event`, () => {
       before(async () => {
         const model = await basicFixture();
-        const items = Array(30).fill(0).map(() => {
-          return {
+        const items = Array(30).fill(0).map(() => ({
             name: 'a name',
-          }
-        });
+          }));
         await model.environmentDb.bulkDocs(items);
       });
 
@@ -604,9 +601,7 @@ describe('VariablesModel', () => {
         element = await basicFixture();
       });
 
-      afterEach(() => {
-        return generator.destroyVariablesData();
-      });
+      afterEach(() => generator.destroyVariablesData());
 
       it('clears the data', async () => {
         await ArcModelEvents.destroy(document.body, ['variables']);

@@ -1,11 +1,5 @@
-import { RestApi } from '@advanced-rest-client/arc-types';
+import { RestApi, Model } from '@advanced-rest-client/arc-types';
 import { ArcBaseModel } from './ArcBaseModel';
-import {
-  ARCModelListOptions,
-  ARCModelListResult,
-  ARCEntityChangeRecord,
-  DeletedEntity,
-} from './types';
 
 export const readHandler: symbol;
 export const updateHandler: symbol;
@@ -55,7 +49,7 @@ export declare class RestApiModel extends ArcBaseModel {
    * @param doc PouchDB document.
    * @returns Promise resolved to a change record.
    */
-  updateIndex(doc: RestApi.ARCRestApiIndex): Promise<ARCEntityChangeRecord<RestApi.ARCRestApiIndex>>;
+  updateIndex(doc: RestApi.ARCRestApiIndex): Promise<Model.ARCEntityChangeRecord<RestApi.ARCRestApiIndex>>;
 
   /**
    * Updates many index objects in one request.
@@ -63,15 +57,15 @@ export declare class RestApiModel extends ArcBaseModel {
    * @param docs List of PouchDB documents to update.
    * @returns Promise resolved to a list of the change records.
    */
-  updateIndexBatch(docs: RestApi.ARCRestApiIndex[]): Promise<ARCEntityChangeRecord<RestApi.ARCRestApiIndex>[]>
+  updateIndexBatch(docs: RestApi.ARCRestApiIndex[]): Promise<Model.ARCEntityChangeRecord<RestApi.ARCRestApiIndex>[]>
 
   /**
    * Removes all AMF and index data from datastores for given index id.
    *
    * @param {string} id Index entry ID to delete.
-   * @return {Promise<DeletedEntity>} Promise resolved to a delete record
+   * @return {Promise<Model.DeletedEntity>} Promise resolved to a delete record
    */
-  delete(id: string): Promise<DeletedEntity>;
+  delete(id: string): Promise<Model.DeletedEntity>;
 
   /**
    * Lists index data.
@@ -79,7 +73,7 @@ export declare class RestApiModel extends ArcBaseModel {
    * @param opts Query options.
    * @returns A promise resolved to a list of REST APIs.
    */
-  list(opts?: ARCModelListOptions): Promise<ARCModelListResult<RestApi.ARCRestApiIndex>>;
+  list(opts?: Model.ARCModelListOptions): Promise<Model.ARCModelListResult<RestApi.ARCRestApiIndex>>;
 
   /**
    * Reads an entry from the raml data datastore.
@@ -96,7 +90,7 @@ export declare class RestApiModel extends ArcBaseModel {
    * @param entity The entity to update.
    * @returns Promise resolved to a change record.
    */
-  updateData(entity: RestApi.ARCRestApi): Promise<ARCEntityChangeRecord<RestApi.ARCRestApi>>;
+  updateData(entity: RestApi.ARCRestApi): Promise<Model.ARCEntityChangeRecord<RestApi.ARCRestApi>>;
 
   /**
    * Removes information about version from ARC data datastore and from index
@@ -105,7 +99,7 @@ export declare class RestApiModel extends ArcBaseModel {
    * @param id Index object ID
    * @param version Version to remove.
    */
-  removeVersion(id: string, version: string): Promise<DeletedEntity>
+  removeVersion(id: string, version: string): Promise<Model.DeletedEntity>
 
   /**
    * Removes versions of API data in a bulk operation.

@@ -2,7 +2,7 @@ import { fixture, assert, oneEvent } from '@open-wc/testing';
 import { DataGenerator } from '@advanced-rest-client/arc-data-generator';
 import sinon from 'sinon';
 import { BodyProcessor } from '@advanced-rest-client/body-editor';
-import { ArcModelEventTypes } from '../../src/events/ArcModelEventTypes.js';
+import { ArcModelEventTypes } from '@advanced-rest-client/arc-events';
 import '../../request-model.js';
 import { sortRequestProjectOrder, queryStore } from '../../src/RequestModel.js';
 import { UrlIndexer } from '../../index.js';

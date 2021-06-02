@@ -11,9 +11,8 @@ WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
 License for the specific language governing permissions and limitations under
 the License.
 */
+import { ArcModelEventTypes, ArcModelEvents } from '@advanced-rest-client/arc-events';
 import { ArcBaseModel, deletemodelHandler } from './ArcBaseModel.js';
-import { ArcModelEventTypes } from './events/ArcModelEventTypes.js';
-import { ArcModelEvents } from './events/ArcModelEvents.js';
 
 /* eslint-disable class-methods-use-this */
 /* eslint-disable no-param-reassign */
@@ -23,23 +22,23 @@ import { ArcModelEvents } from './events/ArcModelEvents.js';
 /** @typedef {import('@advanced-rest-client/arc-types').Variable.ARCEnvironment} ARCEnvironment */
 /** @typedef {import('@advanced-rest-client/arc-types').Variable.ARCVariable} ARCVariable */
 /** @typedef {import('@advanced-rest-client/arc-types').Variable.SystemVariables} SystemVariables */
-/** @typedef {import('./types').ARCEntityChangeRecord} ARCEntityChangeRecord */
-/** @typedef {import('./types').DeletedEntity} DeletedEntity */
-/** @typedef {import('./types').ARCModelListResult} ARCModelListResult */
-/** @typedef {import('./types').ARCModelListOptions} ARCModelListOptions */
-/** @typedef {import('./events/VariableEvents').ARCEnvironmentReadEvent} ARCEnvironmentReadEvent */
-/** @typedef {import('./events/VariableEvents').ARCEnvironmentUpdateEvent} ARCEnvironmentUpdateEvent */
-/** @typedef {import('./events/VariableEvents').ARCEnvironmentDeleteEvent} ARCEnvironmentDeleteEvent */
-/** @typedef {import('./events/VariableEvents').ARCEnvironmentListEvent} ARCEnvironmentListEvent */
-/** @typedef {import('./events/VariableEvents').ARCVariableUpdateEvent} ARCVariableUpdateEvent */
-/** @typedef {import('./events/VariableEvents').ARCVariableDeleteEvent} ARCVariableDeleteEvent */
-/** @typedef {import('./events/VariableEvents').ARCVariableListEvent} ARCVariableListEvent */
-/** @typedef {import('./events/VariableEvents').ARCVariablesListOptions} ARCVariablesListOptions */
-/** @typedef {import('./events/VariableEvents').EnvironmentStateDetail} EnvironmentStateDetail */
-/** @typedef {import('./events/VariableEvents').ARCEnvironmentSelectEvent} ARCEnvironmentSelectEvent */
-/** @typedef {import('./events/VariableEvents').ARCEnvironmentCurrentEvent} ARCEnvironmentCurrentEvent */
-/** @typedef {import('./events/VariableEvents').ARCVariableSetEvent} ARCVariableSetEvent */
-/** @typedef {import('./events/BaseEvents').ARCModelDeleteEvent} ARCModelDeleteEvent */
+/** @typedef {import('@advanced-rest-client/arc-types').Model.ARCEntityChangeRecord} ARCEntityChangeRecord */
+/** @typedef {import('@advanced-rest-client/arc-types').Model.ARCModelListOptions} ARCModelListOptions */
+/** @typedef {import('@advanced-rest-client/arc-types').Model.ARCModelListResult} ARCModelListResult */
+/** @typedef {import('@advanced-rest-client/arc-types').Model.DeletedEntity} DeletedEntity */
+/** @typedef {import('@advanced-rest-client/arc-events').ARCModelDeleteEvent} ARCModelDeleteEvent */
+/** @typedef {import('@advanced-rest-client/arc-events').ARCEnvironmentReadEvent} ARCEnvironmentReadEvent */
+/** @typedef {import('@advanced-rest-client/arc-events').ARCEnvironmentUpdateEvent} ARCEnvironmentUpdateEvent */
+/** @typedef {import('@advanced-rest-client/arc-events').ARCEnvironmentDeleteEvent} ARCEnvironmentDeleteEvent */
+/** @typedef {import('@advanced-rest-client/arc-events').ARCEnvironmentListEvent} ARCEnvironmentListEvent */
+/** @typedef {import('@advanced-rest-client/arc-events').ARCVariableUpdateEvent} ARCVariableUpdateEvent */
+/** @typedef {import('@advanced-rest-client/arc-events').ARCVariableDeleteEvent} ARCVariableDeleteEvent */
+/** @typedef {import('@advanced-rest-client/arc-events').ARCVariableListEvent} ARCVariableListEvent */
+/** @typedef {import('@advanced-rest-client/arc-events').ARCVariablesListOptions} ARCVariablesListOptions */
+/** @typedef {import('@advanced-rest-client/arc-events').EnvironmentStateDetail} EnvironmentStateDetail */
+/** @typedef {import('@advanced-rest-client/arc-events').ARCEnvironmentSelectEvent} ARCEnvironmentSelectEvent */
+/** @typedef {import('@advanced-rest-client/arc-events').ARCEnvironmentCurrentEvent} ARCEnvironmentCurrentEvent */
+/** @typedef {import('@advanced-rest-client/arc-events').ARCVariableSetEvent} ARCVariableSetEvent */
 
 export const envReadHandler = Symbol('envReadHandler');
 export const envUpdateHandler = Symbol('envUpdateHandler');

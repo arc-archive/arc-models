@@ -12,9 +12,8 @@ License for the specific language governing permissions and limitations under
 the License.
 */
 import { v4 } from '@advanced-rest-client/uuid-generator';
+import { ArcModelEventTypes, ArcModelEvents } from '@advanced-rest-client/arc-events';
 import { RequestBaseModel } from './RequestBaseModel.js';
-import { ArcModelEventTypes } from './events/ArcModelEventTypes.js';
-import { ArcModelEvents } from './events/ArcModelEvents.js';
 import { createChangeRecord } from './ArcBaseModel.js';
 
 /* eslint-disable class-methods-use-this */
@@ -24,18 +23,18 @@ import { createChangeRecord } from './ArcBaseModel.js';
 /** @typedef {import('@advanced-rest-client/arc-types').Project.ARCProject} ARCProject */
 /** @typedef {import('@advanced-rest-client/arc-types').ArcRequest.ARCSavedRequest} ARCSavedRequest */
 /** @typedef {import('@advanced-rest-client/arc-types').ArcRequest.ARCHistoryRequest} ARCHistoryRequest */
-/** @typedef {import('./events/ProjectEvents').ARCProjectReadEvent} ARCProjectReadEvent */
-/** @typedef {import('./events/ProjectEvents').ARCProjectReadBulkEvent} ARCProjectReadBulkEvent */
-/** @typedef {import('./events/ProjectEvents').ARCProjectUpdateEvent} ARCProjectUpdateEvent */
-/** @typedef {import('./events/ProjectEvents').ARCProjectUpdateBulkEvent} ARCProjectUpdateBulkEvent */
-/** @typedef {import('./events/ProjectEvents').ARCProjectDeleteEvent} ARCProjectDeleteEvent */
-/** @typedef {import('./events/ProjectEvents').ARCProjectListEvent} ARCProjectListEvent */
-/** @typedef {import('./events/ProjectEvents').ARCProjectListAllEvent} ARCProjectListAllEvent */
-/** @typedef {import('./events/ProjectEvents').ARCProjectMoveEvent} ARCProjectMoveEvent */
-/** @typedef {import('./types').ARCEntityChangeRecord} ARCEntityChangeRecord */
-/** @typedef {import('./types').ARCModelListResult} ARCModelListResult */
-/** @typedef {import('./types').ARCModelListOptions} ARCModelListOptions */
-/** @typedef {import('./types').DeletedEntity} DeletedEntity */
+/** @typedef {import('@advanced-rest-client/arc-events').ARCProjectReadEvent} ARCProjectReadEvent */
+/** @typedef {import('@advanced-rest-client/arc-events').ARCProjectReadBulkEvent} ARCProjectReadBulkEvent */
+/** @typedef {import('@advanced-rest-client/arc-events').ARCProjectUpdateEvent} ARCProjectUpdateEvent */
+/** @typedef {import('@advanced-rest-client/arc-events').ARCProjectUpdateBulkEvent} ARCProjectUpdateBulkEvent */
+/** @typedef {import('@advanced-rest-client/arc-events').ARCProjectDeleteEvent} ARCProjectDeleteEvent */
+/** @typedef {import('@advanced-rest-client/arc-events').ARCProjectListEvent} ARCProjectListEvent */
+/** @typedef {import('@advanced-rest-client/arc-events').ARCProjectListAllEvent} ARCProjectListAllEvent */
+/** @typedef {import('@advanced-rest-client/arc-events').ARCProjectMoveEvent} ARCProjectMoveEvent */
+/** @typedef {import('@advanced-rest-client/arc-types').Model.ARCEntityChangeRecord} ARCEntityChangeRecord */
+/** @typedef {import('@advanced-rest-client/arc-types').Model.ARCModelListOptions} ARCModelListOptions */
+/** @typedef {import('@advanced-rest-client/arc-types').Model.ARCModelListResult} ARCModelListResult */
+/** @typedef {import('@advanced-rest-client/arc-types').Model.DeletedEntity} DeletedEntity */
 
 export const readHandler = Symbol('readHandler');
 export const readBulkHandler = Symbol('readBulkHandler');

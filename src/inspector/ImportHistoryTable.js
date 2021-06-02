@@ -44,7 +44,7 @@ export class ImportHistoryTable extends ImportBaseTable {
   itemBodyTemplate(item) {
     return html`
     <div class="no-wrap">${item.url}</div>
-    <div secondary>
+    <div data-secondary>
       <date-time
         .date="${item.updated}"
         day="numeric"

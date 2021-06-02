@@ -1,6 +1,5 @@
 import {RequestBaseModel} from './RequestBaseModel';
-import { Project, ArcRequest } from '@advanced-rest-client/arc-types';
-import {DeletedEntity, ARCEntityChangeRecord, ARCModelListResult, ARCModelListOptions,} from './types';
+import { Project, ArcRequest, Model } from '@advanced-rest-client/arc-types';
 
 export declare const syncProjects: unique symbol;
 export declare const readBulkHandler: unique symbol;
@@ -81,7 +80,7 @@ export declare class RequestModel extends RequestBaseModel {
    * @param request An object to save / update
    * @returns A promise resolved to the change record
    */
-  post(type: string, request: ArcRequest.ARCHistoryRequest|ArcRequest.ARCSavedRequest): Promise<ARCEntityChangeRecord<ArcRequest.ARCHistoryRequest|ArcRequest.ARCSavedRequest>>;
+  post(type: string, request: ArcRequest.ARCHistoryRequest|ArcRequest.ARCSavedRequest): Promise<Model.ARCEntityChangeRecord<ArcRequest.ARCHistoryRequest|ArcRequest.ARCSavedRequest>>;
 
   /**
    * Updates more than one request in a bulk.
@@ -90,7 +89,7 @@ export declare class RequestModel extends RequestBaseModel {
    * @param requests List of requests to update.
    * @returns List of PouchDB responses to each insert
    */
-  postBulk(type: string, requests: (ArcRequest.ARCHistoryRequest|ArcRequest.ARCSavedRequest)[]): Promise<ARCEntityChangeRecord<ArcRequest.ARCHistoryRequest|ArcRequest.ARCSavedRequest>[]>;
+  postBulk(type: string, requests: (ArcRequest.ARCHistoryRequest|ArcRequest.ARCSavedRequest)[]): Promise<Model.ARCEntityChangeRecord<ArcRequest.ARCHistoryRequest|ArcRequest.ARCSavedRequest>[]>;
 
   /**
    * Removed an object from the datastore.
@@ -103,7 +102,7 @@ export declare class RequestModel extends RequestBaseModel {
    * @returns Promise resolved to a new `_rev` property of deleted
    * object.
    */
-  delete(type: string, id: string, rev?: string): Promise<DeletedEntity>;
+  delete(type: string, id: string, rev?: string): Promise<Model.DeletedEntity>;
 
   /**
    * Removes documents in a bulk operation.
@@ -111,7 +110,7 @@ export declare class RequestModel extends RequestBaseModel {
    * @param type Database type
    * @param items List of keys to remove
    */
-  deleteBulk(type: string, items: string[]): Promise<DeletedEntity[]>;
+  deleteBulk(type: string, items: string[]): Promise<Model.DeletedEntity[]>;
 
   /**
    * Removes requests reference from projects in a batch operation
@@ -139,13 +138,13 @@ export declare class RequestModel extends RequestBaseModel {
    * @returns Resolved promise with restored objects. Objects have
    * updated `_rev` property.
    */
-  revertRemove(type: string, items: DeletedEntity[]): Promise<ARCEntityChangeRecord<ArcRequest.ARCHistoryRequest|ArcRequest.ARCSavedRequest>[]>;
+  revertRemove(type: string, items: Model.DeletedEntity[]): Promise<Model.ARCEntityChangeRecord<ArcRequest.ARCHistoryRequest|ArcRequest.ARCSavedRequest>[]>;
 
   /**
    * Checks for project data in the restored requests and re-inserts the request to the corresponding projects.
    * @param {} result
    */
-  [revertRemoveProject](result: ARCEntityChangeRecord<ArcRequest.ARCHistoryRequest|ArcRequest.ARCSavedRequest>[]): Promise<void>;
+  [revertRemoveProject](result: Model.ARCEntityChangeRecord<ArcRequest.ARCHistoryRequest|ArcRequest.ARCSavedRequest>[]): Promise<void>;
 
   /**
    * Performs a query for the request data.
@@ -157,7 +156,7 @@ export declare class RequestModel extends RequestBaseModel {
    * @param opts Query options.
    * @returns A promise resolved to a query result for requests.
    */
-  list(type: string, opts?: ARCModelListOptions): Promise<ARCModelListResult<ArcRequest.ARCHistoryRequest|ArcRequest.ARCSavedRequest>>;
+  list(type: string, opts?: Model.ARCModelListOptions): Promise<Model.ARCModelListResult<ArcRequest.ARCHistoryRequest|ArcRequest.ARCSavedRequest>>;
 
   /**
    * Saves requests with project data.
@@ -170,7 +169,7 @@ export declare class RequestModel extends RequestBaseModel {
    * is supported
    * @returns A promise resolved to updated request object
    */
-  saveRequestProject(request: ArcRequest.ARCSavedRequest|ArcRequest.ARCHistoryRequest, projects?: string[]): Promise<ARCEntityChangeRecord<ArcRequest.ARCHistoryRequest|ArcRequest.ARCSavedRequest>>;
+  saveRequestProject(request: ArcRequest.ARCSavedRequest|ArcRequest.ARCHistoryRequest, projects?: string[]): Promise<Model.ARCEntityChangeRecord<ArcRequest.ARCHistoryRequest|ArcRequest.ARCSavedRequest>>;
 
   /**
    * Create projects from project names.

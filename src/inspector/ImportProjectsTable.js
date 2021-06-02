@@ -1,3 +1,4 @@
+/* eslint-disable lit-a11y/click-events-have-key-events */
 /* eslint-disable class-methods-use-this */
 /* eslint-disable no-plusplus */
 /**
@@ -394,7 +395,7 @@ export class ImportProjectsTable extends ImportBaseTable {
   itemBodyTemplate(item) {
     return html`
     <div class="no-wrap">${item.name}</div>
-    <div secondary class="no-wrap">${item.url}</div>
+    <div data-secondary class="no-wrap">${item.url}</div>
     `;
   }
 }

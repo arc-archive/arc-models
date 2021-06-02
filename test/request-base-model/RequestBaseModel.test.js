@@ -1,14 +1,13 @@
 import { fixture, assert } from '@open-wc/testing';
 import sinon from 'sinon';
 import { DataGenerator } from '@advanced-rest-client/arc-data-generator';
+import { ArcModelEventTypes, ArcModelEvents } from '@advanced-rest-client/arc-events';
 import { RequestBaseModel } from '../../src/RequestBaseModel.js';
-import { ArcModelEventTypes } from '../../src/events/ArcModelEventTypes.js';
-import { ArcModelEvents } from '../../src/events/ArcModelEvents.js';
 import '../../request-model.js';
 
 /** @typedef {import('@advanced-rest-client/arc-types').Project.ARCProject} ARCProject */
 /** @typedef {import('@advanced-rest-client/arc-types').ArcRequest.ARCSavedRequest} ARCSavedRequest */
-/** @typedef {import('../../src/types').ARCEntityChangeRecord} ARCEntityChangeRecord */
+/** @typedef {import('@advanced-rest-client/arc-types').Model.ARCEntityChangeRecord} ARCEntityChangeRecord */
 /** @typedef {import('../../').RequestModel} RequestModel */
 
 class RequestTestModel extends RequestBaseModel {
@@ -143,9 +142,7 @@ describe('RequestBaseModel', () => {
   });
 
   describe('updateProject()', () => {
-    afterEach(() => {
-      return generator.clearLegacyProjects();
-    });
+    afterEach(() => generator.clearLegacyProjects());
 
     let element = /** @type {RequestTestModel} */ (null);
     beforeEach(async () => {
@@ -199,9 +196,7 @@ describe('RequestBaseModel', () => {
   });
 
   describe('readProject()', () => {
-    afterEach(() => {
-      return generator.clearLegacyProjects();
-    });
+    afterEach(() => generator.clearLegacyProjects());
 
     let element = /** @type {RequestTestModel} */ (null);
     let record = /** @type {ARCEntityChangeRecord} */ (null);
@@ -235,9 +230,7 @@ describe('RequestBaseModel', () => {
   });
 
   describe('removeProject()', () => {
-    afterEach(() => {
-      return generator.clearLegacyProjects();
-    });
+    afterEach(() => generator.clearLegacyProjects());
 
     let element = /** @type {RequestTestModel} */ (null);
     let record = /** @type {ARCEntityChangeRecord} */ (null);
@@ -288,9 +281,7 @@ describe('RequestBaseModel', () => {
   });
 
   describe('removeProjectRequests()', () => {
-    after(() => {
-      return generator.destroySavedRequestData();
-    });
+    after(() => generator.destroySavedRequestData());
 
     let baseModel = /** @type {RequestTestModel} */ (null);
     let requestModel = /** @type {RequestModel} */ (null);

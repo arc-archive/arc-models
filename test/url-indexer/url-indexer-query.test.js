@@ -1,7 +1,7 @@
 import { fixture, assert } from '@open-wc/testing';
+import { ArcModelEvents } from '@advanced-rest-client/arc-events';
 import '../../url-indexer.js';
 import { DbHelper } from './db-helper.js';
-import { ArcModelEvents } from '../../src/events/ArcModelEvents.js';
 import { UrlIndexer } from '../../index.js';
 
 describe('UrlIndexer', () => {

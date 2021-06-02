@@ -77,7 +77,7 @@ describe('ArcPouchTransformer', () => {
       assert.equal(request.updated, compare.updated, 'has the updated property');
       assert.equal(request.name, compare.name);
       assert.equal(request.type, compare.type);
-      assert.equal(request.kind, 'ARC#RequestData');
+      assert.equal(request.kind, 'ARC#HttpRequest');
 
       request = result.requests[1];
       compare = jsonData.requests[1];
@@ -89,7 +89,7 @@ describe('ArcPouchTransformer', () => {
       assert.typeOf(request.updated, 'number', 'has the generated updated property');
       assert.equal(request.name, compare.name);
       assert.equal(request.type, compare.type);
-      assert.equal(request.kind, 'ARC#RequestData');
+      assert.equal(request.kind, 'ARC#HttpRequest');
 
       request = result.requests[3];
       compare = jsonData.requests[3];
@@ -100,7 +100,7 @@ describe('ArcPouchTransformer', () => {
       assert.equal(request.created, compare.updated, 'the created is the previous updated');
       assert.equal(request.name, compare.name);
       assert.equal(request.type, compare.type);
-      assert.equal(request.kind, 'ARC#RequestData');
+      assert.equal(request.kind, 'ARC#HttpRequest');
     });
 
     it('has project values', () => {

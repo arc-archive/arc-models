@@ -16,9 +16,7 @@ describe('Legacy data', () => {
       originalData = JSON.parse(response);
     });
 
-    after(() => {
-      return generator.destroySavedRequestData();
-    });
+    after(() => generator.destroySavedRequestData());
 
     beforeEach(async () => {
       data = generator.clone(originalData);
@@ -46,9 +44,7 @@ describe('Legacy data', () => {
       originalData = JSON.parse(response);
     });
 
-    after(() => {
-      return generator.destroySavedRequestData();
-    });
+    after(() => generator.destroySavedRequestData());
 
     beforeEach(async () => {
       data = generator.clone(originalData);
