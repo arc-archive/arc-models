@@ -39,7 +39,7 @@ import { ArcBaseModel } from './ArcBaseModel';
  * - `passphrase` {String} - A passphrase to use to unlock the certificate. Optional.
  */
 export declare class ClientCertificateModel extends ArcBaseModel {
-  readonly dataDb: PouchDB.Database;
+  get dataDb(): PouchDB.Database;
 
   constructor();
   _attachListeners(node: EventTarget): void;
@@ -84,7 +84,7 @@ export declare class ClientCertificateModel extends ArcBaseModel {
    * id. Because this API operates on a single ID without reviews this won't
    * return the final object.
    */
-  insert(data: ClientCertificate.ClientCertificate): Promise<Model.ARCEntityChangeRecord<ClientCertificate.ARCClientCertificate>>;
+  insert(data: ClientCertificate.ClientCertificate): Promise<Model.ARCEntityChangeRecord<ClientCertificate.ARCCertificateIndex>>;
 
   /**
    * Prepares certificate object to be stored in the data store.
@@ -99,7 +99,8 @@ export declare class ClientCertificateModel extends ArcBaseModel {
    *
    * @param cert Certificate definition. See class description.
    */
-  certificateToStore(cert: ClientCertificate.Certificate|ClientCertificate.Certificate[]): ClientCertificate.Certificate|ClientCertificate.Certificate[];
+  certificateToStore(cert: ClientCertificate.Certificate): ClientCertificate.Certificate;
+  certificateToStore(cert: ClientCertificate.Certificate[]): ClientCertificate.Certificate[];
 
   /**
    * Restores certificate object to it's original values after reading it from

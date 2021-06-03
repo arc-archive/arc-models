@@ -7,9 +7,9 @@ export declare const processUpdateProjectBulkResponse: unique symbol;
  * A base class for Request and Projects` models.
  */
 export declare class RequestBaseModel extends ArcBaseModel {
-  readonly savedDb: PouchDB.Database;
-  readonly historyDb: PouchDB.Database;
-  readonly projectDb: PouchDB.Database;
+  get savedDb(): PouchDB.Database;
+  get historyDb(): PouchDB.Database;
+  get projectDb(): PouchDB.Database;
 
   /**
    * Returns a reference to a PouchDB database instance for given type.

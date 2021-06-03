@@ -1,7 +1,7 @@
 {
   "name": "@advanced-rest-client/arc-models",
   "description": "Event based access to ARC datastores",
-  "version": "5.2.0",
+  "version": "5.2.1",
   "license": "Apache-2.0",
   "main": "index.js",
   "module": "index.js",
@@ -26,7 +26,7 @@
     "email": "arc@mulesoft.com"
   },
   "dependencies": {
-    "@advanced-rest-client/arc-events": "^0.2.15",
+    "@advanced-rest-client/arc-events": "^0.2.17",
     "@advanced-rest-client/arc-icons": "^3.3.3",
     "@advanced-rest-client/body-editor": "^0.2.0",
     "@advanced-rest-client/date-time": "^3.0.2",
@@ -47,9 +47,9 @@
     "pouchdb": "^7.2.2"
   },
   "devDependencies": {
-    "@advanced-rest-client/arc-data-generator": "^3.2.0",
+    "@advanced-rest-client/arc-data-generator": "^3.2.1",
     "@advanced-rest-client/arc-demo-helper": "^3.0.0",
-    "@advanced-rest-client/arc-types": "^0.2.51",
+    "@advanced-rest-client/arc-types": "^0.2.52",
     "@open-wc/eslint-config": "^4.3.0",
     "@open-wc/testing": "^2.5.33",
     "@polymer/paper-toast": "^3.0.0",

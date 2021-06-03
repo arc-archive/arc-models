@@ -18,8 +18,8 @@ export declare class ArcBaseModel extends HTMLElement {
   /**
    * Note, the element does not include PouchDB to the document!
    */
-  readonly db: PouchDB.Database;
-  readonly defaultQueryOptions: DefaultQueryOptions;
+  get db(): PouchDB.Database;
+  get defaultQueryOptions(): DefaultQueryOptions;
   eventsTarget: EventTarget;
   /**
    * Name of the data store

@@ -6,9 +6,9 @@ import 'chance/dist/chance.min.js';
 import '../../client-certificate-model.js';
 
 /** @typedef {import('../../src/ClientCertificateModel').ClientCertificateModel} ClientCertificateModel */
-/** @typedef {import('@advanced-rest-client/arc-types').ClientCertificate.ARCClientCertificate} ARCClientCertificate */
+/** @typedef {import('@advanced-rest-client/arc-types').ClientCertificate.ARCCertificateIndex} ARCCertificateIndex */
+/** @typedef {import('@advanced-rest-client/arc-types').ClientCertificate.ARCRequestCertificate} ARCRequestCertificate */
 /** @typedef {import('@advanced-rest-client/arc-types').ClientCertificate.Certificate} Certificate */
-/** @typedef {import('@advanced-rest-client/arc-types').ClientCertificate.ClientCertificate} ClientCertificate */
 
 describe('ClientCertificateModel', () => {
   const generator = new DataGenerator();
@@ -250,14 +250,14 @@ describe('ClientCertificateModel', () => {
     });
 
     it('inserts an item to the "index" store', async () => {
-      const item = /** @type ClientCertificate */ (generator.generateClientCertificate());
+      const item = (generator.generateClientCertificate());
       await element.insert(item);
       const all = await element.list();
       assert.lengthOf(all.items, 1);
     });
 
     it('returns chnagerecord of the "index" store', async () => {
-      const item = /** @type ClientCertificate */ (generator.generateClientCertificate());
+      const item = (generator.generateClientCertificate());
       const result = await element.insert(item);
       assert.typeOf(result, 'object', 'returns an object');
       assert.typeOf(result.id, 'string', 'has an id');
@@ -267,14 +267,14 @@ describe('ClientCertificateModel', () => {
     });
 
     it('inserts an item to the "data" store', async () => {
-      const item = /** @type ClientCertificate */ (generator.generateClientCertificate());
+      const item = (generator.generateClientCertificate());
       const record = await element.insert(item);
       const saved = await element.get(record.id);
       assert.typeOf(saved.cert, 'object');
     });
 
     it('inserts both object with the same id', async () => {
-      const item = /** @type ClientCertificate */ (generator.generateClientCertificate());
+      const item = (generator.generateClientCertificate());
       const record = await element.insert(item);
       const dataObj = await element.dataDb.get(record.id);
       const indexObj = await element.db.get(record.id);
@@ -283,7 +283,7 @@ describe('ClientCertificateModel', () => {
     });
 
     it('stores binary data', async () => {
-      const item = /** @type ClientCertificate */ (generator.generateClientCertificate({
+      const item = (generator.generateClientCertificate({
         binary: true,
       }));
       const record = await element.insert(item);
@@ -306,7 +306,7 @@ describe('ClientCertificateModel', () => {
     });
 
     it('throws when no type', async () => {
-      const item = /** @type ClientCertificate */ (generator.generateClientCertificate());
+      const item = (generator.generateClientCertificate());
       delete item.type;
       let err;
       try {
@@ -318,7 +318,7 @@ describe('ClientCertificateModel', () => {
     });
 
     it('dispatches change event', async () => {
-      const item = /** @type ClientCertificate */ (generator.generateClientCertificate());
+      const item = (generator.generateClientCertificate());
       const spy = sinon.spy();
       element.addEventListener(ArcModelEventTypes.ClientCertificate.State.update, spy);
       const record = await element.insert(item);
@@ -333,18 +333,19 @@ describe('ClientCertificateModel', () => {
     });
 
     it('adds "created" property when not set', async () => {
-      const item = /** @type ClientCertificate */ (generator.generateClientCertificate());
+      const item = (generator.generateClientCertificate());
       delete item.created;
       const record = await element.insert(item);
       assert.typeOf(record.item.created, 'number');
     });
 
-    it('ignores the key if now set', async () => {
-      const item = /** @type ClientCertificate */ (generator.generateClientCertificate({
+    it('ignores the key if not set', async () => {
+      const item = generator.generateClientCertificate({
         noKey: true,
-      }));
+      });
       const record = await element.insert(item);
-      assert.isUndefined(record.item.key);
+      const data = await element.get(record.id);
+      assert.isUndefined(data.key);
     });
   });
 

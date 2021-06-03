@@ -23,14 +23,14 @@ export declare class RestApiModel extends ArcBaseModel {
    * A handler to the datastore. Contains listing data.
    *
    */
-  readonly indexDb: PouchDB.Database;
+  get indexDb(): PouchDB.Database;
 
   /**
    * A handler to the datastore containing REST API data
    * (AMF model).
    *
    */
-  readonly dataDb: PouchDB.Database;
+  get dataDb(): PouchDB.Database;
 
   constructor();
 

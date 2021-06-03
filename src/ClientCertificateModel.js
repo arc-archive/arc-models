@@ -17,10 +17,11 @@ import { ArcBaseModel, createChangeRecord } from './ArcBaseModel.js';
 /* eslint-disable class-methods-use-this */
 /* eslint-disable no-param-reassign */
 
-/** @typedef {import('@advanced-rest-client/arc-types').ClientCertificate.ARCClientCertificate} ARCClientCertificate */
 /** @typedef {import('@advanced-rest-client/arc-types').ClientCertificate.ARCCertificateIndex} ARCCertificateIndex */
 /** @typedef {import('@advanced-rest-client/arc-types').ClientCertificate.Certificate} Certificate */
 /** @typedef {import('@advanced-rest-client/arc-types').ClientCertificate.ClientCertificate} ClientCertificate */
+/** @typedef {import('@advanced-rest-client/arc-types').ClientCertificate.RequestCertificate} RequestCertificate */
+/** @typedef {import('@advanced-rest-client/arc-types').ClientCertificate.ARCRequestCertificate} ARCRequestCertificate */
 /** @typedef {import('@advanced-rest-client/arc-events').ARCClientCertificateInsertEvent} ARCClientCertificateInsertEvent */
 /** @typedef {import('@advanced-rest-client/arc-events').ARCClientCertificateReadEvent} ARCClientCertificateReadEvent */
 /** @typedef {import('@advanced-rest-client/arc-events').ARCClientCertificateDeleteEvent} ARCClientCertificateDeleteEvent */
@@ -139,7 +140,7 @@ export class ClientCertificateModel extends ArcBaseModel {
     const index = /** @type ARCCertificateIndex */ (await this.db.get(id));
     const { dataKey, _id: indexId } = index;
     const dataId = dataKey || indexId;
-    const data = /** @type ARCClientCertificate */ (await this.dataDb.get(dataId));
+    const data = /** @type ARCRequestCertificate */ (await this.dataDb.get(dataId));
 
     const result = /** @type ClientCertificate */ ({
       cert: this.certificateFromStore(data.cert),
@@ -170,13 +171,12 @@ export class ClientCertificateModel extends ArcBaseModel {
     }
     const { db } = this;
     const index = /** @type ARCCertificateIndex */ (await db.get(id));
-    // @ts-ignore
     index._deleted = true;
     const updateRecord = await db.put(index);
     const { dataKey, _id: indexId } = index;
     const dataId = dataKey || indexId;
     const { dataDb } = this;
-    const data = await dataDb.get(dataId);
+    const data = /** @type ARCRequestCertificate */ (await dataDb.get(dataId));
     data._deleted = true;
     await dataDb.put(data);
     ArcModelEvents.ClientCertificate.State.delete(this, id, updateRecord.rev);
@@ -188,7 +188,6 @@ export class ClientCertificateModel extends ArcBaseModel {
 
   /**
    * Inserts new client certificate object.
-   * See class description for data structure.
    *
    * @param {ClientCertificate} cert Data to insert.
    * @return {Promise<ARCEntityChangeRecord>} Returns a change record for the index entity
@@ -200,7 +199,7 @@ export class ClientCertificateModel extends ArcBaseModel {
     if (!cert.type) {
       throw new Error('The "type" property is required.');
     }
-    const dataEntity = /** @type ARCClientCertificate */({
+    const dataEntity = /** @type ARCRequestCertificate */({
       cert: this.certificateToStore(cert.cert),
       type: cert.type,
     });

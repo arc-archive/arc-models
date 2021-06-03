@@ -8,7 +8,6 @@ import '../../client-certificate-model.js';
 
 /** @typedef {import('../../src/ClientCertificateModel').ClientCertificateModel} ClientCertificateModel */
 /** @typedef {import('@advanced-rest-client/arc-types').ClientCertificate.Certificate} Certificate */
-/** @typedef {import('@advanced-rest-client/arc-types').ClientCertificate.ClientCertificate} ClientCertificate */
 
 describe('<client-certificate-model> events based', () => {
   const generator = new DataGenerator();
@@ -290,14 +289,14 @@ describe('<client-certificate-model> events based', () => {
     });
 
     it('inserts an item to the "index" store', async () => {
-      const item = /** @type ClientCertificate */ (generator.generateClientCertificate());
+      const item = (generator.generateClientCertificate());
       await ArcModelEvents.ClientCertificate.insert(document.body, item);
       const all = await element.list();
       assert.lengthOf(all.items, 1);
     });
 
     it('returns chnagerecord of the "index" store', async () => {
-      const item = /** @type ClientCertificate */ (generator.generateClientCertificate());
+      const item = (generator.generateClientCertificate());
       const result = await ArcModelEvents.ClientCertificate.insert(document.body, item);
       assert.typeOf(result, 'object', 'returns an object');
       assert.typeOf(result.id, 'string', 'has an id');
@@ -307,14 +306,14 @@ describe('<client-certificate-model> events based', () => {
     });
 
     it('inserts an item to the "data" store', async () => {
-      const item = /** @type ClientCertificate */ (generator.generateClientCertificate());
+      const item = (generator.generateClientCertificate());
       const record = await ArcModelEvents.ClientCertificate.insert(document.body, item);
       const saved = await element.get(record.id);
       assert.typeOf(saved.cert, 'object');
     });
 
     it('stores binary data', async () => {
-      const item = /** @type ClientCertificate */ (generator.generateClientCertificate({
+      const item = (generator.generateClientCertificate({
         binary: true,
       }));
       const record = await ArcModelEvents.ClientCertificate.insert(document.body, item);
@@ -337,7 +336,7 @@ describe('<client-certificate-model> events based', () => {
     });
 
     it('throws when no type', async () => {
-      const item = /** @type ClientCertificate */ (generator.generateClientCertificate());
+      const item = (generator.generateClientCertificate());
       delete item.type;
       let err;
       try {
@@ -349,7 +348,7 @@ describe('<client-certificate-model> events based', () => {
     });
 
     it('dispatches change event', async () => {
-      const item = /** @type ClientCertificate */ (generator.generateClientCertificate());
+      const item = (generator.generateClientCertificate());
       const spy = sinon.spy();
       element.addEventListener(ArcModelEventTypes.ClientCertificate.State.update, spy);
       const record = await ArcModelEvents.ClientCertificate.insert(document.body, item);

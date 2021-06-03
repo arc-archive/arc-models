@@ -38,12 +38,12 @@ export declare class RequestModel extends RequestBaseModel {
   /**
    * List of fields to index in the history store.
    */
-  readonly historyIndexes: string[];
+  get historyIndexes(): string[];
 
   /**
    * List of fields to index in the saved store.
    */
-  readonly savedIndexes: string[];
+  get savedIndexes(): string[];
 
   constructor();
 
