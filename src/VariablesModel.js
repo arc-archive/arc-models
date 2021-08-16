@@ -549,7 +549,23 @@ export class VariablesModel extends ArcBaseModel {
    * Reads the current state and informs the components about the change.
    */
   async [selectEnvironment]() {
-    const state = await this.readCurrent();
+    /** @type EnvironmentStateDetail */
+    let state;
+    try {
+      state = await this.readCurrent();
+    } catch (e) {
+      if (this.currentEnvironment) {
+        this.currentEnvironment = undefined;
+        return;
+      }
+      state = {
+        environment: null,
+        variables: [],
+      };
+      if (this.systemVariables) {
+        state.systemVariables = this.systemVariables;
+      }
+    }
     ArcModelEvents.Environment.State.select(this, state);
   }
 
