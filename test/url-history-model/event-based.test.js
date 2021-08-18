@@ -277,4 +277,59 @@ describe('UrlHistoryModel - event based', () => {
       assert.equal(record.item.url, request.url);
     });
   });
+
+  describe(`The delete event`, () => {
+    /** @type ARCUrlHistory */
+    let dataObj;
+    beforeEach(async () => {
+      const element = await basicFixture();
+      const doc = /** @type ARCUrlHistory */ (generator.generateUrlObject());
+      const record = await element.update(doc);
+      dataObj = record.item;
+    });
+
+    afterEach(() => generator.destroyUrlData());
+
+    it('ignores cancelled events', async () => {
+      document.body.addEventListener(ArcModelEventTypes.UrlHistory.delete, function f(e) {
+        e.preventDefault();
+        document.body.removeEventListener(ArcModelEventTypes.UrlHistory.delete, f);
+      });
+      const result = await ArcModelEvents.UrlHistory.delete(document.body, dataObj._id);
+      assert.isUndefined(result);
+    });
+
+    it('removes the entity from the datastore', async () => {
+      await ArcModelEvents.UrlHistory.delete(document.body, dataObj._id);
+      const result = await generator.getDatastoreUrlsData();
+      assert.deepEqual(result, []);
+    });
+
+    it('throws when no ID when constructing the event ', async () => {
+      let thrown = false;
+      try {
+        await ArcModelEvents.UrlHistory.delete(document.body, undefined);
+      } catch (e) {
+        thrown = true;
+      }
+      assert.isTrue(thrown);
+    });
+
+    it('throws when no id when handling the event ', async () => {
+      let thrown = false;
+      try {
+        const e = new CustomEvent(ArcModelEventTypes.UrlHistory.delete, {
+          bubbles: true,
+          cancelable: true,
+          composed: true,
+          detail: { result: undefined },
+        });
+        document.body.dispatchEvent(e);
+        await e.detail.result;
+      } catch (e) {
+        thrown = true;
+      }
+      assert.isTrue(thrown);
+    });
+  });
 });

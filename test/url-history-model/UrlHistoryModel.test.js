@@ -373,4 +373,48 @@ describe('UrlHistoryModel', () => {
       assert.equal(item.url, 'https://API.domain.com');
     });
   });
+
+  describe('delete()', () => {
+    afterEach(() => generator.destroyUrlData());
+
+    /** @type {UrlHistoryModel} */
+    let element;
+    /** @type ARCUrlHistory */
+    let dataObj;
+    beforeEach(async () => {
+      element = await basicFixture();
+      const doc = /** @type ARCUrlHistory */ (generator.generateUrlObject());
+      const record = await element.update(doc);
+      dataObj = record.item;
+    });
+
+    it('removes the object from the datastore', async () => {
+      await element.delete(dataObj._id);
+      let thrown = false;
+      try {
+        await element.read(dataObj._id);
+      } catch (e) {
+        thrown = true;
+      }
+      assert.isTrue(thrown);
+    });
+
+    it('dispatches the state event', async () => {
+      const spy = sinon.spy();
+      element.addEventListener(ArcModelEventTypes.UrlHistory.State.delete, spy);
+      await element.delete(dataObj._id);
+      assert.isTrue(spy.calledOnce);
+    });
+
+    it('has change record on the state event', async () => {
+      const spy = sinon.spy();
+      element.addEventListener(ArcModelEventTypes.UrlHistory.State.delete, spy);
+      await element.delete(dataObj._id);
+      const { id, rev } = spy.args[0][0];
+
+      assert.equal(id, dataObj._id);
+      assert.typeOf(rev, 'string');
+      assert.notEqual(rev, dataObj._rev);
+    });
+  });
 });

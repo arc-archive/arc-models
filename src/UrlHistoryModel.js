@@ -20,10 +20,12 @@ import { ArcBaseModel } from './ArcBaseModel.js';
 /** @typedef {import('@advanced-rest-client/arc-events').ARCHistoryUrlInsertEvent} ARCHistoryUrlInsertEvent */
 /** @typedef {import('@advanced-rest-client/arc-events').ARCHistoryUrlListEvent} ARCHistoryUrlListEvent */
 /** @typedef {import('@advanced-rest-client/arc-events').ARCHistoryUrlQueryEvent} ARCHistoryUrlQueryEvent */
+/** @typedef {import('@advanced-rest-client/arc-events').ARCHistoryUrlDeleteEvent} ARCHistoryUrlDeleteEvent */
 /** @typedef {import('@advanced-rest-client/arc-events').ApiTransportEvent} ApiTransportEvent */
 /** @typedef {import('@advanced-rest-client/arc-types').Model.ARCEntityChangeRecord} ARCEntityChangeRecord */
 /** @typedef {import('@advanced-rest-client/arc-types').Model.ARCModelListOptions} ARCModelListOptions */
 /** @typedef {import('@advanced-rest-client/arc-types').Model.ARCModelListResult} ARCModelListResult */
+/** @typedef {import('@advanced-rest-client/arc-types').Model.DeletedEntity} DeletedEntity */
 
 /**
  * A function used to sort query list items. It relays on two properties that
@@ -57,6 +59,7 @@ export function sortFunction(a, b) {
 export const insertHandler = Symbol('insertHandler');
 export const listHandler = Symbol('listHandler');
 export const queryHandler = Symbol('queryHandler');
+export const deleteHandler = Symbol('deleteHandler');
 export const transportHandler = Symbol('transportHandler');
 
 /**
@@ -73,6 +76,7 @@ export class UrlHistoryModel extends ArcBaseModel {
     this[insertHandler] = this[insertHandler].bind(this);
     this[listHandler] = this[listHandler].bind(this);
     this[queryHandler] = this[queryHandler].bind(this);
+    this[deleteHandler] = this[deleteHandler].bind(this);
     this[transportHandler] = this[transportHandler].bind(this);
   }
 
@@ -189,11 +193,33 @@ export class UrlHistoryModel extends ArcBaseModel {
     return result;
   }
 
+  /**
+   * @param {string} id The id of the URL to remove.
+   * @return {Promise<DeletedEntity>} Promise resolved to a new `_rev` property of deleted object.
+   */
+  async delete(id) {
+    if (!id) {
+      throw new Error("Expected an argument when deleting an URL.");
+    }
+    const { db } = this;
+    const doc = /** @type ARCUrlHistory */ (await db.get(id));
+    const result = await db.remove(id, doc._rev);
+    if (!result.ok) {
+      this._handleException(result);
+    }
+    ArcModelEvents.UrlHistory.State.delete(this, result.id, result.rev);
+    return {
+      id: result.id,
+      rev: result.rev,
+    };
+  }
+
   _attachListeners(node) {
     super._attachListeners(node);
     node.addEventListener(ArcModelEventTypes.UrlHistory.insert, this[insertHandler]);
     node.addEventListener(ArcModelEventTypes.UrlHistory.list, this[listHandler]);
     node.addEventListener(ArcModelEventTypes.UrlHistory.query, this[queryHandler]);
+    node.addEventListener(ArcModelEventTypes.UrlHistory.delete, this[deleteHandler]);
     node.addEventListener(TransportEventTypes.transport, this[transportHandler]);
   }
 
@@ -202,6 +228,7 @@ export class UrlHistoryModel extends ArcBaseModel {
     node.removeEventListener(ArcModelEventTypes.UrlHistory.insert, this[insertHandler]);
     node.removeEventListener(ArcModelEventTypes.UrlHistory.list, this[listHandler]);
     node.removeEventListener(ArcModelEventTypes.UrlHistory.query, this[queryHandler]);
+    node.removeEventListener(ArcModelEventTypes.UrlHistory.delete, this[deleteHandler]);
     node.removeEventListener(TransportEventTypes.transport, this[transportHandler]);
   }
 
@@ -251,6 +278,20 @@ export class UrlHistoryModel extends ArcBaseModel {
 
     const { term } = e;
     e.detail.result = this.query(term);
+  }
+
+  /**
+   * @param {ARCHistoryUrlDeleteEvent} e
+   */
+  [deleteHandler](e) {
+    if (e.defaultPrevented) {
+      return;
+    }
+    e.preventDefault();
+    e.stopPropagation();
+
+    const { id } = e;
+    e.detail.result = this.delete(id);
   }
 
   /**
