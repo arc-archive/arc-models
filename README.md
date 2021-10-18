@@ -1,4 +1,8 @@
-# ARC data models
+# Deprecated
+
+This has been moved to `@advanced-rest-client/idb-store`
+
+-------
 
 Data models for Advanced REST Client application. This module contains the logic used by the application to store and restore data to the UI.
 

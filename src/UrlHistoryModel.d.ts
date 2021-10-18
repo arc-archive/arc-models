@@ -13,6 +13,7 @@ export const transportHandler: unique symbol;
  * A function used to sort query list items. It relays on two properties that
  * are set by query function on array entries: `_time` which is a timestamp of
  * the entry and `cnt` which is number of times the URL has been used.
+ * @deprecated This has been moved to `@advanced-rest-client/idb-store`
  */
 export declare function sortFunction(a: UrlHistory.ARCUrlHistory, b: UrlHistory.ARCUrlHistory): number;
 

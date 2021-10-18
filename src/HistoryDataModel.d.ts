@@ -17,6 +17,7 @@ export declare const computeTotalTime:  unique symbol;
  * and the HAR-like object for each request event made.
  * 
  * This element should be added to the dom to add support for the ARC history.
+ * @deprecated This has been moved to `@advanced-rest-client/idb-store`
  */
 export class HistoryDataModel extends ArcBaseModel {
   /** 

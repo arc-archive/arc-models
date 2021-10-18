@@ -16,6 +16,7 @@ export declare const removeFromHandler: unique symbol;
  * A model to access projects data in Advanced REST Client.
  * This component provides direct access to the data via the API
  * and Events API defined in events/ folder.
+ * @deprecated This has been moved to `@advanced-rest-client/idb-store`
  */
 export declare class ProjectModel extends RequestBaseModel {
   constructor();

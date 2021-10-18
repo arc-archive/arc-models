@@ -35,6 +35,7 @@ export declare const prepare: unique symbol;
  * ```
  * 
  * @fires loadingchange When the `loading` state changes
+ * @deprecated This has been moved to `@advanced-rest-client/idb-store`
  */
 export class ArcExportFormElement extends ExportPanelBase {
   [loadingProperty]: boolean;

@@ -29,6 +29,7 @@ export declare const notifyApiParser: unique symbol;
  * When importing an API data additional steps are required but this element
  * recognizes the API data content and dispatches an event for the API processor library
  * to process the API data.
+ * @deprecated This has been moved to `@advanced-rest-client/idb-store`
  */
 export class ArcDataImportElement extends LitElement {
   constructor();

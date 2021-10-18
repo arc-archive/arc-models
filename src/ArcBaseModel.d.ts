@@ -12,6 +12,7 @@ export declare const createChangeRecord: unique symbol;
 
 /**
  * A base class for all models.
+ * @deprecated This has been moved to `@advanced-rest-client/idb-store`
  */
 export declare class ArcBaseModel extends HTMLElement {
 

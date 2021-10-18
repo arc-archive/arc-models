@@ -32,6 +32,7 @@ export declare const revertRemoveProject: unique symbol;
  * to perform a semi-full search operation. When a `detailed` options is set on the query
  * then it uses slower algorithm but performs full search on the index.
  * When it is not set it only uses filer like query + '*'.
+ * @deprecated This has been moved to `@advanced-rest-client/idb-store`
  */
 export declare class RequestModel extends RequestBaseModel {
 

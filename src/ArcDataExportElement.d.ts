@@ -21,6 +21,7 @@ declare function getDatabaseName(key: keyof DataExport.ArcNativeDataExport): str
 
 /**
  * An element to handle data export for ARC.
+ * @deprecated This has been moved to `@advanced-rest-client/idb-store`
  */
 export declare class ArcDataExportElement extends HTMLElement {
   [appVersionValue]?: string;

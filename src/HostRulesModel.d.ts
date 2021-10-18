@@ -15,6 +15,7 @@ import {ArcBaseModel} from './ArcBaseModel.js';
  * Each event must be cancelable or it will be ignored.
  * The insert, change and delete events dispatches non cancelable update/delete
  * events. Application should listen for this events to update it's state.
+ * @deprecated This has been moved to `@advanced-rest-client/idb-store`
  */
 export declare class HostRulesModel extends ArcBaseModel {
 

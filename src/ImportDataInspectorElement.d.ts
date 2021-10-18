@@ -23,6 +23,7 @@ export declare const actionsTemplate: unique symbol;
  * An element to display tables of import data.
  * @fires cancel
  * @fires import
+ * @deprecated This has been moved to `@advanced-rest-client/idb-store`
  */
 export declare class ImportDataInspectorElement extends LitElement {
   static get styles(): CSSResult;

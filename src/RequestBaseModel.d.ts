@@ -5,6 +5,7 @@ export declare const processUpdateProjectBulkResponse: unique symbol;
 
 /**
  * A base class for Request and Projects` models.
+ * @deprecated This has been moved to `@advanced-rest-client/idb-store`
  */
 export declare class RequestBaseModel extends ArcBaseModel {
   get savedDb(): PouchDB.Database;

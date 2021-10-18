@@ -24,6 +24,7 @@ declare const checkedHandler: unique symbol;
 
 /**
  * @fires resize When the size of the element changes
+ * @deprecated This has been moved to `@advanced-rest-client/idb-store`
  */
 export declare class ExportPanelBase extends LitElement {
   [driveSuggestionsValue]?: Suggestion[];

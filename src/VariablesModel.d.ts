@@ -20,6 +20,7 @@ export declare const selectEnvironment: unique symbol;
 
 /**
  * Model for variables
+ * @deprecated This has been moved to `@advanced-rest-client/idb-store`
  */
 export declare class VariablesModel extends ArcBaseModel {
 

@@ -37,6 +37,7 @@ import { ArcBaseModel } from './ArcBaseModel';
  * The p12 type certificate must be a Buffer. The `get()` method always returns
  * original data type.
  * - `passphrase` {String} - A passphrase to use to unlock the certificate. Optional.
+ * @deprecated This has been moved to `@advanced-rest-client/idb-store`
  */
 export declare class ClientCertificateModel extends ArcBaseModel {
   get dataDb(): PouchDB.Database;

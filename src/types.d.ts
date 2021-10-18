@@ -2,6 +2,7 @@ import { Model } from "@advanced-rest-client/arc-types";
 
 /**
  * Request object change record
+ * @deprecated This has been moved to `@advanced-rest-client/idb-store`
  */
 export declare interface ARCRequestEntityChangeRecord<T> extends Model.ARCEntityChangeRecord<T> {
   /**

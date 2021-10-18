@@ -9,6 +9,7 @@ export const queryHandler: symbol;
 
 /**
  * Gives an access to the WebSocket entities.
+ * @deprecated This has been moved to `@advanced-rest-client/idb-store`
  */
 export declare class WebsocketUrlHistoryModel extends ArcBaseModel {
   constructor();

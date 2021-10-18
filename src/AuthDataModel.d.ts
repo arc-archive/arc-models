@@ -18,6 +18,7 @@ export declare function computeKey(method: string, url?: string): string;
 
 /**
  * Model for authorization data stored in the application.
+ * @deprecated This has been moved to `@advanced-rest-client/idb-store`
  */
 export declare class AuthDataModel extends ArcBaseModel {
 

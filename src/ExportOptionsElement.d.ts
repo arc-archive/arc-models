@@ -12,6 +12,7 @@ declare const resizeHandlerValue: unique symbol;
  * 
  * @fires accept When the user confirms the dialog
  * @fires cancel When the user cancels the dialog
+ * @deprecated This has been moved to `@advanced-rest-client/idb-store`
  */
 export declare class ExportOptionsElement extends ExportPanelBase {
   static get styles(): CSSResult;

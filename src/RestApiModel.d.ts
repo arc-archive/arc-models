@@ -16,6 +16,7 @@ export const deleteDataModel: symbol;
 
 /**
  * REST APIs model.
+ * @deprecated This has been moved to `@advanced-rest-client/idb-store`
  */
 export declare class RestApiModel extends ArcBaseModel {
 

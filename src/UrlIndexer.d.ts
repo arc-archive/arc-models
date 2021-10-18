@@ -128,6 +128,7 @@ declare interface ProcessedQueryResults {
  * .then((result) => {});
  * ```
  * See query method for description of parameters.
+ * @deprecated This has been moved to `@advanced-rest-client/idb-store`
  */
 export declare class UrlIndexer extends HTMLElement {
   constructor();
