@@ -1,6 +1,6 @@
-import { ApiTransportEvent, ARCHistoryUrlDeleteEvent, ARCHistoryUrlInsertEvent, ARCHistoryUrlListEvent, ARCHistoryUrlQueryEvent } from '@advanced-rest-client/arc-events';
-import { UrlHistory, Model } from '@advanced-rest-client/arc-types';
-import { DeletedEntity } from '@advanced-rest-client/arc-types/src/models/base';
+import { ApiTransportEvent, ARCHistoryUrlDeleteEvent, ARCHistoryUrlInsertEvent, ARCHistoryUrlListEvent, ARCHistoryUrlQueryEvent } from '@advanced-rest-client/events';
+import { UrlHistory, Model } from '@advanced-rest-client/events';
+import { DeletedEntity } from '@advanced-rest-client/events/src/models/base';
 import {ArcBaseModel} from './ArcBaseModel.js';
 
 export const insertHandler: unique symbol;
@@ -63,9 +63,6 @@ export declare class UrlHistoryModel extends ArcBaseModel {
    * @return Promise resolved to a new `_rev` property of deleted object.
    */
   delete(id: string): Promise<DeletedEntity>;
-
-  _attachListeners(node: EventTarget): void;
-  _detachListeners(node: EventTarget): void;
 
   [insertHandler](e: ARCHistoryUrlInsertEvent): void;
 

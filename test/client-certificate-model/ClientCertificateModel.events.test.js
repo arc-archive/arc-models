@@ -1,13 +1,13 @@
 /* eslint-disable no-unused-vars */
 import { fixture, assert } from '@open-wc/testing';
 import { DataGenerator } from '@advanced-rest-client/arc-data-generator';
-import { ArcModelEventTypes, ArcModelEvents } from '@advanced-rest-client/arc-events';
+import { ArcModelEventTypes, ArcModelEvents } from '@advanced-rest-client/events';
 import sinon from 'sinon';
 import 'chance/dist/chance.min.js';
 import '../../client-certificate-model.js';
 
 /** @typedef {import('../../src/ClientCertificateModel').ClientCertificateModel} ClientCertificateModel */
-/** @typedef {import('@advanced-rest-client/arc-types').ClientCertificate.Certificate} Certificate */
+/** @typedef {import('@advanced-rest-client/events').ClientCertificate.Certificate} Certificate */
 
 describe('<client-certificate-model> events based', () => {
   const generator = new DataGenerator();

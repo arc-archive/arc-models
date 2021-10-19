@@ -11,8 +11,8 @@ WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
 License for the specific language governing permissions and limitations under
 the License.
 */
-import { v4 } from '@advanced-rest-client/uuid-generator';
-import { ArcModelEventTypes, ArcModelEvents } from '@advanced-rest-client/arc-events';
+import { v4 } from '@advanced-rest-client/uuid';
+import { ArcModelEventTypes, ArcModelEvents } from '@advanced-rest-client/events';
 import { RequestBaseModel } from './RequestBaseModel.js';
 import { createChangeRecord } from './ArcBaseModel.js';
 
@@ -20,21 +20,21 @@ import { createChangeRecord } from './ArcBaseModel.js';
 /* eslint-disable no-continue */
 /* eslint-disable no-plusplus */
 
-/** @typedef {import('@advanced-rest-client/arc-types').Project.ARCProject} ARCProject */
-/** @typedef {import('@advanced-rest-client/arc-types').ArcRequest.ARCSavedRequest} ARCSavedRequest */
-/** @typedef {import('@advanced-rest-client/arc-types').ArcRequest.ARCHistoryRequest} ARCHistoryRequest */
-/** @typedef {import('@advanced-rest-client/arc-events').ARCProjectReadEvent} ARCProjectReadEvent */
-/** @typedef {import('@advanced-rest-client/arc-events').ARCProjectReadBulkEvent} ARCProjectReadBulkEvent */
-/** @typedef {import('@advanced-rest-client/arc-events').ARCProjectUpdateEvent} ARCProjectUpdateEvent */
-/** @typedef {import('@advanced-rest-client/arc-events').ARCProjectUpdateBulkEvent} ARCProjectUpdateBulkEvent */
-/** @typedef {import('@advanced-rest-client/arc-events').ARCProjectDeleteEvent} ARCProjectDeleteEvent */
-/** @typedef {import('@advanced-rest-client/arc-events').ARCProjectListEvent} ARCProjectListEvent */
-/** @typedef {import('@advanced-rest-client/arc-events').ARCProjectListAllEvent} ARCProjectListAllEvent */
-/** @typedef {import('@advanced-rest-client/arc-events').ARCProjectMoveEvent} ARCProjectMoveEvent */
-/** @typedef {import('@advanced-rest-client/arc-types').Model.ARCEntityChangeRecord} ARCEntityChangeRecord */
-/** @typedef {import('@advanced-rest-client/arc-types').Model.ARCModelListOptions} ARCModelListOptions */
-/** @typedef {import('@advanced-rest-client/arc-types').Model.ARCModelListResult} ARCModelListResult */
-/** @typedef {import('@advanced-rest-client/arc-types').Model.DeletedEntity} DeletedEntity */
+/** @typedef {import('@advanced-rest-client/events').Project.ARCProject} ARCProject */
+/** @typedef {import('@advanced-rest-client/events').ArcRequest.ARCSavedRequest} ARCSavedRequest */
+/** @typedef {import('@advanced-rest-client/events').ArcRequest.ARCHistoryRequest} ARCHistoryRequest */
+/** @typedef {import('@advanced-rest-client/events').ARCProjectReadEvent} ARCProjectReadEvent */
+/** @typedef {import('@advanced-rest-client/events').ARCProjectReadBulkEvent} ARCProjectReadBulkEvent */
+/** @typedef {import('@advanced-rest-client/events').ARCProjectUpdateEvent} ARCProjectUpdateEvent */
+/** @typedef {import('@advanced-rest-client/events').ARCProjectUpdateBulkEvent} ARCProjectUpdateBulkEvent */
+/** @typedef {import('@advanced-rest-client/events').ARCProjectDeleteEvent} ARCProjectDeleteEvent */
+/** @typedef {import('@advanced-rest-client/events').ARCProjectListEvent} ARCProjectListEvent */
+/** @typedef {import('@advanced-rest-client/events').ARCProjectListAllEvent} ARCProjectListAllEvent */
+/** @typedef {import('@advanced-rest-client/events').ARCProjectMoveEvent} ARCProjectMoveEvent */
+/** @typedef {import('@advanced-rest-client/events').Model.ARCEntityChangeRecord} ARCEntityChangeRecord */
+/** @typedef {import('@advanced-rest-client/events').Model.ARCModelListOptions} ARCModelListOptions */
+/** @typedef {import('@advanced-rest-client/events').Model.ARCModelListResult} ARCModelListResult */
+/** @typedef {import('@advanced-rest-client/events').Model.DeletedEntity} DeletedEntity */
 
 export const readHandler = Symbol('readHandler');
 export const readBulkHandler = Symbol('readBulkHandler');
@@ -295,8 +295,8 @@ export class ProjectModel extends RequestBaseModel {
   /**
    * @param {EventTarget} node
    */
-  _attachListeners(node) {
-    super._attachListeners(node);
+  listen(node) {
+    super.listen(node);
     node.addEventListener(ArcModelEventTypes.Project.read, this[readHandler]);
     node.addEventListener(ArcModelEventTypes.Project.readBulk, this[readBulkHandler]);
     node.addEventListener(ArcModelEventTypes.Project.update, this[updateHandler]);
@@ -312,8 +312,8 @@ export class ProjectModel extends RequestBaseModel {
   /**
    * @param {EventTarget} node
    */
-  _detachListeners(node) {
-    super._detachListeners(node);
+  unlisten(node) {
+    super.unlisten(node);
     node.removeEventListener(ArcModelEventTypes.Project.read, this[readHandler]);
     node.removeEventListener(ArcModelEventTypes.Project.readBulk, this[readBulkHandler]);
     node.removeEventListener(ArcModelEventTypes.Project.update, this[updateHandler]);

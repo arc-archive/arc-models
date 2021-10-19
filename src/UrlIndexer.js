@@ -11,21 +11,21 @@ WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
 License for the specific language governing permissions and limitations under
 the License.
 */
-import { v4 } from '@advanced-rest-client/uuid-generator';
-import { ArcModelEventTypes, ArcModelEvents } from '@advanced-rest-client/arc-events';
+import { v4 } from '@advanced-rest-client/uuid';
+import { ArcModelEventTypes, ArcModelEvents } from '@advanced-rest-client/events';
 import { normalizeRequestType } from './Utils.js';
 
-/** @typedef {import('@advanced-rest-client/arc-types').Indexer.IndexableRequest} IndexableRequest */
+/** @typedef {import('@advanced-rest-client/events').Indexer.IndexableRequest} IndexableRequest */
 /** @typedef {import('./UrlIndexer').IndexableRequestInternal} IndexableRequestInternal */
 /** @typedef {import('./UrlIndexer').IndexableRequestMap} IndexableRequestMap */
 /** @typedef {import('./UrlIndexer').ProcessedQueryResults} ProcessedQueryResults */
-/** @typedef {import('@advanced-rest-client/arc-types').Indexer.IndexQueryOptions} IndexQueryOptions */
-/** @typedef {import('@advanced-rest-client/arc-types').Indexer.IndexQueryResult} IndexQueryResult */
-/** @typedef {import('@advanced-rest-client/arc-events').ARCRequestUpdatedEvent} ARCRequestUpdatedEvent */
-/** @typedef {import('@advanced-rest-client/arc-events').ARCRequestDeletedEvent} ARCRequestDeletedEvent */
-/** @typedef {import('@advanced-rest-client/arc-events').ARCModelStateDeleteEvent} ARCModelStateDeleteEvent */
-/** @typedef {import('@advanced-rest-client/arc-events').ARCUrlIndexUpdateEvent} ARCUrlIndexUpdateEvent */
-/** @typedef {import('@advanced-rest-client/arc-events').ARCUrlIndexQueryEvent} ARCUrlIndexQueryEvent */
+/** @typedef {import('@advanced-rest-client/events').Indexer.IndexQueryOptions} IndexQueryOptions */
+/** @typedef {import('@advanced-rest-client/events').Indexer.IndexQueryResult} IndexQueryResult */
+/** @typedef {import('@advanced-rest-client/events').ARCRequestUpdatedEvent} ARCRequestUpdatedEvent */
+/** @typedef {import('@advanced-rest-client/events').ARCRequestDeletedEvent} ARCRequestDeletedEvent */
+/** @typedef {import('@advanced-rest-client/events').ARCModelStateDeleteEvent} ARCModelStateDeleteEvent */
+/** @typedef {import('@advanced-rest-client/events').ARCUrlIndexUpdateEvent} ARCUrlIndexUpdateEvent */
+/** @typedef {import('@advanced-rest-client/events').ARCUrlIndexQueryEvent} ARCUrlIndexQueryEvent */
 
 /* eslint-disable class-methods-use-this */
 /* eslint-disable no-plusplus */
@@ -99,12 +99,16 @@ export function createSchema(e) {
  * The component automatically handles request update/delete events to index or
  * remove index of a request object.
  */
-export class UrlIndexer extends HTMLElement {
+export class UrlIndexer {
   /**
-   * @constructor
+   * @param {EventTarget} eventsTarget The element to use to listen for the DOM events and dispatch the events on.
    */
-  constructor() {
-    super();
+  constructor(eventsTarget) {
+    /**
+     * The element to use to listen for the DOM events and dispatch the events on.
+     */
+    this.eventsTarget = eventsTarget;
+
     this[indexUpdateHandler] = this[indexUpdateHandler].bind(this);
     this[indexQueryHandler] = this[indexQueryHandler].bind(this);
     this[requestChangeHandler] = this[requestChangeHandler].bind(this);
@@ -115,20 +119,28 @@ export class UrlIndexer extends HTMLElement {
     this[deleteRequestQueueValue] = [];
   }
 
-  connectedCallback() {
-    window.addEventListener(ArcModelEventTypes.UrlIndexer.update, this[indexUpdateHandler]);
-    window.addEventListener(ArcModelEventTypes.UrlIndexer.query, this[indexQueryHandler]);
-    window.addEventListener(ArcModelEventTypes.Request.State.update, this[requestChangeHandler]);
-    window.addEventListener(ArcModelEventTypes.Request.State.delete, this[requestDeleteHandler]);
-    window.addEventListener(ArcModelEventTypes.destroyed, this[deletemodelHandler]);
+  /**
+   * Listens for the DOM events.
+   */
+  listen() {
+    const { eventsTarget } = this;
+    eventsTarget.addEventListener(ArcModelEventTypes.UrlIndexer.update, this[indexUpdateHandler]);
+    eventsTarget.addEventListener(ArcModelEventTypes.UrlIndexer.query, this[indexQueryHandler]);
+    eventsTarget.addEventListener(ArcModelEventTypes.Request.State.update, this[requestChangeHandler]);
+    eventsTarget.addEventListener(ArcModelEventTypes.Request.State.delete, this[requestDeleteHandler]);
+    eventsTarget.addEventListener(ArcModelEventTypes.destroyed, this[deletemodelHandler]);
   }
 
-  disconnectedCallback() {
-    window.removeEventListener(ArcModelEventTypes.UrlIndexer.update, this[indexUpdateHandler]);
-    window.removeEventListener(ArcModelEventTypes.UrlIndexer.query, this[indexQueryHandler]);
-    window.removeEventListener(ArcModelEventTypes.Request.State.update, this[requestChangeHandler]);
-    window.removeEventListener(ArcModelEventTypes.Request.State.delete, this[requestDeleteHandler]);
-    window.removeEventListener(ArcModelEventTypes.destroyed, this[deletemodelHandler]);
+  /**
+   * Removes the DOM event listeners.
+   */
+  unlisten() {
+    const { eventsTarget } = this;
+    eventsTarget.removeEventListener(ArcModelEventTypes.UrlIndexer.update, this[indexUpdateHandler]);
+    eventsTarget.removeEventListener(ArcModelEventTypes.UrlIndexer.query, this[indexQueryHandler]);
+    eventsTarget.removeEventListener(ArcModelEventTypes.Request.State.update, this[requestChangeHandler]);
+    eventsTarget.removeEventListener(ArcModelEventTypes.Request.State.delete, this[requestDeleteHandler]);
+    eventsTarget.removeEventListener(ArcModelEventTypes.destroyed, this[deletemodelHandler]);
   }
 
   /**
@@ -350,7 +362,7 @@ export class UrlIndexer extends HTMLElement {
     }
     db.close();
     this.__db = null;
-    ArcModelEvents.UrlIndexer.State.finished(this);
+    ArcModelEvents.UrlIndexer.State.finished(this.eventsTarget);
   }
 
   /**

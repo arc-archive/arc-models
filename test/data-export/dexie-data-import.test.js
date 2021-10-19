@@ -1,46 +1,45 @@
 import { assert, fixture } from '@open-wc/testing';
-import { DataGenerator } from '@advanced-rest-client/arc-data-generator';
+import { MockedStore } from '../../index.js'
 import { DataHelper } from './DataHelper.js';
-import '../../arc-data-import.js';
-
-/** @typedef {import('../../src/ArcDataImportElement.js').ArcDataImportElement} ArcDataImportElement */
+import { ArcDataImport } from '../../src/ArcDataImport.js';
 
 describe('Dexie legacy import', () => {
-  /**
-   * @return {Promise<ArcDataImportElement>}
-   */
-  async function basicFixture() {
-    return fixture(`<arc-data-import></arc-data-import>`);
-  }
+  const store = new MockedStore();
 
-  const generator = new DataGenerator();
+  async function etFixture() {
+    return fixture(`<div></div>`);
+  }
 
   describe('Dexie import to datastore', () => {
     let originalData;
-    let element = /** @type ArcDataImportElement */ (null);
     let data;
     before(async () => {
-      await generator.destroySavedRequestData();
+      await store.destroySaved();
       const response = await DataHelper.getFile('dexie-data-export.json');
       originalData = JSON.parse(response);
     });
 
-    after(() => generator.destroySavedRequestData());
+    after(() => store.destroySaved());
 
+    /** @type ArcDataImport */
+    let element;
+    /** @type Element */
+    let et;
     beforeEach(async () => {
-      element = await basicFixture();
-      data = generator.clone(originalData);
+      et = await etFixture();
+      element = new ArcDataImport(et);
+      data = store.clone(originalData);
     });
 
     it('stores the data', async () => {
       const parsed = await element.normalizeImportData(data);
       const errors = await element.storeData(parsed);
       assert.isUndefined(errors, 'has no data storing error');
-      const requests = await generator.getDatastoreRequestData();
+      const requests = await store.getDatastoreRequestData();
       assert.lengthOf(requests, 6, 'Has 6 requests');
-      const projects = await generator.getDatastoreProjectsData();
+      const projects = await store.getDatastoreProjectsData();
       assert.lengthOf(projects, 2, 'Has 2 projects');
-      const history = await generator.getDatastoreHistoryData();
+      const history = await store.getDatastoreHistoryData();
       assert.lengthOf(history, 0, 'Has no history');
     });
 

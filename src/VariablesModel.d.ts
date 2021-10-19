@@ -1,5 +1,5 @@
-import { Variable, Model } from '@advanced-rest-client/arc-types';
-import { ARCEnvironmentCurrentEvent, ARCEnvironmentSelectEvent, EnvironmentStateDetail } from '@advanced-rest-client/arc-events';
+import { Variable, Model } from '@advanced-rest-client/events';
+import { ARCEnvironmentCurrentEvent, ARCEnvironmentSelectEvent, EnvironmentStateDetail } from '@advanced-rest-client/events';
 import {ArcBaseModel} from './ArcBaseModel';
 
 export declare const envReadHandler: unique symbol;
@@ -159,9 +159,6 @@ export declare class VariablesModel extends ArcBaseModel {
    * Reads the current state and informs the components about the change.
    */
   [selectEnvironment](): Promise<void>;
-
-  _attachListeners(node: EventTarget): void;
-  _detachListeners(node: EventTarget): void;
 
   /**
    * A handler for the environment change event

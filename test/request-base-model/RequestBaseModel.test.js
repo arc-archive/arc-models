@@ -1,13 +1,13 @@
 import { fixture, assert } from '@open-wc/testing';
 import sinon from 'sinon';
 import { DataGenerator } from '@advanced-rest-client/arc-data-generator';
-import { ArcModelEventTypes, ArcModelEvents } from '@advanced-rest-client/arc-events';
+import { ArcModelEventTypes, ArcModelEvents } from '@advanced-rest-client/events';
 import { RequestBaseModel } from '../../src/RequestBaseModel.js';
 import '../../request-model.js';
 
-/** @typedef {import('@advanced-rest-client/arc-types').Project.ARCProject} ARCProject */
-/** @typedef {import('@advanced-rest-client/arc-types').ArcRequest.ARCSavedRequest} ARCSavedRequest */
-/** @typedef {import('@advanced-rest-client/arc-types').Model.ARCEntityChangeRecord} ARCEntityChangeRecord */
+/** @typedef {import('@advanced-rest-client/events').Project.ARCProject} ARCProject */
+/** @typedef {import('@advanced-rest-client/events').ArcRequest.ARCSavedRequest} ARCSavedRequest */
+/** @typedef {import('@advanced-rest-client/events').Model.ARCEntityChangeRecord} ARCEntityChangeRecord */
 /** @typedef {import('../../').RequestModel} RequestModel */
 
 class RequestTestModel extends RequestBaseModel {

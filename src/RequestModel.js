@@ -12,9 +12,9 @@ WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
 License for the specific language governing permissions and limitations under
 the License.
 */
-import { BodyProcessor } from '@advanced-rest-client/body-editor';
-import { v4 } from '@advanced-rest-client/uuid-generator';
-import { ArcModelEventTypes, ArcModelEvents } from '@advanced-rest-client/arc-events';
+import { BodyProcessor } from '@advanced-rest-client/libs';
+import { v4 } from '@advanced-rest-client/uuid';
+import { ArcModelEventTypes, ArcModelEvents } from '@advanced-rest-client/events';
 import { RequestBaseModel } from './RequestBaseModel.js';
 import '../url-indexer.js';
 import { UrlIndexer } from './UrlIndexer.js';
@@ -25,27 +25,28 @@ import { normalizeRequest, cancelEvent, revertDelete, restoreTransformedPayload 
 /* eslint-disable no-plusplus */
 /* eslint-disable no-await-in-loop */
 
-/** @typedef {import('@advanced-rest-client/arc-types').Project.ARCProject} ARCProject */
-/** @typedef {import('@advanced-rest-client/arc-types').ArcRequest.ARCSavedRequest} ARCSavedRequest */
-/** @typedef {import('@advanced-rest-client/arc-types').ArcRequest.ARCHistoryRequest} ARCHistoryRequest */
-/** @typedef {import('@advanced-rest-client/arc-types').ArcRequest.ARCRequestRestoreOptions} ARCRequestRestoreOptions */
-/** @typedef {import('./types').DeletedEntity} DeletedEntity */
-/** @typedef {import('./types').ARCEntityChangeRecord} ARCEntityChangeRecord */
-/** @typedef {import('./types').ARCModelListResult} ARCModelListResult */
-/** @typedef {import('./types').ARCModelListOptions} ARCModelListOptions */
-/** @typedef {import('./events/RequestEvents').ARCRequestReadEvent} ARCRequestReadEvent */
-/** @typedef {import('./events/RequestEvents').ARCRequestReadBulkEvent} ARCRequestReadBulkEvent */
-/** @typedef {import('./events/RequestEvents').ARCRequestUpdateEvent} ARCRequestUpdateEvent */
-/** @typedef {import('./events/RequestEvents').ARCRequestUpdateBulkEvent} ARCRequestUpdateBulkEvent */
-/** @typedef {import('./events/RequestEvents').ARCRequestStoreEvent} ARCRequestStoreEvent */
-/** @typedef {import('./events/RequestEvents').ARCRequestDeleteEvent} ARCRequestDeleteEvent */
-/** @typedef {import('./events/RequestEvents').ARCRequestListEvent} ARCRequestListEvent */
-/** @typedef {import('./events/RequestEvents').ARCRequestQueryEvent} ARCRequestQueryEvent */
-/** @typedef {import('./events/RequestEvents').ARCRequestListProjectRequestsEvent} ARCRequestListProjectRequestsEvent */
-/** @typedef {import('./events/RequestEvents').ARCRequestDeleteBulkEvent} ARCRequestDeleteBulkEvent */
-/** @typedef {import('./events/RequestEvents').ARCRequestUndeleteBulkEvent} ARCRequestUndeleteBulkEvent */
-/** @typedef {import('./events/BaseEvents').ARCModelUpdateEventDetail} ARCModelUpdateEventDetail */
-/** @typedef {import('./events/BaseEvents').ARCModelDeleteEvent} ARCModelDeleteEvent */
+/** @typedef {import('@advanced-rest-client/events').Project.ARCProject} ARCProject */
+/** @typedef {import('@advanced-rest-client/events').ArcRequest.ARCSavedRequest} ARCSavedRequest */
+/** @typedef {import('@advanced-rest-client/events').ArcRequest.ARCHistoryRequest} ARCHistoryRequest */
+/** @typedef {import('@advanced-rest-client/events').ArcRequest.ARCRequestRestoreOptions} ARCRequestRestoreOptions */
+/** @typedef {import('@advanced-rest-client/events').ArcResponse.TransformedPayload} TransformedPayload */
+/** @typedef {import('@advanced-rest-client/events').Model.DeletedEntity} DeletedEntity */
+/** @typedef {import('@advanced-rest-client/events').Model.ARCEntityChangeRecord} ARCEntityChangeRecord */
+/** @typedef {import('@advanced-rest-client/events').Model.ARCModelListResult} ARCModelListResult */
+/** @typedef {import('@advanced-rest-client/events').Model.ARCModelListOptions} ARCModelListOptions */
+/** @typedef {import('@advanced-rest-client/events').ARCRequestReadEvent} ARCRequestReadEvent */
+/** @typedef {import('@advanced-rest-client/events').ARCRequestReadBulkEvent} ARCRequestReadBulkEvent */
+/** @typedef {import('@advanced-rest-client/events').ARCRequestUpdateEvent} ARCRequestUpdateEvent */
+/** @typedef {import('@advanced-rest-client/events').ARCRequestUpdateBulkEvent} ARCRequestUpdateBulkEvent */
+/** @typedef {import('@advanced-rest-client/events').ARCRequestStoreEvent} ARCRequestStoreEvent */
+/** @typedef {import('@advanced-rest-client/events').ARCRequestDeleteEvent} ARCRequestDeleteEvent */
+/** @typedef {import('@advanced-rest-client/events').ARCRequestListEvent} ARCRequestListEvent */
+/** @typedef {import('@advanced-rest-client/events').ARCRequestQueryEvent} ARCRequestQueryEvent */
+/** @typedef {import('@advanced-rest-client/events').ARCRequestListProjectRequestsEvent} ARCRequestListProjectRequestsEvent */
+/** @typedef {import('@advanced-rest-client/events').ARCRequestDeleteBulkEvent} ARCRequestDeleteBulkEvent */
+/** @typedef {import('@advanced-rest-client/events').ARCRequestUndeleteBulkEvent} ARCRequestUndeleteBulkEvent */
+/** @typedef {import('@advanced-rest-client/events').ARCModelUpdateEventDetail} ARCModelUpdateEventDetail */
+/** @typedef {import('@advanced-rest-client/events').ARCModelDeleteEvent} ARCModelDeleteEvent */
 
 export const readHandler = Symbol('readHandler');
 export const readBulkHandler = Symbol('readBulkHandler');
@@ -180,7 +181,7 @@ export class RequestModel extends RequestBaseModel {
       } else {
         request = BodyProcessor.restorePayload(request);
         if (request.response && request.response.payload) {
-          const p = request.response.payload;
+          const p = /** @type TransformedPayload */ (request.response.payload);
           if (p.type && p.data) {
             request.response.payload = restoreTransformedPayload(p);
           }
@@ -472,7 +473,7 @@ export class RequestModel extends RequestBaseModel {
   async [revertRemoveProject](result) {
     const projects = {};
     result.forEach((record) => {
-      const req = /** @type ARCHistoryRequest|ARCSavedRequest */ (record.item);
+      const req = /** @type ARCSavedRequest */ (record.item);
       if (!Array.isArray(req.projects) || !req.projects.length) {
         return;
       }
@@ -861,8 +862,8 @@ export class RequestModel extends RequestBaseModel {
    * Adds event listeners.
    * @param {EventTarget} node
    */
-  _attachListeners(node) {
-    super._attachListeners(node);
+  listen(node) {
+    super.listen(node);
     node.addEventListener(ArcModelEventTypes.Request.read, this[readHandler]);
     node.addEventListener(ArcModelEventTypes.Request.readBulk, this[readBulkHandler]);
     node.addEventListener(ArcModelEventTypes.Request.store, this[storeHandler]);
@@ -881,8 +882,8 @@ export class RequestModel extends RequestBaseModel {
    * Removes event listeners.
    * @param {EventTarget} node
    */
-  _detachListeners(node) {
-    super._detachListeners(node);
+  unlisten(node) {
+    super.unlisten(node);
     node.removeEventListener(ArcModelEventTypes.Request.read, this[readHandler]);
     node.removeEventListener(ArcModelEventTypes.Request.readBulk, this[readBulkHandler]);
     node.removeEventListener(ArcModelEventTypes.Request.store, this[storeHandler]);

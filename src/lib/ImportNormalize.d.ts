@@ -1,6 +1,6 @@
-import { DataExport } from '@advanced-rest-client/arc-types';
+import { DataExport } from '@advanced-rest-client/events';
 
-/** @typedef {import('@advanced-rest-client/arc-types').DataExport.ArcExportObject} ArcExportObject */
+/** @typedef {import('@advanced-rest-client/events').DataExport.ArcExportObject} ArcExportObject */
 
 /**
  * A class that takes care of the import data and normalizes it to a common

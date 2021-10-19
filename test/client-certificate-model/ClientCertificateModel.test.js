@@ -1,14 +1,14 @@
 import { fixture, assert } from '@open-wc/testing';
 import { DataGenerator } from '@advanced-rest-client/arc-data-generator';
 import sinon from 'sinon';
-import { ArcModelEventTypes } from '@advanced-rest-client/arc-events';
+import { ArcModelEventTypes } from '@advanced-rest-client/events';
 import 'chance/dist/chance.min.js';
 import '../../client-certificate-model.js';
 
 /** @typedef {import('../../src/ClientCertificateModel').ClientCertificateModel} ClientCertificateModel */
-/** @typedef {import('@advanced-rest-client/arc-types').ClientCertificate.ARCCertificateIndex} ARCCertificateIndex */
-/** @typedef {import('@advanced-rest-client/arc-types').ClientCertificate.ARCRequestCertificate} ARCRequestCertificate */
-/** @typedef {import('@advanced-rest-client/arc-types').ClientCertificate.Certificate} Certificate */
+/** @typedef {import('@advanced-rest-client/events').ClientCertificate.ARCCertificateIndex} ARCCertificateIndex */
+/** @typedef {import('@advanced-rest-client/events').ClientCertificate.ARCRequestCertificate} ARCRequestCertificate */
+/** @typedef {import('@advanced-rest-client/events').ClientCertificate.Certificate} Certificate */
 
 describe('ClientCertificateModel', () => {
   const generator = new DataGenerator();

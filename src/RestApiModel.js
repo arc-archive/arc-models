@@ -11,32 +11,32 @@ WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
 License for the specific language governing permissions and limitations under
 the License.
 */
-import { ArcModelEventTypes, ArcModelEvents } from '@advanced-rest-client/arc-events';
+import { ArcModelEventTypes, ArcModelEvents } from '@advanced-rest-client/events';
 import { ArcBaseModel, deletemodelHandler } from './ArcBaseModel.js';
 
 /* eslint-disable class-methods-use-this */
 /* eslint-disable no-param-reassign */
 /* eslint-disable no-plusplus */
 
-/** @typedef {import('@advanced-rest-client/arc-types').RestApi.ARCRestApiIndex} ARCRestApiIndex */
-/** @typedef {import('@advanced-rest-client/arc-types').RestApi.ARCRestApi} ARCRestApi */
-/** @typedef {import('@advanced-rest-client/arc-events').ARCRestApiReadEvent} ARCRestApiReadEvent */
-/** @typedef {import('@advanced-rest-client/arc-events').ARCRestApiUpdateEvent} ARCRestApiUpdateEvent */
-/** @typedef {import('@advanced-rest-client/arc-events').ARCRestApiUpdateBulkEvent} ARCRestApiUpdateBulkEvent */
-/** @typedef {import('@advanced-rest-client/arc-events').ARCRestApiUpdatedEvent} ARCRestApiUpdatedEvent */
-/** @typedef {import('@advanced-rest-client/arc-events').ARCRestApiDeleteEvent} ARCRestApiDeleteEvent */
-/** @typedef {import('@advanced-rest-client/arc-events').ARCRestApiDeletedEvent} ARCRestApiDeletedEvent */
-/** @typedef {import('@advanced-rest-client/arc-events').ARCRestApiListEvent} ARCRestApiListEvent */
-/** @typedef {import('@advanced-rest-client/arc-events').ARCRestApiDataReadEvent} ARCRestApiDataReadEvent */
-/** @typedef {import('@advanced-rest-client/arc-events').ARCRestApiDataUpdateEvent} ARCRestApiDataUpdateEvent */
-/** @typedef {import('@advanced-rest-client/arc-events').ARCRestApiDataUpdatedEvent} ARCRestApiDataUpdatedEvent */
-/** @typedef {import('@advanced-rest-client/arc-events').ARCRestApiVersionDeleteEvent} ARCRestApiVersionDeleteEvent */
-/** @typedef {import('@advanced-rest-client/arc-events').ARCRestApiVersionDeletedEvent} ARCRestApiVersionDeletedEvent */
-/** @typedef {import('@advanced-rest-client/arc-events').ARCModelDeleteEvent} ARCModelDeleteEvent */
-/** @typedef {import('@advanced-rest-client/arc-types').Model.ARCEntityChangeRecord} ARCEntityChangeRecord */
-/** @typedef {import('@advanced-rest-client/arc-types').Model.ARCModelListOptions} ARCModelListOptions */
-/** @typedef {import('@advanced-rest-client/arc-types').Model.ARCModelListResult} ARCModelListResult */
-/** @typedef {import('@advanced-rest-client/arc-types').Model.DeletedEntity} DeletedEntity */
+/** @typedef {import('@advanced-rest-client/events').RestApi.ARCRestApiIndex} ARCRestApiIndex */
+/** @typedef {import('@advanced-rest-client/events').RestApi.ARCRestApi} ARCRestApi */
+/** @typedef {import('@advanced-rest-client/events').ARCRestApiReadEvent} ARCRestApiReadEvent */
+/** @typedef {import('@advanced-rest-client/events').ARCRestApiUpdateEvent} ARCRestApiUpdateEvent */
+/** @typedef {import('@advanced-rest-client/events').ARCRestApiUpdateBulkEvent} ARCRestApiUpdateBulkEvent */
+/** @typedef {import('@advanced-rest-client/events').ARCRestApiUpdatedEvent} ARCRestApiUpdatedEvent */
+/** @typedef {import('@advanced-rest-client/events').ARCRestApiDeleteEvent} ARCRestApiDeleteEvent */
+/** @typedef {import('@advanced-rest-client/events').ARCRestApiDeletedEvent} ARCRestApiDeletedEvent */
+/** @typedef {import('@advanced-rest-client/events').ARCRestApiListEvent} ARCRestApiListEvent */
+/** @typedef {import('@advanced-rest-client/events').ARCRestApiDataReadEvent} ARCRestApiDataReadEvent */
+/** @typedef {import('@advanced-rest-client/events').ARCRestApiDataUpdateEvent} ARCRestApiDataUpdateEvent */
+/** @typedef {import('@advanced-rest-client/events').ARCRestApiDataUpdatedEvent} ARCRestApiDataUpdatedEvent */
+/** @typedef {import('@advanced-rest-client/events').ARCRestApiVersionDeleteEvent} ARCRestApiVersionDeleteEvent */
+/** @typedef {import('@advanced-rest-client/events').ARCRestApiVersionDeletedEvent} ARCRestApiVersionDeletedEvent */
+/** @typedef {import('@advanced-rest-client/events').ARCModelDeleteEvent} ARCModelDeleteEvent */
+/** @typedef {import('@advanced-rest-client/events').Model.ARCEntityChangeRecord} ARCEntityChangeRecord */
+/** @typedef {import('@advanced-rest-client/events').Model.ARCModelListOptions} ARCModelListOptions */
+/** @typedef {import('@advanced-rest-client/events').Model.ARCModelListResult} ARCModelListResult */
+/** @typedef {import('@advanced-rest-client/events').Model.DeletedEntity} DeletedEntity */
 
 export const readHandler = Symbol('readHandler');
 export const updateHandler = Symbol('updateHandler');
@@ -330,8 +330,11 @@ export class RestApiModel extends ArcBaseModel {
     };
   }
 
-  _attachListeners(node) {
-    super._attachListeners(node);
+  /**
+   * @param {EventTarget} node
+   */
+  listen(node) {
+    super.listen(node);
     node.addEventListener(ArcModelEventTypes.RestApi.read, this[readHandler]);
     node.addEventListener(ArcModelEventTypes.RestApi.update, this[updateHandler]);
     node.addEventListener(ArcModelEventTypes.RestApi.updateBulk, this[updatebulkHandler]);
@@ -342,8 +345,11 @@ export class RestApiModel extends ArcBaseModel {
     node.addEventListener(ArcModelEventTypes.RestApi.versionDelete, this[versionDeleteHandler]);
   }
 
-  _detachListeners(node) {
-    super._detachListeners(node);
+  /**
+   * @param {EventTarget} node
+   */
+  unlisten(node) {
+    super.unlisten(node);
     node.removeEventListener(ArcModelEventTypes.RestApi.read, this[readHandler]);
     node.removeEventListener(ArcModelEventTypes.RestApi.update, this[updateHandler]);
     node.removeEventListener(ArcModelEventTypes.RestApi.updateBulk, this[updatebulkHandler]);

@@ -14,9 +14,9 @@ export const currentItemValue = Symbol('currentItemValue');
 /** @typedef {import('./PostmanV2Transformer').PostmanBody} PostmanBody */
 /** @typedef {import('./PostmanV2Transformer').PostmanUrlEncoded} PostmanUrlEncoded */
 /** @typedef {import('./PostmanV2Transformer').PostmanFormData} PostmanFormData */
-/** @typedef {import('@advanced-rest-client/arc-types').DataExport.ExportArcSavedRequest} ExportArcSavedRequest */
-/** @typedef {import('@advanced-rest-client/arc-types').DataExport.ExportArcProjects} ExportArcProjects */
-/** @typedef {import('@advanced-rest-client/arc-types').DataExport.ArcExportObject} ArcExportObject */
+/** @typedef {import('@advanced-rest-client/events').DataExport.ExportArcSavedRequest} ExportArcSavedRequest */
+/** @typedef {import('@advanced-rest-client/events').DataExport.ExportArcProjects} ExportArcProjects */
+/** @typedef {import('@advanced-rest-client/events').DataExport.ArcExportObject} ArcExportObject */
 
 /**
  * Transforms Postman v2.1 collections to ARC import object.

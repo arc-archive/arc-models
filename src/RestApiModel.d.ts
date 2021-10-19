@@ -1,4 +1,4 @@
-import { RestApi, Model } from '@advanced-rest-client/arc-types';
+import { RestApi, Model } from '@advanced-rest-client/events';
 import { ArcBaseModel } from './ArcBaseModel';
 
 export const readHandler: symbol;
@@ -108,7 +108,4 @@ export declare class RestApiModel extends ArcBaseModel {
    * @param versions List of versions to remove.
    */
   removeVersions(indexId: string, versions: string[]): Promise<void>;
-
-  _attachListeners(node: EventTarget): void;
-  _detachListeners(node: EventTarget): void;
 }

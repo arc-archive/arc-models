@@ -1,5 +1,5 @@
 import { fixture, assert, aTimeout } from '@open-wc/testing';
-import { ArcModelEventTypes, ArcModelEvents } from '@advanced-rest-client/arc-events';
+import { ArcModelEventTypes, ArcModelEvents } from '@advanced-rest-client/events';
 import { DbHelper } from './db-helper.js';
 import '../../url-indexer.js';
 

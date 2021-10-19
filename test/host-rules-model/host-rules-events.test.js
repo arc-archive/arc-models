@@ -1,10 +1,10 @@
 import { fixture, assert } from '@open-wc/testing';
 import { DataGenerator } from '@advanced-rest-client/arc-data-generator';
-import { ArcModelEventTypes, ArcModelEvents } from '@advanced-rest-client/arc-events';
+import { ArcModelEventTypes, ArcModelEvents } from '@advanced-rest-client/events';
 import '../../host-rules-model.js';
 
 /** @typedef {import('../../src/HostRulesModel').HostRulesModel} HostRulesModel */
-/** @typedef {import('@advanced-rest-client/arc-types').HostRule.ARCHostRule} ARCHostRule */
+/** @typedef {import('@advanced-rest-client/events').HostRule.ARCHostRule} ARCHostRule */
 
 describe('<host-rules-model> - Events based', () => {
   const generator = new DataGenerator();

@@ -5,12 +5,12 @@ import {
 } from './DbUtils.js';
 import { normalizeRequest } from '../Utils.js';
 
-/** @typedef {import('@advanced-rest-client/arc-types').DataExport.ArcNativeDataExport} ArcNativeDataExport */
-/** @typedef {import('@advanced-rest-client/arc-types').DataExport.ArcExportProcessedData} ArcExportProcessedData */
-/** @typedef {import('@advanced-rest-client/arc-types').DataExport.ExportKey} ExportKey */
-/** @typedef {import('@advanced-rest-client/arc-types').DataExport.ArcExportClientCertificateData} ArcExportClientCertificateData */
-/** @typedef {import('@advanced-rest-client/arc-types').ClientCertificate.ARCClientCertificate} ARCClientCertificate */
-/** @typedef {import('@advanced-rest-client/arc-types').ClientCertificate.ARCCertificateIndex} ARCCertificateIndex */
+/** @typedef {import('@advanced-rest-client/events').DataExport.ArcNativeDataExport} ArcNativeDataExport */
+/** @typedef {import('@advanced-rest-client/events').DataExport.ArcExportProcessedData} ArcExportProcessedData */
+/** @typedef {import('@advanced-rest-client/events').DataExport.ExportKey} ExportKey */
+/** @typedef {import('@advanced-rest-client/events').DataExport.ArcExportClientCertificateData} ArcExportClientCertificateData */
+/** @typedef {import('@advanced-rest-client/events').ClientCertificate.ARCRequestCertificate} ARCRequestCertificate */
+/** @typedef {import('@advanced-rest-client/events').ClientCertificate.ARCCertificateIndex} ARCCertificateIndex */
 
 /**
  * Maps export key from the event to database name.
@@ -126,7 +126,7 @@ export class ExportFactory {
     if (!indexData.length) {
       return undefined;
     }
-    const data = /** @type ARCClientCertificate[] */ (await getDatabaseEntries('client-certificates-data', this.dbChunk));
+    const data = /** @type ARCRequestCertificate[] */ (await getDatabaseEntries('client-certificates-data', this.dbChunk));
     const result = [];
     indexData.forEach((item) => {
       const { dataKey, _id } = item;

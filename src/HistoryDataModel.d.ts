@@ -1,6 +1,6 @@
 import { ArcBaseModel } from './ArcBaseModel.js';
-import { ArcRequest, ArcResponse, HistoryData } from '@advanced-rest-client/arc-types';
-import { ApiResponseEvent } from '@advanced-rest-client/arc-events';
+import { ArcRequest, ArcResponse, HistoryData } from '@advanced-rest-client/events';
+import { ApiResponseEvent } from '@advanced-rest-client/events';
 
 export declare const responseHandler:  unique symbol;
 export declare const saveHistoryData:  unique symbol;
@@ -31,10 +31,6 @@ export class HistoryDataModel extends ArcBaseModel {
   dataDisabled: boolean;
 
   constructor();
-
-  connectedCallback(): void;
-
-  disconnectedCallback(): void;
 
   /**
    * Processes API response action.

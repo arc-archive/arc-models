@@ -11,7 +11,7 @@ WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
 License for the specific language governing permissions and limitations under
 the License.
 */
-import { ArcModelEventTypes, ArcModelEvents } from '@advanced-rest-client/arc-events';
+import { ArcModelEventTypes, ArcModelEvents } from '@advanced-rest-client/events';
 import { ArcBaseModel } from './ArcBaseModel.js';
 
 /* eslint-disable require-atomic-updates */
@@ -19,15 +19,15 @@ import { ArcBaseModel } from './ArcBaseModel.js';
 /* eslint-disable no-continue */
 /* eslint-disable no-param-reassign */
 
-/** @typedef {import('@advanced-rest-client/arc-types').HostRule.ARCHostRule} ARCHostRule */
-/** @typedef {import('@advanced-rest-client/arc-types').Model.ARCEntityChangeRecord} ARCEntityChangeRecord */
-/** @typedef {import('@advanced-rest-client/arc-types').Model.ARCModelListOptions} ARCModelListOptions */
-/** @typedef {import('@advanced-rest-client/arc-types').Model.ARCModelListResult} ARCModelListResult */
-/** @typedef {import('@advanced-rest-client/arc-types').Model.DeletedEntity} DeletedEntity */
-/** @typedef {import('@advanced-rest-client/arc-events').ARCHostRuleUpdateEvent} ARCHostRuleUpdateEvent */
-/** @typedef {import('@advanced-rest-client/arc-events').ARCHostRuleUpdateBulkEvent} ARCHostRuleUpdateBulkEvent */
-/** @typedef {import('@advanced-rest-client/arc-events').ARCHostRuleDeleteEvent} ARCHostRuleDeleteEvent */
-/** @typedef {import('@advanced-rest-client/arc-events').ARCHostRulesListEvent} ARCHostRulesListEvent */
+/** @typedef {import('@advanced-rest-client/events').HostRule.ARCHostRule} ARCHostRule */
+/** @typedef {import('@advanced-rest-client/events').Model.ARCEntityChangeRecord} ARCEntityChangeRecord */
+/** @typedef {import('@advanced-rest-client/events').Model.ARCModelListOptions} ARCModelListOptions */
+/** @typedef {import('@advanced-rest-client/events').Model.ARCModelListResult} ARCModelListResult */
+/** @typedef {import('@advanced-rest-client/events').Model.DeletedEntity} DeletedEntity */
+/** @typedef {import('@advanced-rest-client/events').ARCHostRuleUpdateEvent} ARCHostRuleUpdateEvent */
+/** @typedef {import('@advanced-rest-client/events').ARCHostRuleUpdateBulkEvent} ARCHostRuleUpdateBulkEvent */
+/** @typedef {import('@advanced-rest-client/events').ARCHostRuleDeleteEvent} ARCHostRuleDeleteEvent */
+/** @typedef {import('@advanced-rest-client/events').ARCHostRulesListEvent} ARCHostRulesListEvent */
 
 export const updateHandler = Symbol('updateHandler');
 export const updateBulkHandler = Symbol('updateBulkHandler');
@@ -58,16 +58,22 @@ export class HostRulesModel extends ArcBaseModel {
     this[updateBulkHandler] = this[updateBulkHandler].bind(this);
   }
 
-  _attachListeners(node) {
-    super._attachListeners(node);
+  /**
+   * @param {EventTarget} node
+   */
+  listen(node) {
+    super.listen(node);
     node.addEventListener(ArcModelEventTypes.HostRules.update, this[updateHandler]);
     node.addEventListener(ArcModelEventTypes.HostRules.updateBulk, this[updateBulkHandler]);
     node.addEventListener(ArcModelEventTypes.HostRules.delete, this[deleteHandler]);
     node.addEventListener(ArcModelEventTypes.HostRules.list, this[listHandler]);
   }
 
-  _detachListeners(node) {
-    super._detachListeners(node);
+  /**
+   * @param {EventTarget} node
+   */
+  unlisten(node) {
+    super.unlisten(node);
     node.removeEventListener(ArcModelEventTypes.HostRules.update, this[updateHandler]);
     node.removeEventListener(ArcModelEventTypes.HostRules.updateBulk, this[updateBulkHandler]);
     node.removeEventListener(ArcModelEventTypes.HostRules.delete, this[deleteHandler]);

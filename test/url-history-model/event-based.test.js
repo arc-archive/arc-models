@@ -1,11 +1,11 @@
 import { assert, fixture, html, oneEvent } from '@open-wc/testing';
 import { DataGenerator } from '@advanced-rest-client/arc-data-generator';
-import { TransportEventTypes, TransportEvents, ArcModelEventTypes, ArcModelEvents } from '@advanced-rest-client/arc-events';
+import { TransportEventTypes, TransportEvents, ArcModelEventTypes, ArcModelEvents } from '@advanced-rest-client/events';
 import sinon from 'sinon';
 import '../../url-history-model.js';
 
 /** @typedef {import('../../src/UrlHistoryModel').UrlHistoryModel} UrlHistoryModel */
-/** @typedef {import('@advanced-rest-client/arc-types').UrlHistory.ARCUrlHistory} ARCUrlHistory */
+/** @typedef {import('@advanced-rest-client/events').UrlHistory.ARCUrlHistory} ARCUrlHistory */
 
 describe('UrlHistoryModel - event based', () => {
   /**

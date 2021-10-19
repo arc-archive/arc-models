@@ -1,4 +1,4 @@
-import { HostRule, Model } from '@advanced-rest-client/arc-types';
+import { HostRule, Model } from '@advanced-rest-client/events';
 import {ArcBaseModel} from './ArcBaseModel.js';
 
 /**
@@ -19,8 +19,6 @@ import {ArcBaseModel} from './ArcBaseModel.js';
 export declare class HostRulesModel extends ArcBaseModel {
 
   constructor();
-  _attachListeners(node: EventTarget): void;
-  _detachListeners(node: EventTarget): void;
 
   /**
    * Reads an entry from the datastore.

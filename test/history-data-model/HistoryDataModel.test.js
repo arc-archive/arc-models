@@ -1,7 +1,7 @@
 /* eslint-disable prefer-template */
 import { fixture, html, assert, oneEvent } from '@open-wc/testing';
 import { DataGenerator } from '@advanced-rest-client/arc-data-generator';
-import { ArcModelEventTypes, TransportEvents, TransportEventTypes } from '@advanced-rest-client/arc-events';
+import { ArcModelEventTypes, TransportEvents, TransportEventTypes } from '@advanced-rest-client/events';
 import '../../history-data-model.js';
 import '../../request-model.js';
 import {
@@ -15,12 +15,12 @@ import {
 } from '../../src/HistoryDataModel.js';
 
 /** @typedef {import('../../').HistoryDataModel} HistoryDataModel */
-/** @typedef {import('@advanced-rest-client/arc-types').HistoryData.HistoryData} HistoryData */
-/** @typedef {import('@advanced-rest-client/arc-types').ArcRequest.TransportRequest} TransportRequest */
-/** @typedef {import('@advanced-rest-client/arc-types').ArcResponse.Response} Response */
-/** @typedef {import('@advanced-rest-client/arc-types').ArcRequest.ARCHistoryRequest} ARCHistoryRequest */
-/** @typedef {import('@advanced-rest-client/arc-events').ARCRequestUpdatedEvent} ARCRequestUpdatedEvent */
-/** @typedef {import('@advanced-rest-client/arc-types').ArcResponse.TransformedPayload} TransformedPayload */
+/** @typedef {import('@advanced-rest-client/events').HistoryData.HistoryData} HistoryData */
+/** @typedef {import('@advanced-rest-client/events').ArcRequest.TransportRequest} TransportRequest */
+/** @typedef {import('@advanced-rest-client/events').ArcResponse.Response} Response */
+/** @typedef {import('@advanced-rest-client/events').ArcRequest.ARCHistoryRequest} ARCHistoryRequest */
+/** @typedef {import('@advanced-rest-client/events').ARCRequestUpdatedEvent} ARCRequestUpdatedEvent */
+/** @typedef {import('@advanced-rest-client/events').ArcResponse.TransformedPayload} TransformedPayload */
 
 describe('HistoryDataModel', () => {
   const generator = new DataGenerator();

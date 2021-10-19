@@ -11,18 +11,18 @@ WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
 License for the specific language governing permissions and limitations under
 the License.
 */
-import { ArcModelEventTypes, ArcModelEvents } from '@advanced-rest-client/arc-events';
+import { ArcModelEventTypes, ArcModelEvents } from '@advanced-rest-client/events';
 import { ArcBaseModel } from './ArcBaseModel.js';
 
-/** @typedef {import('@advanced-rest-client/arc-types').AuthData.ARCAuthData} ARCAuthData */
-/** @typedef {import('@advanced-rest-client/arc-events').ARCAuthDataUpdateEvent} ARCAuthDataUpdateEvent */
-/** @typedef {import('@advanced-rest-client/arc-events').ARCAuthDataQueryEvent} ARCAuthDataQueryEvent */
-/** @typedef {import('@advanced-rest-client/arc-types').Model.ARCEntityChangeRecord} ARCEntityChangeRecord */
+/** @typedef {import('@advanced-rest-client/events').AuthData.ARCAuthData} ARCAuthData */
+/** @typedef {import('@advanced-rest-client/events').ARCAuthDataUpdateEvent} ARCAuthDataUpdateEvent */
+/** @typedef {import('@advanced-rest-client/events').ARCAuthDataQueryEvent} ARCAuthDataQueryEvent */
+/** @typedef {import('@advanced-rest-client/events').Model.ARCEntityChangeRecord} ARCEntityChangeRecord */
 
 /**
  * Removes query parameters and the fragment part from the URL
- * @param {String} url URL to process
- * @return {String} Canonical URL.
+ * @param {string} url URL to process
+ * @return {string} Canonical URL.
  */
 export function normalizeUrl(url) {
   if (!url) {
@@ -45,9 +45,9 @@ export function normalizeUrl(url) {
 /**
  * Computes the database key for auth data
  *
- * @param {String} method The Authorization method to restore data for.
- * @param {String=} url The URL of the request
- * @return {String} Datastore key for auth data
+ * @param {string} method The Authorization method to restore data for.
+ * @param {string=} url The URL of the request
+ * @return {string} Datastore key for auth data
  */
 export function computeKey(method, url) {
   let path = `${method}/`;
@@ -73,8 +73,8 @@ export class AuthDataModel extends ArcBaseModel {
   /**
    * @param {EventTarget} node
    */
-  _attachListeners(node) {
-    super._attachListeners(node);
+  listen(node) {
+    super.listen(node);
     node.addEventListener(ArcModelEventTypes.AuthData.query, this[queryHandler]);
     node.addEventListener(ArcModelEventTypes.AuthData.update, this[updateHandler]);
   }
@@ -82,8 +82,8 @@ export class AuthDataModel extends ArcBaseModel {
   /**
    * @param {EventTarget} node
    */
-  _detachListeners(node) {
-    super._detachListeners(node);
+  unlisten(node) {
+    super.unlisten(node);
     node.removeEventListener(ArcModelEventTypes.AuthData.query, this[queryHandler]);
     node.removeEventListener(ArcModelEventTypes.AuthData.update, this[updateHandler]);
   }

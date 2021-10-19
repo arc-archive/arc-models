@@ -1,5 +1,5 @@
-import { Project, Model } from '@advanced-rest-client/arc-types';
-import { ARCProjectDeleteEvent, ARCProjectListAllEvent, ARCProjectListEvent, ARCProjectMoveEvent, ARCProjectReadEvent, ARCProjectUpdateBulkEvent, ARCProjectUpdateEvent } from '@advanced-rest-client/arc-events';
+import { Project, Model } from '@advanced-rest-client/events';
+import { ARCProjectDeleteEvent, ARCProjectListAllEvent, ARCProjectListEvent, ARCProjectMoveEvent, ARCProjectReadEvent, ARCProjectUpdateBulkEvent, ARCProjectUpdateEvent } from '@advanced-rest-client/events';
 import { RequestBaseModel } from './RequestBaseModel.js';
 
 export declare const readHandler: unique symbol;
@@ -98,9 +98,6 @@ export declare class ProjectModel extends RequestBaseModel {
    * @param rid Request id
    */
   removeRequest(pid: string, rid: string): Promise<void>;
-
-  _attachListeners(node: EventTarget): void;
-  _detachListeners(node: EventTarget): void;
 
   /**
    * Handler for project read event request.

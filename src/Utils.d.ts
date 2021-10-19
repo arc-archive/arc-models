@@ -1,4 +1,4 @@
-import { ArcRequest, ArcResponse, Project, Model } from '@advanced-rest-client/arc-types';
+import { ArcRequest, ArcResponse, Project, Model } from '@advanced-rest-client/events';
 
 /**
  * Computes past midnight for given timestamp.

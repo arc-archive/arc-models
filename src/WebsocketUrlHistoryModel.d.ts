@@ -1,4 +1,4 @@
-import { UrlHistory, Model } from '@advanced-rest-client/arc-types';
+import { UrlHistory, Model } from '@advanced-rest-client/events';
 import {ArcBaseModel} from './ArcBaseModel.js';
 
 export declare function sortFunction(a: UrlHistory.ARCWebsocketUrlHistory, b: UrlHistory.ARCWebsocketUrlHistory): number;
@@ -44,7 +44,4 @@ export declare class WebsocketUrlHistoryModel extends ArcBaseModel {
    * @returns A promise resolved to a list of PouchDB documents.
    */
   query(query: string): Promise<UrlHistory.ARCWebsocketUrlHistory[]>;
-
-  _attachListeners(node: EventTarget): void;
-  _detachListeners(node: EventTarget): void;
 }

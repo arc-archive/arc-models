@@ -5,14 +5,14 @@ import { ImportFactory, transformKeys } from '../../src/lib/ImportFactory.js';
 
 /* global PouchDB */
 
-/** @typedef {import('@advanced-rest-client/arc-types').ArcRequest.ARCSavedRequest} ARCSavedRequest */
-/** @typedef {import('@advanced-rest-client/arc-types').ArcRequest.ARCHistoryRequest} ARCHistoryRequest */
-/** @typedef {import('@advanced-rest-client/arc-types').Project.ARCProject} ARCProject */
-/** @typedef {import('@advanced-rest-client/arc-types').UrlHistory.ARCWebsocketUrlHistory} ARCWebsocketUrlHistory */
-/** @typedef {import('@advanced-rest-client/arc-types').UrlHistory.ARCUrlHistory} ARCUrlHistory */
-/** @typedef {import('@advanced-rest-client/arc-types').AuthData.ARCAuthData} ARCAuthData */
-/** @typedef {import('@advanced-rest-client/arc-types').HostRule.ARCHostRule} ARCHostRule */
-/** @typedef {import('@advanced-rest-client/arc-types').Variable.ARCVariable} ARCVariable */
+/** @typedef {import('@advanced-rest-client/events').ArcRequest.ARCSavedRequest} ARCSavedRequest */
+/** @typedef {import('@advanced-rest-client/events').ArcRequest.ARCHistoryRequest} ARCHistoryRequest */
+/** @typedef {import('@advanced-rest-client/events').Project.ARCProject} ARCProject */
+/** @typedef {import('@advanced-rest-client/events').UrlHistory.ARCWebsocketUrlHistory} ARCWebsocketUrlHistory */
+/** @typedef {import('@advanced-rest-client/events').UrlHistory.ARCUrlHistory} ARCUrlHistory */
+/** @typedef {import('@advanced-rest-client/events').AuthData.ARCAuthData} ARCAuthData */
+/** @typedef {import('@advanced-rest-client/events').HostRule.ARCHostRule} ARCHostRule */
+/** @typedef {import('@advanced-rest-client/events').Variable.ARCVariable} ARCVariable */
 
 describe('ImportDataStore', () => {
   const generator = new DataGenerator();

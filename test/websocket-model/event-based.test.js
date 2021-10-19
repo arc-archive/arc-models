@@ -1,7 +1,7 @@
 import { fixture, assert, html } from '@open-wc/testing';
 import { DataGenerator } from '@advanced-rest-client/arc-data-generator';
 import sinon from 'sinon';
-import { ArcModelEventTypes, ArcModelEvents } from '@advanced-rest-client/arc-events';
+import { ArcModelEventTypes, ArcModelEvents } from '@advanced-rest-client/events';
 import '../../websocket-url-history-model.js';
 
 
@@ -10,7 +10,7 @@ import '../../websocket-url-history-model.js';
 /* eslint-disable no-unused-vars */
 
 /** @typedef {import('../../src/WebsocketUrlHistoryModel').WebsocketUrlHistoryModel} WebsocketUrlHistoryModel */
-/** @typedef {import('@advanced-rest-client/arc-types').UrlHistory.ARCWebsocketUrlHistory} ARCWebsocketUrlHistory */
+/** @typedef {import('@advanced-rest-client/events').UrlHistory.ARCWebsocketUrlHistory} ARCWebsocketUrlHistory */
 
 describe('WebsocketUrlHistoryModel - Events API', () => {
   /**

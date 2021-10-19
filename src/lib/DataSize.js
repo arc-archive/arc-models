@@ -1,5 +1,5 @@
 /* eslint-disable no-plusplus */
-/** @typedef {import('@advanced-rest-client/arc-types').ArcResponse.TransformedPayload} TransformedPayload */
+/** @typedef {import('@advanced-rest-client/events').ArcResponse.TransformedPayload} TransformedPayload */
 
 /**
  * Computes size in the nearest units

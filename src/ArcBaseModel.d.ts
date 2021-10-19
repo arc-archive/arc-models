@@ -1,4 +1,4 @@
-import { Model } from '@advanced-rest-client/arc-types';
+import { Model } from '@advanced-rest-client/events';
 
 export declare interface DefaultQueryOptions extends Object {
   limit: number;
@@ -20,14 +20,17 @@ export declare class ArcBaseModel extends HTMLElement {
    */
   get db(): PouchDB.Database;
   get defaultQueryOptions(): DefaultQueryOptions;
-  eventsTarget: EventTarget;
+  /**
+   * Set with `listen()` method or separately. When set the model dispatch events on this node.
+   * When not set the model does not dispatch events.
+   */
+  eventsTarget?: EventTarget;
   /**
    * Name of the data store
    */
   name?: string;
   /**
    * Limit number of revisions on the data store.
-   * @attribute
    */
   revsLimit?: number;
 
@@ -37,21 +40,15 @@ export declare class ArcBaseModel extends HTMLElement {
    */
   constructor(dbname?: string, revsLimit?: number);
 
-  connectedCallback(): void;
-  disconnectedCallback(): void;
-
-  _attachListeners(node: EventTarget): void;
-  _detachListeners(node: EventTarget): void;
-
   /**
-   * Removes old handlers (if any) and attaches listeners on new event
-   * event target.
-   *
-   * @param eventsTarget Event target to set handlers on. If not set it
-   * will set handlers on the `window` object.
+   * Listens for the DOM events.
    */
-  _eventsTargetChanged(eventsTarget: EventTarget): void;
-
+  listen(node: EventTarget): void;
+  /**
+   * Removes the DOM event listeners.
+   * @param {EventTarget} node
+   */
+  unlisten(node: EventTarget): void;
   /**
    * Reads an entry from the datastore.
    *

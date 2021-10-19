@@ -1,11 +1,11 @@
 import { fixture, assert } from '@open-wc/testing';
 import sinon from 'sinon';
-import { TelemetryEventTypes, ArcModelEventTypes, ArcModelEvents, ARCModelDeleteEvent } from '@advanced-rest-client/arc-events';
+import { TelemetryEventTypes, ArcModelEventTypes, ArcModelEvents, ARCModelDeleteEvent } from '@advanced-rest-client/events';
 import { ArcBaseModel, notifyDestroyed, deletemodelHandler } from '../../src/ArcBaseModel.js';
 import { STORE_NAME } from './TestModel.js';
 
 /** @typedef {import('./TestModel').TestModel} TestModel */
-/** @typedef {import('@advanced-rest-client/arc-events').ARCModelStateDeleteEvent} ARCModelStateDeleteEvent */
+/** @typedef {import('@advanced-rest-client/events').ARCModelStateDeleteEvent} ARCModelStateDeleteEvent */
 
 /* eslint-disable require-atomic-updates */
 

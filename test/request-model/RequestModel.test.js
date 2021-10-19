@@ -2,7 +2,7 @@ import { fixture, assert, oneEvent } from '@open-wc/testing';
 import { DataGenerator } from '@advanced-rest-client/arc-data-generator';
 import sinon from 'sinon';
 import { BodyProcessor } from '@advanced-rest-client/body-editor';
-import { ArcModelEventTypes } from '@advanced-rest-client/arc-events';
+import { ArcModelEventTypes } from '@advanced-rest-client/events';
 import '../../request-model.js';
 import { sortRequestProjectOrder, queryStore } from '../../src/RequestModel.js';
 import { UrlIndexer } from '../../index.js';
@@ -10,12 +10,12 @@ import { UrlIndexer } from '../../index.js';
 /* eslint-disable prefer-destructuring */
 
 /** @typedef {import('../../index').RequestModel} RequestModel */
-/** @typedef {import('@advanced-rest-client/arc-types').Project.ARCProject} ARCProject */
-/** @typedef {import('@advanced-rest-client/arc-types').ArcRequest.ARCSavedRequest} ARCSavedRequest */
-/** @typedef {import('@advanced-rest-client/arc-types').ArcRequest.ARCHistoryRequest} ARCHistoryRequest */
+/** @typedef {import('@advanced-rest-client/events').Project.ARCProject} ARCProject */
+/** @typedef {import('@advanced-rest-client/events').ArcRequest.ARCSavedRequest} ARCSavedRequest */
+/** @typedef {import('@advanced-rest-client/events').ArcRequest.ARCHistoryRequest} ARCHistoryRequest */
 /** @typedef {import('@advanced-rest-client/arc-data-generator').InsertSavedResult} InsertSavedResult */
-/** @typedef {import('@advanced-rest-client/arc-types').ArcResponse.TransformedPayload} TransformedPayload */
-/** @typedef {import('@advanced-rest-client/arc-types').ArcResponse.Response} Response */
+/** @typedef {import('@advanced-rest-client/events').ArcResponse.TransformedPayload} TransformedPayload */
+/** @typedef {import('@advanced-rest-client/events').ArcResponse.Response} Response */
 
 describe('RequestModel', () => {
   /**

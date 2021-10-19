@@ -1,14 +1,14 @@
 /* eslint-disable class-methods-use-this */
 /* eslint-disable no-param-reassign */
 
-import { v4 } from '@advanced-rest-client/uuid-generator';
+import { v4 } from '@advanced-rest-client/uuid';
 import { dataValue } from './BaseTransformer.js';
 import { PostmanTransformer } from './PostmanTransformer.js';
 
-/** @typedef {import('@advanced-rest-client/arc-types').DataExport.ExportArcSavedRequest} ExportArcSavedRequest */
-/** @typedef {import('@advanced-rest-client/arc-types').DataExport.ExportArcProjects} ExportArcProjects */
-/** @typedef {import('@advanced-rest-client/arc-types').DataExport.ArcExportObject} ArcExportObject */
-/** @typedef {import('@advanced-rest-client/arc-types').DataExport.ExportArcVariable} ExportArcVariable */
+/** @typedef {import('@advanced-rest-client/events').DataExport.ExportArcSavedRequest} ExportArcSavedRequest */
+/** @typedef {import('@advanced-rest-client/events').DataExport.ExportArcProjects} ExportArcProjects */
+/** @typedef {import('@advanced-rest-client/events').DataExport.ArcExportObject} ArcExportObject */
+/** @typedef {import('@advanced-rest-client/events').DataExport.ExportArcVariable} ExportArcVariable */
 /** @typedef {import('./PostmanBackupTransformer').PostmanBackupV1} PostmanBackupV1 */
 /** @typedef {import('./PostmanBackupTransformer').PostmanCollection} PostmanCollection */
 /** @typedef {import('./PostmanBackupTransformer').PostmanArcRequestData} PostmanArcRequestData */

@@ -1,5 +1,5 @@
 import { ArcBaseModel } from './ArcBaseModel';
-import { Project, ArcRequest, Model } from '@advanced-rest-client/arc-types';
+import { Project, ArcRequest, Model } from '@advanced-rest-client/events';
 
 export declare const processUpdateProjectBulkResponse: unique symbol;
 

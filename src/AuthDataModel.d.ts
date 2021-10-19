@@ -1,5 +1,5 @@
 import { ArcBaseModel } from './ArcBaseModel';
-import { AuthData, Model } from '@advanced-rest-client/arc-types';
+import { AuthData, Model } from '@advanced-rest-client/events';
 
 /**
  * Removes query parameters and the fragment part from the URL
@@ -20,12 +20,7 @@ export declare function computeKey(method: string, url?: string): string;
  * Model for authorization data stored in the application.
  */
 export declare class AuthDataModel extends ArcBaseModel {
-
   constructor();
-
-  _attachListeners(node: EventTarget): void;
-  _detachListeners(node: EventTarget): void;
-
   /**
    * Queries for a datastore entry. Similar to `read()` but without using `id`
    * but rather the URL.

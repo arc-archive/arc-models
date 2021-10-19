@@ -8,7 +8,7 @@ import {
   processRequestsArray,
 } from '../../src/lib/DbUtils.js';
 
-/** @typedef {import('@advanced-rest-client/arc-types').ArcRequest.ARCSavedRequest} ARCSavedRequest */
+/** @typedef {import('@advanced-rest-client/events').ArcRequest.ARCSavedRequest} ARCSavedRequest */
 
 /* global PouchDB */
 

@@ -13,14 +13,14 @@ the License.
 */
 
 import 'pouchdb/dist/pouchdb.js';
-import { TelemetryEvents, ArcModelEventTypes, ArcModelEvents } from '@advanced-rest-client/arc-events';
+import { TelemetryEvents, ArcModelEventTypes, ArcModelEvents } from '@advanced-rest-client/events';
 
 /* eslint-disable class-methods-use-this */
 
-/** @typedef {import('@advanced-rest-client/arc-events').ARCModelDeleteEvent} ARCModelDeleteEvent */
-/** @typedef {import('@advanced-rest-client/arc-types').Model.ARCEntityChangeRecord} ARCEntityChangeRecord */
-/** @typedef {import('@advanced-rest-client/arc-types').Model.ARCModelListOptions} ARCModelListOptions */
-/** @typedef {import('@advanced-rest-client/arc-types').Model.ARCModelListResult} ARCModelListResult */
+/** @typedef {import('@advanced-rest-client/events').ARCModelDeleteEvent} ARCModelDeleteEvent */
+/** @typedef {import('@advanced-rest-client/events').Model.ARCEntityChangeRecord} ARCEntityChangeRecord */
+/** @typedef {import('@advanced-rest-client/events').Model.ARCModelListOptions} ARCModelListOptions */
+/** @typedef {import('@advanced-rest-client/events').Model.ARCModelListResult} ARCModelListResult */
 
 export const deletemodelHandler = Symbol('deletemodelHandler');
 export const notifyDestroyed = Symbol('notifyDestroyed');
@@ -29,16 +29,21 @@ export const createChangeRecord = Symbol('createChangeRecord');
 /**
  * A base class for all models.
  */
-export class ArcBaseModel extends HTMLElement {
+export class ArcBaseModel {
   /**
    * @param {string=} dbname Name of the data store
    * @param {number=} revsLimit Limit number of revisions on the data store.
    */
   constructor(dbname, revsLimit) {
-    super();
     this.name = dbname;
     this.revsLimit = revsLimit;
     this[deletemodelHandler] = this[deletemodelHandler].bind(this);
+    /**
+     * Set with `listen()` method or separately. When set the model dispatch events on this node.
+     * When not set the model does not dispatch events.
+     * @type {EventTarget}
+     */
+    this.eventsTarget = undefined;
   }
 
   /**
@@ -55,14 +60,6 @@ export class ArcBaseModel extends HTMLElement {
       opts.revs_limit = this.revsLimit;
     }
     return new PouchDB(this.name, opts);
-  }
-
-  set eventsTarget(value) {
-    this._eventsTargetChanged(value);
-  }
-
-  get eventsTarget() {
-    return this._oldEventsTarget || window;
   }
 
   /**
@@ -83,49 +80,21 @@ export class ArcBaseModel extends HTMLElement {
     };
   }
 
-  connectedCallback() {
-    if (!this._oldEventsTarget) {
-      this._eventsTargetChanged(this.eventsTarget);
-    }
-    if (!this.hasAttribute('aria-hidden')) {
-      this.setAttribute('aria-hidden', 'true');
-    }
-    if (!this.hasAttribute('hidden')) {
-      this.setAttribute('hidden', '');
-    }
-  }
-
-  disconnectedCallback() {
-    this._detachListeners(this.eventsTarget);
-  }
-
   /**
+   * Listens for the DOM events.
    * @param {EventTarget} node
    */
-  _attachListeners(node) {
+  listen(node) {
+    this.eventsTarget = node;
     node.addEventListener(ArcModelEventTypes.destroy, this[deletemodelHandler]);
   }
 
   /**
+   * Removes the DOM event listeners.
    * @param {EventTarget} node
    */
-  _detachListeners(node) {
+  unlisten(node) {
     node.removeEventListener(ArcModelEventTypes.destroy, this[deletemodelHandler]);
-  }
-
-  /**
-   * Removes old handlers (if any) and attaches listeners on new event
-   * event target.
-   *
-   * @param {EventTarget} eventsTarget Event target to set handlers on. If not set it
-   * will set handlers on the `window` object.
-   */
-  _eventsTargetChanged(eventsTarget) {
-    if (this._oldEventsTarget) {
-      this._detachListeners(this._oldEventsTarget);
-    }
-    this._oldEventsTarget = eventsTarget || window;
-    this._attachListeners(this._oldEventsTarget);
   }
 
   /**
@@ -160,7 +129,9 @@ export class ArcBaseModel extends HTMLElement {
     } else {
       message = JSON.stringify(e);
     }
-    TelemetryEvents.exception(this, message, true);
+    if (this.eventsTarget) {
+      TelemetryEvents.exception(this.eventsTarget, message, true);
+    }
     if (!noThrow) {
       throw e;
     }
@@ -182,7 +153,9 @@ export class ArcBaseModel extends HTMLElement {
    * @param {string} store The name of the deleted store
    */
   [notifyDestroyed](store) {
-    ArcModelEvents.destroyed(this, store);
+    if (this.eventsTarget) {
+      ArcModelEvents.destroyed(this.eventsTarget, store);
+    }
   }
 
   /**
@@ -218,9 +191,6 @@ export class ArcBaseModel extends HTMLElement {
       return true;
     }
     if (!e.cancelable) {
-      return true;
-    }
-    if (e.composedPath()[0] === this) {
       return true;
     }
     return false;

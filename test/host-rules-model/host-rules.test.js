@@ -1,11 +1,11 @@
 import { fixture, assert } from '@open-wc/testing';
 import sinon from 'sinon';
 import { DataGenerator } from '@advanced-rest-client/arc-data-generator';
-import { ArcModelEventTypes } from '@advanced-rest-client/arc-events';
+import { ArcModelEventTypes } from '@advanced-rest-client/events';
 import '../../host-rules-model.js';
 
 /** @typedef {import('../../src/HostRulesModel').HostRulesModel} HostRulesModel */
-/** @typedef {import('@advanced-rest-client/arc-types').HostRule.ARCHostRule} ARCHostRule */
+/** @typedef {import('@advanced-rest-client/events').HostRule.ARCHostRule} ARCHostRule */
 /* eslint-disable no-param-reassign */
 
 describe('<host-rules-model>', () => {

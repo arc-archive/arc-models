@@ -13,22 +13,22 @@ WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
 License for the specific language governing permissions and limitations under
 the License.
 */
-import { v4 } from '@advanced-rest-client/uuid-generator';
-import { TransportEventTypes, ArcModelEvents } from '@advanced-rest-client/arc-events';
-import { BodyProcessor } from '@advanced-rest-client/body-editor';
+import { v4 } from '@advanced-rest-client/uuid';
+import { TransportEventTypes, ArcModelEvents } from '@advanced-rest-client/events';
+import { BodyProcessor } from '@advanced-rest-client/libs';
 import { ArcBaseModel } from './ArcBaseModel.js';
 import { normalizeRequest } from './Utils.js';
 import { computePayloadSize, calculateBytes } from './lib/DataSize.js';
 
-/** @typedef {import('@advanced-rest-client/arc-events').ApiResponseEvent} ApiResponseEvent */
-/** @typedef {import('@advanced-rest-client/arc-types').ArcRequest.TransportRequest} TransportRequest */
-/** @typedef {import('@advanced-rest-client/arc-types').ArcRequest.ArcBaseRequest} ArcBaseRequest */
-/** @typedef {import('@advanced-rest-client/arc-types').ArcRequest.ARCHistoryRequest} ARCHistoryRequest */
-/** @typedef {import('@advanced-rest-client/arc-types').ArcResponse.Response} Response */
-/** @typedef {import('@advanced-rest-client/arc-types').ArcResponse.ErrorResponse} ErrorResponse */
-/** @typedef {import('@advanced-rest-client/arc-types').ArcResponse.RequestTime} RequestTime */
-/** @typedef {import('@advanced-rest-client/arc-types').ArcResponse.TransformedPayload} TransformedPayload */
-/** @typedef {import('@advanced-rest-client/arc-types').HistoryData.HistoryData} HistoryData */
+/** @typedef {import('@advanced-rest-client/events').ApiResponseEvent} ApiResponseEvent */
+/** @typedef {import('@advanced-rest-client/events').ArcRequest.TransportRequest} TransportRequest */
+/** @typedef {import('@advanced-rest-client/events').ArcRequest.ArcBaseRequest} ArcBaseRequest */
+/** @typedef {import('@advanced-rest-client/events').ArcRequest.ARCHistoryRequest} ARCHistoryRequest */
+/** @typedef {import('@advanced-rest-client/events').ArcResponse.Response} Response */
+/** @typedef {import('@advanced-rest-client/events').ArcResponse.ErrorResponse} ErrorResponse */
+/** @typedef {import('@advanced-rest-client/events').ArcResponse.RequestTime} RequestTime */
+/** @typedef {import('@advanced-rest-client/events').ArcResponse.TransformedPayload} TransformedPayload */
+/** @typedef {import('@advanced-rest-client/events').HistoryData.HistoryData} HistoryData */
 
 export const responseHandler = Symbol('responseHandler');
 export const saveHistoryData = Symbol('saveHistoryData');
@@ -71,16 +71,16 @@ export class HistoryDataModel extends ArcBaseModel {
   /**
    * @param {EventTarget} node
    */
-  _attachListeners(node) {
-    super._attachListeners(node);
+  listen(node) {
+    super.listen(node);
     node.addEventListener(TransportEventTypes.response, this[responseHandler]);
   }
 
   /**
    * @param {EventTarget} node
    */
-  _detachListeners(node) {
-    super._detachListeners(node);
+  unlisten(node) {
+    super.unlisten(node);
     node.removeEventListener(TransportEventTypes.response, this[responseHandler]);
   }
 

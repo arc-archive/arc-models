@@ -9,7 +9,7 @@ import { ArcDexieTransformer } from '../transformers/ArcDexieTransformer.js';
 import { ArcPouchTransformer } from '../transformers/ArcPouchTransformer.js';
 import { PostmanDataTransformer } from '../transformers/PostmanDataTransformer.js';
 
-/** @typedef {import('@advanced-rest-client/arc-types').DataExport.ArcExportObject} ArcExportObject */
+/** @typedef {import('@advanced-rest-client/events').DataExport.ArcExportObject} ArcExportObject */
 
 /**
  * A class that takes care of the import data and normalizes it to a common

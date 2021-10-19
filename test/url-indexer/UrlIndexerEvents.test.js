@@ -2,7 +2,7 @@ import { assert } from '@open-wc/testing';
 import {
   ARCUrlIndexUpdateEvent,
   ARCUrlIndexQueryEvent,
-} from '@advanced-rest-client/arc-events';
+} from '@advanced-rest-client/events';
 
 /** @typedef {import('../../src/AuthDataModel').AuthDataModel} AuthDataModel */
 

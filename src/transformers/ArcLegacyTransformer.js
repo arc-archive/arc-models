@@ -1,16 +1,16 @@
 /* eslint-disable no-param-reassign */
 /* eslint-disable class-methods-use-this */
 
-import { v4 } from '@advanced-rest-client/uuid-generator';
+import { v4 } from '@advanced-rest-client/uuid';
 import { BaseTransformer, dataValue } from './BaseTransformer.js';
 
-/** @typedef {import('@advanced-rest-client/arc-types').DataExport.ArcExportObject} ArcExportObject */
+/** @typedef {import('@advanced-rest-client/events').DataExport.ArcExportObject} ArcExportObject */
 /** @typedef {import('./ArcLegacyTransformer').LegacyExport} LegacyExport */
 /** @typedef {import('./ArcLegacyTransformer').LegacyRequest} LegacyRequest */
 /** @typedef {import('./ArcLegacyTransformer').LegacyProject} LegacyProject */
 /** @typedef {import('./ArcLegacyTransformer').LegacyProjectProcessing} LegacyProjectProcessing */
-/** @typedef {import('@advanced-rest-client/arc-types').DataExport.ExportArcSavedRequest} ExportArcSavedRequest */
-/** @typedef {import('@advanced-rest-client/arc-types').DataExport.ExportArcProjects} ExportArcProjects */
+/** @typedef {import('@advanced-rest-client/events').DataExport.ExportArcSavedRequest} ExportArcSavedRequest */
+/** @typedef {import('@advanced-rest-client/events').DataExport.ExportArcProjects} ExportArcProjects */
 
 /**
  * Tests if the data import is a single request export.

@@ -1,5 +1,5 @@
 import {RequestBaseModel} from './RequestBaseModel';
-import { Project, ArcRequest, Model } from '@advanced-rest-client/arc-types';
+import { Project, ArcRequest, Model } from '@advanced-rest-client/events';
 
 export declare const syncProjects: unique symbol;
 export declare const readBulkHandler: unique symbol;
@@ -269,14 +269,4 @@ export declare class RequestModel extends RequestBaseModel {
    * @param id Project id
    */
   readProjectRequestsLegacy(id: string): Promise<(ArcRequest.ARCHistoryRequest|ArcRequest.ARCSavedRequest)[]>;
-
-  /**
-   * Adds event listeners.
-   */
-  _attachListeners(node: EventTarget): void;
-
-  /**
-   * Removes event listeners.
-   */
-  _detachListeners(node: EventTarget): void;
 }

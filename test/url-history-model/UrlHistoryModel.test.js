@@ -1,12 +1,12 @@
 import { assert, fixture, html } from '@open-wc/testing';
 import { DataGenerator } from '@advanced-rest-client/arc-data-generator';
 import sinon from 'sinon';
-import { ArcModelEventTypes } from '@advanced-rest-client/arc-events';
+import { ArcModelEventTypes } from '@advanced-rest-client/events';
 import '../../url-history-model.js';
 import { sortFunction } from '../../src/UrlHistoryModel.js';
 
 /** @typedef {import('../../src/UrlHistoryModel').UrlHistoryModel} UrlHistoryModel */
-/** @typedef {import('@advanced-rest-client/arc-types').UrlHistory.ARCUrlHistory} ARCUrlHistory */
+/** @typedef {import('@advanced-rest-client/events').UrlHistory.ARCUrlHistory} ARCUrlHistory */
 
 describe('UrlHistoryModel', () => {
   /**

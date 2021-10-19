@@ -4,7 +4,7 @@ import { DataTestHelper } from './DataTestHelper.js';
 import { ArcPouchTransformer } from '../../src/transformers/ArcPouchTransformer.js';
 import { ExportProcessor } from '../../src/lib/ExportProcessor.js';
 
-/** @typedef {import('@advanced-rest-client/arc-types').DataExport.ArcExportObject} ArcExportObject */
+/** @typedef {import('@advanced-rest-client/events').DataExport.ArcExportObject} ArcExportObject */
 
 describe('ArcPouchTransformer', () => {
   describe('previous version', () => {

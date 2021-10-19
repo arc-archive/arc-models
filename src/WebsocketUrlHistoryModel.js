@@ -11,16 +11,16 @@ WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
 License for the specific language governing permissions and limitations under
 the License.
 */
-import { ArcModelEventTypes, ArcModelEvents } from '@advanced-rest-client/arc-events';
+import { ArcModelEventTypes, ArcModelEvents } from '@advanced-rest-client/events';
 import { ArcBaseModel } from './ArcBaseModel.js';
 
-/** @typedef {import('@advanced-rest-client/arc-types').UrlHistory.ARCWebsocketUrlHistory} ARCWebsocketUrlHistory */
-/** @typedef {import('@advanced-rest-client/arc-events').ARCWSUrlInsertEvent} ARCWSUrlInsertEvent */
-/** @typedef {import('@advanced-rest-client/arc-events').ARCWSUrlListEvent} ARCWSUrlListEvent */
-/** @typedef {import('@advanced-rest-client/arc-events').ARCWSUrlQueryEvent} ARCWSUrlQueryEvent */
-/** @typedef {import('@advanced-rest-client/arc-types').Model.ARCEntityChangeRecord} ARCEntityChangeRecord */
-/** @typedef {import('@advanced-rest-client/arc-types').Model.ARCModelListOptions} ARCModelListOptions */
-/** @typedef {import('@advanced-rest-client/arc-types').Model.ARCModelListResult} ARCModelListResult */
+/** @typedef {import('@advanced-rest-client/events').UrlHistory.ARCWebsocketUrlHistory} ARCWebsocketUrlHistory */
+/** @typedef {import('@advanced-rest-client/events').ARCWSUrlInsertEvent} ARCWSUrlInsertEvent */
+/** @typedef {import('@advanced-rest-client/events').ARCWSUrlListEvent} ARCWSUrlListEvent */
+/** @typedef {import('@advanced-rest-client/events').ARCWSUrlQueryEvent} ARCWSUrlQueryEvent */
+/** @typedef {import('@advanced-rest-client/events').Model.ARCEntityChangeRecord} ARCEntityChangeRecord */
+/** @typedef {import('@advanced-rest-client/events').Model.ARCModelListOptions} ARCModelListOptions */
+/** @typedef {import('@advanced-rest-client/events').Model.ARCModelListResult} ARCModelListResult */
 
 /* eslint-disable no-plusplus */
 /* eslint-disable no-continue */
@@ -180,15 +180,21 @@ export class WebsocketUrlHistoryModel extends ArcBaseModel {
     return result;
   }
 
-  _attachListeners(node) {
-    super._attachListeners(node);
+  /**
+   * @param {EventTarget} node
+   */
+  listen(node) {
+    super.listen(node);
     node.addEventListener(ArcModelEventTypes.WSUrlHistory.insert, this[insertHandler]);
     node.addEventListener(ArcModelEventTypes.WSUrlHistory.list, this[listHandler]);
     node.addEventListener(ArcModelEventTypes.WSUrlHistory.query, this[queryHandler]);
   }
 
-  _detachListeners(node) {
-    super._detachListeners(node);
+  /**
+   * @param {EventTarget} node
+   */
+  unlisten(node) {
+    super.unlisten(node);
     node.removeEventListener(ArcModelEventTypes.WSUrlHistory.insert, this[insertHandler]);
     node.removeEventListener(ArcModelEventTypes.WSUrlHistory.list, this[listHandler]);
     node.removeEventListener(ArcModelEventTypes.WSUrlHistory.query, this[queryHandler]);

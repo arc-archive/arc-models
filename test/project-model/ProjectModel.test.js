@@ -1,19 +1,19 @@
 import { fixture, assert, oneEvent } from '@open-wc/testing';
 import { DataGenerator } from '@advanced-rest-client/arc-data-generator';
-import { v4 } from '@advanced-rest-client/uuid-generator';
-import { ArcModelEventTypes } from '@advanced-rest-client/arc-events';
+import { v4 } from '@advanced-rest-client/uuid';
+import { ArcModelEventTypes } from '@advanced-rest-client/events';
 import sinon from 'sinon';
 import '../../project-model.js';
 import '../../request-model.js';
 
 /** @typedef {import('../../src/ProjectModel').ProjectModel} ProjectModel */
 /** @typedef {import('../../index').RequestModel} RequestModel */
-/** @typedef {import('@advanced-rest-client/arc-events').ARCProjectUpdatedEvent} ARCProjectUpdatedEvent */
-/** @typedef {import('@advanced-rest-client/arc-events').ARCProjectDeleteEvent} ARCProjectDeleteEvent */
-/** @typedef {import('@advanced-rest-client/arc-types').Project.ARCProject} ARCProject */
-/** @typedef {import('@advanced-rest-client/arc-types').ArcRequest.ARCSavedRequest} ARCSavedRequest */
-/** @typedef {import('@advanced-rest-client/arc-types').ArcRequest.ARCHistoryRequest} ARCHistoryRequest */
-/** @typedef {import('@advanced-rest-client/arc-types').Model.ARCEntityChangeRecord} ARCEntityChangeRecord */
+/** @typedef {import('@advanced-rest-client/events').ARCProjectUpdatedEvent} ARCProjectUpdatedEvent */
+/** @typedef {import('@advanced-rest-client/events').ARCProjectDeleteEvent} ARCProjectDeleteEvent */
+/** @typedef {import('@advanced-rest-client/events').Project.ARCProject} ARCProject */
+/** @typedef {import('@advanced-rest-client/events').ArcRequest.ARCSavedRequest} ARCSavedRequest */
+/** @typedef {import('@advanced-rest-client/events').ArcRequest.ARCHistoryRequest} ARCHistoryRequest */
+/** @typedef {import('@advanced-rest-client/events').Model.ARCEntityChangeRecord} ARCEntityChangeRecord */
 
 describe('ProjectModel', () => {
   /**

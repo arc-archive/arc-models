@@ -20,4 +20,4 @@ The element must be accompanied by the peer `<request-model>` as it uses events 
 
 ## Type
 
-The type is defined in `@advanced-rest-client/arc-types` as `HistoryData.HistoryData`.
+The type is defined in `@advanced-rest-client/events` as `HistoryData.HistoryData`.

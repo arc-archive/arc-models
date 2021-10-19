@@ -4,9 +4,9 @@
 import { dataValue } from './BaseTransformer.js';
 import { PostmanTransformer } from './PostmanTransformer.js';
 
-/** @typedef {import('@advanced-rest-client/arc-types').DataExport.ExportArcSavedRequest} ExportArcSavedRequest */
-/** @typedef {import('@advanced-rest-client/arc-types').DataExport.ExportArcProjects} ExportArcProjects */
-/** @typedef {import('@advanced-rest-client/arc-types').DataExport.ArcExportObject} ArcExportObject */
+/** @typedef {import('@advanced-rest-client/events').DataExport.ExportArcSavedRequest} ExportArcSavedRequest */
+/** @typedef {import('@advanced-rest-client/events').DataExport.ExportArcProjects} ExportArcProjects */
+/** @typedef {import('@advanced-rest-client/events').DataExport.ArcExportObject} ArcExportObject */
 /** @typedef {import('./PostmanV1Transformer').PostmanV1} PostmanV1 */
 /** @typedef {import('./PostmanV1Transformer').PostmanRequest} PostmanRequest */
 /** @typedef {import('./PostmanV1Transformer').PostmanFolder} PostmanFolder */

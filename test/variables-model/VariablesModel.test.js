@@ -1,15 +1,15 @@
 import { assert, fixture, html, oneEvent } from '@open-wc/testing';
 import { DataGenerator } from '@advanced-rest-client/arc-data-generator';
 import sinon from 'sinon';
-import { ArcModelEventTypes, ArcModelEvents } from '@advanced-rest-client/arc-events';
+import { ArcModelEventTypes, ArcModelEvents } from '@advanced-rest-client/events';
 import '../../variables-model.js';
 import { currentValue } from '../../src/VariablesModel.js';
 
 /* global PouchDB */
 
 /** @typedef {import('../../src/VariablesModel').VariablesModel} VariablesModel */
-/** @typedef {import('@advanced-rest-client/arc-types').Variable.ARCVariable} ARCVariable */
-/** @typedef {import('@advanced-rest-client/arc-types').Variable.ARCEnvironment} ARCEnvironment */
+/** @typedef {import('@advanced-rest-client/events').Variable.ARCVariable} ARCVariable */
+/** @typedef {import('@advanced-rest-client/events').Variable.ARCEnvironment} ARCEnvironment */
 
 describe('VariablesModel', () => {
   const generator = new DataGenerator();

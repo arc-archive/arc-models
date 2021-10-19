@@ -1,5 +1,5 @@
-import { DataExport } from '@advanced-rest-client/arc-types';
-import { Indexer } from '@advanced-rest-client/arc-types';
+import { DataExport } from '@advanced-rest-client/events';
+import { Indexer } from '@advanced-rest-client/events';
 
 export const handleConflictedItem: unique symbol;
 export const insertGeneric: unique symbol;

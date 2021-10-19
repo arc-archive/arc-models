@@ -4,8 +4,8 @@ import { DataGenerator } from '@advanced-rest-client/arc-data-generator';
 import { ExportFactory } from '../../src/lib/ExportFactory.js';
 
 /* global PouchDB */
-/** @typedef {import('@advanced-rest-client/arc-types').ArcRequest.ARCSavedRequest} ARCSavedRequest */
-/** @typedef {import('@advanced-rest-client/arc-types').ArcRequest.ARCHistoryRequest} ARCHistoryRequest */
+/** @typedef {import('@advanced-rest-client/events').ArcRequest.ARCSavedRequest} ARCSavedRequest */
+/** @typedef {import('@advanced-rest-client/events').ArcRequest.ARCHistoryRequest} ARCHistoryRequest */
 
 describe('ExportFactory', () => {
   const generator = new DataGenerator();

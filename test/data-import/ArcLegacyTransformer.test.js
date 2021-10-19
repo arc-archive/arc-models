@@ -2,7 +2,7 @@ import { assert } from '@open-wc/testing';
 import { DataTestHelper } from './DataTestHelper.js';
 import { ArcLegacyTransformer } from '../../src/transformers/ArcLegacyTransformer.js';
 
-/** @typedef {import('@advanced-rest-client/arc-types').DataExport.ArcExportObject} ArcExportObject */
+/** @typedef {import('@advanced-rest-client/events').DataExport.ArcExportObject} ArcExportObject */
 
 describe('ArcLegacyTransformer', () => {
   describe('Single request import', () => {

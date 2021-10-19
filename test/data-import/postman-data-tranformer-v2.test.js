@@ -2,8 +2,8 @@ import { assert } from '@open-wc/testing';
 import { DataTestHelper } from './DataTestHelper.js';
 import { PostmanV2Transformer } from '../../src/transformers/PostmanV2Transformer.js';
 
-/** @typedef {import('@advanced-rest-client/arc-types').DataExport.ExportArcProjects} ExportArcProjects */
-/** @typedef {import('@advanced-rest-client/arc-types').DataExport.ExportArcSavedRequest} ExportArcSavedRequest */
+/** @typedef {import('@advanced-rest-client/events').DataExport.ExportArcProjects} ExportArcProjects */
+/** @typedef {import('@advanced-rest-client/events').DataExport.ExportArcSavedRequest} ExportArcSavedRequest */
 
 describe('PostmanV2Transformer', () => {
   describe('readProjectInfo()', () => {

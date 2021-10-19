@@ -1,15 +1,15 @@
 import { fixture, assert } from '@open-wc/testing';
 import sinon from 'sinon';
 import { DataGenerator } from '@advanced-rest-client/arc-data-generator';
-import { ArcModelEventTypes } from '@advanced-rest-client/arc-events';
+import { ArcModelEventTypes } from '@advanced-rest-client/events';
 import 'chance/dist/chance.min.js';
 import '../../rest-api-model.js';
 
 /* eslint-disable prefer-destructuring */
 
 /** @typedef {import('../../src/RestApiModel').RestApiModel} RestApiModel */
-/** @typedef {import('@advanced-rest-client/arc-types').RestApi.ARCRestApiIndex} ARCRestApiIndex */
-/** @typedef {import('@advanced-rest-client/arc-types').RestApi.ARCRestApi} ARCRestApi */
+/** @typedef {import('@advanced-rest-client/events').RestApi.ARCRestApiIndex} ARCRestApiIndex */
+/** @typedef {import('@advanced-rest-client/events').RestApi.ARCRestApi} ARCRestApi */
 
 describe('RestApiModel', () => {
   const generator = new DataGenerator();

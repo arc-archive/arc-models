@@ -11,25 +11,25 @@ WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
 License for the specific language governing permissions and limitations under
 the License.
 */
-import { ArcModelEventTypes, ArcModelEvents } from '@advanced-rest-client/arc-events';
+import { ArcModelEventTypes, ArcModelEvents } from '@advanced-rest-client/events';
 import { ArcBaseModel, createChangeRecord } from './ArcBaseModel.js';
 
 /* eslint-disable class-methods-use-this */
 /* eslint-disable no-param-reassign */
 
-/** @typedef {import('@advanced-rest-client/arc-types').ClientCertificate.ARCCertificateIndex} ARCCertificateIndex */
-/** @typedef {import('@advanced-rest-client/arc-types').ClientCertificate.Certificate} Certificate */
-/** @typedef {import('@advanced-rest-client/arc-types').ClientCertificate.ClientCertificate} ClientCertificate */
-/** @typedef {import('@advanced-rest-client/arc-types').ClientCertificate.RequestCertificate} RequestCertificate */
-/** @typedef {import('@advanced-rest-client/arc-types').ClientCertificate.ARCRequestCertificate} ARCRequestCertificate */
-/** @typedef {import('@advanced-rest-client/arc-events').ARCClientCertificateInsertEvent} ARCClientCertificateInsertEvent */
-/** @typedef {import('@advanced-rest-client/arc-events').ARCClientCertificateReadEvent} ARCClientCertificateReadEvent */
-/** @typedef {import('@advanced-rest-client/arc-events').ARCClientCertificateDeleteEvent} ARCClientCertificateDeleteEvent */
-/** @typedef {import('@advanced-rest-client/arc-events').ARCClientCertificateListEvent} ARCClientCertificateListEvent */
-/** @typedef {import('@advanced-rest-client/arc-types').Model.ARCEntityChangeRecord} ARCEntityChangeRecord */
-/** @typedef {import('@advanced-rest-client/arc-types').Model.ARCModelListOptions} ARCModelListOptions */
-/** @typedef {import('@advanced-rest-client/arc-types').Model.ARCModelListResult} ARCModelListResult */
-/** @typedef {import('@advanced-rest-client/arc-types').Model.DeletedEntity} DeletedEntity */
+/** @typedef {import('@advanced-rest-client/events').ClientCertificate.ARCCertificateIndex} ARCCertificateIndex */
+/** @typedef {import('@advanced-rest-client/events').ClientCertificate.Certificate} Certificate */
+/** @typedef {import('@advanced-rest-client/events').ClientCertificate.ClientCertificate} ClientCertificate */
+/** @typedef {import('@advanced-rest-client/events').ClientCertificate.RequestCertificate} RequestCertificate */
+/** @typedef {import('@advanced-rest-client/events').ClientCertificate.ARCRequestCertificate} ARCRequestCertificate */
+/** @typedef {import('@advanced-rest-client/events').ARCClientCertificateInsertEvent} ARCClientCertificateInsertEvent */
+/** @typedef {import('@advanced-rest-client/events').ARCClientCertificateReadEvent} ARCClientCertificateReadEvent */
+/** @typedef {import('@advanced-rest-client/events').ARCClientCertificateDeleteEvent} ARCClientCertificateDeleteEvent */
+/** @typedef {import('@advanced-rest-client/events').ARCClientCertificateListEvent} ARCClientCertificateListEvent */
+/** @typedef {import('@advanced-rest-client/events').Model.ARCEntityChangeRecord} ARCEntityChangeRecord */
+/** @typedef {import('@advanced-rest-client/events').Model.ARCModelListOptions} ARCModelListOptions */
+/** @typedef {import('@advanced-rest-client/events').Model.ARCModelListResult} ARCModelListResult */
+/** @typedef {import('@advanced-rest-client/events').Model.DeletedEntity} DeletedEntity */
 
 export const listHandler = Symbol('listHandler');
 export const insertHandler = Symbol('insertHandler');
@@ -94,8 +94,8 @@ export class ClientCertificateModel extends ArcBaseModel {
   /**
    * @param {EventTarget} node
    */
-  _attachListeners(node) {
-    super._attachListeners(node);
+  listen(node) {
+    super.listen(node);
     node.addEventListener(ArcModelEventTypes.ClientCertificate.list, this[listHandler]);
     node.addEventListener(ArcModelEventTypes.ClientCertificate.read, this[readHandler]);
     node.addEventListener(ArcModelEventTypes.ClientCertificate.delete, this[deleteHandler]);
@@ -105,8 +105,8 @@ export class ClientCertificateModel extends ArcBaseModel {
   /**
    * @param {EventTarget} node
    */
-  _detachListeners(node) {
-    super._detachListeners(node);
+  unlisten(node) {
+    super.unlisten(node);
     node.removeEventListener(ArcModelEventTypes.ClientCertificate.list, this[listHandler]);
     node.removeEventListener(ArcModelEventTypes.ClientCertificate.read, this[readHandler]);
     node.removeEventListener(ArcModelEventTypes.ClientCertificate.delete, this[deleteHandler]);

@@ -4,13 +4,13 @@
 
 import { normalizeAuthorization } from '../Utils.js';
 
-/** @typedef {import('@advanced-rest-client/arc-types').DataExport.ArcExportClientCertificateData} ArcExportClientCertificateData */
+/** @typedef {import('@advanced-rest-client/events').DataExport.ArcExportClientCertificateData} ArcExportClientCertificateData */
 /** @typedef {import('./DbUtils').PageResult} PageResult */
-/** @typedef {import('@advanced-rest-client/arc-types').ClientCertificate.ARCClientCertificate} ARCClientCertificate */
-/** @typedef {import('@advanced-rest-client/arc-types').ClientCertificate.ARCCertificateIndex} ARCCertificateIndex */
-/** @typedef {import('@advanced-rest-client/arc-types').ArcRequest.ARCHistoryRequest} ARCHistoryRequest */
-/** @typedef {import('@advanced-rest-client/arc-types').ArcRequest.RequestAuthorization} RequestAuthorization */
-/** @typedef {import('@advanced-rest-client/arc-types').Authorization.CCAuthorization} CCAuthorization */
+/** @typedef {import('@advanced-rest-client/events').ClientCertificate.ARCRequestCertificate} ARCRequestCertificate */
+/** @typedef {import('@advanced-rest-client/events').ClientCertificate.ARCCertificateIndex} ARCCertificateIndex */
+/** @typedef {import('@advanced-rest-client/events').ArcRequest.ARCHistoryRequest} ARCHistoryRequest */
+/** @typedef {import('@advanced-rest-client/events').ArcRequest.RequestAuthorization} RequestAuthorization */
+/** @typedef {import('@advanced-rest-client/events').Authorization.CCAuthorization} CCAuthorization */
 
 /**
  * Safely reads a datastore entry. It returns undefined if the entry does not exist.
@@ -114,7 +114,7 @@ export async function readClientCertificateIfNeeded(id, certificates) {
   if (index.dataKey) {
     delete index.dataKey;
   }
-  const data = /** @type ARCClientCertificate */ (await getEntry('client-certificates-data', indexId));
+  const data = /** @type ARCRequestCertificate */ (await getEntry('client-certificates-data', indexId));
   if (!data) {
     return null;
   }

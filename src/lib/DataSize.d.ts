@@ -1,4 +1,4 @@
-import { TransformedPayload } from '@advanced-rest-client/arc-types/src/request/ArcResponse';
+import { TransformedPayload } from '@advanced-rest-client/events/src/request/ArcResponse';
 
 /**
  * Computes size in the nearest units

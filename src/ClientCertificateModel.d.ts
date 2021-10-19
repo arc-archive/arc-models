@@ -1,4 +1,4 @@
-import { ClientCertificate, Model } from '@advanced-rest-client/arc-types';
+import { ClientCertificate, Model } from '@advanced-rest-client/events';
 import { ArcBaseModel } from './ArcBaseModel';
 
 /**

@@ -1,5 +1,5 @@
 import { ARCSavedRequest, ARCHistoryRequest, ARCAuthData, ARCWebsocketUrlHistory, ARCHostRule, ARCUrlHistory, ARCVariable, ARCProject } from '../../index';
-import { DataExport } from '@advanced-rest-client/arc-types';
+import { DataExport } from '@advanced-rest-client/events';
 /**
  * A class that processes ARC data to create a standard export object.
  */

@@ -1,4 +1,4 @@
-import { Indexer } from '@advanced-rest-client/arc-types';
+import { Indexer } from '@advanced-rest-client/events';
 export declare function createSchema(e: Event): void;
 export declare const STORE_NAME: string;
 export declare const STORE_VERSION: number;
@@ -129,10 +129,23 @@ declare interface ProcessedQueryResults {
  * ```
  * See query method for description of parameters.
  */
-export declare class UrlIndexer extends HTMLElement {
-  constructor();
-  connectedCallback(): void;
-  disconnectedCallback(): void;
+export declare class UrlIndexer {
+  /**
+   * The element to use to listen for the DOM events and dispatch the events on.
+   */
+  eventsTarget: EventTarget;
+  /**
+   * @param eventsTarget The element to use to listen for the DOM events and dispatch the events on.
+   */
+  constructor(eventsTarget: EventTarget);
+  /**
+   * Listens for the DOM events.
+   */
+  listen(): void;
+  /**
+   * Removes the DOM event listeners.
+   */
+  unlisten(): void;
 
   /**
    * Opens search index data store.

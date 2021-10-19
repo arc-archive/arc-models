@@ -15,8 +15,8 @@ const generator = new DataGenerator();
 /* eslint-disable prefer-destructuring */
 /* global PouchDB */
 
-/** @typedef {import('@advanced-rest-client/arc-types').ArcRequest.ARCHistoryRequest} ARCHistoryRequest */
-/** @typedef {import('@advanced-rest-client/arc-types').Project.ARCProject} ARCProject */
+/** @typedef {import('@advanced-rest-client/events').ArcRequest.ARCHistoryRequest} ARCHistoryRequest */
+/** @typedef {import('@advanced-rest-client/events').Project.ARCProject} ARCProject */
 
 describe('Utils', () => {
   describe('normalizeRequest()', () => {

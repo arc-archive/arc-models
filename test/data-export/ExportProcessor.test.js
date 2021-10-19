@@ -3,7 +3,7 @@ import 'chance/dist/chance.min.js';
 import { DataGenerator } from '@advanced-rest-client/arc-data-generator/arc-data-generator.js';
 import { ExportProcessor } from '../../src/lib/ExportProcessor.js';
 
-/** @typedef {import('@advanced-rest-client/arc-types').ClientCertificate.Certificate} Certificate */
+/** @typedef {import('@advanced-rest-client/events').ClientCertificate.Certificate} Certificate */
 
 /* global Chance */
 // @ts-ignore
